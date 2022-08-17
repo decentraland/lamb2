@@ -8,8 +8,8 @@ import type {
 } from "@well-known-components/interfaces"
 import { metricDeclarations } from "./metrics"
 import { TheGraphComponent } from "./ports/the-graph"
-import { ContentAPI } from 'dcl-catalyst-client'
 import { Profile, IPFSv1, IPFSv2 } from '@dcl/schemas'
+import { ContentComponent } from "./ports/content"
 
 export type GlobalContext = {
   components: BaseComponents
@@ -22,7 +22,7 @@ export type BaseComponents = {
   server: IHttpServerComponent<GlobalContext>
   fetch: IFetchComponent
   metrics: IMetricsComponent<keyof typeof metricDeclarations>
-  contentClient: ContentAPI
+  content: ContentComponent
   theGraph: TheGraphComponent
 }
 
@@ -63,25 +63,3 @@ export type ProfileData = {
 export type ProfileMetadata = Profile & {
   timestamp: number
 }
-
-// export type ProfileMetadata = {
-//   timestamp: number
-//   avatars: {
-//     name: string
-//     description: string
-//     hasClaimedName?: boolean
-//     avatar: Avatar
-//   }[]
-// }
-
-// export type AvatarSnapshots = Record<string, string>
-
-// type Avatar = {
-//   bodyShape: any
-//   eyes: any
-//   hair: any
-//   skin: any
-//   snapshots: AvatarSnapshots
-//   version: number
-//   wearables: WearableId[]
-// }

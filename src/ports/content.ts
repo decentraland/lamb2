@@ -1,38 +1,46 @@
-import { EthAddress } from '@dcl/crypto'
-import { IBaseComponent, IConfigComponent } from '@well-known-components/interfaces'
+import { IBaseComponent } from "@well-known-components/interfaces";
+import { AppComponents } from "../types";
 import { ContentAPI, ContentClient } from 'dcl-catalyst-client'
-import { EntityType } from '@dcl/schemas'
-
-// TODO: use a common schema instead of this type
-export type ProfileMetadata = {
-
-}
+import { EntityType } from "dcl-catalyst-commons";
+import { Entity } from "@dcl/schemas";
 
 export type ContentComponent = IBaseComponent & {
-  getProfiles: (ethAddresses: EthAddress[]) => ProfileMetadata[]
-  client: ContentAPI | undefined
+    getExternalContentServerUrl(): string
+    fetchEntitiesByPointers(type: EntityType, pointers: string[]): Promise<Entity[]>
 }
 
-export async function createContentComponent(config: IConfigComponent): Promise<ContentComponent> {
+export async function createContentComponent(components: Pick<AppComponents, 'config'>): Promise<ContentComponent> {
+    const contentServerURL = await getContentServerAddress(components)
+    const contentClient: ContentAPI = new ContentClient({ contentUrl: contentServerURL })
 
-  let client: ContentAPI | undefined
-
-  async function start() {
-    const contentServerAddress = (await config.getString('CONTENT_SERVER_ADDRESS')) ?? 'http://content-server:6969'
-    client = new ContentClient({ contentUrl: contentServerAddress })
-  }
+    async function start() {}
       
-  async function stop() {}
+    async function stop() {}
 
-  function getProfiles(ethAddresses: EthAddress[]): ProfileMetadata[] {
-    
-    return []
+    function getExternalContentServerUrl(): string {
+        return contentServerURL
+    }
+
+    function fetchEntitiesByPointers(type: EntityType, pointers: string[]) {
+        return contentClient.fetchEntitiesByPointers(type, pointers)
+    }
+
+    return {
+        start,
+        stop,
+        getExternalContentServerUrl,
+        fetchEntitiesByPointers
+    }
 }
-    
-  return {
-    start,
-    stop,
-    getProfiles,
-    client
-  }
+
+async function getContentServerAddress(components: Pick<AppComponents, 'config'>) {
+    let configAddress: string = (await components.config.getString('CONTENT_SERVER_ADDRESS')) ?? 'http://content-server:6969'
+    configAddress = configAddress.toLowerCase()
+    if (!configAddress.startsWith('http')) {
+      configAddress = 'http://' + configAddress
+    }
+    while (configAddress.endsWith('/')) {
+      configAddress = configAddress.slice(0, -1)
+    }
+    return configAddress
 }
