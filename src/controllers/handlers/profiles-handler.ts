@@ -2,19 +2,10 @@ import { Request } from "node-fetch"
 import { getProfiles } from "../../logic/profiles"
 import { HandlerContextWithPath } from "../../types"
 
-export async function profilesHandler(context: Pick<HandlerContextWithPath<"metrics" | "contentClient" | "theGraph" | "config", "/profiles">, "url" | "components" | "request">) {
-  const { components: { metrics } } = context
-
+export async function profilesHandler(context: Pick<HandlerContextWithPath<"metrics" | "content" | "theGraph" | "config" | "fetch", "/profiles">, "url" | "components" | "request">) {
   // Get the profile ids
   const body = await context.request.clone().json()
   const ethAddresses = body.ethAddresses
-
-  // Metrics
-  // TODO: check how does this work. Do I need to do something else to recieve the metrics?
-  metrics.increment("profiles_counter", {
-    pathname: context.url.pathname,
-    ethAddresses: ethAddresses
-  })
 
   // Return 400 if there are no ids in the payload
   if (!ethAddresses) {

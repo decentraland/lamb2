@@ -1,46 +1,32 @@
 import { EthAddress } from '@dcl/crypto'
 import { AppComponents, ProfileData, ProfileMetadata, WearableId, Filename, Filehash, Name } from '../types'
-import { Entity, EntityType, IPFSv2, Snapshots } from '@dcl/schemas'
+import { Entity, EntityType, Snapshots } from '@dcl/schemas'
 import { parseUrn } from '@dcl/urn-resolver'
 import { ownedNames, ownedWearables } from './ownership'
 import { IConfigComponent } from '@well-known-components/interfaces'
+import { ownedThirdPartyWearables } from './third-party'
 
-export async function getProfiles(components: Pick<AppComponents, "metrics" | "contentClient" | "theGraph" | "config">, ethAddresses: EthAddress[], ifModifiedSinceTimestamp?: number | undefined): Promise<ProfileMetadata[] | undefined> {
+export async function getProfiles(components: Pick<AppComponents, "metrics" | "content" | "theGraph" | "config" | "fetch">, ethAddresses: EthAddress[], ifModifiedSinceTimestamp?: number | undefined): Promise<ProfileMetadata[] | undefined> {
     try {
-        const { contentClient } = components
+        const { content } = components
 
         // Fetch entities by pointers
-        const profileEntities: Entity[] = await contentClient.fetchEntitiesByPointers(EntityType.PROFILE, ethAddresses)
-        // console.log('profile entities:')
-        // profileEntities.forEach( (entity) => {
-        //     console.log(entity)
-        //     console.log(entity.metadata)
-        //     console.log(entity.metadata.avatars[0])
-        // })
+        const profileEntities: Entity[] = await content.fetchEntitiesByPointers(EntityType.PROFILE, ethAddresses)
 
         // Avoid querying profiles if there wasn't any new deployment
         if (noNewDeployments(ifModifiedSinceTimestamp, profileEntities))
             return
 
-        // Group nfts and profile metadata by ethAddress
+        // Group profile metadata, names, and wearables by ethAddress
         const { profileByEthAddress, namesByEthAddress, wearablesIdsByEthAddress } = await profileEntitiesToMaps(profileEntities)
 
         // Check which NFTs are owned
         const ownedWearableIdsByEthAddress = await ownedWearables(components, wearablesIdsByEthAddress)
         const ownedNamesByEthAddress = await ownedNames(components, namesByEthAddress)
-        // console.log('owned wearables:')
-        // ownedWearableIdsByEthAddress.forEach( (val, key) => {
-        //     console.log(`${key}`)
-        //     console.log(val)
-        // })
-        console.log('owned names:')
-        ownedNamesByEthAddress.forEach( (val, key) => {
-            console.log(`${key}`)
-            console.log(val)
-        })
+        const ownedTPWByEthAddress = await ownedThirdPartyWearables(components, wearablesIdsByEthAddress)
 
         // Add name data and snapshot urls to profiles
-        return await enhanceProfiles(components.config, profileByEthAddress, ownedNamesByEthAddress, ownedWearableIdsByEthAddress)
+        return await extendProfiles(components.config, profileByEthAddress, ownedNamesByEthAddress, ownedWearableIdsByEthAddress, ownedTPWByEthAddress)
     } catch(error) {
         console.log(error)
         return []
@@ -97,7 +83,6 @@ async function extractDataFromEntity(entity: Entity): Promise<{ ethAddress: EthA
 }
 
 async function getValidNonBaseWearables(metadata: ProfileMetadata): Promise<WearableId[]> {
-    // const allWearablesInProfilePromises: Promise<WearableId | undefined>[] = []
     const wearablesInProfile: WearableId[] = []
     for (const avatar of metadata.avatars) {
       for (const wearableId of avatar.avatar.wearables) {
@@ -125,13 +110,12 @@ async function translateWearablesIdFormat(wearableId: WearableId): Promise<Weara
     return parsed?.uri?.toString()
 }
 
-async function enhanceProfiles(config: IConfigComponent, profileByEthAddress: Map<string, ProfileData>, ownedNamesByEthAddress: Map<string, Set<string>>, ownedWearableIdsByEthAddress: Map<string, Set<string>>): Promise<ProfileMetadata[]> {
+async function extendProfiles(config: IConfigComponent, profileByAddress: Map<string, ProfileData>, namesByAddress: Map<string, Set<string>>, wearableIdsByAddress: Map<string, Set<string>>, TPWIdsByAddress: Map<string, string[]>): Promise<ProfileMetadata[]> {
     const baseUrl = await config.getString('CONTENT_SERVER_ADDRESS') ?? ''
-    const enhancedProfiles = Array.from(profileByEthAddress.entries()).map(async ([ethAddress, profile]) => {
-        const ownedNames = ownedNamesByEthAddress.get(ethAddress)
-        const ownedWearables = ownedWearableIdsByEthAddress.get(ethAddress)
-        //     const tpw = thirdPartyWearables.get(ethAddress) ?? []
-        //     const { metadata, content } = profile
+    const extendedProfiles = Array.from(profileByAddress.entries()).map(async ([ethAddress, profile]) => {
+        const ownedNames = namesByAddress.get(ethAddress)
+        const ownedWearables = Array.from(wearableIdsByAddress.get(ethAddress) ?? [])
+        const thirdPartyWearables = TPWIdsByAddress.get(ethAddress) ?? []
         const avatars = profile.metadata.avatars.map(async (profileData) => ({
             ...profileData,
             hasClaimedName: ownedNames?.has(profileData.name) ?? false,
@@ -139,7 +123,7 @@ async function enhanceProfiles(config: IConfigComponent, profileByEthAddress: Ma
                 ...profileData.avatar,
                 bodyShape: await translateWearablesIdFormat(profileData.avatar.bodyShape) ?? '',
                 snapshots: addBaseUrlToSnapshots(baseUrl, profileData.avatar.snapshots, profile.content),
-                wearables: []
+                wearables: ownedWearables.concat(thirdPartyWearables)
             }
         }))
         return {
@@ -147,7 +131,7 @@ async function enhanceProfiles(config: IConfigComponent, profileByEthAddress: Ma
             avatars: await Promise.all(avatars)
         }
     })
-    return await Promise.all(enhancedProfiles)
+    return await Promise.all(extendedProfiles)
 }
 
 /**

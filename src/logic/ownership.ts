@@ -2,6 +2,7 @@ import { EthAddress } from '@dcl/crypto'
 import { TheGraphComponent } from '../ports/the-graph'
 import { AppComponents, Name, WearableId } from '../types'
 import { ISubgraphComponent } from '@well-known-components/thegraph-component'
+import { parseUrn } from '@dcl/urn-resolver'
 
 type Owned = boolean
 type NFTId = string
@@ -19,9 +20,6 @@ export async function ownedNames(components: Pick<AppComponents, "theGraph">, na
 async function ownedNFTsByAddress(components: Pick<AppComponents, "theGraph">, nftIdsByEthAddressToCheck: Map<EthAddress, NFTId[]>, querySubgraph: (theGraph: TheGraphComponent, nftsToCheck: [EthAddress, string[]][]) => any): Promise<Map<EthAddress, Set<NFTId>>> {
     const { theGraph } = components
 
-    // Map to store unknown NFTs
-    // const unknownMap: Map<EthAddress, NFTId[]> = new Map()
-
     // Check ownership for unknown nfts
     const ownedNftIdsByEthAddress = await getOwnedNftIdsByEthAddress(theGraph, nftIdsByEthAddressToCheck, querySubgraph)
 
@@ -31,15 +29,12 @@ async function ownedNFTsByAddress(components: Pick<AppComponents, "theGraph">, n
         // If the query to the subgraph failed, then consider the nft as owned
         if (!ownedNfts)
             ownedNftIdsByEthAddress.set(ethAddress, new Set(nfts))
-        // const ownershipMapForAddress = result.get(ethAddress)
-        // for (let nft of nfts) {
-        //     ownershipMapForAddress?.set(nft, ownedNfts?.has(nft) ?? true)
-        // }
     }
     return ownedNftIdsByEthAddress
 }
-
-// Return a set of the NFTs that are actually owned by the eth address, for every eth address
+/**
+ * Return a set of the NFTs that are actually owned by the eth address, for every eth address
+ */ 
 async function getOwnedNftIdsByEthAddress(theGraph: TheGraphComponent, nftsToCheck: Map<EthAddress, NFTId[]>, querySubgraph: (theGraph: TheGraphComponent, nftsToCheck: [EthAddress, string[]][]) => any): Promise<Map<EthAddress, Set<NFTId>>> {
     const entries = Array.from(nftsToCheck.entries())
     const result: Map<EthAddress, Set<NFTId>> = new Map()
@@ -53,7 +48,6 @@ async function getOwnedNftIdsByEthAddress(theGraph: TheGraphComponent, nftsToChe
             for (const { ownedNFTs, owner } of queryResult)
                 result.set(owner, new Set(ownedNFTs))
         } catch (error) {
-            // NFTOwnership.LOGGER.warn(error)
             console.log(error)
         } finally {
             offset += NFT_FRAGMENTS_PER_QUERY
@@ -97,7 +91,7 @@ async function getOwnersByWearable(wearableIdsToCheck: [EthAddress, WearableId[]
     // Run query
     const queryResponse = await runQuery<Map<EthAddress, {urn: string}[]>>(subgraph, subgraphQuery, {})
     
-    // Transform result to array of owner and urns
+    // Transform result to array of { owner, urns }
     const result = Object.entries(queryResponse).map(([addressWithPrefix, wearables]) => ({
         owner: addressWithPrefix.substring(1),  // Remove the 'P' prefix added previously because the graph needs the fragment name to start with a letter
         urns: wearables.map((urnObj: {urn: string}) => urnObj.urn)
@@ -117,7 +111,7 @@ function getWearablesFragment([ethAddress, wearableIds]: [EthAddress, WearableId
     `
 }
 
-async function runQuery<QueryResult>(subgraph: ISubgraphComponent, query: string, variables: Record<string, any>): Promise<QueryResult> { // TODO: change the output type
+export async function runQuery<QueryResult>(subgraph: ISubgraphComponent, query: string, variables: Record<string, any>): Promise<QueryResult> { // TODO: change the output type
     try {
         return subgraph.query<QueryResult>(query, variables)
     } catch (error) {
