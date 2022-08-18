@@ -106,11 +106,11 @@ export async function ownedThirdPartyWearables(components: Pick<AppComponents, "
         const resolver = await createThirdPartyResolverForCollection(components, collectionId)
 
         // Get owned wearables for the collection
-        const ownedTPWForCollection = await getOwnedTPW(components, address, resolver)
+        const ownedTPWForCollection = await resolver.findWearablesByOwner(address)
 
         // Add wearables for collection to all owned wearables set
         for (const tpw of ownedTPWForCollection)
-          ownedTPW.add(tpw.urn)
+          ownedTPW.add(tpw)
     } 
 
     // Filter the wearables from the map with the actually owned wearables
