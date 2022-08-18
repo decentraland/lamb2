@@ -11,7 +11,7 @@ export async function getProfiles(components: Pick<AppComponents, "metrics" | "c
         const { content } = components
 
         // Fetch entities by pointers
-        const profileEntities: Entity[] = await content.fetchEntitiesByPointers(EntityType.PROFILE, ethAddresses)
+        const profileEntities: Entity[] = await content.fetchEntitiesByPointers(EntityType.PROFILE, ethAddresses) // COULD BE CACHED?
 
         // Avoid querying profiles if there wasn't any new deployment
         if (noNewDeployments(ifModifiedSinceTimestamp, profileEntities))
@@ -21,9 +21,9 @@ export async function getProfiles(components: Pick<AppComponents, "metrics" | "c
         const { profileByEthAddress, namesByEthAddress, wearablesIdsByEthAddress } = await profileEntitiesToMaps(profileEntities)
 
         // Check which NFTs are owned
-        const ownedWearableIdsByEthAddress = await ownedWearables(components, wearablesIdsByEthAddress)
-        const ownedNamesByEthAddress = await ownedNames(components, namesByEthAddress)
-        const ownedTPWByEthAddress = await ownedThirdPartyWearables(components, wearablesIdsByEthAddress)
+        const ownedWearableIdsByEthAddress = await ownedWearables(components, wearablesIdsByEthAddress) // COULD BE CACHED?
+        const ownedNamesByEthAddress = await ownedNames(components, namesByEthAddress) // COULD BE CACHED?
+        const ownedTPWByEthAddress = await ownedThirdPartyWearables(components, wearablesIdsByEthAddress) // COULD BE CACHED?
 
         // Add name data and snapshot urls to profiles
         return await extendProfiles(components.config, profileByEthAddress, ownedNamesByEthAddress, ownedWearableIdsByEthAddress, ownedTPWByEthAddress)
