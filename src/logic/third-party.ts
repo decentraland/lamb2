@@ -92,7 +92,7 @@ type Metrics = {
  * gets its API resolver, gets the owned third party wearables for that collection, and
  * finally sanitize wearableIdsByAddress with the owned wearables.
  */
-export async function ownedThirdPartyWearables(components: Pick<AppComponents, "theGraph" | "fetch" | "content">, wearableIdsByAddress: Map<EthAddress, WearableId[]>): Promise<Map<EthAddress, string[]>> {
+export async function ownedThirdPartyWearables(components: Pick<AppComponents, "theGraph" | "fetch" | "content">, wearableIdsByAddress: Map<string, string[]>): Promise<Map<string, string[]>> {
   const response = new Map()
   for (const [address, wearableIds] of wearableIdsByAddress) {
 
@@ -222,7 +222,7 @@ function buildRegistryOwnerUrl(thirdPartyResolverURL: string, registryId: string
   return `${baseUrl}/registry/${registryId}/address/${owner}/assets`
 }
 
-async function getOwnedTPW(components: Pick<AppComponents, "content">, owner: EthAddress, resolver: TPWResolver): Promise<{ urn: WearableId; amount: number; definition?: Wearable | undefined }[]> {
+async function getOwnedTPW(components: Pick<AppComponents, "content">, owner: string, resolver: TPWResolver): Promise<{ urn: string; amount: number; definition?: Wearable | undefined }[]> {
   // Fetch wearables and definitions
   const wearablesByOwner = await resolver.findWearablesByOwner(owner)
   const wearablesById: Map<WearableId, Wearable> = await fetchDefinitions(components, wearablesByOwner)
@@ -241,12 +241,12 @@ async function getOwnedTPW(components: Pick<AppComponents, "content">, owner: Et
     definition: wearablesById.get(id.toLowerCase())
   }))
 }
-async function fetchDefinitions(components: Pick<AppComponents, "content">, wearableIds: WearableId[]): Promise<Map<string, Wearable>> {
+async function fetchDefinitions(components: Pick<AppComponents, "content">, wearableIds: string[]): Promise<Map<string, Wearable>> {
   const wearables = await fetchWearables(components, wearableIds)
   return new Map(wearables.map((wearable) => [wearable.id.toLowerCase(), wearable]))
 }
 
-async function fetchWearables(components: Pick<AppComponents, "content">, wearableIds: WearableId[]): Promise<Wearable[]> {
+async function fetchWearables(components: Pick<AppComponents, "content">, wearableIds: string[]): Promise<Wearable[]> {
   if (wearableIds.length === 0) {
     return []
   }

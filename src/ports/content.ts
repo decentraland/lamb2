@@ -14,7 +14,7 @@ export async function createContentComponent(components: Pick<AppComponents, 'co
     const contentClient: ContentAPI = new ContentClient({ contentUrl: contentServerURL })
 
     async function start() {}
-      
+
     async function stop() {}
 
     function getExternalContentServerUrl(): string {

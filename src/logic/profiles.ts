@@ -6,7 +6,7 @@ import { ownedNames, ownedWearables } from './ownership'
 import { IConfigComponent } from '@well-known-components/interfaces'
 import { ownedThirdPartyWearables } from './third-party'
 
-export async function getProfiles(components: Pick<AppComponents, "metrics" | "content" | "theGraph" | "config" | "fetch">, ethAddresses: EthAddress[], ifModifiedSinceTimestamp?: number | undefined): Promise<ProfileMetadata[] | undefined> {
+export async function getProfiles(components: Pick<AppComponents, "metrics" | "content" | "theGraph" | "config" | "fetch">, ethAddresses: string[], ifModifiedSinceTimestamp?: number | undefined): Promise<ProfileMetadata[] | undefined> {
     try {
         const { content } = components
 
@@ -43,10 +43,10 @@ function roundToSeconds(timestamp: number) {
     return Math.floor(timestamp / 1000) * 1000
 }
 
-async function profileEntitiesToMaps(profileEntities: Entity[]): Promise<{ profileByEthAddress: Map<EthAddress, ProfileData>, namesByEthAddress: Map<EthAddress, Name[]>, wearablesIdsByEthAddress  : Map<EthAddress, WearableId[]> }> {
-    const profileByEthAddress: Map<EthAddress, ProfileData> = new Map()
-    const wearablesIdsByEthAddress: Map<EthAddress, WearableId[]> = new Map()
-    const namesByEthAddress: Map<EthAddress, Name[]> = new Map()
+async function profileEntitiesToMaps(profileEntities: Entity[]): Promise<{ profileByEthAddress: Map<string, ProfileData>, namesByEthAddress: Map<string, string[]>, wearablesIdsByEthAddress  : Map<string, string[]> }> {
+    const profileByEthAddress: Map<string, ProfileData> = new Map()
+    const wearablesIdsByEthAddress: Map<string, string[]> = new Map()
+    const namesByEthAddress: Map<string, Name[]> = new Map()
 
     // Extract data from every entity and fill the maps with it. Need .map() instead of .forEach() to be able to await for the method to set the maps
     const entityPromises = profileEntities
@@ -67,7 +67,7 @@ function hasMetadata(entity: Entity): boolean {
     return !!entity.metadata
 }
 
-async function extractDataFromEntity(entity: Entity): Promise<{ ethAddress: EthAddress; metadata: ProfileMetadata, content: Map<Filename, Filehash>, names: string[], wearables: WearableId[] }> {
+async function extractDataFromEntity(entity: Entity): Promise<{ ethAddress: string; metadata: ProfileMetadata, content: Map<Filename, Filehash>, names: string[], wearables: string[] }> {
     const ethAddress = entity.pointers[0]
     const metadata: ProfileMetadata = entity.metadata
     const content = new Map((entity.content ?? []).map(({ file, hash }) => [file, hash]))
@@ -82,7 +82,7 @@ async function extractDataFromEntity(entity: Entity): Promise<{ ethAddress: EthA
     return { ethAddress, metadata, content, names: filteredNames, wearables: nonBaseWearables }
 }
 
-async function getValidNonBaseWearables(metadata: ProfileMetadata): Promise<WearableId[]> {
+async function getValidNonBaseWearables(metadata: ProfileMetadata): Promise<string[]> {
     const wearablesInProfile: WearableId[] = []
     for (const avatar of metadata.avatars) {
       for (const wearableId of avatar.avatar.wearables) {
@@ -93,16 +93,16 @@ async function getValidNonBaseWearables(metadata: ProfileMetadata): Promise<Wear
         }
       }
     }
-    const filteredWearables = wearablesInProfile.filter((wearableId): wearableId is WearableId => !!wearableId)
+    const filteredWearables = wearablesInProfile.filter((wearableId): wearableId is string => !!wearableId)
     return filteredWearables
 }
 
-export function isBaseAvatar(wearable: WearableId): boolean {
+export function isBaseAvatar(wearable: string): boolean {
     return wearable.includes('base-avatars')
 }
 
 // Translates from the old id format into the new one
-async function translateWearablesIdFormat(wearableId: WearableId): Promise<WearableId | undefined> {
+async function translateWearablesIdFormat(wearableId: string): Promise<string | undefined> {
     if (!wearableId.startsWith('dcl://'))
         return wearableId
     

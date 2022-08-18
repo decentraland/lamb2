@@ -2,29 +2,26 @@ import { EthAddress } from '@dcl/crypto'
 import { TheGraphComponent } from '../ports/the-graph'
 import { AppComponents, Name, WearableId } from '../types'
 import { ISubgraphComponent } from '@well-known-components/thegraph-component'
-import { parseUrn } from '@dcl/urn-resolver'
 
-type Owned = boolean
-type NFTId = string
 const NFT_FRAGMENTS_PER_QUERY = 10
 
-export async function ownedWearables(components: Pick<AppComponents, "theGraph">, wearableIdsByEthAddress: Map<EthAddress, WearableId[]>): Promise<Map<EthAddress, Set<WearableId>>> {
+export async function ownedWearables(components: Pick<AppComponents, "theGraph">, wearableIdsByEthAddress: Map<string, string[]>): Promise<Map<string, Set<string>>> {
     return ownedNFTsByAddress(components, wearableIdsByEthAddress, queryWearablesSubgraph)
 }
 
-export async function ownedNames(components: Pick<AppComponents, "theGraph">, namesByEthAddress: Map<EthAddress, Name[]>): Promise<Map<EthAddress, Set<WearableId>>> {
+export async function ownedNames(components: Pick<AppComponents, "theGraph">, namesByEthAddress: Map<string, string[]>): Promise<Map<string, Set<string>>> {
     return ownedNFTsByAddress(components, namesByEthAddress, queryNamesSubgraph)
 }
 
 // Checks the ownership for every nft resulting in a map of ownership for every eth address
-async function ownedNFTsByAddress(components: Pick<AppComponents, "theGraph">, nftIdsByEthAddressToCheck: Map<EthAddress, NFTId[]>, querySubgraph: (theGraph: TheGraphComponent, nftsToCheck: [EthAddress, string[]][]) => any): Promise<Map<EthAddress, Set<NFTId>>> {
+async function ownedNFTsByAddress(components: Pick<AppComponents, "theGraph">, nftIdsByAddressToCheck: Map<string, string[]>, querySubgraph: (theGraph: TheGraphComponent, nftsToCheck: [string, string[]][]) => any): Promise<Map<string, Set<string>>> {
     const { theGraph } = components
 
     // Check ownership for unknown nfts
-    const ownedNftIdsByEthAddress = await getOwnedNftIdsByEthAddress(theGraph, nftIdsByEthAddressToCheck, querySubgraph)
+    const ownedNftIdsByEthAddress = await getOwnedNftIdsByEthAddress(theGraph, nftIdsByAddressToCheck, querySubgraph)
 
     // Fill final map with nfts ownership
-    for( const [ethAddress, nfts] of nftIdsByEthAddressToCheck ) {
+    for(const [ethAddress, nfts] of nftIdsByAddressToCheck) {
         const ownedNfts = ownedNftIdsByEthAddress.get(ethAddress)
         // If the query to the subgraph failed, then consider the nft as owned
         if (!ownedNfts)
@@ -32,12 +29,13 @@ async function ownedNFTsByAddress(components: Pick<AppComponents, "theGraph">, n
     }
     return ownedNftIdsByEthAddress
 }
+
 /**
  * Return a set of the NFTs that are actually owned by the eth address, for every eth address
  */ 
-async function getOwnedNftIdsByEthAddress(theGraph: TheGraphComponent, nftsToCheck: Map<EthAddress, NFTId[]>, querySubgraph: (theGraph: TheGraphComponent, nftsToCheck: [EthAddress, string[]][]) => any): Promise<Map<EthAddress, Set<NFTId>>> {
-    const entries = Array.from(nftsToCheck.entries())
-    const result: Map<EthAddress, Set<NFTId>> = new Map()
+async function getOwnedNftIdsByEthAddress(theGraph: TheGraphComponent, nftIdsByAddressToCheck: Map<string, string[]>, querySubgraph: (theGraph: TheGraphComponent, nftsToCheck: [string, string[]][]) => any): Promise<Map<string, Set<string>>> {
+    const entries = Array.from(nftIdsByAddressToCheck.entries())
+    const result: Map<EthAddress, Set<string>> = new Map()
 
     // Make multilpe queries to graph as at most NFT_FRAGMENTS_PER_QUERY per time
     let offset = 0
@@ -57,7 +55,7 @@ async function getOwnedNftIdsByEthAddress(theGraph: TheGraphComponent, nftsToChe
     return result
 }
 
-async function queryWearablesSubgraph(theGraph: TheGraphComponent, nftsToCheck: [EthAddress, string[]][]): Promise<{ owner: string; ownedNFTs: string[] }[]> {
+async function queryWearablesSubgraph(theGraph: TheGraphComponent, nftsToCheck: [string, string[]][]): Promise<{ owner: string; ownedNFTs: string[] }[]> {
     const result = await checkForWearablesOwnership(theGraph, nftsToCheck)
     return result.map(({ urns, owner }) => ({ ownedNFTs: urns, owner }))
 }
@@ -67,14 +65,14 @@ async function queryWearablesSubgraph(theGraph: TheGraphComponent, nftsToCheck: 
  * @param wearableIdsToCheck pairs of ethAddress and a list of urns to check ownership
  * @returns the pairs of ethAddress and list of urns
  */
-async function checkForWearablesOwnership(theGraph: TheGraphComponent, wearableIdsToCheck: [EthAddress, string[]][]): Promise<{ owner: EthAddress; urns: string[] }[]> {
+async function checkForWearablesOwnership(theGraph: TheGraphComponent, wearableIdsToCheck: [string, string[]][]): Promise<{ owner: string; urns: string[] }[]> {
     const ethereumWearablesOwnersPromise = getOwnedWearables(wearableIdsToCheck, theGraph.collectionsSubgraph)
     const maticWearablesOwnersPromise = getOwnedWearables(wearableIdsToCheck, theGraph.maticCollectionsSubgraph)
     const [ethereumWearablesOwners, maticWearablesOwners] = await Promise.all([ethereumWearablesOwnersPromise, maticWearablesOwnersPromise])
     return concatWearables(ethereumWearablesOwners, maticWearablesOwners)
 }
 
-async function getOwnedWearables(wearableIdsToCheck: [EthAddress, WearableId[]][], subgraph: ISubgraphComponent): Promise<{ owner: EthAddress; urns: string[] }[]> {
+async function getOwnedWearables(wearableIdsToCheck: [string, string[]][], subgraph: ISubgraphComponent): Promise<{ owner: string; urns: string[] }[]> {
     try {
         return getOwnersByWearable(wearableIdsToCheck, subgraph)
     } catch (error) {
@@ -84,12 +82,12 @@ async function getOwnedWearables(wearableIdsToCheck: [EthAddress, WearableId[]][
     }
 }
 
-async function getOwnersByWearable(wearableIdsToCheck: [EthAddress, WearableId[]][], subgraph: ISubgraphComponent): Promise<{ owner: EthAddress; urns: string[] }[]> {
+async function getOwnersByWearable(wearableIdsToCheck: [string, string[]][], subgraph: ISubgraphComponent): Promise<{ owner: string; urns: string[] }[]> {
     // Build query for subgraph
     const subgraphQuery = `{` + wearableIdsToCheck.map((query) => getWearablesFragment(query)).join('\n') + `}`
 
     // Run query
-    const queryResponse = await runQuery<Map<EthAddress, {urn: string}[]>>(subgraph, subgraphQuery, {})
+    const queryResponse = await runQuery<Map<string, {urn: string}[]>>(subgraph, subgraphQuery, {})
     
     // Transform result to array of { owner, urns }
     const result = Object.entries(queryResponse).map(([addressWithPrefix, wearables]) => ({
@@ -100,7 +98,7 @@ async function getOwnersByWearable(wearableIdsToCheck: [EthAddress, WearableId[]
     return result
 }
 
-function getWearablesFragment([ethAddress, wearableIds]: [EthAddress, WearableId[]]) {
+function getWearablesFragment([ethAddress, wearableIds]: [string, string[]]) {
     const urnList = wearableIds.map((wearableId) => `"${wearableId}"`).join(',')
 
     // We need to add a 'P' prefix, because the graph needs the fragment name to start with a letter
@@ -124,7 +122,7 @@ export async function runQuery<QueryResult>(subgraph: ISubgraphComponent, query:
     }
 }
 
-function concatWearables(ethereumWearablesOwners: { owner: EthAddress; urns: string[] }[], maticWearablesOwners: { owner: EthAddress; urns: string[] }[]) {
+function concatWearables(ethereumWearablesOwners: { owner: string; urns: string[] }[], maticWearablesOwners: { owner: string; urns: string[] }[]) {
     const allWearables: Map<string, string[]> = new Map<string, string[]>()
 
     ethereumWearablesOwners.forEach((a) => {allWearables.set(a.owner, a.urns)})
@@ -136,12 +134,12 @@ function concatWearables(ethereumWearablesOwners: { owner: EthAddress; urns: str
     return Array.from(allWearables.entries()).map(([owner, urns]) => ({ owner, urns }))
 }
 
-async function queryNamesSubgraph(theGraph: TheGraphComponent, nftsToCheck: [EthAddress, Name[]][]): Promise<{ owner: string; ownedNFTs: string[] }[]> {
+async function queryNamesSubgraph(theGraph: TheGraphComponent, nftsToCheck: [string, string[]][]): Promise<{ owner: string; ownedNFTs: string[] }[]> {
     const result = await checkForNamesOwnership(theGraph, nftsToCheck)
     return result.map(({ names, owner }) => ({ ownedNFTs: names, owner }))
 }
 
-async function checkForNamesOwnership(theGraph: TheGraphComponent, namesToCheck: [EthAddress, string[]][]): Promise<{ owner: EthAddress; names: string[] }[]> {
+async function checkForNamesOwnership(theGraph: TheGraphComponent, namesToCheck: [string, string[]][]): Promise<{ owner: string; names: string[] }[]> {
     // Build query for subgraph
     const subgraphQuery = `{` + namesToCheck.map((query) => getNamesFragment(query)).join('\n') + `}`
 
@@ -155,7 +153,7 @@ async function checkForNamesOwnership(theGraph: TheGraphComponent, namesToCheck:
     }))
   }
 
-function getNamesFragment([ethAddress, names]: [EthAddress, string[]]) {
+function getNamesFragment([ethAddress, names]: [string, string[]]) {
     const nameList = names.map((name) => `"${name}"`).join(',')
     // We need to add a 'P' prefix, because the graph needs the fragment name to start with a letter
     return `
