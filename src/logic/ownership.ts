@@ -1,5 +1,5 @@
 import { EthAddress } from '@dcl/crypto'
-import { TheGraphComponent } from '../ports/the-graph'
+import { runQuery, TheGraphComponent } from '../ports/the-graph'
 import { AppComponents, Name, WearableId } from '../types'
 import { ISubgraphComponent } from '@well-known-components/thegraph-component'
 
@@ -107,19 +107,6 @@ function getWearablesFragment([ethAddress, wearableIds]: [string, string[]]) {
         urn
         }
     `
-}
-
-export async function runQuery<QueryResult>(subgraph: ISubgraphComponent, query: string, variables: Record<string, any>): Promise<QueryResult> { // TODO: change the output type
-    try {
-        return subgraph.query<QueryResult>(query, variables)
-    } catch (error) {
-        // TheGraphClient.LOGGER.error(
-        //   `Failed to execute the following query to the subgraph ${this.urls[query.subgraph]} ${query.description}'.`,
-        //   error
-        // )
-        console.log(error)
-        throw new Error('Internal server error')
-    }
 }
 
 function concatWearables(ethereumWearablesOwners: { owner: string; urns: string[] }[], maticWearablesOwners: { owner: string; urns: string[] }[]) {

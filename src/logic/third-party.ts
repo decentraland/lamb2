@@ -1,7 +1,7 @@
 import { EthAddress, WearableId, EntityType, Entity } from '@dcl/schemas'
 import { parseUrn } from '@dcl/urn-resolver'
+import { runQuery } from '../ports/the-graph'
 import { AppComponents } from '../types'
-import { runQuery } from './ownership'
 
 const QUERY_THIRD_PARTY_RESOLVER = `
 query ThirdPartyResolver($id: String!) {

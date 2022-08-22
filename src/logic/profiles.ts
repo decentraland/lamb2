@@ -1,10 +1,10 @@
-import { EthAddress } from '@dcl/crypto'
 import { AppComponents, ProfileData, ProfileMetadata, WearableId, Filename, Filehash, Name } from '../types'
 import { Entity, EntityType, Snapshots } from '@dcl/schemas'
 import { parseUrn } from '@dcl/urn-resolver'
 import { ownedNames, ownedWearables } from './ownership'
 import { IConfigComponent } from '@well-known-components/interfaces'
 import { ownedThirdPartyWearables } from './third-party'
+import { WearablesOwnershipChecker } from './nfts-ownership/WearablesOwnershipChecker'
 
 export async function getProfiles(components: Pick<AppComponents, "metrics" | "content" | "theGraph" | "config" | "fetch">, ethAddresses: string[], ifModifiedSinceTimestamp?: number | undefined): Promise<ProfileMetadata[] | undefined> {
     try {
@@ -24,6 +24,17 @@ export async function getProfiles(components: Pick<AppComponents, "metrics" | "c
         const ownedWearableIdsByEthAddress = await ownedWearables(components, wearablesIdsByEthAddress) // COULD BE CACHED?
         const ownedNamesByEthAddress = await ownedNames(components, namesByEthAddress) // COULD BE CACHED?
         const ownedTPWByEthAddress = await ownedThirdPartyWearables(components, wearablesIdsByEthAddress) // COULD BE CACHED?
+
+        const wearablesOwnershipChecker = new WearablesOwnershipChecker(components) // Could be a component if we want to use it as a cache
+        await wearablesOwnershipChecker.addNFTsFromEntities(profileEntities)
+        // const namesOwnershipChecker = new NamesOwnershipChecker(components) // Could be a component if we want to use it as a cache
+        // await namesOwnershipChecker.addNFTsFromEntities(profileEntities)
+        // const tpwOwnershipChecker = new TPWOwnershipChecker(components) // Could be a component if we want to use it as a cache
+        // await tpwOwnershipChecker.addNFTsFromEntities(profileEntities)
+        for(const address of profileByEthAddress.keys()) {
+            console.log(`wearables for address: ${address}`)
+            console.log(wearablesOwnershipChecker.getOwnedForAddress(address))
+        }
 
         // Add name data and snapshot urls to profiles
         return await extendProfiles(components.config, profileByEthAddress, ownedNamesByEthAddress, ownedWearableIdsByEthAddress, ownedTPWByEthAddress)

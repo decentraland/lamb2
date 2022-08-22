@@ -1,6 +1,6 @@
 import { Entity } from "@dcl/schemas"
-import { TheGraphComponent } from "../ports/the-graph"
-import { AppComponents } from "../types"
+import { TheGraphComponent } from "../../ports/the-graph"
+import { AppComponents } from "../../types"
 
 const NFT_FRAGMENTS_PER_QUERY = 10
 
@@ -21,13 +21,17 @@ export abstract class NFTOwnershipChecker {
     public async addNFTsFromEntities(profileEntities: Entity[]) {
         // Extract data from entities
         const nftsByAddress = new Map<string, string[]>()
-        profileEntities
+        const promises = profileEntities
             .filter(hasMetadata)
             .map(async (entity) => {
                 const address = entity.pointers[0]
-                const nfts = this.extractNFTsFromEntity(entity)
+                console.log(`address: ${address}`)
+                const nfts = await this.extractNFTsFromEntity(entity)
+                console.log(`nfts:`)
+                console.log(nfts)
                 nftsByAddress.set(address, nfts)
             })
+        await Promise.all(promises)
 
         // Set ownership
         this.ownedNFTsByAddress = await this.getOwnedNFTsByAddress(nftsByAddress)
@@ -37,22 +41,29 @@ export abstract class NFTOwnershipChecker {
         return this.ownedNFTsByAddress.get(address) ?? new Set()
     }
 
-    protected abstract extractNFTsFromEntity(entity: Entity): string[]
+    /*
+     * Determines what data corresponds to the NFTOwnershipChecker implementation and
+     * how to extract it from an entity
+     */
+    protected abstract extractNFTsFromEntity(entity: Entity): Promise<string[]>
 
+    /* 
+     * Determines how to query subgraph to check ownership for the NFTOwnershipChecker implementation
+     */
     protected abstract querySubgraph(theGraph: TheGraphComponent, nftsToCheck: [string, string[]][]): any
 
     // Checks the ownership for every nft resulting in a map of ownership for every eth address
     private async getOwnedNFTsByAddress(nftIdsByAddressToCheck: Map<string, string[]>): Promise<Map<string, Set<string>>> {
         // Check ownership for unknown nfts
         const ownedNftIdsByEthAddress = await this.querySubgraphByFragments(nftIdsByAddressToCheck)
-
         // Fill final map with nfts ownership
         for(const [ethAddress, nfts] of nftIdsByAddressToCheck) {
             const ownedNfts = ownedNftIdsByEthAddress.get(ethAddress)
             // If the query to the subgraph failed, then consider the nft as owned
             if (!ownedNfts)
-                ownedNftIdsByEthAddress.set(ethAddress, new Set(nfts))
+            ownedNftIdsByEthAddress.set(ethAddress, new Set(nfts))
         }
+
         return ownedNftIdsByEthAddress
     }
 

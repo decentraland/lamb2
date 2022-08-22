@@ -47,3 +47,16 @@ export async function createTheGraphComponent(components: Pick<AppComponents, 'c
     thirdPartyRegistrySubgraph
   }
 }
+
+export async function runQuery<QueryResult>(subgraph: ISubgraphComponent, query: string, variables: Record<string, any>): Promise<QueryResult> { // TODO: change the output type
+  try {
+      return subgraph.query<QueryResult>(query, variables)
+  } catch (error) {
+      // TheGraphClient.LOGGER.error(
+      //   `Failed to execute the following query to the subgraph ${this.urls[query.subgraph]} ${query.description}'.`,
+      //   error
+      // )
+      console.log(error)
+      throw new Error('Internal server error')
+  }
+}
