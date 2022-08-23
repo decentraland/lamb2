@@ -63,3 +63,29 @@ export type ProfileData = {
 export type ProfileMetadata = Profile & {
   timestamp: number
 }
+
+export interface NFTsOwnershipChecker {
+  addNFTsForAddress: (address: string, nfts: string[]) => void
+  checkNFTsOwnership: () => void
+  getOwnedNFTsForAddress: (address: string) => string[]
+}
+
+export interface TPWResolver {
+  findWearablesByOwner: (owner: string) => Promise<string[]>
+}
+
+export type ThirdPartyAsset = {
+  id: string
+  amount: number
+  urn: {
+    decentraland: string
+  }
+}
+
+export type ThirdPartyAssets = {
+  address: string
+  total: number
+  page: number
+  assets: ThirdPartyAsset[]
+  next?: string
+}

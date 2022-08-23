@@ -1,29 +1,37 @@
-import { AppComponents, ProfileData, ProfileMetadata, WearableId, Filename, Filehash, Name } from '../types'
+import { AppComponents, ProfileMetadata, Filename, Filehash, NFTsOwnershipChecker } from '../types'
 import { Entity, EntityType, Snapshots } from '@dcl/schemas'
-import { parseUrn } from '@dcl/urn-resolver'
 import { IConfigComponent } from '@well-known-components/interfaces'
-import { translateWearablesIdFormat, WearablesOwnershipChecker } from './nfts-ownership/WearablesOwnershipChecker'
-import { NamesOwnershipChecker } from './nfts-ownership/NamesOwnershipChecker'
-import { TPWOwnershipChecker } from './nfts-ownership/TPWOwnershipChecker'
+import { getValidNonBaseWearables, translateWearablesIdFormat} from './wearables'
+import { createWearablesOwnershipChecker } from '../ports/ownership-checker/wearables-ownership-checker'
+import { createNamesOwnershipChecker } from '../ports/ownership-checker/names-ownership-checker'
+import { createTPWOwnershipChecker } from '../ports/ownership-checker/tpw-ownership-checker'
 
 export async function getProfiles(components: Pick<AppComponents, "metrics" | "content" | "theGraph" | "config" | "fetch">, ethAddresses: string[], ifModifiedSinceTimestamp?: number | undefined): Promise<ProfileMetadata[] | undefined> {
     try {
         // Fetch entities by pointers
-        const profileEntities: Entity[] = await components.content.fetchEntitiesByPointers(EntityType.PROFILE, ethAddresses) // COULD BE CACHED?
-
+        let profileEntities: Entity[] = await components.content.fetchEntitiesByPointers(EntityType.PROFILE, ethAddresses) // COULD BE CACHED?
+        
         // Avoid querying profiles if there wasn't any new deployment
         if (noNewDeployments(ifModifiedSinceTimestamp, profileEntities))
-            return
+        return
+
+        // Filter entities
+        profileEntities = profileEntities.filter(hasMetadata)
+
+        // Create the NFTs ownership checkers
+        const wearablesOwnershipChecker = createWearablesOwnershipChecker(components)
+        const namesOwnershipChecker = createNamesOwnershipChecker(components)
+        const tpwOwnershipChecker = createTPWOwnershipChecker(components)
 
         // Get data from entities and add them to the ownership checkers
-        // await addNFTsToCheckersFromEntities
+        await addNFTsToCheckersFromEntities(profileEntities, wearablesOwnershipChecker, namesOwnershipChecker, tpwOwnershipChecker)
 
-        const wearablesOwnershipChecker = new WearablesOwnershipChecker(components) // Could be a component if we want to use it as a cache
-        await wearablesOwnershipChecker.addNFTsFromEntities(profileEntities)
-        const namesOwnershipChecker = new NamesOwnershipChecker(components) // Could be a component if we want to use it as a cache
-        await namesOwnershipChecker.addNFTsFromEntities(profileEntities)
-        const tpwOwnershipChecker = new TPWOwnershipChecker(components) // Could be a component if we want to use it as a cache
-        await tpwOwnershipChecker.addNFTsFromEntities(profileEntities)
+        // Check ownership for every nft in parallel
+        await Promise.all([
+            wearablesOwnershipChecker.checkNFTsOwnership(),
+            namesOwnershipChecker.checkNFTsOwnership(),
+            tpwOwnershipChecker.checkNFTsOwnership()
+        ])
 
         // Add name data and snapshot urls to profiles
         return await extendProfiles(components.config, profileEntities, wearablesOwnershipChecker, namesOwnershipChecker, tpwOwnershipChecker)
@@ -43,35 +51,42 @@ function roundToSeconds(timestamp: number) {
     return Math.floor(timestamp / 1000) * 1000
 }
 
-// async function addNFTsToCheckersFromEntities(profileEntities: Entity[]): Promise<{ profileByEthAddress: Map<string, ProfileData>, namesByEthAddress: Map<string, string[]>, wearablesIdsByEthAddress  : Map<string, string[]> }> {
-//     const profileByEthAddress: Map<string, ProfileData> = new Map()
-//     const wearablesIdsByEthAddress: Map<string, string[]> = new Map()
-//     const namesByEthAddress: Map<string, Name[]> = new Map()
+// Extract data from every entity and fills the nfts ownership checkers
+async function addNFTsToCheckersFromEntities(profileEntities: Entity[], wearablesOwnershipChecker: NFTsOwnershipChecker, namesOwnershipChecker: NFTsOwnershipChecker, tpwOwnershipChecker: NFTsOwnershipChecker): Promise<void> {
+    const entityPromises = profileEntities
+        .map(async (entity) => { 
+            const { ethAddress, names, wearables } = await extractDataFromEntity(entity)
+            wearablesOwnershipChecker.addNFTsForAddress(ethAddress, wearables)
+            namesOwnershipChecker.addNFTsForAddress(ethAddress, names)
+            tpwOwnershipChecker.addNFTsForAddress(ethAddress, wearables)
+        })
+    await Promise.all(entityPromises)
+}
 
-//     // Extract data from every entity and fill the maps with it. Need .map() instead of .forEach() to be able to await for the method to set the maps
-//     const entityPromises = profileEntities
-//         .filter(hasMetadata)
-//         .map(async (entity) => { 
-//             const { ethAddress, metadata, content, names, wearables } = await extractDataFromEntity(entity)
+async function extractDataFromEntity(entity: Entity): Promise<{ ethAddress: string; metadata: ProfileMetadata, content: Map<Filename, Filehash>, names: string[], wearables: string[] }> {
+    const ethAddress = entity.pointers[0]
+    const metadata: ProfileMetadata = entity.metadata
+    const content = new Map((entity.content ?? []).map(({ file, hash }) => [file, hash]))
+    const filteredNames = metadata.avatars.map(({ name }) => name).filter((name) => name && name.trim().length > 0)
+    
+    // Add timestamp to the metadata
+    metadata.timestamp = entity.timestamp
 
-//             profileByEthAddress.set(ethAddress, { metadata, content})
-//             namesByEthAddress.set(ethAddress, names)
-//             wearablesIdsByEthAddress.set(ethAddress, wearables)
-//         })
-//     await Promise.all(entityPromises)
+    // Get non-base wearables wearables which urn are valid 
+    const nonBaseWearables = await getValidNonBaseWearables(metadata)
 
-//     return { profileByEthAddress, namesByEthAddress, wearablesIdsByEthAddress }
-// }
+    return { ethAddress, metadata, content, names: filteredNames, wearables: nonBaseWearables }
+}
 
-async function extendProfiles(config: IConfigComponent, profileEntities: Entity[], wearablesOwnershipChecker: WearablesOwnershipChecker, namesOwnershipChecker: NamesOwnershipChecker, tpwOwnershipChecker: TPWOwnershipChecker): Promise<ProfileMetadata[]> {
+async function extendProfiles(config: IConfigComponent, profileEntities: Entity[], wearablesOwnershipChecker: NFTsOwnershipChecker, namesOwnershipChecker: NFTsOwnershipChecker, tpwOwnershipChecker: NFTsOwnershipChecker): Promise<ProfileMetadata[]> {
     const baseUrl = await config.getString('CONTENT_SERVER_ADDRESS') ?? ''
-    const extendedProfiles = profileEntities
-        .filter(hasMetadata)
+    const extendedProfiles = profileEntities    // CAMBIAR ESTO? RECIBIR EL MAPA DE PROFILES BY ADDRESS O UN ARRAY DE OBJETOS {ethAddress, metadata, content
+        // .filter(hasMetadata) already filtered before
         .map(async (entity) => {
             const { ethAddress, metadata, content } = await extractProfileDataFromEntity(entity)
-            const ownedNames = namesOwnershipChecker.getOwnedForAddress(ethAddress)
-            const ownedWearables = wearablesOwnershipChecker.getOwnedForAddress(ethAddress)
-            const thirdPartyWearables = tpwOwnershipChecker.getOwnedForAddress(ethAddress)
+            const ownedNames = namesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
+            const ownedWearables = wearablesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
+            const thirdPartyWearables = tpwOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
             const avatars = metadata.avatars.map(async (profileData) => ({
                 ...profileData,
                 hasClaimedName: ownedNames.includes(profileData.name),

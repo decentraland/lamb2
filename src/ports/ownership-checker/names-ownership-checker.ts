@@ -1,21 +1,28 @@
-import { Entity } from "@dcl/schemas";
-import { runQuery, TheGraphComponent } from "../../ports/the-graph";
-import { AppComponents, ProfileMetadata } from "../../types";
-import { NFTOwnershipChecker } from "./NFTOwnershipChecker";
-import { ownedNFTsByAddress } from "../ownership";
+import { ownedNFTsByAddress } from "../../logic/ownership";
+import { AppComponents, NFTsOwnershipChecker } from "../../types";
+import { runQuery, TheGraphComponent } from "../the-graph";
 
-export class NamesOwnershipChecker extends NFTOwnershipChecker {
-    constructor(components: Pick<AppComponents, "metrics" | "content" | "theGraph" | "config" | "fetch">) {
-        super(components)
+export function createNamesOwnershipChecker(cmpnnts: Pick<AppComponents, "metrics" | "content" | "theGraph" | "config" | "fetch">): NFTsOwnershipChecker {
+
+    let ownedNamesByAddress: Map<string, string[]> = new Map()
+    const components = cmpnnts
+
+    function addNFTsForAddress(address: string, nfts: string[]) {
+        ownedNamesByAddress.set(address, nfts)
+    }
+
+    async function checkNFTsOwnership() {
+        ownedNamesByAddress = await ownedNFTsByAddress(components, ownedNamesByAddress, queryNamesSubgraph)
+    }
+
+    function getOwnedNFTsForAddress(address: string) {
+        return ownedNamesByAddress.get(address) ?? []
     }
     
-    protected async extractNFTsFromEntity(entity: Entity): Promise<string[]> {
-        const metadata: ProfileMetadata = entity.metadata
-        return metadata.avatars.map(({ name }) => name).filter((name) => name && name.trim().length > 0)
-    }
-    
-    protected async getOwnedNFTsByAddress(components: Pick<AppComponents, "metrics" | "content" | "theGraph" | "config" | "fetch">, namesByEthAddress: Map<string, string[]>): Promise<Map<string, string[]>> {
-        return ownedNFTsByAddress(components, namesByEthAddress, queryNamesSubgraph)
+    return {
+        addNFTsForAddress,
+        checkNFTsOwnership,
+        getOwnedNFTsForAddress
     }
 }
 
@@ -47,4 +54,3 @@ function getNamesFragment([ethAddress, names]: [string, string[]]) {
       }
     `
 }
-

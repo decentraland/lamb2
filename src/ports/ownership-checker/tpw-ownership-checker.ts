@@ -1,24 +1,29 @@
-import { Entity } from "@dcl/schemas";
 import { parseUrn } from "@dcl/urn-resolver";
-import { runQuery } from "../../ports/the-graph";
-import { AppComponents } from "../../types";
-import { NFTOwnershipChecker } from "./NFTOwnershipChecker";
-import { getValidNonBaseWearables } from "./WearablesOwnershipChecker";
+import { AppComponents, NFTsOwnershipChecker, ThirdPartyAsset, ThirdPartyAssets, TPWResolver } from "../../types";
+import { runQuery } from "../the-graph";
 
-export class TPWOwnershipChecker extends NFTOwnershipChecker {
-    constructor(components: Pick<AppComponents, "metrics" | "content" | "theGraph" | "config" | "fetch">) {
-        super(components)
+export function createTPWOwnershipChecker(cmpnnts: Pick<AppComponents, "metrics" | "content" | "theGraph" | "config" | "fetch">): NFTsOwnershipChecker {
+
+    let ownedTPWByAddress: Map<string, string[]> = new Map()
+    const components = cmpnnts
+
+    function addNFTsForAddress(address: string, nfts: string[]) {
+        ownedTPWByAddress.set(address, nfts)
     }
 
-    protected async extractNFTsFromEntity(entity: Entity): Promise<string[]> {
-        // Get non-base wearables wearables which urn are valid 
-        return await getValidNonBaseWearables(entity.metadata)
+    async function checkNFTsOwnership() {
+        ownedTPWByAddress = await ownedThirdPartyWearables(components, ownedTPWByAddress)
     }
 
-    protected getOwnedNFTsByAddress(components: Pick<AppComponents, "metrics" | "content" | "theGraph" | "config" | "fetch">, wearableIdsByAddress: Map<string, string[]>): Promise<Map<string, string[]>> {
-        return ownedThirdPartyWearables(components, wearableIdsByAddress)
+    function getOwnedNFTsForAddress(address: string) {
+        return ownedTPWByAddress.get(address) ?? []
     }
     
+    return {
+        addNFTsForAddress,
+        checkNFTsOwnership,
+        getOwnedNFTsForAddress
+    }
 }
 
 const QUERY_THIRD_PARTY_RESOLVER = `
@@ -30,26 +35,6 @@ query ThirdPartyResolver($id: String!) {
 }
 `
 
-export interface TPWResolver {
-  findWearablesByOwner: (owner: string) => Promise<string[]>
-}
-
-export type ThirdPartyAsset = {
-  id: string
-  amount: number
-  urn: {
-    decentraland: string
-  }
-}
-
-export type ThirdPartyAssets = {
-  address: string
-  total: number
-  page: number
-  assets: ThirdPartyAsset[]
-  next?: string
-}
-
 /*
  * It could happen that a user had a third-party wearable in its profile which it was
  * selled through the blockchain without being reflected on the content server, so we 
@@ -59,12 +44,11 @@ export type ThirdPartyAssets = {
  * finally sanitize wearableIdsByAddress with the owned wearables.
  */
 async function ownedThirdPartyWearables(components: Pick<AppComponents, "theGraph" | "fetch" | "content">, wearableIdsByAddress: Map<string, string[]>): Promise<Map<string, string[]>> {
-// async function ownedThirdPartyWearables(components: Pick<AppComponents, "theGraph" | "fetch" | "content">, wearableIdsByAddress: Map<string, string[]>): Promise<Map<string, string[]>> {
   const response = new Map()
   for (const [address, wearableIds] of wearableIdsByAddress) {
 
     // Get collectionIds from all wearables
-    const collectionIds = await filterCollectionIdsFromWearables(wearableIds)
+    const collectionIds = await filterCollectionIdsFromWearables(wearableIds)  // This can be done before and store only collection ids
 
     // Get all owned TPW for every collectionId
     const ownedTPW: Set<string> = new Set()
@@ -147,7 +131,7 @@ function parseCollectionId(collectionId: string): { thirdPartyId: string, regist
 }
 
 /**
- * This method returns the third party resolver API to be used to query assets from any collection
+ * Returns the third party resolver API to be used to query assets from any collection
  * of given third party integration
  */
 async function findThirdPartyResolver(components: Pick<AppComponents, "theGraph">, id: string): Promise<string | undefined> {
