@@ -8,7 +8,5 @@ export async function createFetchComponent() {
     },
   }
 
-  
-
   return fetch
 }

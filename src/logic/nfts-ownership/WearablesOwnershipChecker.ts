@@ -4,6 +4,7 @@ import { AppComponents, ProfileMetadata } from "../../types";
 import { NFTOwnershipChecker } from "./NFTOwnershipChecker";
 import { parseUrn } from '@dcl/urn-resolver'
 import { ISubgraphComponent } from "@well-known-components/thegraph-component";
+import { ownedNFTsByAddress } from "../ownership";
 
 export class WearablesOwnershipChecker extends NFTOwnershipChecker {
     constructor(components: Pick<AppComponents, "metrics" | "content" | "theGraph" | "config" | "fetch">) {
@@ -15,13 +16,12 @@ export class WearablesOwnershipChecker extends NFTOwnershipChecker {
         return await getValidNonBaseWearables(entity.metadata)
     }
     
-    protected async querySubgraph(theGraph: TheGraphComponent, nftsToCheck: [string, string[]][]) {
-        const result = await checkForWearablesOwnership(theGraph, nftsToCheck)
-        return result.map(({ urns, owner }) => ({ ownedNFTs: urns, owner }))
-    } 
+    protected async getOwnedNFTsByAddress(components: Pick<AppComponents, "metrics" | "content" | "theGraph" | "config" | "fetch">, wearableIdsByEthAddress: Map<string, string[]>): Promise<Map<string, string[]>> {
+        return ownedNFTsByAddress(components, wearableIdsByEthAddress, queryWearablesSubgraph)
+    }
 }
 
-async function getValidNonBaseWearables(metadata: ProfileMetadata): Promise<string[]> {
+export async function getValidNonBaseWearables(metadata: ProfileMetadata): Promise<string[]> {
     const wearablesInProfile: string[] = []
     for (const avatar of metadata.avatars) {
       for (const wearableId of avatar.avatar.wearables) {
@@ -36,17 +36,22 @@ async function getValidNonBaseWearables(metadata: ProfileMetadata): Promise<stri
     return filteredWearables
 }
 
-export function isBaseAvatar(wearable: string): boolean {
+function isBaseAvatar(wearable: string): boolean {
     return wearable.includes('base-avatars')
 }
 
 // Translates from the old id format into the new one
-async function translateWearablesIdFormat(wearableId: string): Promise<string | undefined> {
+export async function translateWearablesIdFormat(wearableId: string): Promise<string | undefined> {
     if (!wearableId.startsWith('dcl://'))
         return wearableId
     
     const parsed = await parseUrn(wearableId)
     return parsed?.uri?.toString()
+}
+
+async function queryWearablesSubgraph(theGraph: TheGraphComponent, nftsToCheck: [string, string[]][]): Promise<{ owner: string; ownedNFTs: string[] }[]> {
+    const result = await checkForWearablesOwnership(theGraph, nftsToCheck)
+    return result.map(({ urns, owner }) => ({ ownedNFTs: urns, owner }))
 }
 
 /**

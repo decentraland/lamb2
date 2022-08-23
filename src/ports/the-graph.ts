@@ -1,4 +1,4 @@
-import { IBaseComponent, IConfigComponent } from '@well-known-components/interfaces'
+import { IBaseComponent } from '@well-known-components/interfaces'
 import { ISubgraphComponent, createSubgraphComponent } from '@well-known-components/thegraph-component'
 import { AppComponents } from '../types'
 

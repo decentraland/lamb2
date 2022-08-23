@@ -1,43 +1,32 @@
 import { AppComponents, ProfileData, ProfileMetadata, WearableId, Filename, Filehash, Name } from '../types'
 import { Entity, EntityType, Snapshots } from '@dcl/schemas'
 import { parseUrn } from '@dcl/urn-resolver'
-import { ownedNames, ownedWearables } from './ownership'
 import { IConfigComponent } from '@well-known-components/interfaces'
-import { ownedThirdPartyWearables } from './third-party'
-import { WearablesOwnershipChecker } from './nfts-ownership/WearablesOwnershipChecker'
+import { translateWearablesIdFormat, WearablesOwnershipChecker } from './nfts-ownership/WearablesOwnershipChecker'
+import { NamesOwnershipChecker } from './nfts-ownership/NamesOwnershipChecker'
+import { TPWOwnershipChecker } from './nfts-ownership/TPWOwnershipChecker'
 
 export async function getProfiles(components: Pick<AppComponents, "metrics" | "content" | "theGraph" | "config" | "fetch">, ethAddresses: string[], ifModifiedSinceTimestamp?: number | undefined): Promise<ProfileMetadata[] | undefined> {
     try {
-        const { content } = components
-
         // Fetch entities by pointers
-        const profileEntities: Entity[] = await content.fetchEntitiesByPointers(EntityType.PROFILE, ethAddresses) // COULD BE CACHED?
+        const profileEntities: Entity[] = await components.content.fetchEntitiesByPointers(EntityType.PROFILE, ethAddresses) // COULD BE CACHED?
 
         // Avoid querying profiles if there wasn't any new deployment
         if (noNewDeployments(ifModifiedSinceTimestamp, profileEntities))
             return
 
-        // Group profile metadata, names, and wearables by ethAddress
-        const { profileByEthAddress, namesByEthAddress, wearablesIdsByEthAddress } = await profileEntitiesToMaps(profileEntities)
-
-        // Check which NFTs are owned
-        const ownedWearableIdsByEthAddress = await ownedWearables(components, wearablesIdsByEthAddress) // COULD BE CACHED?
-        const ownedNamesByEthAddress = await ownedNames(components, namesByEthAddress) // COULD BE CACHED?
-        const ownedTPWByEthAddress = await ownedThirdPartyWearables(components, wearablesIdsByEthAddress) // COULD BE CACHED?
+        // Get data from entities and add them to the ownership checkers
+        // await addNFTsToCheckersFromEntities
 
         const wearablesOwnershipChecker = new WearablesOwnershipChecker(components) // Could be a component if we want to use it as a cache
         await wearablesOwnershipChecker.addNFTsFromEntities(profileEntities)
-        // const namesOwnershipChecker = new NamesOwnershipChecker(components) // Could be a component if we want to use it as a cache
-        // await namesOwnershipChecker.addNFTsFromEntities(profileEntities)
-        // const tpwOwnershipChecker = new TPWOwnershipChecker(components) // Could be a component if we want to use it as a cache
-        // await tpwOwnershipChecker.addNFTsFromEntities(profileEntities)
-        for(const address of profileByEthAddress.keys()) {
-            console.log(`wearables for address: ${address}`)
-            console.log(wearablesOwnershipChecker.getOwnedForAddress(address))
-        }
+        const namesOwnershipChecker = new NamesOwnershipChecker(components) // Could be a component if we want to use it as a cache
+        await namesOwnershipChecker.addNFTsFromEntities(profileEntities)
+        const tpwOwnershipChecker = new TPWOwnershipChecker(components) // Could be a component if we want to use it as a cache
+        await tpwOwnershipChecker.addNFTsFromEntities(profileEntities)
 
         // Add name data and snapshot urls to profiles
-        return await extendProfiles(components.config, profileByEthAddress, ownedNamesByEthAddress, ownedWearableIdsByEthAddress, ownedTPWByEthAddress)
+        return await extendProfiles(components.config, profileEntities, wearablesOwnershipChecker, namesOwnershipChecker, tpwOwnershipChecker)
     } catch(error) {
         console.log(error)
         return []
@@ -54,95 +43,66 @@ function roundToSeconds(timestamp: number) {
     return Math.floor(timestamp / 1000) * 1000
 }
 
-async function profileEntitiesToMaps(profileEntities: Entity[]): Promise<{ profileByEthAddress: Map<string, ProfileData>, namesByEthAddress: Map<string, string[]>, wearablesIdsByEthAddress  : Map<string, string[]> }> {
-    const profileByEthAddress: Map<string, ProfileData> = new Map()
-    const wearablesIdsByEthAddress: Map<string, string[]> = new Map()
-    const namesByEthAddress: Map<string, Name[]> = new Map()
+// async function addNFTsToCheckersFromEntities(profileEntities: Entity[]): Promise<{ profileByEthAddress: Map<string, ProfileData>, namesByEthAddress: Map<string, string[]>, wearablesIdsByEthAddress  : Map<string, string[]> }> {
+//     const profileByEthAddress: Map<string, ProfileData> = new Map()
+//     const wearablesIdsByEthAddress: Map<string, string[]> = new Map()
+//     const namesByEthAddress: Map<string, Name[]> = new Map()
 
-    // Extract data from every entity and fill the maps with it. Need .map() instead of .forEach() to be able to await for the method to set the maps
-    const entityPromises = profileEntities
+//     // Extract data from every entity and fill the maps with it. Need .map() instead of .forEach() to be able to await for the method to set the maps
+//     const entityPromises = profileEntities
+//         .filter(hasMetadata)
+//         .map(async (entity) => { 
+//             const { ethAddress, metadata, content, names, wearables } = await extractDataFromEntity(entity)
+
+//             profileByEthAddress.set(ethAddress, { metadata, content})
+//             namesByEthAddress.set(ethAddress, names)
+//             wearablesIdsByEthAddress.set(ethAddress, wearables)
+//         })
+//     await Promise.all(entityPromises)
+
+//     return { profileByEthAddress, namesByEthAddress, wearablesIdsByEthAddress }
+// }
+
+async function extendProfiles(config: IConfigComponent, profileEntities: Entity[], wearablesOwnershipChecker: WearablesOwnershipChecker, namesOwnershipChecker: NamesOwnershipChecker, tpwOwnershipChecker: TPWOwnershipChecker): Promise<ProfileMetadata[]> {
+    const baseUrl = await config.getString('CONTENT_SERVER_ADDRESS') ?? ''
+    const extendedProfiles = profileEntities
         .filter(hasMetadata)
-        .map(async (entity) => { 
-            const { ethAddress, metadata, content, names, wearables } = await extractDataFromEntity(entity)
-
-            profileByEthAddress.set(ethAddress, { metadata, content})
-            namesByEthAddress.set(ethAddress, names)
-            wearablesIdsByEthAddress.set(ethAddress, wearables)
+        .map(async (entity) => {
+            const { ethAddress, metadata, content } = await extractProfileDataFromEntity(entity)
+            const ownedNames = namesOwnershipChecker.getOwnedForAddress(ethAddress)
+            const ownedWearables = wearablesOwnershipChecker.getOwnedForAddress(ethAddress)
+            const thirdPartyWearables = tpwOwnershipChecker.getOwnedForAddress(ethAddress)
+            const avatars = metadata.avatars.map(async (profileData) => ({
+                ...profileData,
+                hasClaimedName: ownedNames.includes(profileData.name),
+                avatar: {
+                    ...profileData.avatar,
+                    bodyShape: await translateWearablesIdFormat(profileData.avatar.bodyShape) ?? '',
+                    snapshots: addBaseUrlToSnapshots(baseUrl, profileData.avatar.snapshots, content),
+                    wearables: ownedWearables.concat(thirdPartyWearables)
+                }
+            }))
+            return {
+                timestamp: metadata.timestamp,
+                avatars: await Promise.all(avatars)
+            }
         })
-    await Promise.all(entityPromises)
-
-    return { profileByEthAddress, namesByEthAddress, wearablesIdsByEthAddress }
+    return await Promise.all(extendedProfiles)
 }
 
 function hasMetadata(entity: Entity): boolean {
     return !!entity.metadata
 }
 
-async function extractDataFromEntity(entity: Entity): Promise<{ ethAddress: string; metadata: ProfileMetadata, content: Map<Filename, Filehash>, names: string[], wearables: string[] }> {
+async function extractProfileDataFromEntity(entity: Entity): Promise<{ ethAddress: string; metadata: ProfileMetadata, content: Map<Filename, Filehash>}> {
     const ethAddress = entity.pointers[0]
     const metadata: ProfileMetadata = entity.metadata
     const content = new Map((entity.content ?? []).map(({ file, hash }) => [file, hash]))
-    const filteredNames = metadata.avatars.map(({ name }) => name).filter((name) => name && name.trim().length > 0)
     
     // Add timestamp to the metadata
     metadata.timestamp = entity.timestamp
 
-    // Get non-base wearables wearables which urn are valid 
-    const nonBaseWearables = await getValidNonBaseWearables(metadata)
-
-    return { ethAddress, metadata, content, names: filteredNames, wearables: nonBaseWearables }
-}
-
-async function getValidNonBaseWearables(metadata: ProfileMetadata): Promise<string[]> {
-    const wearablesInProfile: WearableId[] = []
-    for (const avatar of metadata.avatars) {
-      for (const wearableId of avatar.avatar.wearables) {
-        if (!isBaseAvatar(wearableId)) {
-            const translatedWearableId = await translateWearablesIdFormat(wearableId)
-            if (translatedWearableId)
-                wearablesInProfile.push(translatedWearableId)
-        }
-      }
-    }
-    const filteredWearables = wearablesInProfile.filter((wearableId): wearableId is string => !!wearableId)
-    return filteredWearables
-}
-
-export function isBaseAvatar(wearable: string): boolean {
-    return wearable.includes('base-avatars')
-}
-
-// Translates from the old id format into the new one
-async function translateWearablesIdFormat(wearableId: string): Promise<string | undefined> {
-    if (!wearableId.startsWith('dcl://'))
-        return wearableId
-    
-    const parsed = await parseUrn(wearableId)
-    return parsed?.uri?.toString()
-}
-
-async function extendProfiles(config: IConfigComponent, profileByAddress: Map<string, ProfileData>, namesByAddress: Map<string, Set<string>>, wearableIdsByAddress: Map<string, Set<string>>, TPWIdsByAddress: Map<string, string[]>): Promise<ProfileMetadata[]> {
-    const baseUrl = await config.getString('CONTENT_SERVER_ADDRESS') ?? ''
-    const extendedProfiles = Array.from(profileByAddress.entries()).map(async ([ethAddress, profile]) => {
-        const ownedNames = namesByAddress.get(ethAddress)
-        const ownedWearables = Array.from(wearableIdsByAddress.get(ethAddress) ?? [])
-        const thirdPartyWearables = TPWIdsByAddress.get(ethAddress) ?? []
-        const avatars = profile.metadata.avatars.map(async (profileData) => ({
-            ...profileData,
-            hasClaimedName: ownedNames?.has(profileData.name) ?? false,
-            avatar: {
-                ...profileData.avatar,
-                bodyShape: await translateWearablesIdFormat(profileData.avatar.bodyShape) ?? '',
-                snapshots: addBaseUrlToSnapshots(baseUrl, profileData.avatar.snapshots, profile.content),
-                wearables: ownedWearables.concat(thirdPartyWearables)
-            }
-        }))
-        return {
-            timestamp: profile.metadata.timestamp,
-            avatars: await Promise.all(avatars)
-        }
-    })
-    return await Promise.all(extendedProfiles)
+    return { ethAddress, metadata, content }
 }
 
 /**
