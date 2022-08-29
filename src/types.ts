@@ -55,11 +55,6 @@ export type Filehash = IPFSv1 | IPFSv2
 export type WearableId = string // These ids are used as pointers on the content server
 export type Name = string
 
-export type ProfileData = {
-  metadata: ProfileMetadata
-  content: Map<Filename, Filehash>
-}
-
 export type ProfileMetadata = Profile & {
   timestamp: number
 }

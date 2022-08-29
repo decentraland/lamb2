@@ -9,11 +9,11 @@ import { createTPWOwnershipChecker } from '../ports/ownership-checker/tpw-owners
 export async function getProfiles(components: Pick<AppComponents, "metrics" | "content" | "theGraph" | "config" | "fetch">, ethAddresses: string[], ifModifiedSinceTimestamp?: number | undefined): Promise<ProfileMetadata[] | undefined> {
     try {
         // Fetch entities by pointers
-        let profileEntities: Entity[] = await components.content.fetchEntitiesByPointers(EntityType.PROFILE, ethAddresses) // COULD BE CACHED?
+        let profileEntities: Entity[] = await components.content.fetchEntitiesByPointers(EntityType.PROFILE, ethAddresses)
         
         // Avoid querying profiles if there wasn't any new deployment
         if (noNewDeployments(ifModifiedSinceTimestamp, profileEntities))
-        return
+            return
 
         // Filter entities
         profileEntities = profileEntities.filter(hasMetadata)
@@ -80,8 +80,7 @@ async function extractDataFromEntity(entity: Entity): Promise<{ ethAddress: stri
 
 async function extendProfiles(config: IConfigComponent, profileEntities: Entity[], wearablesOwnershipChecker: NFTsOwnershipChecker, namesOwnershipChecker: NFTsOwnershipChecker, tpwOwnershipChecker: NFTsOwnershipChecker): Promise<ProfileMetadata[]> {
     const baseUrl = await config.getString('CONTENT_SERVER_ADDRESS') ?? ''
-    const extendedProfiles = profileEntities    // CAMBIAR ESTO? RECIBIR EL MAPA DE PROFILES BY ADDRESS O UN ARRAY DE OBJETOS {ethAddress, metadata, content
-        // .filter(hasMetadata) already filtered before
+    const extendedProfiles = profileEntities
         .map(async (entity) => {
             const { ethAddress, metadata, content } = await extractProfileDataFromEntity(entity)
             const ownedNames = namesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)

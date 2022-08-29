@@ -54,7 +54,7 @@ async function ownedThirdPartyWearables(components: Pick<AppComponents, "theGrap
     const ownedTPW: Set<string> = new Set()
     for (const collectionId of collectionIds) {
         // Get API for collection
-        const resolver = await createThirdPartyResolverForCollection(components, collectionId)
+        const resolver = await createThirdPartyResolverForCollection(components, collectionId)  // COULD BE CACHED?
 
         // Get owned wearables for the collection
         const ownedTPWForCollection = await resolver.findWearablesByOwner(address)

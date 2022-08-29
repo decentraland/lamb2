@@ -24,6 +24,8 @@ export async function initComponents(): Promise<AppComponents> {
 
   const theGraph = await createTheGraphComponent({ config, logs, fetch, metrics })
 
+  
+
   return {
     config,
     logs,
