@@ -2,6 +2,7 @@ import { ISubgraphComponent } from "@well-known-components/thegraph-component";
 import { ownedNFTsByAddress } from "../../logic/ownership";
 import { AppComponents, NFTsOwnershipChecker } from "../../types";
 import { runQuery, TheGraphComponent } from "../the-graph";
+import { getCachedNFTsAndPendingCheckNFTs, fillCacheWithRecentlyCheckedWearables  } from "../../logic/cache";
 
 export function createWearablesOwnershipChecker(cmpnnts: Pick<AppComponents, "metrics" | "content" | "theGraph" | "config" | "ownershipCaches">): NFTsOwnershipChecker {
 
@@ -16,45 +17,8 @@ export function createWearablesOwnershipChecker(cmpnnts: Pick<AppComponents, "me
     async function checkNFTsOwnership() {
         console.log('Checking ownership. Owned wearables map:')
         console.log(ownedWearablesByAddress)
-        const nftsToCheckByAddress: Map<string, string[]> = new Map()
-        const cachedOwnedNFTsByAddress: Map<string, string[]> = new Map()
-        console.log('Checking the wearables cache...')
         // Check the cache before checking ownership in the blockchain
-        for (const [address, nfts] of ownedWearablesByAddress.entries()) {
-            if (cache.has(address)) {
-                // Get a map {nft -> isOwned} for address
-                const cachedOwnershipForAddress = cache.get(address)
-                console.log(`Cache for ${address}:`)
-                console.log(cachedOwnershipForAddress)
-
-                // Check for every nft if it is in the cache and add them to cachedOwnedNfts or nftsToCheck
-                const cachedOwnedNfts = []
-                const nftsToCheck = []
-                for (const nft of nfts) {
-                    // If the nft is present on the map, ownership for the nft won't be checked in the blockchain.
-                    if (cachedOwnershipForAddress?.has(nft)) {
-                        // If the nft is owned, it will be added to the cached owned map. If not, it is ignored.
-                        if (cachedOwnershipForAddress.get(nft))
-                            cachedOwnedNfts.push(nft)
-                    } else {
-                        // Add the nft to the nftsToCheck
-                        nftsToCheck.push(nft)
-                    }
-                }
-
-                // Add cached nfts to the cached map
-                if (cachedOwnedNfts.length > 0)
-                    cachedOwnedNFTsByAddress.set(address, cachedOwnedNfts)
-
-                // Add nfts to be checked to the map to be checked
-                if (nftsToCheck.length > 0)
-                    nftsToCheckByAddress.set(address, nftsToCheck)
-            } else {
-                console.log(`Address ${address} is not present`)
-                // Since the address is not cached, add every nft for the address to the nftsToCheck
-                nftsToCheckByAddress.set(address, nfts)
-            }
-        }
+        const { nftsToCheckByAddress, cachedOwnedNFTsByAddress } = getCachedNFTsAndPendingCheckNFTs(ownedWearablesByAddress, cache)
 
         console.log('nfts to check:')
         console.log(nftsToCheckByAddress)
@@ -70,51 +34,11 @@ export function createWearablesOwnershipChecker(cmpnnts: Pick<AppComponents, "me
 
         console.log('Adding to the cache...')
         // Traverse the checked nfts to set the cache depending on its ownership
-        for (const [address, nfts] of nftsToCheckByAddress) {
-            console.log(`Adding adress: ${address}`)
-            const ownedNftsForAddress = ownedWearablesByAddress.get(address)
-
-            // Get the cached map for the address or initialize it if address is not present
-            let ownershipForAddressToBeCached: Map<string, boolean>
-            if (cache.has(address)) {
-                console.log('Present')
-                ownershipForAddressToBeCached = cache.get(address) ?? new Map()
-            } else {
-                console.log('Not present')
-                ownershipForAddressToBeCached = new Map()
-            }
-            console.log('starting ownershipForAddressToBeCached:')
-            console.log(ownershipForAddressToBeCached)
-            
-            console.log(`Filling cache with ${address} nfts...`)
-            // Fill the map with the recently adquired nfts ownership
-            for (const nft of nfts) {
-                if (ownedNftsForAddress) {
-                    console.log(`${nft} is owned: ${ownedNftsForAddress.includes(nft)}`)
-                    ownershipForAddressToBeCached?.set(nft, ownedNftsForAddress.includes(nft))
-                } else {
-                    console.log(`${nft} is NOT owned since address isn't in the ownership map`)
-                    // Address isn't in the ownership map so the nft is not owned by this address
-                    ownershipForAddressToBeCached?.set(nft, false)
-                }
-            }
-
-            // Set the map to the cache
-            console.log(`setting in the cache for ${address}:`)
-            console.log(ownershipForAddressToBeCached)
-            cache.set(address, ownershipForAddressToBeCached)
-        }
+        fillCacheWithRecentlyCheckedWearables(nftsToCheckByAddress, ownedWearablesByAddress, cache);
 
         console.log('Merging maps...')
         // Merge cachedOwnedNFTsByAddress (contains the nfts which ownershipwas cached) into ownedWearablesByAddress (recently checked ownnership map)
-        for (const [cachedAddress, cachedNFTs] of cachedOwnedNFTsByAddress) {
-            if (ownedWearablesByAddress.has(cachedAddress)) {
-                const recentlyCheckedNFTs = ownedWearablesByAddress.get(cachedAddress) ?? []
-                ownedWearablesByAddress.set(cachedAddress, recentlyCheckedNFTs?.concat(cachedNFTs))
-            } else { 
-                ownedWearablesByAddress.set(cachedAddress, cachedNFTs)
-            }
-        }
+        mergeMapIntoMap(cachedOwnedNFTsByAddress, ownedWearablesByAddress);
         console.log('Final map:')
         console.log(ownedWearablesByAddress)
     }
