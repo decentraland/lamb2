@@ -10,6 +10,7 @@ import { metricDeclarations } from "./metrics"
 import { TheGraphComponent } from "./ports/the-graph"
 import { Profile, IPFSv1, IPFSv2 } from '@dcl/schemas'
 import { ContentComponent } from "./ports/content"
+import { OwnershipCachesComponent } from "./ports/ownership-caches"
 
 export type GlobalContext = {
   components: BaseComponents
@@ -24,6 +25,7 @@ export type BaseComponents = {
   metrics: IMetricsComponent<keyof typeof metricDeclarations>
   content: ContentComponent
   theGraph: TheGraphComponent
+  ownershipCaches: OwnershipCachesComponent
 }
 
 // components used in runtime

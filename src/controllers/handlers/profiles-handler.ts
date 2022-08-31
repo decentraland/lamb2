@@ -2,7 +2,7 @@ import { Request } from "node-fetch"
 import { getProfiles } from "../../logic/profiles"
 import { HandlerContextWithPath } from "../../types"
 
-export async function profilesHandler(context: Pick<HandlerContextWithPath<"metrics" | "content" | "theGraph" | "config" | "fetch", "/profiles">, "url" | "components" | "request">) {
+export async function profilesHandler(context: Pick<HandlerContextWithPath<"metrics" | "content" | "theGraph" | "config" | "fetch" | "ownershipCaches", "/profiles">, "url" | "components" | "request">) {
   // Get the profile ids
   const body = await context.request.clone().json()
   const ethAddresses = body.ethAddresses

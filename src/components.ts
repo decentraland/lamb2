@@ -6,9 +6,8 @@ import { createMetricsComponent } from "@well-known-components/metrics"
 import { AppComponents, GlobalContext } from "./types"
 import { metricDeclarations } from "./metrics"
 import { createTheGraphComponent } from "./ports/the-graph"
-
-import { ISubgraphComponent, createSubgraphComponent } from '@well-known-components/thegraph-component'
 import { createContentComponent } from "./ports/content"
+import { createOwnershipCachesComponent } from "./ports/ownership-caches"
 
 // Initialize all the components of the app
 export async function initComponents(): Promise<AppComponents> {
@@ -24,7 +23,7 @@ export async function initComponents(): Promise<AppComponents> {
 
   const theGraph = await createTheGraphComponent({ config, logs, fetch, metrics })
 
-  
+  const ownershipCaches = await createOwnershipCachesComponent({ config })
 
   return {
     config,
@@ -34,6 +33,7 @@ export async function initComponents(): Promise<AppComponents> {
     fetch,
     metrics,
     content,
-    theGraph
+    theGraph,
+    ownershipCaches
   }
 }

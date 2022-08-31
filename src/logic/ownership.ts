@@ -1,4 +1,3 @@
-import { EthAddress } from '@dcl/crypto'
 import { TheGraphComponent } from '../ports/the-graph'
 import { AppComponents } from '../types'
 

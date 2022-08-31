@@ -6,7 +6,7 @@ import { createWearablesOwnershipChecker } from '../ports/ownership-checker/wear
 import { createNamesOwnershipChecker } from '../ports/ownership-checker/names-ownership-checker'
 import { createTPWOwnershipChecker } from '../ports/ownership-checker/tpw-ownership-checker'
 
-export async function getProfiles(components: Pick<AppComponents, "metrics" | "content" | "theGraph" | "config" | "fetch">, ethAddresses: string[], ifModifiedSinceTimestamp?: number | undefined): Promise<ProfileMetadata[] | undefined> {
+export async function getProfiles(components: Pick<AppComponents, "metrics" | "content" | "theGraph" | "config" | "fetch" | "ownershipCaches">, ethAddresses: string[], ifModifiedSinceTimestamp?: number | undefined): Promise<ProfileMetadata[] | undefined> {
     try {
         // Fetch entities by pointers
         let profileEntities: Entity[] = await components.content.fetchEntitiesByPointers(EntityType.PROFILE, ethAddresses)
