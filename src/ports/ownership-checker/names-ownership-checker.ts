@@ -1,18 +1,31 @@
+import { getCachedNFTsAndPendingCheckNFTs, fillCacheWithRecentlyCheckedWearables } from "../../logic/cache";
+import { mergeMapIntoMap } from "../../logic/maps";
 import { ownedNFTsByAddress } from "../../logic/ownership";
 import { AppComponents, NFTsOwnershipChecker } from "../../types";
 import { runQuery, TheGraphComponent } from "../the-graph";
 
-export function createNamesOwnershipChecker(cmpnnts: Pick<AppComponents, "metrics" | "content" | "theGraph" | "config" | "fetch">): NFTsOwnershipChecker {
+export function createNamesOwnershipChecker(cmpnnts: Pick<AppComponents, "metrics" | "content" | "theGraph" | "config" | "fetch" | "ownershipCaches">): NFTsOwnershipChecker {
 
     let ownedNamesByAddress: Map<string, string[]> = new Map()
     const components = cmpnnts
+    const cache = components.ownershipCaches.namesCache;
 
     function addNFTsForAddress(address: string, nfts: string[]) {
         ownedNamesByAddress.set(address, nfts)
     }
 
     async function checkNFTsOwnership() {
+        // Check the cache before checking ownership in the blockchain
+        const { nftsToCheckByAddress, cachedOwnedNFTsByAddress } = getCachedNFTsAndPendingCheckNFTs(ownedNamesByAddress, cache)
+
+        // Check ownership for the non-cached nfts
         ownedNamesByAddress = await ownedNFTsByAddress(components, ownedNamesByAddress, queryNamesSubgraph)
+
+        // Traverse the checked nfts to set the cache depending on its ownership
+        fillCacheWithRecentlyCheckedWearables(nftsToCheckByAddress, ownedNamesByAddress, cache);
+
+        // Merge cachedOwnedNFTsByAddress (contains the nfts which ownershipwas cached) into ownedWearablesByAddress (recently checked ownnership map)
+        mergeMapIntoMap(cachedOwnedNFTsByAddress, ownedNamesByAddress);
     }
 
     function getOwnedNFTsForAddress(address: string) {

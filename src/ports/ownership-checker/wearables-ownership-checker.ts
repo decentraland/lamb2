@@ -3,6 +3,7 @@ import { ownedNFTsByAddress } from "../../logic/ownership";
 import { AppComponents, NFTsOwnershipChecker } from "../../types";
 import { runQuery, TheGraphComponent } from "../the-graph";
 import { getCachedNFTsAndPendingCheckNFTs, fillCacheWithRecentlyCheckedWearables  } from "../../logic/cache";
+import { mergeMapIntoMap } from "../../logic/maps";
 
 export function createWearablesOwnershipChecker(cmpnnts: Pick<AppComponents, "metrics" | "content" | "theGraph" | "config" | "ownershipCaches">): NFTsOwnershipChecker {
 
@@ -14,33 +15,18 @@ export function createWearablesOwnershipChecker(cmpnnts: Pick<AppComponents, "me
         ownedWearablesByAddress.set(address, nfts)
     }
 
-    async function checkNFTsOwnership() {
-        console.log('Checking ownership. Owned wearables map:')
-        console.log(ownedWearablesByAddress)
+    async function checkNFTsOwnership() {        
         // Check the cache before checking ownership in the blockchain
         const { nftsToCheckByAddress, cachedOwnedNFTsByAddress } = getCachedNFTsAndPendingCheckNFTs(ownedWearablesByAddress, cache)
 
-        console.log('nfts to check:')
-        console.log(nftsToCheckByAddress)
-
-        console.log('cached nfts:')
-        console.log(cachedOwnedNFTsByAddress)
-        
         // Check ownership for the non-cached nfts
         ownedWearablesByAddress = await ownedNFTsByAddress(components, nftsToCheckByAddress, queryWearablesSubgraph)
 
-        console.log('owned wearables recently checked map:')
-        console.log(ownedWearablesByAddress)
-
-        console.log('Adding to the cache...')
         // Traverse the checked nfts to set the cache depending on its ownership
         fillCacheWithRecentlyCheckedWearables(nftsToCheckByAddress, ownedWearablesByAddress, cache);
 
-        console.log('Merging maps...')
         // Merge cachedOwnedNFTsByAddress (contains the nfts which ownershipwas cached) into ownedWearablesByAddress (recently checked ownnership map)
         mergeMapIntoMap(cachedOwnedNFTsByAddress, ownedWearablesByAddress);
-        console.log('Final map:')
-        console.log(ownedWearablesByAddress)
     }
 
     function getOwnedNFTsForAddress(address: string) {
