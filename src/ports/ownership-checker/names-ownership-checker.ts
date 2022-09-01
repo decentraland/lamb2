@@ -19,7 +19,7 @@ export function createNamesOwnershipChecker(cmpnnts: Pick<AppComponents, "metric
         const { nftsToCheckByAddress, cachedOwnedNFTsByAddress } = getCachedNFTsAndPendingCheckNFTs(ownedNamesByAddress, cache)
 
         // Check ownership for the non-cached nfts
-        ownedNamesByAddress = await ownedNFTsByAddress(components, ownedNamesByAddress, queryNamesSubgraph)
+        ownedNamesByAddress = await ownedNFTsByAddress(components, nftsToCheckByAddress, queryNamesSubgraph)
 
         // Traverse the checked nfts to set the cache depending on its ownership
         fillCacheWithRecentlyCheckedWearables(nftsToCheckByAddress, ownedNamesByAddress, cache);
