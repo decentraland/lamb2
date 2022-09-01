@@ -1,18 +1,31 @@
 import { parseUrn } from "@dcl/urn-resolver";
+import { getCachedNFTsAndPendingCheckNFTs, fillCacheWithRecentlyCheckedWearables } from "../../logic/cache";
+import { mergeMapIntoMap } from "../../logic/maps";
 import { AppComponents, NFTsOwnershipChecker, ThirdPartyAsset, ThirdPartyAssets, TPWResolver } from "../../types";
 import { runQuery } from "../the-graph";
 
-export function createTPWOwnershipChecker(cmpnnts: Pick<AppComponents, "metrics" | "content" | "theGraph" | "config" | "fetch">): NFTsOwnershipChecker {
+export function createTPWOwnershipChecker(cmpnnts: Pick<AppComponents, "metrics" | "content" | "theGraph" | "config" | "fetch" | "ownershipCaches">): NFTsOwnershipChecker {
 
     let ownedTPWByAddress: Map<string, string[]> = new Map()
     const components = cmpnnts
+    const cache = components.ownershipCaches.tpwCache;
 
     function addNFTsForAddress(address: string, nfts: string[]) {
         ownedTPWByAddress.set(address, nfts)
     }
 
     async function checkNFTsOwnership() {
-        ownedTPWByAddress = await ownedThirdPartyWearables(components, ownedTPWByAddress)
+      // Check the cache before checking ownership in the blockchain
+      const { nftsToCheckByAddress, cachedOwnedNFTsByAddress } = getCachedNFTsAndPendingCheckNFTs(ownedTPWByAddress, cache)
+
+      // Check ownership for the non-cached nfts
+      ownedTPWByAddress = await ownedThirdPartyWearables(components, nftsToCheckByAddress)
+
+      // Traverse the checked nfts to set the cache depending on its ownership
+      fillCacheWithRecentlyCheckedWearables(nftsToCheckByAddress, ownedTPWByAddress, cache);
+
+      // Merge cachedOwnedNFTsByAddress (contains the nfts which ownershipwas cached) into ownedWearablesByAddress (recently checked ownnership map)
+      mergeMapIntoMap(cachedOwnedNFTsByAddress, ownedTPWByAddress);
     }
 
     function getOwnedNFTsForAddress(address: string) {
