@@ -49,7 +49,7 @@ async function checkForNamesOwnership(theGraph: TheGraphComponent, namesToCheck:
     const subgraphQuery = `{` + namesToCheck.map((query) => getNamesFragment(query)).join('\n') + `}`
 
     // Run query
-    const queryResponse = runQuery<Map<string, {name: string}[]>>(theGraph.ensSubgraph, subgraphQuery, {})
+    const queryResponse = await runQuery<Map<string, {name: string}[]>>(theGraph.ensSubgraph, subgraphQuery, {})
 
     // Transform result to array of owner and urns
     return Object.entries(queryResponse).map(([addressWithPrefix, names]) => ({
