@@ -86,3 +86,10 @@ export type ThirdPartyAssets = {
   assets: ThirdPartyAsset[]
   next?: string
 }
+
+/**
+ * Function used to fetch TheGraph
+ * @public
+ */
+ export type QueryGraph = <T = any>(query: string, variables?: Variables, remainingAttempts?: number) => Promise<T>
+ 

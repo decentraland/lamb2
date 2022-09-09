@@ -32,7 +32,7 @@ export function createWearablesOwnershipChecker(cmpnnts: Pick<AppComponents, "me
     function getOwnedNFTsForAddress(address: string) {
         return ownedWearablesByAddress.get(address) ?? []
     }
-    
+
     return {
         addNFTsForAddress,
         checkNFTsOwnership,
@@ -73,7 +73,7 @@ async function getOwnersByWearable(wearableIdsToCheck: [string, string[]][], sub
 
     // Run query
     const queryResponse = await runQuery<Map<string, {urn: string}[]>>(subgraph, subgraphQuery, {})
-    
+
     // Transform result to array of { owner, urns }
     const result = Object.entries(queryResponse).map(([addressWithPrefix, wearables]) => ({
         owner: addressWithPrefix.substring(1),  // Remove the 'P' prefix added previously because the graph needs the fragment name to start with a letter
