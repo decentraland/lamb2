@@ -2,16 +2,16 @@ import { Request } from "node-fetch"
 import { getProfiles } from "../../logic/profiles"
 import { HandlerContextWithPath } from "../../types"
 
-export async function profilesHandler(context: Pick<HandlerContextWithPath<"metrics" | "content" | "theGraph" | "config" | "fetch" | "ownershipCaches", "/profiles">, "url" | "components" | "request">) {
+export async function profilesHandler(context: HandlerContextWithPath<"metrics" | "content" | "theGraph" | "config" | "fetch" | "ownershipCaches", "/profiles">) {
   // Get the profile ids
-  const body = await context.request.clone().json()
+  const body = await context.request.json()
   const ethAddresses = body.ethAddresses
 
   // Return 400 if there are no ids in the payload
   if (!ethAddresses) {
     return {
       status: 400,
-      body: "No profile ids were specified. Expected ids:string[] in body"
+      body: "No profile ids were specified. Expected ethAddresses:string[] in body"
     }
   }
 
