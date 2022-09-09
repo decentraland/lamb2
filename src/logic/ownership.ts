@@ -4,7 +4,8 @@ import { AppComponents } from '../types'
 const NFT_FRAGMENTS_PER_QUERY = 10
 
 /*
- * Checks the ownership for every nft resulting in a map of ownership for every eth address
+ * Checks the ownership for every nft resulting in a map of ownership for every eth address.
+ * Receives a `querySubgraph` method to know how to do the query.
  */
 export async function ownedNFTsByAddress(components: Pick<AppComponents, "theGraph">, nftIdsByAddressToCheck: Map<string, string[]>, querySubgraph: (theGraph: TheGraphComponent, nftsToCheck: [string, string[]][]) => any): Promise<Map<string, string[]>> {
     const { theGraph } = components
@@ -22,10 +23,10 @@ export async function ownedNFTsByAddress(components: Pick<AppComponents, "theGra
     return ownedNftIdsByEthAddress
 }
 
-/**
+/*
  * Return a set of the NFTs that are actually owned by the eth address, for every eth address.
  * Receives a `querySubgraph` method to know how to do the query.
- */ 
+ */
 async function querySubgraphByFragments(theGraph: TheGraphComponent, nftIdsByAddressToCheck: Map<string, string[]>, querySubgraph: (theGraph: TheGraphComponent, nftsToCheck: [string, string[]][]) => any): Promise<Map<string, string[]>> {
     const entries = Array.from(nftIdsByAddressToCheck.entries())
     const result: Map<string, string[]> = new Map()
