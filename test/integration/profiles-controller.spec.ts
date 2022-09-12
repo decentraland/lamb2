@@ -82,7 +82,7 @@ const profileEntityWithoutNFTs = {
   version: "v3",
   id: "bafkreid2ltr77sewkzr4xz37pzyvcgzeljubecqworvsdbw7t5333h6q3a",
   type: EntityType.PROFILE,
-  timestamp: 1662137617154,
+  timestamp: 1642137617154,
   pointers: ["0x2"],
   content: [
     {
@@ -293,7 +293,7 @@ const profileEntityWithClaimedName = {
   version: "v3",
   id: "bafkreid2ltr77sewkzr4xz37pzyvcgzeljubecqworvsdbw7t5333h6q3a",
   type: EntityType.PROFILE,
-  timestamp: 1662137617154,
+  timestamp: 1632137617154,
   pointers: ["0x5"],
   content: [
     {
@@ -745,6 +745,140 @@ const profileEntitySnapshotsReferenceContentFile = {
         userId: "0x10",
         email: "",
         ethAddress: "0x10",
+        version: 30,
+        avatar: {
+          bodyShape: "urn:decentraland:off-chain:base-avatars:BaseMale",
+          wearables: [],
+          snapshots: {
+            body: "bafkreicilawwtbjyf6ahyzv64ssoamdm73rif75qncee5lv6j3a3352lua",
+            face256: "bafkreigi3yrgdhvjr2cqzxvfztnsubnll2cfdioo4vfzu6o6vibwoag2ma",
+          },
+          eyes: {
+            color: {
+              r: 0.37109375,
+              g: 0.22265625,
+              b: 0.1953125,
+              a: 1,
+            },
+          },
+          hair: {
+            color: {
+              r: 0.234375,
+              g: 0.12890625,
+              b: 0.04296875,
+              a: 1,
+            },
+          },
+          skin: {
+            color: {
+              r: 0.94921875,
+              g: 0.76171875,
+              b: 0.6484375,
+              a: 1,
+            },
+          },
+        },
+        interests: [],
+        unclaimedName: "cryptonico",
+        hasConnectedWeb3: true,
+      },
+    ],
+  },
+}
+
+const profileEntityWithOldTimestamp = {
+  version: "v3",
+  id: "bafkreid2ltr77sewkzr4xz37pzyvcgzeljubecqworvsdbw7t5333h6q3a",
+  type: EntityType.PROFILE,
+  timestamp: 1642137617154,
+  pointers: ["0x11"],
+  content: [
+    {
+      file: "body.png",
+      hash: "bafkreicilawwtbjyf6ahyzv64ssoamdm73rif75qncee5lv6j3a3352lua",
+    },
+    {
+      file: "face256.png",
+      hash: "bafkreigi3yrgdhvjr2cqzxvfztnsubnll2cfdioo4vfzu6o6vibwoag2ma",
+    },
+  ],
+  metadata: {
+    avatars: [
+      {
+        hasClaimedName: false,
+        name: "cryptonico#e602",
+        description: "",
+        tutorialStep: 256,
+        userId: "0x11",
+        email: "",
+        ethAddress: "0x11",
+        version: 30,
+        avatar: {
+          bodyShape: "urn:decentraland:off-chain:base-avatars:BaseMale",
+          wearables: [],
+          snapshots: {
+            body: "bafkreicilawwtbjyf6ahyzv64ssoamdm73rif75qncee5lv6j3a3352lua",
+            face256: "bafkreigi3yrgdhvjr2cqzxvfztnsubnll2cfdioo4vfzu6o6vibwoag2ma",
+          },
+          eyes: {
+            color: {
+              r: 0.37109375,
+              g: 0.22265625,
+              b: 0.1953125,
+              a: 1,
+            },
+          },
+          hair: {
+            color: {
+              r: 0.234375,
+              g: 0.12890625,
+              b: 0.04296875,
+              a: 1,
+            },
+          },
+          skin: {
+            color: {
+              r: 0.94921875,
+              g: 0.76171875,
+              b: 0.6484375,
+              a: 1,
+            },
+          },
+        },
+        interests: [],
+        unclaimedName: "cryptonico",
+        hasConnectedWeb3: true,
+      },
+    ],
+  },
+}
+
+const profileEntityWithNewTimestamp = {
+  version: "v3",
+  id: "bafkreid2ltr77sewkzr4xz37pzyvcgzeljubecqworvsdbw7t5333h6q3a",
+  type: EntityType.PROFILE,
+  timestamp: 1662137617154,
+  pointers: ["0x12"],
+  content: [
+    {
+      file: "body.png",
+      hash: "bafkreicilawwtbjyf6ahyzv64ssoamdm73rif75qncee5lv6j3a3352lua",
+    },
+    {
+      file: "face256.png",
+      hash: "bafkreigi3yrgdhvjr2cqzxvfztnsubnll2cfdioo4vfzu6o6vibwoag2ma",
+    },
+  ],
+  metadata: {
+    avatars: [
+      {
+        hasClaimedName: false,
+        name: "cryptonico#e602",
+        description: "",
+        tutorialStep: 256,
+        userId: "0x12",
+        email: "",
+        ethAddress: "0x12",
         version: 30,
         avatar: {
           bodyShape: "urn:decentraland:off-chain:base-avatars:BaseMale",
@@ -1362,4 +1496,63 @@ test("integration tests for /profiles", function ({ components, stubComponents }
     expect(responseObj[0].avatars?.[0].avatar.snapshots.face256).toEqual("https://peer.decentraland.org/content/contents/asdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasd")
     expect(responseObj[0].avatars?.[0].avatar.wearables.length).toEqual(0)
   })
+
+  it("calling with two profiles, with if-modified-since header, with one of them modified after the header's date", async () => {
+    const { localFetch } = components
+    const { theGraph, content } = stubComponents
+    const addresses = ["0x11", "0x12"]
+
+    content.fetchEntitiesByPointers.withArgs(EntityType.PROFILE, addresses).resolves(await Promise.all([profileEntityWithOldTimestamp, profileEntityWithNewTimestamp]))
+    
+    const wearablesQuery = "{\n        P0x11: nfts(where: { owner: \"0x11\", searchItemType_in: [\"wearable_v1\", \"wearable_v2\", \"smart_wearable_v1\", \"emote_v1\"], urn_in: [] }, first: 1000) {\n        urn\n        }\n    \n\n        P0x12: nfts(where: { owner: \"0x12\", searchItemType_in: [\"wearable_v1\", \"wearable_v2\", \"smart_wearable_v1\", \"emote_v1\"], urn_in: [] }, first: 1000) {\n        urn\n        }\n    }"
+    theGraph.collectionsSubgraph.query = sinon.stub().withArgs(wearablesQuery, {}).resolves({P0x11: [],P0x12: []})
+    theGraph.maticCollectionsSubgraph.query = sinon.stub().withArgs(wearablesQuery, {}).resolves({P0x11: [],P0x12: []})
+    
+    const namesQuery = "{\n      P0x11: nfts(where: { owner: \"0x11\", category: ens, name_in: [\"cryptonico#e602\"] }, first: 1000) {\n        name\n      }\n    \n\n      P0x12: nfts(where: { owner: \"0x12\", category: ens, name_in: [\"cryptonico#e602\"] }, first: 1000) {\n        name\n      }\n    }"
+    theGraph.ensSubgraph.query = sinon.stub().withArgs(namesQuery, {}).resolves({P0x11: [],P0x12: []})
+
+    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ethAddresses:addresses}), headers: {"If-Modified-Since": "Mon Jul 11 2022 15:53:46 GMT-0300 (Argentina Standard Time)"}})
+
+    expect(response.status).toEqual(200)
+    const responseText = await response.text()
+    const responseObj = JSON.parse(responseText)
+    expect(responseObj.length).toEqual(2)
+
+    expect(responseObj[0].avatars.length).toEqual(1)
+    expect(responseObj[0].avatars?.[0].hasClaimedName).toEqual(false)
+    expect(responseObj[0].avatars?.[0].ethAddress).toEqual("0x11")
+    expect(responseObj[0].avatars?.[0].name).toEqual("cryptonico#e602")
+    expect(responseObj[0].avatars?.[0].unclaimedName).toEqual("cryptonico")
+    expect(responseObj[0].avatars?.[0].avatar.bodyShape).toEqual("urn:decentraland:off-chain:base-avatars:BaseMale")
+    expect(responseObj[0].avatars?.[0].avatar.snapshots.body).toEqual("https://peer.decentraland.org/content/contents/bafkreicilawwtbjyf6ahyzv64ssoamdm73rif75qncee5lv6j3a3352lua")
+    expect(responseObj[0].avatars?.[0].avatar.snapshots.face256).toEqual("https://peer.decentraland.org/content/contents/bafkreigi3yrgdhvjr2cqzxvfztnsubnll2cfdioo4vfzu6o6vibwoag2ma")
+    expect(responseObj[0].avatars?.[0].avatar.wearables.length).toEqual(0)
+
+    expect(responseObj[1].avatars.length).toEqual(1)
+    expect(responseObj[1].avatars?.[0].hasClaimedName).toEqual(false)
+    expect(responseObj[1].avatars?.[0].ethAddress).toEqual("0x12")
+    expect(responseObj[1].avatars?.[0].name).toEqual("cryptonico#e602")
+    expect(responseObj[1].avatars?.[0].unclaimedName).toEqual("cryptonico")
+    expect(responseObj[1].avatars?.[0].avatar.bodyShape).toEqual("urn:decentraland:off-chain:base-avatars:BaseMale")
+    expect(responseObj[1].avatars?.[0].avatar.snapshots.body).toEqual("https://peer.decentraland.org/content/contents/bafkreicilawwtbjyf6ahyzv64ssoamdm73rif75qncee5lv6j3a3352lua")
+    expect(responseObj[1].avatars?.[0].avatar.snapshots.face256).toEqual("https://peer.decentraland.org/content/contents/bafkreigi3yrgdhvjr2cqzxvfztnsubnll2cfdioo4vfzu6o6vibwoag2ma")
+    expect(responseObj[1].avatars?.[0].avatar.wearables.length).toEqual(0)
+  })
+
+  it("calling with two profiles, with if-modified-since header, with both of them modified before the header's date", async () => {
+    const { localFetch } = components
+    const { content } = stubComponents
+    const addresses = ["0x11", "0x12"]
+
+    content.fetchEntitiesByPointers.withArgs(EntityType.PROFILE, addresses).resolves(await Promise.all([profileEntityWithOldTimestamp, profileEntityWithNewTimestamp]))
+    
+    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ethAddresses:addresses}), headers: {"If-Modified-Since": "Mon Jul 11 2023 15:53:46 GMT-0300 (Argentina Standard Time)"}})
+
+    expect(response.status).toEqual(304)
+    const responseText = await response.text()
+    expect(responseText).toEqual('')
+
+  })
+
+
 })

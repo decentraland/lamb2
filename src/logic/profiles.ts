@@ -10,7 +10,7 @@ export async function getProfiles(components: Pick<AppComponents, "metrics" | "c
     try {
         // Fetch entities by pointers
         let profileEntities: Entity[] = await components.content.fetchEntitiesByPointers(EntityType.PROFILE, ethAddresses)
-        
+
         // Avoid querying profiles if there wasn't any new deployment
         if (noNewDeployments(ifModifiedSinceTimestamp, profileEntities))
             return
