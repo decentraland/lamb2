@@ -11,6 +11,7 @@ import { TheGraphComponent } from "./ports/the-graph"
 import { Profile, IPFSv1, IPFSv2 } from '@dcl/schemas'
 import { ContentComponent } from "./ports/content"
 import { OwnershipCachesComponent } from "./ports/ownership-caches"
+import { Variables } from "@well-known-components/thegraph-component"
 
 export type GlobalContext = {
   components: BaseComponents
