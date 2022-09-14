@@ -2,9 +2,7 @@ import { createConfigComponent, createDotEnvConfigComponent } from "@well-known-
 import { createLogComponent } from "@well-known-components/logger"
 import { createTestMetricsComponent } from "@well-known-components/metrics"
 import sinon from "sinon"
-import { pingHandler } from "../../src/controllers/handlers/ping-handler"
 import { ownedNFTsByAddress } from "../../src/logic/ownership"
-import { metricDeclarations } from "../../src/metrics"
 import { createTestTheGraphComponent } from "../components"
 
 
