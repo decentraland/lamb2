@@ -26,13 +26,15 @@ export const createMockSubgraphComponent = (mock?: QueryGraph): ISubgraphCompone
   query: mock ?? (jest.fn() as jest.MockedFunction<QueryGraph>)
 })
 
-const defaultTheGraphComponent: TheGraphComponent = {
-  start: async () => {},
-  stop: async () => {},
-  collectionsSubgraph: createMockSubgraphComponent(),
-  maticCollectionsSubgraph: createMockSubgraphComponent(),
-  ensSubgraph: createMockSubgraphComponent(),
-  thirdPartyRegistrySubgraph: createMockSubgraphComponent()
+export function createTestTheGraphComponent(): TheGraphComponent {
+  return {
+    start: async () => {},
+    stop: async () => {},
+    collectionsSubgraph: createMockSubgraphComponent(),
+    maticCollectionsSubgraph: createMockSubgraphComponent(),
+    ensSubgraph: createMockSubgraphComponent(),
+    thirdPartyRegistrySubgraph: createMockSubgraphComponent()
+  }
 }
 
 // export const buildTheGraphComponent = (subGraphs?: Partial<SubGraphs>): TheGraphComponent => ({
