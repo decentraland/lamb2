@@ -43,9 +43,12 @@ export function getCachedNFTsAndPendingCheckNFTs(ownedNFTsByAddress: Map<string,
     return { nftsToCheckByAddress, cachedOwnedNFTsByAddress };
 }
 
-export function fillCacheWithRecentlyCheckedWearables(nftsToCheckByAddress: Map<string, string[]>, ownedWearablesByAddress: Map<string, string[]>, cache: LRU<string, Map<string, boolean>>) {
-    for (const [address, nfts] of nftsToCheckByAddress) {
-        const ownedNftsForAddress = ownedWearablesByAddress.get(address);
+/* 
+ * Traverse the already checked nfts to set the cache depending on its ownership
+ */
+export function fillCacheWithRecentlyCheckedWearables(checkedNFTsByAddress: Map<string, string[]>, ownedNFTsByAddress: Map<string, string[]>, cache: LRU<string, Map<string, boolean>>) {
+    for (const [address, nfts] of checkedNFTsByAddress) {
+        const ownedNftsForAddress = ownedNFTsByAddress.get(address);
 
         // Get the cached map for the address or initialize it if address is not present
         let ownershipForAddressToBeCached: Map<string, boolean>;

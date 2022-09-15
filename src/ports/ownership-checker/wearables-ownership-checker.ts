@@ -22,7 +22,7 @@ export function createWearablesOwnershipChecker(cmpnnts: Pick<AppComponents, "me
         // Check ownership for the non-cached nfts
         ownedWearablesByAddress = await ownedNFTsByAddress(components, nftsToCheckByAddress, queryWearablesSubgraph)
 
-        // Traverse the checked nfts to set the cache depending on its ownership
+        // Traverse the already checked nfts to set the cache depending on its ownership
         fillCacheWithRecentlyCheckedWearables(nftsToCheckByAddress, ownedWearablesByAddress, cache);
 
         // Merge cachedOwnedNFTsByAddress (contains the nfts which ownershipwas cached) into ownedWearablesByAddress (recently checked ownnership map)
