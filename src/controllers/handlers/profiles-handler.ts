@@ -5,18 +5,18 @@ import { HandlerContextWithPath } from "../../types"
 export async function profilesHandler(context: HandlerContextWithPath<"metrics" | "content" | "theGraph" | "config" | "fetch" | "ownershipCaches", "/profiles">) {
   // Get the profile ids
   const body = await context.request.json()
-  const ethAddresses = body.ethAddresses
+  const ids = body.ids
 
   // Return 400 if there are no ids in the payload
-  if (!ethAddresses) {
+  if (!ids) {
     return {
       status: 400,
-      body: "No profile ids were specified. Expected ethAddresses:string[] in body"
+      body: "No profile ids were specified. Expected ids:string[] in body"
     }
   }
 
   // Get profiles depending on its adressess
-  const profiles = await getProfiles(context.components, ethAddresses, getIfModifiedSinceTimestamp(context.request))
+  const profiles = await getProfiles(context.components, ids, getIfModifiedSinceTimestamp(context.request))
 
   // The only case in which we receive undefined profiles is when no profile was updated after de If-Modified-Since specified moment.
   // In this case, as per spec, we return 304 (not modified) and empty body
