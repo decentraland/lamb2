@@ -30,13 +30,13 @@ test("integration tests for /profiles", function ({ components, stubComponents }
     const r = await localFetch.fetch("/profiles", {method: 'post', body: '{}'})
 
     expect(r.status).toEqual(400)
-    expect(await r.text()).toEqual("No profile ids were specified. Expected ethAddresses:string[] in body")
+    expect(await r.text()).toEqual("No profile ids were specified. Expected ids:string[] in body")
   })
 
   it("calling with an empty list", async () => {
     const { localFetch } = components
 
-    const r = await localFetch.fetch("/profiles", {method: 'post', body: '{"ethAddresses":[]}'})
+    const r = await localFetch.fetch("/profiles", {method: 'post', body: '{"ids":[]}'})
 
     expect(r.status).toEqual(200)
     expect(await r.text()).toEqual("[]")
@@ -80,7 +80,7 @@ test("integration tests for /profiles", function ({ components, stubComponents }
       .onCall(0).resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
       .onCall(1).resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
     
-    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ethAddresses:addresses})})
+    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ids:addresses})})
 
     sinon.assert.calledOnceWithMatch(content.fetchEntitiesByPointers, EntityType.PROFILE, addresses)
 
@@ -124,7 +124,7 @@ test("integration tests for /profiles", function ({ components, stubComponents }
       P0x2: []
     })
     
-    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ethAddresses:addresses})})
+    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ids:addresses})})
 
     expect(response.status).toEqual(200)
     const responseText = await response.text()
@@ -162,7 +162,7 @@ test("integration tests for /profiles", function ({ components, stubComponents }
         P0x3: []
     })
     
-    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ethAddresses:addresses})})
+    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ids:addresses})})
 
     expect(response.status).toEqual(200)
     const responseText = await response.text()
@@ -200,7 +200,7 @@ test("integration tests for /profiles", function ({ components, stubComponents }
         P0x4: []
     })
     
-    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ethAddresses:addresses})})
+    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ids:addresses})})
 
     expect(response.status).toEqual(200)
     const responseText = await response.text()
@@ -236,7 +236,7 @@ test("integration tests for /profiles", function ({ components, stubComponents }
         P0x5: [ { name: 'cryptonico' },]
     })
     
-    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ethAddresses:addresses})})
+    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ids:addresses})})
 
     expect(response.status).toEqual(200)
     const responseText = await response.text()
@@ -282,7 +282,7 @@ test("integration tests for /profiles", function ({ components, stubComponents }
       .onCall(0).resolves(new Response(JSON.stringify(tpwResolverResponseOwnOnlyOne)))
       .onCall(1).resolves(new Response(JSON.stringify(tpwResolverResponseOwnOnlyOne)))
     
-    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ethAddresses:addresses})})
+    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ids:addresses})})
 
     expect(response.status).toEqual(200)
     const responseText = await response.text()
@@ -341,7 +341,7 @@ test("integration tests for /profiles", function ({ components, stubComponents }
       .onCall(0).resolves(new Response(JSON.stringify(tpwResolverResponseFromDifferentCollection)))
       .onCall(1).resolves(new Response(JSON.stringify(tpwResolverResponseFromDifferentCollection)))
       .onCall(2).resolves(new Response(JSON.stringify(tpwResolverResponseFromDifferentCollection)))
-    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ethAddresses:addresses})})
+    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ids:addresses})})
 
     expect(response.status).toEqual(200)
     const responseText = await response.text()
@@ -411,7 +411,7 @@ test("integration tests for /profiles", function ({ components, stubComponents }
       .onCall(0).resolves(new Response(JSON.stringify(tpwResolverResponseFullAnother)))
       .onCall(1).resolves(new Response(JSON.stringify(tpwResolverResponseFullAnother)))
     
-    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ethAddresses:addresses})})
+    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ids:addresses})})
 
     expect(response.status).toEqual(200)
     const responseText = await response.text()
@@ -463,7 +463,7 @@ test("integration tests for /profiles", function ({ components, stubComponents }
     const namesQuery = "{\n      P0x9: nfts(where: { owner: \"0x9\", category: ens, name_in: [\"cryptonico#e602\"] }, first: 1000) {\n        name\n      }\n    }"
     theGraph.ensSubgraph.query = sinon.stub().withArgs(namesQuery, {}).resolves({P0x9: []})
     
-    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ethAddresses:addresses})})
+    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ids:addresses})})
 
     expect(response.status).toEqual(200)
     const responseText = await response.text()
@@ -492,7 +492,7 @@ test("integration tests for /profiles", function ({ components, stubComponents }
     const namesQuery = "{\n      P0x10: nfts(where: { owner: \"0x10\", category: ens, name_in: [\"cryptonico#e602\"] }, first: 1000) {\n        name\n      }\n    }"
     theGraph.ensSubgraph.query = sinon.stub().withArgs(namesQuery, {}).resolves({P0x10: []})
     
-    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ethAddresses:addresses})})
+    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ids:addresses})})
 
     expect(response.status).toEqual(200)
     const responseText = await response.text()
@@ -523,7 +523,7 @@ test("integration tests for /profiles", function ({ components, stubComponents }
     const namesQuery = "{\n      P0x11: nfts(where: { owner: \"0x11\", category: ens, name_in: [\"cryptonico#e602\"] }, first: 1000) {\n        name\n      }\n    \n\n      P0x12: nfts(where: { owner: \"0x12\", category: ens, name_in: [\"cryptonico#e602\"] }, first: 1000) {\n        name\n      }\n    }"
     theGraph.ensSubgraph.query = sinon.stub().withArgs(namesQuery, {}).resolves({P0x11: [],P0x12: []})
 
-    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ethAddresses:addresses}), headers: {"If-Modified-Since": "Mon Jul 11 2022 15:53:46 GMT-0300 (Argentina Standard Time)"}})
+    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ids:addresses}), headers: {"If-Modified-Since": "Mon Jul 11 2022 15:53:46 GMT-0300 (Argentina Standard Time)"}})
 
     expect(response.status).toEqual(200)
     const responseText = await response.text()
@@ -558,7 +558,7 @@ test("integration tests for /profiles", function ({ components, stubComponents }
 
     content.fetchEntitiesByPointers.withArgs(EntityType.PROFILE, addresses).resolves(await Promise.all([profileEntityWithOldTimestamp, profileEntityWithNewTimestamp]))
     
-    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ethAddresses:addresses}), headers: {"If-Modified-Since": "Mon Jul 11 2023 15:53:46 GMT-0300 (Argentina Standard Time)"}})
+    const response = await localFetch.fetch("/profiles", {method: 'post', body: JSON.stringify({ids:addresses}), headers: {"If-Modified-Since": "Mon Jul 11 2023 15:53:46 GMT-0300 (Argentina Standard Time)"}})
 
     expect(response.status).toEqual(304)
     const responseText = await response.text()
