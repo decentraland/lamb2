@@ -10,7 +10,7 @@ export const metricDeclarations = {
   profiles_counter: {
     help: "Count calls to profiles",
     type: IMetricsComponent.CounterType,
-    labelNames: ["pathname", "ethAddresses"]
+    labelNames: ["pathname", "ids"]
   },
   subgraph_ok_total: {
     help: "Count total calls to subgraph",
