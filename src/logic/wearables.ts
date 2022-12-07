@@ -1,5 +1,6 @@
-import { ProfileMetadata } from "../types"
+import { AppComponents, ProfileMetadata } from "../types"
 import { parseUrn } from '@dcl/urn-resolver'
+import { runQuery } from "../ports/the-graph"
 
 export async function getValidNonBaseWearables(metadata: ProfileMetadata): Promise<string[]> {
     const wearablesInProfile: string[] = []
@@ -29,3 +30,40 @@ export async function translateWearablesIdFormat(wearableId: string): Promise<st
     return parsed?.uri?.toString()
 }
 
+const QUERY_WEARABLES: string = `
+{
+  nfts(
+    where: {owner: "$owner" },
+    searchItemType_in: ["wearable_v1", "wearable_v2", "smart_wearable_v1"],
+    orderBy: updatedAt,
+    orderDirection: desc,
+    first: $first,
+    skip: $skip
+  ) {
+    urn,
+    id,
+    category,
+    updatedAt
+  }
+}`
+
+export async function getWearablesForAddress(
+  components: Pick<AppComponents, 'theGraph'>,
+  id: string,
+  pageSize: number,
+  pageNum: number
+) {
+  const { theGraph } = components
+
+  // Set query
+  const query = QUERY_WEARABLES.replace('$owner', id.toLowerCase())
+    .replace('$first', `${pageSize}`)
+    .replace('$skip', `${(pageNum - 1) * pageSize}`)
+
+  // Query wearables from TheGraph
+  const collections = await runQuery<any[]>(theGraph.collectionsSubgraph, query, {})
+  const matic = await runQuery<any[]>(theGraph.maticCollectionsSubgraph, query, {})
+  console.log(collections)
+  console.log(matic)
+  return collections
+}
