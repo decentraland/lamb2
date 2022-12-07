@@ -4,8 +4,11 @@
 import { createRunner, createLocalFetchCompoment } from "@well-known-components/test-helpers"
 
 import { main } from "../src/service"
-import { TestComponents } from "../src/types"
+import { QueryGraph, TestComponents } from "../src/types"
 import { initComponents as originalInitComponents } from "../src/components"
+import { EntityType } from "dcl-catalyst-commons"
+import { ISubgraphComponent } from "@well-known-components/thegraph-component"
+import { TheGraphComponent } from "../src/ports/the-graph"
 
 /**
  * Behaves like Jest "describe" function, used to describe a test for a
@@ -19,13 +22,36 @@ export const test = createRunner<TestComponents>({
   initComponents,
 })
 
+export const createMockSubgraphComponent = (mock?: QueryGraph): ISubgraphComponent => ({
+  query: mock ?? (jest.fn() as jest.MockedFunction<QueryGraph>)
+})
+
+export function createTestTheGraphComponent(): TheGraphComponent {
+  return {
+    start: async () => {},
+    stop: async () => {},
+    collectionsSubgraph: createMockSubgraphComponent(),
+    maticCollectionsSubgraph: createMockSubgraphComponent(),
+    ensSubgraph: createMockSubgraphComponent(),
+    thirdPartyRegistrySubgraph: createMockSubgraphComponent()
+  }
+}
+
+// export const buildTheGraphComponent = (subGraphs?: Partial<SubGraphs>): TheGraphComponent => ({
+//   ...defaultTheGraphComponent,
+//   ...subGraphs
+// })
+
 async function initComponents(): Promise<TestComponents> {
   const components = await originalInitComponents()
 
   const { config } = components
+
+  // components.theGraph = defaultTheGraphComponent
 
   return {
     ...components,
     localFetch: await createLocalFetchCompoment(config),
   }
 }
+

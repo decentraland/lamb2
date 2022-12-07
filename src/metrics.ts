@@ -5,8 +5,23 @@ export const metricDeclarations = {
   test_ping_counter: {
     help: "Count calls to ping",
     type: IMetricsComponent.CounterType,
-    labelNames: ["pathname"],
+    labelNames: ["pathname"]
   },
+  profiles_counter: {
+    help: "Count calls to profiles",
+    type: IMetricsComponent.CounterType,
+    labelNames: ["pathname", "ids"]
+  },
+  subgraph_ok_total: {
+    help: "Count total calls to subgraph",
+    type: IMetricsComponent.CounterType,
+    labelNames: ["url"]
+  },
+  subgraph_errors_total: {
+    help: "Count total calls to subgraph",
+    type: IMetricsComponent.CounterType,
+    labelNames: ["url", "errorMessage"]
+  }
 }
 
 // type assertions

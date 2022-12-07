@@ -7,6 +7,11 @@ import type {
   IMetricsComponent,
 } from "@well-known-components/interfaces"
 import { metricDeclarations } from "./metrics"
+import { TheGraphComponent } from "./ports/the-graph"
+import { Profile, IPFSv1, IPFSv2 } from '@dcl/schemas'
+import { ContentComponent } from "./ports/content"
+import { OwnershipCachesComponent } from "./ports/ownership-caches"
+import { Variables } from "@well-known-components/thegraph-component"
 
 export type GlobalContext = {
   components: BaseComponents
@@ -19,6 +24,9 @@ export type BaseComponents = {
   server: IHttpServerComponent<GlobalContext>
   fetch: IFetchComponent
   metrics: IMetricsComponent<keyof typeof metricDeclarations>
+  content: ContentComponent
+  theGraph: TheGraphComponent
+  ownershipCaches: OwnershipCachesComponent
 }
 
 // components used in runtime
@@ -44,3 +52,45 @@ export type HandlerContextWithPath<
 >
 
 export type Context<Path extends string = any> = IHttpServerComponent.PathAwareContext<GlobalContext, Path>
+
+export type Filename = string
+export type Filehash = IPFSv1 | IPFSv2
+export type WearableId = string // These ids are used as pointers on the content server
+export type Name = string
+
+export type ProfileMetadata = Profile & {
+  timestamp: number
+}
+
+export interface NFTsOwnershipChecker {
+  addNFTsForAddress: (address: string, nfts: string[]) => void
+  checkNFTsOwnership: () => void
+  getOwnedNFTsForAddress: (address: string) => string[]
+}
+
+export interface TPWResolver {
+  findWearablesByOwner: (owner: string) => Promise<string[]>
+}
+
+export type ThirdPartyAsset = {
+  id: string
+  amount: number
+  urn: {
+    decentraland: string
+  }
+}
+
+export type ThirdPartyAssets = {
+  address: string
+  total: number
+  page: number
+  assets: ThirdPartyAsset[]
+  next?: string
+}
+
+/**
+ * Function used to fetch TheGraph
+ * @public
+ */
+ export type QueryGraph = <T = any>(query: string, variables?: Variables, remainingAttempts?: number) => Promise<T>
+ 

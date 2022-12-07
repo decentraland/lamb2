@@ -5,16 +5,25 @@ import { createFetchComponent } from "./ports/fetch"
 import { createMetricsComponent } from "@well-known-components/metrics"
 import { AppComponents, GlobalContext } from "./types"
 import { metricDeclarations } from "./metrics"
+import { createTheGraphComponent } from "./ports/the-graph"
+import { createContentComponent } from "./ports/content"
+import { createOwnershipCachesComponent } from "./ports/ownership-caches"
 
 // Initialize all the components of the app
 export async function initComponents(): Promise<AppComponents> {
+  
   const config = await createDotEnvConfigComponent({ path: [".env.default", ".env"] })
-
   const logs = createLogComponent()
   const server = await createServerComponent<GlobalContext>({ config, logs }, {})
   const statusChecks = await createStatusCheckComponent({ server, config })
   const fetch = await createFetchComponent()
   const metrics = await createMetricsComponent(metricDeclarations, { server, config })
+  
+  const content = await createContentComponent({ config })
+
+  const theGraph = await createTheGraphComponent({ config, logs, fetch, metrics })
+
+  const ownershipCaches = await createOwnershipCachesComponent({ config })
 
   return {
     config,
@@ -23,5 +32,8 @@ export async function initComponents(): Promise<AppComponents> {
     statusChecks,
     fetch,
     metrics,
+    content,
+    theGraph,
+    ownershipCaches
   }
 }
