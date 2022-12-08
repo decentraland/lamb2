@@ -25,9 +25,14 @@ export async function getNamesForAddress(
   pageNum: number
 ) {
   const { theGraph } = components
-  const query = QUERY_NAMES.replace('$owner', id.toLowerCase())
+
+  // Set query
+  const query = QUERY_NAMES
+    .replace('$owner', id.toLowerCase())
     .replace('$first', `${pageSize}`)
     .replace('$skip', `${(pageNum - 1) * pageSize}`)
+
+  // Query owned names from TheGraph for the address
   const names = await runQuery<any[]>(theGraph.ensSubgraph, query, {})
   return names
 }

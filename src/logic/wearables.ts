@@ -56,11 +56,12 @@ export async function getWearablesForAddress(
   const { theGraph } = components
 
   // Set query
-  const query = QUERY_WEARABLES.replace('$owner', id.toLowerCase())
+  const query = QUERY_WEARABLES
+    .replace('$owner', id.toLowerCase())
     .replace('$first', `${pageSize}`)
     .replace('$skip', `${(pageNum - 1) * pageSize}`)
 
-  // Query wearables from TheGraph
+  // Query owned wearables from TheGraph for the address
   const collections = await runQuery<any[]>(theGraph.collectionsSubgraph, query, {})
   const matic = await runQuery<any[]>(theGraph.maticCollectionsSubgraph, query, {})
   console.log(collections)
