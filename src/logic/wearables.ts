@@ -33,9 +33,8 @@ export async function translateWearablesIdFormat(wearableId: string): Promise<st
 const QUERY_WEARABLES: string = `
 {
   nfts(
-    where: {owner: "$owner" },
-    searchItemType_in: ["wearable_v1", "wearable_v2", "smart_wearable_v1"],
-    orderBy: updatedAt,
+    where: { owner: "$owner", category: "wearable"},
+    orderBy: createdAt,
     orderDirection: desc,
     first: $first,
     skip: $skip
@@ -43,7 +42,7 @@ const QUERY_WEARABLES: string = `
     urn,
     id,
     category,
-    updatedAt
+    createdAt
   }
 }`
 
