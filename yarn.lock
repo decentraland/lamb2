@@ -296,12 +296,12 @@
   dependencies:
     eth-connect "^6.0.2"
 
-"@dcl/crypto@^3.0.1":
-  version "3.0.1"
-  resolved "https://registry.npmjs.org/@dcl/crypto/-/crypto-3.0.1.tgz"
-  integrity sha512-jHp/cDhdTQNIcOpCfQMNtfSKpABMdYnSXepOsYd9YGM7G55cg1Bg8706zx9yeceSxnHDTWR5n3TXBZlbexvtTg==
+"@dcl/crypto@^3.2.3":
+  version "3.2.3"
+  resolved "https://registry.yarnpkg.com/@dcl/crypto/-/crypto-3.2.3.tgz#768d3b0ea4d62b7078d7466fa8159d096f1cb618"
+  integrity sha512-0fscXbo8FRjs3Fy3ekBWRNBmUB4McWncEpsa+VFmhBRvjYI7xK00W0E/MM5eiWoQxt92fewkIR68vEPTCaqLwA==
   dependencies:
-    "@dcl/schemas" "^4.14.1"
+    "@dcl/schemas" "^5.4.2"
     eth-connect "^6.0.3"
     ethereum-cryptography "^1.0.3"
 
@@ -314,7 +314,7 @@
     ipfs-unixfs-importer "^7.0.3"
     multiformats "^9.6.3"
 
-"@dcl/schemas@^4.14.0", "@dcl/schemas@^4.14.1":
+"@dcl/schemas@^4.14.0":
   version "4.15.0"
   resolved "https://registry.npmjs.org/@dcl/schemas/-/schemas-4.15.0.tgz"
   integrity sha512-anT86g2keEmU5LMxg93ARgYUCmnz4YnOLjMY3ZJrHqD4LklDBPBcOiDpix973yO6BEDD3jhvWOKpvZ/2OmIXhg==
@@ -323,16 +323,7 @@
     ajv-errors "^2.0.1"
     ajv-keywords "^4.0.1"
 
-"@dcl/schemas@^5.0.3":
-  version "5.4.1"
-  resolved "https://registry.npmjs.org/@dcl/schemas/-/schemas-5.4.1.tgz"
-  integrity sha512-CkoGwKdkgUwvssmQ2fbdlDh9D/c9akwg6/FF4nCdDG8snFpFuI0MIiTFPUdZFpmYnS2JxJt5u0pjg7xjTeGTUQ==
-  dependencies:
-    ajv "^8.11.0"
-    ajv-errors "^3.0.0"
-    ajv-keywords "^5.1.0"
-
-"@dcl/schemas@^5.4.2":
+"@dcl/schemas@^5.0.3", "@dcl/schemas@^5.4.2":
   version "5.4.2"
   resolved "https://registry.npmjs.org/@dcl/schemas/-/schemas-5.4.2.tgz"
   integrity sha512-NyJvL8KGsCm3GbyzELZen+4GR7LmPb+zGie6XatND2FIHsNkciWldKJ8/o2gCFOWNyhA+Si8umQllG5dT7BOxg==
