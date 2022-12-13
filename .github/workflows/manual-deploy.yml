@@ -8,8 +8,8 @@ on:
         type: choice
         options:
           - dev
-          - biz
-        default: biz
+          - prd
+        default: dev
         description: Environment
       tag:
         required: true
