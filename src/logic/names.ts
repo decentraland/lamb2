@@ -4,7 +4,7 @@ import { AppComponents } from '../types'
 const QUERY_NAMES: string = `
 {
   nfts(
-    where: {owner: "$owner"} 
+    where: {owner: "$owner", category: "ens"} 
     orderBy: createdAt,
     orderDirection: desc,
     first: $first,
