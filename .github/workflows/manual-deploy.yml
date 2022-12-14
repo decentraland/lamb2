@@ -3,14 +3,6 @@ name: Build and Deploy
 on:
   workflow_dispatch:
     inputs:
-      deployment-environment:
-        required: true
-        type: choice
-        options:
-          - dev
-          - prd
-        default: dev
-        description: Environment
       tag:
         required: true
         default: "latest"
@@ -29,7 +21,6 @@ jobs:
         uses: decentraland/actions/.github/workflows/build-quay-main.yml@main
         with:
           service-name: lambdos
-          deployment-environment: ${{ inputs.deployment-environment }}
           docker-tag: ${{ inputs.tag }}
         secrets:
           QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
