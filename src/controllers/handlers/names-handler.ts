@@ -4,8 +4,8 @@ import { HandlerContextWithPath } from '../../types'
 export async function namesHandler(context: HandlerContextWithPath<'config' | 'theGraph', '/nfts/names/:id'>) {
   // Get params
   const { id } = context.params
-  const pageSize = parseInt(context.url.searchParams.get('pageSize') ?? '5')
-  const pageNum = parseInt(context.url.searchParams.get('pageNum') ?? '1')
+  const pageSize = context.url.searchParams.get('pageSize')
+  const pageNum = context.url.searchParams.get('pageNum')
 
   const names = await getNamesForAddress(context.components, id, pageSize, pageNum)
 

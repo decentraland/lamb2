@@ -4,8 +4,8 @@ import { HandlerContextWithPath } from '../../types'
 export async function wearablesHandler(context: HandlerContextWithPath<'config' | 'theGraph', '/nfts/wearables/:id'>) {
   // Get request params
   const { id } = context.params
-  const pageSize = parseInt(context.url.searchParams.get('pageSize') ?? '5')
-  const pageNum = parseInt(context.url.searchParams.get('pageNum') ?? '1')
+  const pageSize = context.url.searchParams.get('pageSize')
+  const pageNum = context.url.searchParams.get('pageNum')
 
   // Get wearables for requested address
   const wearables = await getWearablesForAddress(context.components, id, pageSize, pageNum)

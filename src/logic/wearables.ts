@@ -35,6 +35,20 @@ const QUERY_WEARABLES: string = `
   nfts(
     where: { owner: "$owner", category: "wearable"},
     orderBy: createdAt,
+    orderDirection: desc
+  ) {
+    urn,
+    id,
+    category,
+    createdAt
+  }
+}`
+
+const QUERY_WEARABLES_PAGINATED: string = `
+{
+  nfts(
+    where: { owner: "$owner", category: "wearable"},
+    orderBy: createdAt,
     orderDirection: desc,
     first: $first,
     skip: $skip
@@ -49,16 +63,21 @@ const QUERY_WEARABLES: string = `
 export async function getWearablesForAddress(
   components: Pick<AppComponents, 'theGraph'>,
   id: string,
-  pageSize: number,
-  pageNum: number
+  pageSize?: string | null,
+  pageNum?: string | null
 ) {
   const { theGraph } = components
 
-  // Set query
-  const query = QUERY_WEARABLES
-    .replace('$owner', id.toLowerCase())
-    .replace('$first', `${pageSize}`)
-    .replace('$skip', `${(pageNum - 1) * pageSize}`)
+  // Set query depending on pagination
+  let query
+  if (pageSize && pageNum) {
+    query = QUERY_WEARABLES_PAGINATED
+      .replace('$owner', id.toLowerCase())
+      .replace('$first', `${pageSize}`)
+      .replace('$skip', `${(parseInt(pageNum) - 1) * parseInt(pageSize)}`)
+  } else {
+    query = QUERY_WEARABLES.replace('$owner', id.toLowerCase())
+  }
 
   // Query owned wearables from TheGraph for the address
   const collections = await runQuery<any[]>(theGraph.collectionsSubgraph, query, {})
