@@ -3,7 +3,7 @@ import { AppComponents } from '../types'
 
 const QUERY_NAMES: string = `
 {
-  enss(
+  nfts(
     where: {owner: "$owner"} 
     orderBy: createdAt,
     orderDirection: desc,
@@ -11,10 +11,15 @@ const QUERY_NAMES: string = `
     skip: $skip
   ) {
     id,
-    nft {
-      name
-    },
-    createdAt
+    name,
+    contractAddress,
+    soldAt,
+    activeOrder {
+      id,
+      marketplaceAddress,
+      category,
+      price
+    }
   }
 }`
 
