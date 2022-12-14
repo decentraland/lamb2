@@ -8,13 +8,31 @@ const QUERY_LANDS: string = `
     first: $first,
     skip: $skip
   ) {
-    name
+    name,
+    contractAddress,
+    category,
     parcel {
-      x, y
+      x, y,
+			data {
+			  id,
+        name,
+        description
+			}
     }
     estate {
-      tokenId
-    }
+      tokenId,
+      data {
+        id,
+        description
+      }
+    },
+    activeOrder {
+      id,
+      category,
+      status,
+      price
+    },
+    image
   }
 }`
 
