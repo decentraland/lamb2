@@ -20,14 +20,17 @@ on:
 jobs:
   build-and-deploy:
     if: ${{ inputs.deployment-environment }}
-    name: "Build and then deploy to: ${{ inputs.deployment-environment }}"
+    name: "Build and deploy to: ${{ inputs.deployment-environment }}"
     runs-on: ubuntu-latest
     environment: ${{ inputs.deployment-environment }}
-    uses: decentraland/actions/.github/workflows/build-quay-main.yml@main
-    with:
-      service-name: lambdos
-      deployment-environment: ${{ inputs.deployment-environment }}
-      docker-tag: ${{ inputs.tag }}
-    secrets:
-      QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
-      QUAY_TOKEN: ${{ secrets.QUAY_TOKEN }}
+    steps:
+      - name: Build and deploy to quay
+        id: deploy
+        uses: decentraland/actions/.github/workflows/build-quay-main.yml@main
+        with:
+          service-name: lambdos
+          deployment-environment: ${{ inputs.deployment-environment }}
+          docker-tag: ${{ inputs.tag }}
+        secrets:
+          QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
+          QUAY_TOKEN: ${{ secrets.QUAY_TOKEN }}
