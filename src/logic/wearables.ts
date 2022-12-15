@@ -39,6 +39,13 @@ const QUERY_WEARABLES: string = `
   ) {
     urn,
     id,
+    item {
+      metadata {
+        wearable {
+          name
+        }
+      }
+    },
     category,
     createdAt
   }
@@ -55,6 +62,13 @@ const QUERY_WEARABLES_PAGINATED: string = `
   ) {
     urn,
     id,
+    item {
+      metadata {
+        wearable {
+          name
+        }
+      }
+    },
     category,
     createdAt
   }

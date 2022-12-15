@@ -10,6 +10,13 @@ const QUERY_EMOTES: string = `
   ) {
     urn,
     id,
+    item {
+      metadata {
+        wearable {
+          name
+        }
+      }
+    },
     category,
     createdAt
   }
@@ -26,6 +33,13 @@ const QUERY_EMOTES_PAGINATED: string = `
   ) {
     urn,
     id,
+    item {
+      metadata {
+        wearable {
+          name
+        }
+      }
+    },
     category,
     createdAt
   }
