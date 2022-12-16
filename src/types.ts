@@ -8,10 +8,11 @@ import type {
 } from "@well-known-components/interfaces"
 import { metricDeclarations } from "./metrics"
 import { TheGraphComponent } from "./ports/the-graph"
-import { Profile, IPFSv1, IPFSv2 } from '@dcl/schemas'
+import { Profile, IPFSv1, IPFSv2, NFT } from '@dcl/schemas'
 import { ContentComponent } from "./ports/content"
 import { OwnershipCachesComponent } from "./ports/ownership-caches"
 import { Variables } from "@well-known-components/thegraph-component"
+import LRU from 'lru-cache'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -27,6 +28,7 @@ export type BaseComponents = {
   content: ContentComponent
   theGraph: TheGraphComponent
   ownershipCaches: OwnershipCachesComponent
+  wearablesCache: LRU<string, NFT[]>
 }
 
 // components used in runtime

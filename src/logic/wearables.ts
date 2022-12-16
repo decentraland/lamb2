@@ -47,29 +47,7 @@ const QUERY_WEARABLES: string = `
         }
       }
     },
-    category,
-    createdAt
-  }
-}`
-
-const QUERY_WEARABLES_PAGINATED: string = `
-{
-  nfts(
-    where: { owner: "$owner", category: "wearable"},
-    orderBy: createdAt,
-    orderDirection: desc,
-    first: $first,
-    skip: $skip
-  ) {
-    urn,
-    id,
-    item {
-      metadata {
-        wearable {
-          name
-        }
-      }
-    },
+    image,
     category,
     createdAt
   }
@@ -80,34 +58,43 @@ interface wearablesQueryResponse {
 }
 
 export async function getWearablesForAddress(
-  components: Pick<AppComponents, 'theGraph'>,
+  components: Pick<AppComponents, 'theGraph' | 'wearablesCache'>,
   id: string,
-  pageSize?: string | null,
-  pageNum?: string | null,
-  paginationToken?: string | null
+  pageSize?: number,
+  pageNum?: number
 ) {
-  const { theGraph } = components
+  const { theGraph, wearablesCache } = components
 
-  // Set query depending if pagination is required
-  let query
-  if (pageSize && pageNum)
-    query = QUERY_WEARABLES_PAGINATED
-      .replace('$owner', id.toLowerCase())
-      .replace('$first', `${pageSize}`)
-      .replace('$skip', `${(parseInt(pageNum) - 1) * parseInt(pageSize)}`)
-  else
-    query = QUERY_WEARABLES.replace('$owner', id.toLowerCase())
-  
+  // Retrieve wearables for id from cache. They are stored sorted by creation date
+  let allWearables = wearablesCache.get(id)
 
-  // Query owned wearables from TheGraph for the address
-  const collectionsWearables = (await runQuery<wearablesQueryResponse>(theGraph.collectionsSubgraph, query, {})).nfts
-  const maticWearables = (await runQuery<wearablesQueryResponse>(theGraph.maticCollectionsSubgraph, query, {})).nfts
+  // If it was a miss, a queries are done and the merged response is stored
+  if (!allWearables) {
+    // Set query
+    const query = QUERY_WEARABLES.replace('$owner', id.toLowerCase())
+    
+    // Query owned wearables from TheGraph for the address
+    const collectionsWearables = (await runQuery<wearablesQueryResponse>(theGraph.collectionsSubgraph, query, {})).nfts
+    const maticWearables = (await runQuery<wearablesQueryResponse>(theGraph.maticCollectionsSubgraph, query, {})).nfts
 
-  if (pageSize && pageNum) {
-    throw ("To be implemented")
-  } else {
-    // If pagination is not required, wearables from both collections are merged
-    return collectionsWearables.concat(maticWearables)
+    // Merge the resonses and sort by creation date
+    allWearables =  collectionsWearables.concat(maticWearables).sort(compareByCreatedAt)
+
+    // Store the in the cache
+    wearablesCache.set(id, allWearables)
   }
-  return collectionsWearables
+
+  // Return a paginated response if required
+  if (pageSize && pageNum)
+    return allWearables.slice((pageNum - 1) * pageSize, pageNum * pageSize)
+  else
+    return allWearables
+}
+
+/* 
+ * Returns a positive number if nft1 is older than nft2, zero if they are equal, and a negative
+ * number if nft2 is older than nft1. Can be used to sorts nfts by creationDate, descending
+ */
+function compareByCreatedAt(nft1: NFT, nft2: NFT) {
+  return (nft2.createdAt - nft1.createdAt)
 }
