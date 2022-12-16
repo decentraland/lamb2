@@ -19,7 +19,7 @@ export async function wearablesHandler(context: HandlerContextWithPath<'config' 
   }
 
   // Get wearables for requested address
-  const wearables = await getWearablesForAddress(context.components, id, pageSize, pageNum)
+  const wearables = await getWearablesForAddress(context.components, id, pageSize, pageNum, paginationToken)
 
   return {
     status: 200,
