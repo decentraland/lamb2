@@ -46,7 +46,9 @@ const QUERY_WEARABLES: string = `
         wearable {
           name
         }
-      }
+      },
+      rarity,
+      price
     }
   }
 }`
@@ -94,7 +96,9 @@ function transformToResponseSchema(wearable: wearableFromQuery): wearableForResp
     id: wearable.id,
     image: wearable.image,
     createdAt: wearable.createdAt,
-    name: wearable.item.metadata.wearable.name
+    name: wearable.item.metadata.wearable.name,
+    rarity: wearable.item.rarity,
+    price: wearable.item.price
   }
 }
 

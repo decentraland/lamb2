@@ -111,6 +111,8 @@ export type wearableFromQuery = {
         name: string
       }
     }
+    rarity: string,
+    price: number
   }
 }
 
@@ -119,7 +121,9 @@ export type wearableForResponse = {
   id: string,
   image: string,
   createdAt: number,
-  name: string
+  name: string,
+  rarity: string,
+  price: number
 }
 
 export type Wearable = {
