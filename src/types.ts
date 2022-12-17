@@ -8,7 +8,7 @@ import type {
 } from "@well-known-components/interfaces"
 import { metricDeclarations } from "./metrics"
 import { TheGraphComponent } from "./ports/the-graph"
-import { Profile, IPFSv1, IPFSv2, NFT } from '@dcl/schemas'
+import { Profile, IPFSv1, IPFSv2 } from '@dcl/schemas'
 import { ContentComponent } from "./ports/content"
 import { OwnershipCachesComponent } from "./ports/ownership-caches"
 import { Variables } from "@well-known-components/thegraph-component"
@@ -28,7 +28,7 @@ export type BaseComponents = {
   content: ContentComponent
   theGraph: TheGraphComponent
   ownershipCaches: OwnershipCachesComponent
-  wearablesCache: LRU<string, NFT[]>
+  wearablesCache: LRU<string, wearableForResponse[]>
 }
 
 // components used in runtime
@@ -96,3 +96,32 @@ export type ThirdPartyAssets = {
  */
  export type QueryGraph = <T = any>(query: string, variables?: Variables, remainingAttempts?: number) => Promise<T>
  
+export interface wearablesQueryResponse {
+  nfts: wearableFromQuery[]
+}
+
+export type wearableFromQuery = {
+  urn: string,
+  id: string,
+  image: string,
+  createdAt: number,
+  item: {
+    metadata: {
+      wearable: {
+        name: string
+      }
+    }
+  }
+}
+
+export type wearableForResponse = {
+  urn: string,
+  id: string,
+  image: string,
+  createdAt: number,
+  name: string
+}
+
+export type Wearable = {
+
+}
