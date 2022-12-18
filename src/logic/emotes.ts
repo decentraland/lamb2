@@ -1,5 +1,6 @@
+import { transformEmoteToResponseSchema, transformWearableToResponseSchema } from '../adapters/query-to-response'
 import { runQuery } from '../ports/the-graph'
-import { AppComponents } from '../types'
+import { AppComponents, emotesQueryResponse, wearablesQueryResponse } from '../types'
 
 const QUERY_EMOTES: string = `
 {
@@ -10,15 +11,18 @@ const QUERY_EMOTES: string = `
   ) {
     urn,
     id,
+    image,
+    createdAt,
     item {
       metadata {
-        wearable {
-          name
+        emote {
+          name,
+          description
         }
-      }
-    },
-    category,
-    createdAt
+      },
+      rarity,
+      price
+    }
   }
 }`
 
@@ -33,15 +37,18 @@ const QUERY_EMOTES_PAGINATED: string = `
   ) {
     urn,
     id,
+    image,
+    createdAt,
     item {
       metadata {
-        wearable {
-          name
+        emote {
+          name,
+          description
         }
-      }
-    },
-    category,
-    createdAt
+      },
+      rarity,
+      price
+    }
   }
 }`
 
@@ -65,6 +72,5 @@ export async function getEmotesForAddress(
   }
 
   // Query owned names from TheGraph for the address
-  const names = await runQuery<any[]>(theGraph.maticCollectionsSubgraph, query, {})
-  return names
+  return (await runQuery<emotesQueryResponse>(theGraph.maticCollectionsSubgraph, query, {})).nfts.map(transformEmoteToResponseSchema)
 }

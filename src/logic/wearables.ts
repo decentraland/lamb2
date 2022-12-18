@@ -1,6 +1,7 @@
-import { AppComponents, ProfileMetadata, wearableForResponse, wearableFromQuery, wearablesQueryResponse } from "../types"
+import { AppComponents, ProfileMetadata, nftForCollectionResponse, wearableFromQuery, wearablesQueryResponse } from "../types"
 import { parseUrn } from '@dcl/urn-resolver'
 import { runQuery } from "../ports/the-graph"
+import { transformWearableToResponseSchema } from "../adapters/query-to-response"
 
 export async function getValidNonBaseWearables(metadata: ProfileMetadata): Promise<string[]> {
     const wearablesInProfile: string[] = []
@@ -44,7 +45,8 @@ const QUERY_WEARABLES: string = `
     item {
       metadata {
         wearable {
-          name
+          name,
+          description
         }
       },
       rarity,
@@ -70,8 +72,8 @@ export async function getWearablesForAddress(
     const query = QUERY_WEARABLES.replace('$owner', id.toLowerCase())
     
     // Query owned wearables from TheGraph for the address
-    const collectionsWearables = (await runQuery<wearablesQueryResponse>(theGraph.collectionsSubgraph, query, {})).nfts.map(transformToResponseSchema)
-    const maticWearables = (await runQuery<wearablesQueryResponse>(theGraph.maticCollectionsSubgraph, query, {})).nfts.map(transformToResponseSchema)
+    const collectionsWearables = (await runQuery<wearablesQueryResponse>(theGraph.collectionsSubgraph, query, {})).nfts.map(transformWearableToResponseSchema)
+    const maticWearables = (await runQuery<wearablesQueryResponse>(theGraph.maticCollectionsSubgraph, query, {})).nfts.map(transformWearableToResponseSchema)
 
     // Merge the resonses and sort by creation date
     allWearables =  collectionsWearables.concat(maticWearables).sort(compareByCreatedAt)
@@ -88,24 +90,9 @@ export async function getWearablesForAddress(
 }
 
 /* 
- * Adapts the result from the query to the desired schema for the response
- */
-function transformToResponseSchema(wearable: wearableFromQuery): wearableForResponse {
-  return {
-    urn: wearable.urn,
-    id: wearable.id,
-    image: wearable.image,
-    createdAt: wearable.createdAt,
-    name: wearable.item.metadata.wearable.name,
-    rarity: wearable.item.rarity,
-    price: wearable.item.price
-  }
-}
-
-/* 
  * Returns a positive number if nft1 is older than nft2, zero if they are equal, and a negative
  * number if nft2 is older than nft1. Can be used to sorts nfts by creationDate, descending
  */
-function compareByCreatedAt(wearable1: wearableForResponse, wearable2: wearableForResponse) {
+function compareByCreatedAt(wearable1: nftForCollectionResponse, wearable2: nftForCollectionResponse) {
   return (wearable2.createdAt - wearable1.createdAt)
 }

@@ -1,7 +1,7 @@
-import { AppComponents, wearableForResponse } from "../types";
+import { AppComponents, nftForCollectionResponse } from "../types";
 import LRU from 'lru-cache'
 
-export async function createWearablesCache(components: Pick<AppComponents, 'config'>): Promise<LRU<string, wearableForResponse[]>> {
+export async function createWearablesCache(components: Pick<AppComponents, 'config'>): Promise<LRU<string, nftForCollectionResponse[]>> {
     const { config } = components
     
     const wearablesSize = parseInt(await config.getString('WEARABLES_CACHE_MAX_SIZE') ?? '1000')

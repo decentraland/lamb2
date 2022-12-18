@@ -28,7 +28,7 @@ export type BaseComponents = {
   content: ContentComponent
   theGraph: TheGraphComponent
   ownershipCaches: OwnershipCachesComponent
-  wearablesCache: LRU<string, wearableForResponse[]>
+  wearablesCache: LRU<string, nftForCollectionResponse[]>
 }
 
 // components used in runtime
@@ -108,7 +108,8 @@ export type wearableFromQuery = {
   item: {
     metadata: {
       wearable: {
-        name: string
+        name: string,
+        description: string
       }
     }
     rarity: string,
@@ -116,16 +117,34 @@ export type wearableFromQuery = {
   }
 }
 
-export type wearableForResponse = {
+export interface emotesQueryResponse {
+  nfts: emoteFromQuery[]
+}
+
+export type emoteFromQuery = {
+  urn: string,
+  id: string,
+  image: string,
+  createdAt: number,
+  item: {
+    metadata: {
+      emote: {
+        name: string,
+        description: string
+      }
+    }
+    rarity: string,
+    price: number
+  }
+}
+
+export type nftForCollectionResponse = {
   urn: string,
   id: string,
   image: string,
   createdAt: number,
   name: string,
+  description: string,
   rarity: string,
   price: number
-}
-
-export type Wearable = {
-
 }
