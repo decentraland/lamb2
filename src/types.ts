@@ -148,3 +148,21 @@ export type nftForCollectionResponse = {
   rarity: string,
   price: number
 }
+
+export interface namesQueryResponse {
+  nfts: nameFromQuery[]
+}
+
+export type nameFromQuery = {
+  name: string,
+  contractAddress: string,
+  activeOrder: {
+    price: string
+  }
+}
+
+export type nameForResponse = {
+  name: string,
+  contractAddress: string,
+  price: string | null
+}

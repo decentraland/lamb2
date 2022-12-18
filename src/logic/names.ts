@@ -1,5 +1,6 @@
+import { transformNameToResponseSchema } from '../adapters/query-to-response'
 import { runQuery } from '../ports/the-graph'
-import { AppComponents } from '../types'
+import { AppComponents, namesQueryResponse } from '../types'
 
 const QUERY_NAMES: string = `
 {
@@ -30,14 +31,9 @@ const QUERY_NAMES_PAGINATED: string = `
     first: $first,
     skip: $skip
   ) {
-    id,
     name,
     contractAddress,
-    soldAt,
     activeOrder {
-      id,
-      marketplaceAddress,
-      category,
       price
     }
   }
@@ -63,6 +59,6 @@ export async function getNamesForAddress(
   }
 
   // Query owned names from TheGraph for the address
-  const names = await runQuery<any[]>(theGraph.ensSubgraph, query, {})
+  const names = (await runQuery<namesQueryResponse>(theGraph.ensSubgraph, query, {})).nfts.map(transformNameToResponseSchema)
   return names
 }
