@@ -9,14 +9,9 @@ const QUERY_NAMES: string = `
     orderBy: createdAt,
     orderDirection: desc
   ) {
-    id,
     name,
     contractAddress,
-    soldAt,
     activeOrder {
-      id,
-      marketplaceAddress,
-      category,
       price
     }
   }
