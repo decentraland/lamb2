@@ -82,11 +82,17 @@ export async function getWearablesForAddress(
     wearablesCache.set(id, allWearables)
   }
 
-  // Return a paginated response if required
+  // Set total amount of wearables
+  const wearablesTotal = allWearables.length
+
+  // Virtually paginate the response if required
   if (pageSize && pageNum)
-    return allWearables.slice((pageNum - 1) * pageSize, pageNum * pageSize)
-  else
-    return allWearables
+    allWearables = allWearables.slice((pageNum - 1) * pageSize, pageNum * pageSize)
+  
+  return {
+    wearables: allWearables,
+    totalAmount: wearablesTotal
+  }
 }
 
 /* 

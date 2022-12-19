@@ -7,16 +7,18 @@ export async function wearablesHandler(context: HandlerContextWithPath<'config' 
   const pageSize = context.url.searchParams.get('pageSize')
   const pageNum = context.url.searchParams.get('pageNum')
 
-  let wearables
+  // Get wearables depending on pagination
+  let wearablesResponse
   if (pageSize && pageNum)
-    wearables = await getWearablesForAddress(context.components, id, parseInt(pageSize), parseInt(pageNum))
+    wearablesResponse = await getWearablesForAddress(context.components, id, parseInt(pageSize), parseInt(pageNum))
   else
-    wearables = await getWearablesForAddress(context.components, id)
+    wearablesResponse = await getWearablesForAddress(context.components, id)
 
   return {
     status: 200,
     body: {
-      wearables: wearables,
+      wearables: wearablesResponse.wearables,
+      totalAmount: wearablesResponse.totalAmount,
       pageNum: pageNum,
       pageSize: pageSize
     }
