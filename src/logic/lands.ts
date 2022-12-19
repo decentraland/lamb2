@@ -1,5 +1,6 @@
+import { transformLandToResponseSchema } from '../adapters/query-to-response'
 import { runQuery } from '../ports/the-graph'
-import { AppComponents } from '../types'
+import { AppComponents, landsQueryResponse } from '../types'
 
 const QUERY_LANDS: string = `
 {
@@ -10,24 +11,18 @@ const QUERY_LANDS: string = `
     contractAddress,
     category,
     parcel {
-      x, y,
+      x,
+      y,
 			data {
-			  id,
-        name,
         description
 			}
     }
     estate {
-      tokenId,
       data {
-        id,
         description
       }
     },
     activeOrder {
-      id,
-      category,
-      status,
       price
     },
     image
@@ -45,24 +40,18 @@ const QUERY_LANDS_PAGINATED: string = `
     contractAddress,
     category,
     parcel {
-      x, y,
+      x,
+      y,
 			data {
-			  id,
-        name,
         description
 			}
     }
     estate {
-      tokenId,
       data {
-        id,
         description
       }
     },
     activeOrder {
-      id,
-      category,
-      status,
       price
     },
     image
@@ -89,6 +78,6 @@ export async function getLandsForAddress(
   }
 
   // Query owned lands from TheGraph for the address
-  const lands = await runQuery<any[]>(theGraph.ensSubgraph, query, {})
+  const lands = (await runQuery<landsQueryResponse>(theGraph.ensSubgraph, query, {})).nfts.map(transformLandToResponseSchema)
   return lands
 }

@@ -1,4 +1,4 @@
-import { emoteFromQuery, nameForResponse, nameFromQuery, nftForCollectionResponse, wearableFromQuery } from "../types";
+import { emoteFromQuery, landForResponse, landFromQuery, nameForResponse, nameFromQuery, nftForCollectionResponse, wearableFromQuery } from "../types";
 
 /* 
  * Adapts the result from the wearables query to the desired schema for the response
@@ -36,12 +36,47 @@ export function transformEmoteToResponseSchema(emote: emoteFromQuery): nftForCol
  * Adapts the result from the names query to the desired schema for the response
  */
 export function transformNameToResponseSchema(name: nameFromQuery): nameForResponse {
+  // Set price depending on activeOrder. It could be null if is not at sale
   let price = null
   if (name.activeOrder)
     price = name.activeOrder.price
+
   return {
     name: name.name,
     contractAddress: name.contractAddress,
     price: price,
+  }
+}
+
+/* 
+ * Adapts the result from the landes query to the desired schema for the response
+ */
+export function transformLandToResponseSchema(land: landFromQuery): landForResponse {
+  // Set price depending on activeOrder. It could be null if is not at sale
+  let price = null
+  if (land.activeOrder)
+    price = land.activeOrder.price
+  
+  // Set category dependent fields
+  let x, y, description
+  if (land.category == "parcel") {
+    x = land.parcel.x
+    y = land.parcel.y
+    if (land.parcel.data)
+      description = land.parcel.data.description
+  } else if (land.category == "estate"){
+    if (land.estate.data)
+      description = land.estate.data.description
+  }
+  
+  return {
+    name: land.name,
+    contractAddress: land.contractAddress,
+    category: land.category,
+    x: x,
+    y: y,
+    description: description,
+    price: price,
+    image: land.image
   }
 }

@@ -166,3 +166,40 @@ export type nameForResponse = {
   contractAddress: string,
   price: string | null
 }
+
+export interface landsQueryResponse {
+  nfts: landFromQuery[]
+}
+
+export type landFromQuery = {
+  name: string,
+  contractAddress: string,
+  category: string,
+  parcel: {
+    x: string,
+    y: string,
+    data: {
+      description: string
+    }
+  }
+  estate: {
+    data: {
+      description: string
+    }
+  },
+  activeOrder: {
+    price: string
+  },
+  image: string
+}
+
+export type landForResponse = {
+  name: string,
+  contractAddress: string,
+  category: string,
+  x?: string,
+  y?: string,
+  description: string | undefined,
+  price: string | null,
+  image: string
+}
