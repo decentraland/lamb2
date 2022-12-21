@@ -1,4 +1,4 @@
-import { AppComponents, ProfileMetadata, nftForCollectionResponse, wearableFromQuery, wearablesQueryResponse } from "../types"
+import { AppComponents, ProfileMetadata, emoteForResponse, wearableFromQuery, wearablesQueryResponse, wearableForResponse } from "../types"
 import { parseUrn } from '@dcl/urn-resolver'
 import { runQuery } from "../ports/the-graph"
 import { transformWearableToResponseSchema } from "../adapters/query-to-response"
@@ -73,11 +73,11 @@ export async function getWearablesForAddress(
     const query = QUERY_WEARABLES.replace('$owner', id.toLowerCase())
     
     // Query owned wearables from TheGraph for the address
-    const collectionsWearables = (await runQuery<wearablesQueryResponse>(theGraph.collectionsSubgraph, query, {})).nfts.map(transformWearableToResponseSchema)
-    const maticWearables = (await runQuery<wearablesQueryResponse>(theGraph.maticCollectionsSubgraph, query, {})).nfts.map(transformWearableToResponseSchema)
+    const collectionsWearables = (await runQuery<wearablesQueryResponse>(theGraph.collectionsSubgraph, query, {})).nfts
+    const maticWearables = (await runQuery<wearablesQueryResponse>(theGraph.maticCollectionsSubgraph, query, {})).nfts
 
     // Merge the resonses and sort by creation date
-    allWearables =  collectionsWearables.concat(maticWearables).sort(compareByCreatedAt)
+    allWearables =  groupByURN(collectionsWearables.concat(maticWearables)).sort(compareByCreatedAt)
 
     // Store the in the cache
     wearablesCache.set(id, allWearables)
@@ -101,18 +101,46 @@ export async function getWearablesForAddress(
 }
 
 /* 
+ * Groups every wearable with the same URN. Each of them has some data which differentiates them as individuals.
+ * That data is stored in an array binded to the corresponding urn. Returns an array of wearables in the response format.
+ */
+function groupByURN(wearables: wearableFromQuery[]): wearableForResponse[] {
+  // Initialize the map
+  const wearablesByURN = new Map<string, wearableForResponse>()
+
+  // Set the map with the wearables data
+  wearables.forEach(wearable => {
+    if (wearablesByURN.has(wearable.urn)) {
+      // The wearable was present in the map, its individual data is added to the individualData array for that wearable
+      const wearableFromMap = wearablesByURN.get(wearable.urn)
+      wearableFromMap?.individualData.push({
+        id: wearable.id,
+        createdAt: wearable.createdAt,
+        price: wearable.item.price  
+      })
+    } else {
+      // The wearable was not present in the map, it is added and its individualData array is initialized with its data
+      wearablesByURN.set(wearable.urn, transformWearableToResponseSchema(wearable))
+    }
+  })
+
+  // Return the contents of the map as an array
+  return Array.from(wearablesByURN.values())
+}
+
+/* 
  * Returns a positive number if wearable1 is older than wearable2, zero if they are equal, and a negative
  * number if wearable2 is older than wearable1. Can be used to sort wearables by creationDate, descending
  */
-function compareByCreatedAt(wearable1: nftForCollectionResponse, wearable2: nftForCollectionResponse) {
-  return (wearable2.createdAt - wearable1.createdAt)
+function compareByCreatedAt(wearable1: wearableForResponse, wearable2: wearableForResponse) {
+  return (wearable2.individualData[0].createdAt - wearable1.individualData[0].createdAt)
 }
 
 /* 
  * Returns a positive number if wearable1 has a lower rarity than wearable2, zero if they are equal, and a negative
  * number if wearable2 has a lower rarity than wearable1. Can be used to sort wearables by rarity, descending
  */
-function compareByRarity(wearable1: nftForCollectionResponse, wearable2: nftForCollectionResponse) {
+function compareByRarity(wearable1: wearableForResponse, wearable2: wearableForResponse) {
   const rarities = [
     'common',
     'uncommon',
