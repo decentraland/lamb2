@@ -58,8 +58,9 @@ const QUERY_WEARABLES: string = `
 export async function getWearablesForAddress(
   components: Pick<AppComponents, 'theGraph' | 'wearablesCache'>,
   id: string,
-  pageSize?: number,
-  pageNum?: number
+  pageSize?: string | null,
+  pageNum?: string | null,
+  orderBy?: string | null
 ) {
   const { theGraph, wearablesCache } = components
 
@@ -83,11 +84,15 @@ export async function getWearablesForAddress(
   }
 
   // Set total amount of wearables
-  const wearablesTotal = allWearables.length
+  let wearablesTotal = allWearables.length
+
+  // Sort them by another field if specified
+  if (orderBy === "rarity")
+    allWearables = allWearables.sort(compareByRarity)
 
   // Virtually paginate the response if required
   if (pageSize && pageNum)
-    allWearables = allWearables.slice((pageNum - 1) * pageSize, pageNum * pageSize)
+    allWearables = allWearables.slice((parseInt(pageNum) - 1) * parseInt(pageSize), parseInt(pageNum) * parseInt(pageSize))
   
   return {
     wearables: allWearables,
@@ -96,9 +101,28 @@ export async function getWearablesForAddress(
 }
 
 /* 
- * Returns a positive number if nft1 is older than nft2, zero if they are equal, and a negative
- * number if nft2 is older than nft1. Can be used to sorts nfts by creationDate, descending
+ * Returns a positive number if wearable1 is older than wearable2, zero if they are equal, and a negative
+ * number if wearable2 is older than wearable1. Can be used to sort wearables by creationDate, descending
  */
 function compareByCreatedAt(wearable1: nftForCollectionResponse, wearable2: nftForCollectionResponse) {
   return (wearable2.createdAt - wearable1.createdAt)
+}
+
+/* 
+ * Returns a positive number if wearable1 has a lower rarity than wearable2, zero if they are equal, and a negative
+ * number if wearable2 has a lower rarity than wearable1. Can be used to sort wearables by rarity, descending
+ */
+function compareByRarity(wearable1: nftForCollectionResponse, wearable2: nftForCollectionResponse) {
+  const rarities = [
+    'common',
+    'uncommon',
+    'rare',
+    'epic',
+    'legendary',
+    'mythic',
+    'unique',
+  ]
+  const w1RarityValue = rarities.findIndex((rarity) => rarity === wearable1.rarity)
+  const w2RarityValue = rarities.findIndex((rarity) => rarity === wearable2.rarity)
+  return (w2RarityValue - w1RarityValue)
 }
