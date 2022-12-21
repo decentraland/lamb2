@@ -9,7 +9,7 @@ jobs:
   cd:
     uses: decentraland/actions/.github/workflows/build-quay-main.yml@main
     with:
-      service-name: lambdos
+      service-name: lamb2
     secrets:
       QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
       QUAY_TOKEN: ${{ secrets.QUAY_TOKEN }}
