@@ -1,7 +1,8 @@
-import { AppComponents, ProfileMetadata, emoteForResponse, wearableFromQuery, wearablesQueryResponse, wearableForResponse } from "../types"
+import { AppComponents, ProfileMetadata, wearableFromQuery, wearablesQueryResponse, wearableForResponse } from "../types"
 import { parseUrn } from '@dcl/urn-resolver'
 import { runQuery } from "../ports/the-graph"
 import { transformWearableToResponseSchema } from "../adapters/query-to-response"
+import { cloneDeep } from 'lodash'
 
 export async function getValidNonBaseWearables(metadata: ProfileMetadata): Promise<string[]> {
     const wearablesInProfile: string[] = []
@@ -35,13 +36,13 @@ const QUERY_WEARABLES: string = `
 {
   nfts(
     where: { owner: "$owner", category: "wearable"},
-    orderBy: createdAt,
-    orderDirection: desc
+    orderBy: transferredAt,
+    orderDirection: desc,
   ) {
     urn,
     id,
     image,
-    createdAt,
+    transferredAt,
     item {
       metadata {
         wearable {
@@ -77,7 +78,7 @@ export async function getWearablesForAddress(
     const maticWearables = (await runQuery<wearablesQueryResponse>(theGraph.maticCollectionsSubgraph, query, {})).nfts
 
     // Merge the resonses and sort by creation date
-    allWearables =  groupByURN(collectionsWearables.concat(maticWearables)).sort(compareByCreatedAt)
+    allWearables = groupByURN(collectionsWearables.concat(maticWearables)).sort(compareByTransferredAt)
 
     // Store the in the cache
     wearablesCache.set(id, allWearables)
@@ -88,7 +89,7 @@ export async function getWearablesForAddress(
 
   // Sort them by another field if specified
   if (orderBy === "rarity")
-    allWearables = allWearables.sort(compareByRarity)
+    allWearables = cloneDeep(allWearables).sort(compareByRarity)
 
   // Virtually paginate the response if required
   if (pageSize && pageNum)
@@ -115,7 +116,7 @@ function groupByURN(wearables: wearableFromQuery[]): wearableForResponse[] {
       const wearableFromMap = wearablesByURN.get(wearable.urn)
       wearableFromMap?.individualData.push({
         id: wearable.id,
-        createdAt: wearable.createdAt,
+        transferredAt: wearable.transferredAt,
         price: wearable.item.price  
       })
     } else {
@@ -132,8 +133,8 @@ function groupByURN(wearables: wearableFromQuery[]): wearableForResponse[] {
  * Returns a positive number if wearable1 is older than wearable2, zero if they are equal, and a negative
  * number if wearable2 is older than wearable1. Can be used to sort wearables by creationDate, descending
  */
-function compareByCreatedAt(wearable1: wearableForResponse, wearable2: wearableForResponse) {
-  return (wearable2.individualData[0].createdAt - wearable1.individualData[0].createdAt)
+function compareByTransferredAt(wearable1: wearableForResponse, wearable2: wearableForResponse) {
+  return (wearable2.individualData[0].transferredAt - wearable1.individualData[0].transferredAt)
 }
 
 /* 

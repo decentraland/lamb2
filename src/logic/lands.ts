@@ -5,7 +5,9 @@ import { AppComponents, landsQueryResponse } from '../types'
 const QUERY_LANDS: string = `
 {
   nfts(
-    where: { owner: "$owner", category_in: [parcel, estate] }
+    where: { owner: "$owner", category_in: [parcel, estate] },
+    orderBy: transferredAt,
+    orderDirection: desc
   ) {
     name,
     contractAddress,
@@ -33,6 +35,8 @@ const QUERY_LANDS_PAGINATED: string = `
 {
   nfts(
     where: { owner: "$owner", category_in: [parcel, estate] },
+    orderBy: transferredAt,
+    orderDirection: desc,
     first: $first,
     skip: $skip
   ) {

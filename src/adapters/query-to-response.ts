@@ -12,7 +12,7 @@ export function transformWearableToResponseSchema(wearable: wearableFromQuery): 
     rarity: wearable.item.rarity,
     individualData: [{
       id: wearable.id,
-      createdAt: wearable.createdAt,
+      transferredAt: wearable.transferredAt,
       price: wearable.item.price,
     }]
   }
@@ -26,7 +26,7 @@ export function transformEmoteToResponseSchema(emote: emoteFromQuery): emoteForR
     urn: emote.urn,
     id: emote.id,
     image: emote.image,
-    createdAt: emote.createdAt,
+    transferredAt: emote.transferredAt,
     name: emote.item.metadata.emote.name,
     description: emote.item.metadata.emote.description,
     rarity: emote.item.rarity,

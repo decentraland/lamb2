@@ -6,13 +6,13 @@ const QUERY_EMOTES: string = `
 {
   nfts(
     where: { owner: "$owner", category: "emote" },
-    orderBy: createdAt,
+    orderBy: transferredAt,
     orderDirection: desc
   ) {
     urn,
     id,
     image,
-    createdAt,
+    transferredAt,
     item {
       metadata {
         emote {
@@ -30,7 +30,7 @@ const QUERY_EMOTES_PAGINATED: string = `
 {
   nfts(
     where: { owner: "$owner", category: "emote" },
-    orderBy: createdAt,
+    orderBy: transferredAt,
     orderDirection: desc,
     first: $first,
     skip: $skip
@@ -38,7 +38,7 @@ const QUERY_EMOTES_PAGINATED: string = `
     urn,
     id,
     image,
-    createdAt,
+    transferredAt,
     item {
       metadata {
         emote {
