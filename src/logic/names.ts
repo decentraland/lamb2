@@ -6,8 +6,8 @@ const QUERY_NAMES: string = `
 {
   nfts(
     where: {owner: "$owner", category: "ens"} 
-    orderBy: createdAt,
-    orderDirection: desc
+    orderBy: transferredAt,
+    orderDirection: desc,
   ) {
     name,
     contractAddress,
@@ -21,7 +21,7 @@ const QUERY_NAMES_PAGINATED: string = `
 {
   nfts(
     where: {owner: "$owner", category: "ens"} 
-    orderBy: createdAt,
+    orderBy: transferredAt,
     orderDirection: desc,
     first: $first,
     skip: $skip

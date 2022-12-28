@@ -104,7 +104,7 @@ export type wearableFromQuery = {
   urn: string,
   id: string,
   image: string,
-  createdAt: number,
+  transferredAt: number,
   item: {
     metadata: {
       wearable: {
@@ -126,7 +126,7 @@ export type wearableForResponse = {
   rarity: string,
   individualData: {
     id: string,
-    createdAt: number,
+    transferredAt: number,
     price: number
   }[]
 }
@@ -139,7 +139,7 @@ export type emoteFromQuery = {
   urn: string,
   id: string,
   image: string,
-  createdAt: number,
+  transferredAt: number,
   item: {
     metadata: {
       emote: {
@@ -156,7 +156,7 @@ export type emoteForResponse = {
   urn: string,
   id: string,
   image: string,
-  createdAt: number,
+  transferredAt: number,
   name: string,
   description: string,
   rarity: string,
