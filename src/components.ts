@@ -17,7 +17,11 @@ export async function initComponents(): Promise<AppComponents> {
   const logs = createLogComponent()
   const server = await createServerComponent<GlobalContext>({ config, logs }, {
     cors: {
-      maxAge: 36000
+      maxAge: 36000,
+      origin: true,
+      methods: 'GET,HEAD,POST,PUT,DELETE,CONNECT,TRACE,PATCH',
+      allowedHeaders: ['Cache-Control', 'Content-Type', 'Origin', 'Accept', 'User-Agent'],
+      credentials: true
     }
   })
   const statusChecks = await createStatusCheckComponent({ server, config })
