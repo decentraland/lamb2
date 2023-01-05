@@ -21,6 +21,11 @@ export const metricDeclarations = {
     help: "Count total calls to subgraph",
     type: IMetricsComponent.CounterType,
     labelNames: ["url", "errorMessage"]
+  },
+  dcl_lamb2_server_build_info: {
+    help: 'Lamb2 server static build info.',
+    type: IMetricsComponent.GaugeType,
+    labelNames: ['commitHash']
   }
 }
 
