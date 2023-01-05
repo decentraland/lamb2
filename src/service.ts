@@ -18,4 +18,7 @@ export async function main(program: Lifecycle.EntryPointParameters<AppComponents
 
   // start ports: db, listeners, synchronizations, etc
   await startComponents()
+
+  const commitHash = await components.config.getString('COMMIT_HASH') ?? ''
+  components.metrics.observe('dcl_lamb2_server_build_info', { commitHash }, 1)
 }
