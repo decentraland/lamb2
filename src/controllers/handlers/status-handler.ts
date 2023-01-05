@@ -11,13 +11,11 @@ export async function statusHandler(context: Pick<HandlerContextWithPath<"metric
     pathname: url.pathname,
   })
 
-  const commit = await config.getString("COMMIT_SHA") ?? ''
-  const commit2 = process.env.COMMIT_SHA
+  const commit = await config.getString("COMMIT_HASH") ?? ''
 
   return {
     body: {
-      commit: commit,
-      commit2: commit2
+      commit: commit
     },
   }
 }
