@@ -47,7 +47,7 @@ async function initComponents(): Promise<TestComponents> {
   const components = await originalInitComponents()
 
   // const { config } = components
-  const config = await createDotEnvConfigComponent({}, {COMMIT_SHA: 'commit_sha'})
+  const config = await createDotEnvConfigComponent({}, {COMMIT_HASH: 'commit_hash'})
 
   // components.theGraph = defaultTheGraphComponent
 
