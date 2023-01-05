@@ -9,6 +9,7 @@ import { initComponents as originalInitComponents } from "../src/components"
 import { EntityType } from "dcl-catalyst-commons"
 import { ISubgraphComponent } from "@well-known-components/thegraph-component"
 import { TheGraphComponent } from "../src/ports/the-graph"
+import { createDotEnvConfigComponent } from "@well-known-components/env-config-provider"
 
 /**
  * Behaves like Jest "describe" function, used to describe a test for a
@@ -45,12 +46,14 @@ export function createTestTheGraphComponent(): TheGraphComponent {
 async function initComponents(): Promise<TestComponents> {
   const components = await originalInitComponents()
 
-  const { config } = components
+  // const { config } = components
+  const config = await createDotEnvConfigComponent({}, {COMMIT_HASH: 'commit_hash'})
 
   // components.theGraph = defaultTheGraphComponent
 
   return {
     ...components,
+    config: config,
     localFetch: await createLocalFetchCompoment(config),
   }
 }
