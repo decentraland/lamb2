@@ -9,7 +9,7 @@ describe("ping-controller-unit", () => {
     const metrics = createTestMetricsComponent(metricDeclarations)
     const config = await createDotEnvConfigComponent({}, {COMMIT_HASH: 'commit_hash'})
     expect((await metrics.getValue("test_status_counter")).values).toEqual([])
-    expect(await statusHandler({ url, components: { metrics, config } })).toEqual({ body: { commit: 'commit_hash' } })
+    expect(await statusHandler({ url, components: { metrics, config } })).toEqual({ body: { commitHash: 'commit_hash' } })
     expect((await metrics.getValue("test_status_counter")).values).toEqual([
       { labels: { pathname: "/well-known-components" }, value: 1 },
     ])
@@ -20,7 +20,7 @@ describe("ping-controller-unit", () => {
     const metrics = createTestMetricsComponent(metricDeclarations)
     const config = await createDotEnvConfigComponent({}, {COMMIT_HASH: 'commit_hash'})
     expect((await metrics.getValue("test_status_counter")).values).toEqual([])
-    expect(await statusHandler({ url, components: { metrics, config } })).toEqual({ body: { commit: 'commit_hash' } })
+    expect(await statusHandler({ url, components: { metrics, config } })).toEqual({ body: { commitHash: 'commit_hash' } })
     expect((await metrics.getValue("test_status_counter")).values).toEqual([
       { labels: { pathname: "/well-known-components" }, value: 1 },
     ])
@@ -31,8 +31,8 @@ describe("ping-controller-unit", () => {
     const metrics = createTestMetricsComponent(metricDeclarations)
     const config = await createDotEnvConfigComponent({}, {COMMIT_HASH: 'commit_hash'})
     expect((await metrics.getValue("test_status_counter")).values).toEqual([])
-    expect(await statusHandler({ url, components: { metrics, config } })).toEqual({ body: { commit: 'commit_hash' } })
-    expect(await statusHandler({ url, components: { metrics, config } })).toEqual({ body: { commit: 'commit_hash' } })
+    expect(await statusHandler({ url, components: { metrics, config } })).toEqual({ body: { commitHash: 'commit_hash' } })
+    expect(await statusHandler({ url, components: { metrics, config } })).toEqual({ body: { commitHash: 'commit_hash' } })
     expect((await metrics.getValue("test_status_counter")).values).toEqual([
       { labels: { pathname: "/well-known-components" }, value: 2 },
     ])
