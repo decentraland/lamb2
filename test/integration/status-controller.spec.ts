@@ -6,7 +6,7 @@ test("integration sanity tests using a real server backend", function ({ compone
     const r = await localFetch.fetch("/status")
 
     expect(r.status).toEqual(200)
-    expect(await r.json()).toEqual({ commit: 'commit_hash' })
+    expect(await r.json()).toEqual({ commitHash: 'commit_hash' })
   })
 
   it("calling /status increments a metric", async () => {
@@ -16,7 +16,7 @@ test("integration sanity tests using a real server backend", function ({ compone
     const r = await localFetch.fetch("/status")
 
     expect(r.status).toEqual(200)
-    expect(await r.json()).toEqual({ commit: 'commit_hash' })
+    expect(await r.json()).toEqual({ commitHash: 'commit_hash' })
 
     expect(metrics.increment.calledOnceWith("test_status_counter", { pathname: "/status" })).toEqual(true)
   })
