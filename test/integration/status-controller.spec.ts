@@ -1,7 +1,7 @@
 import { test } from "../components"
 
 test("integration sanity tests using a real server backend", function ({ components, stubComponents }) {
-  it("responds with commit", async () => {
+  it("responds with commitHash", async () => {
     const { localFetch } = components
     const r = await localFetch.fetch("/status")
 

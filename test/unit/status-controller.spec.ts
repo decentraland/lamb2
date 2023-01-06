@@ -3,8 +3,8 @@ import { createTestMetricsComponent } from "@well-known-components/metrics"
 import { statusHandler } from "../../src/controllers/handlers/status-handler"
 import { metricDeclarations } from "../../src/metrics"
 
-describe("ping-controller-unit", () => {
-  it("must return commit HASH", async () => {
+describe("status-controller-unit", () => {
+  it("must return commit hash", async () => {
     const url = new URL("https://github.com/well-known-components")
     const metrics = createTestMetricsComponent(metricDeclarations)
     const config = await createDotEnvConfigComponent({}, {COMMIT_HASH: 'commit_hash'})
