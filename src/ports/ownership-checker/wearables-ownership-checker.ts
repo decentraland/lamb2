@@ -61,7 +61,6 @@ async function getOwnedWearables(wearableIdsToCheck: [string, string[]][], subgr
     try {
         return getOwnersByWearable(wearableIdsToCheck, subgraph)
     } catch (error) {
-        // TheGraphClient.LOGGER.error(error)
         console.log(error)
         return []
     }

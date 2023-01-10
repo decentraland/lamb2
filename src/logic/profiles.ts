@@ -1,7 +1,7 @@
 import { AppComponents, ProfileMetadata, Filename, Filehash, NFTsOwnershipChecker } from '../types'
-import { Entity, EntityType, Snapshots } from '@dcl/schemas'
+import { Avatar, Entity, EntityType, Snapshots } from '@dcl/schemas'
 import { IConfigComponent } from '@well-known-components/interfaces'
-import { getValidNonBaseWearables, translateWearablesIdFormat} from './wearables'
+import { getBaseWearables, getValidNonBaseWearables, translateWearablesIdFormat} from './wearables'
 import { createWearablesOwnershipChecker } from '../ports/ownership-checker/wearables-ownership-checker'
 import { createNamesOwnershipChecker } from '../ports/ownership-checker/names-ownership-checker'
 import { createTPWOwnershipChecker } from '../ports/ownership-checker/tpw-ownership-checker'
@@ -54,7 +54,7 @@ function roundToSeconds(timestamp: number) {
 // Extract data from every entity and fills the nfts ownership checkers
 async function addNFTsToCheckersFromEntities(profileEntities: Entity[], wearablesOwnershipChecker: NFTsOwnershipChecker, namesOwnershipChecker: NFTsOwnershipChecker, tpwOwnershipChecker: NFTsOwnershipChecker): Promise<void> {
     const entityPromises = profileEntities
-        .map(async (entity) => { 
+        .map(async (entity) => {
             const { ethAddress, names, wearables } = await extractDataFromEntity(entity)
             wearablesOwnershipChecker.addNFTsForAddress(ethAddress, wearables)
             namesOwnershipChecker.addNFTsForAddress(ethAddress, names)
@@ -72,7 +72,7 @@ async function extractDataFromEntity(entity: Entity): Promise<{ ethAddress: stri
     // Add timestamp to the metadata
     metadata.timestamp = entity.timestamp
 
-    // Get non-base wearables wearables which urn are valid 
+    // Get non-base wearables which urn are valid 
     const nonBaseWearables = await getValidNonBaseWearables(metadata)
 
     return { ethAddress, metadata, content, names: filteredNames, wearables: nonBaseWearables }
@@ -82,10 +82,15 @@ async function extendProfiles(config: IConfigComponent, profileEntities: Entity[
     const baseUrl = await config.getString('CONTENT_SERVER_ADDRESS') ?? ''
     const extendedProfiles = profileEntities
         .map(async (entity) => {
+            // Extract data from each entity, which is used to fill the final response
             const { ethAddress, metadata, content } = await extractProfileDataFromEntity(entity)
+
+            // Get owned nfts from every ownership checker
             const ownedNames = namesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
             const ownedWearables = wearablesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
             const thirdPartyWearables = tpwOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
+
+            // Fill the avatars field for each profile
             const avatars = metadata.avatars.map(async (profileData) => ({
                 ...profileData,
                 hasClaimedName: ownedNames.includes(profileData.name),
@@ -93,9 +98,13 @@ async function extendProfiles(config: IConfigComponent, profileEntities: Entity[
                     ...profileData.avatar,
                     bodyShape: await translateWearablesIdFormat(profileData.avatar.bodyShape) ?? '',
                     snapshots: addBaseUrlToSnapshots(baseUrl, profileData.avatar.snapshots, content),
-                    wearables: ownedWearables.concat(thirdPartyWearables)
+                    wearables: (await getBaseWearables(profileData.avatar.wearables))
+                        .concat(ownedWearables)
+                        .concat(thirdPartyWearables)
                 }
             }))
+
+            // Build each profile with timestamp and avatars
             return {
                 timestamp: metadata.timestamp,
                 avatars: await Promise.all(avatars)

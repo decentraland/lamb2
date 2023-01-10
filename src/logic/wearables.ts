@@ -8,7 +8,7 @@ export async function getValidNonBaseWearables(metadata: ProfileMetadata): Promi
     const wearablesInProfile: string[] = []
     for (const avatar of metadata.avatars) {
       for (const wearableId of avatar.avatar.wearables) {
-        if (!isBaseAvatar(wearableId)) {
+        if (!isBaseWearable(wearableId)) {
             const translatedWearableId = await translateWearablesIdFormat(wearableId)
             if (translatedWearableId)
                 wearablesInProfile.push(translatedWearableId)
@@ -19,7 +19,25 @@ export async function getValidNonBaseWearables(metadata: ProfileMetadata): Promi
     return filteredWearables
 }
 
-function isBaseAvatar(wearable: string): boolean {
+/* 
+ * Filters base wearables from a wearables array and translate them to the new id format
+ */
+export async function getBaseWearables(wearables: string[]): Promise<string[]> {
+  // Filter base wearables
+  const baseWearables = wearables.filter(isBaseWearable)
+
+  // Translate old format ones to the new id format
+  const validBaseWearables = []
+  for (const wearableId of baseWearables) {
+    const translatedWearableId = await translateWearablesIdFormat(wearableId)
+    if (translatedWearableId)
+      validBaseWearables.push(translatedWearableId)
+  }
+  
+  return validBaseWearables
+}
+
+function isBaseWearable(wearable: string): boolean {
     return wearable.includes('base-avatars')
 }
 
