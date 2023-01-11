@@ -1,10 +1,11 @@
-name: node
+name: Build and Test
 
 on:
-  push:
+  pull_request:
+  workflow_call:
 
 jobs:
-  install:
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
