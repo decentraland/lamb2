@@ -19,15 +19,12 @@ jobs:
       - uses: decentraland/gh-action-release@0.3.4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: get latest release and export as GIT_TAG
+        run:  echo "GIT_TAG=$(git tag | grep -E "^[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -1)" > $GITHUB_ENV
 
   push:
     needs: release
     if: ${{ success() }}
-    env:
-      release-tag: echo "GIT_TAG=$(git tag | grep -E "^[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -1)"
-    # steps:
-      # - name: get latest release and export as GIT_TAG
-        # run:  echo "GIT_TAG=$(git tag | grep -E "^[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -1)" > $GITHUB_ENV
     uses: decentraland/actions/.github/workflows/build-quay-main.yml@main
     with:
       service-name: lamb2
