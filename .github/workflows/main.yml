@@ -1,11 +1,12 @@
 name: Release and push docker image
 
 on:
-  pull_request:
-  workflow_call:
+  push:
+    branches:
+      - "main"
+      - "chore/release"
 
 jobs:
-
   build-and-test:
     uses: ./.github/workflows/build-and-test.yml
 
@@ -20,7 +21,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
   push:
-    runs-on: ubuntu-latest
     needs: release
     env:
       release-tag: echo "GIT_TAG=$(git tag | grep -E "^[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -1)"
