@@ -16,6 +16,9 @@ jobs:
     needs: build-and-test
     if: ${{ success() }}
     steps:
+      - uses: actions/checkout@master
+        with:
+          fetch-depth: 0
       - uses: decentraland/gh-action-release@0.3.4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
