@@ -75,6 +75,7 @@ export function transformLandToResponseSchema(land: landFromQuery): landForRespo
   return {
     name: land.name,
     contractAddress: land.contractAddress,
+    tokenId: land.tokenId,
     category: land.category,
     x: x,
     y: y,

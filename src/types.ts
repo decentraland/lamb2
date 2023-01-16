@@ -190,6 +190,7 @@ export interface landsQueryResponse {
 export type landFromQuery = {
   name: string,
   contractAddress: string,
+  tokenId: string,
   category: string,
   parcel: {
     x: string,
@@ -212,6 +213,7 @@ export type landFromQuery = {
 export type landForResponse = {
   name: string,
   contractAddress: string,
+  tokenId: string,
   category: string,
   x?: string,
   y?: string,
