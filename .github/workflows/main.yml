@@ -29,7 +29,9 @@ jobs:
   print:
     needs: release
     if: ${{ success() }}
-    run: echo "${{ needs.release.steps.release-tag.outputs.GIT_TAG }}"
+    steps:
+      - name: print tag
+        run: echo "${{ needs.release.steps.release-tag.outputs.GIT_TAG }}"
 
   push:
     needs: release
