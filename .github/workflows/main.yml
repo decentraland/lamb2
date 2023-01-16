@@ -26,6 +26,11 @@ jobs:
         id: release-tag
         run: echo "GIT_TAG=$(git tag | grep -E "^[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -1)" >> $GITHUB_OUTPUT
 
+  print:
+    needs: release
+    if: ${{ success() }}
+    run: echo "${{ needs.release.steps.release-tag.outputs.GIT_TAG }}"
+
   push:
     needs: release
     if: ${{ success() }}
