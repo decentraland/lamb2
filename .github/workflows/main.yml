@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - "main"
-      - "chore/latest"
 
 jobs:
   build-and-test:
