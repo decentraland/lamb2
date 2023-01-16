@@ -24,19 +24,9 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: get latest release and export as GIT_TAG
         id: release-tag
-        # run: echo "GIT_TAG=$(git tag | grep -E "^[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -1)" >> $GITHUB_OUTPUT
         run: echo "GIT_TAG=$(git tag | grep -E "^[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -1)" >> $GITHUB_ENV
     outputs:
-      # release-version: ${{ steps.release-tag.outputs }}
       release-version: ${{ env.GIT_TAG }}
-
-  print:
-    runs-on: ubuntu-latest
-    needs: release
-    if: ${{ success() }}
-    steps:
-      - name: print tag
-        run: echo "${{ needs.release.outputs.release-version }}"
 
   push:
     needs: release
@@ -44,7 +34,7 @@ jobs:
     uses: decentraland/actions/.github/workflows/build-quay-main.yml@main
     with:
       service-name: lamb2
-      docker-tag: ${{ needs.release.steps.release-tag.outputs.GIT_TAG }}
+      docker-tag: ${{ needs.release.outputs.release-version }}
     secrets:
       QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
       QUAY_TOKEN: ${{ secrets.QUAY_TOKEN }}
