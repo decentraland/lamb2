@@ -36,7 +36,7 @@ jobs:
     if: ${{ success() }}
     steps:
       - name: print tag
-        run: echo "${{ needs.release.steps.release-tag.outputs.release-version }}"
+        run: echo "${{ needs.release.outputs.release-version }}"
 
   push:
     needs: release
