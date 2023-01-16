@@ -59,6 +59,8 @@ const QUERY_WEARABLES: string = `
   ) {
     urn,
     id,
+    contractAddress,
+    tokenId,
     image,
     transferredAt,
     item {
@@ -134,6 +136,7 @@ function groupByURN(wearables: wearableFromQuery[]): wearableForResponse[] {
       const wearableFromMap = wearablesByURN.get(wearable.urn)
       wearableFromMap?.individualData.push({
         id: wearable.id,
+        tokenId: wearable.tokenId,
         transferredAt: wearable.transferredAt,
         price: wearable.item.price  
       })
