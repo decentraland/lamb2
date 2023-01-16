@@ -170,6 +170,7 @@ export interface namesQueryResponse {
 export type nameFromQuery = {
   name: string,
   contractAddress: string,
+  tokenId: string,
   activeOrder: {
     price: string
   }
@@ -178,6 +179,7 @@ export type nameFromQuery = {
 export type nameForResponse = {
   name: string,
   contractAddress: string,
+  tokenId: string,
   price: string | null
 }
 

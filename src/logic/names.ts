@@ -11,6 +11,7 @@ const QUERY_NAMES: string = `
   ) {
     name,
     contractAddress,
+    tokenId,
     activeOrder {
       price
     }
@@ -28,6 +29,7 @@ const QUERY_NAMES_PAGINATED: string = `
   ) {
     name,
     contractAddress,
+    tokenId,
     activeOrder {
       price
     }

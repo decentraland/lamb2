@@ -46,6 +46,7 @@ export function transformNameToResponseSchema(name: nameFromQuery): nameForRespo
   return {
     name: name.name,
     contractAddress: name.contractAddress,
+    tokenId: name.tokenId,
     price: price,
   }
 }
