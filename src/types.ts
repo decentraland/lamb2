@@ -103,6 +103,8 @@ export interface wearablesQueryResponse {
 export type wearableFromQuery = {
   urn: string,
   id: string,
+  contractAddress: string,
+  tokenId: string,
   image: string,
   transferredAt: number,
   item: {
@@ -120,12 +122,14 @@ export type wearableFromQuery = {
 // The response is grouped by URN
 export type wearableForResponse = {
   urn: string,
+  contractAddress: string,
   image: string,
   name: string,
   description: string,
   rarity: string,
   individualData: {
     id: string,
+    tokenId: string,
     transferredAt: number,
     price: number
   }[]
@@ -138,6 +142,8 @@ export interface emotesQueryResponse {
 export type emoteFromQuery = {
   urn: string,
   id: string,
+  contractAddress: string,
+  tokenId: string,
   image: string,
   transferredAt: number,
   item: {
@@ -155,6 +161,8 @@ export type emoteFromQuery = {
 export type emoteForResponse = {
   urn: string,
   id: string,
+  contractAddress: string,
+  tokenId: string,
   image: string,
   transferredAt: number,
   name: string,
@@ -170,6 +178,7 @@ export interface namesQueryResponse {
 export type nameFromQuery = {
   name: string,
   contractAddress: string,
+  tokenId: string,
   activeOrder: {
     price: string
   }
@@ -178,6 +187,7 @@ export type nameFromQuery = {
 export type nameForResponse = {
   name: string,
   contractAddress: string,
+  tokenId: string,
   price: string | null
 }
 
@@ -188,6 +198,7 @@ export interface landsQueryResponse {
 export type landFromQuery = {
   name: string,
   contractAddress: string,
+  tokenId: string,
   category: string,
   parcel: {
     x: string,
@@ -210,6 +221,7 @@ export type landFromQuery = {
 export type landForResponse = {
   name: string,
   contractAddress: string,
+  tokenId: string,
   category: string,
   x?: string,
   y?: string,

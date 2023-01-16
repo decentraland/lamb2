@@ -11,6 +11,7 @@ const QUERY_LANDS: string = `
   ) {
     name,
     contractAddress,
+    tokenId,
     category,
     parcel {
       x,
@@ -42,6 +43,7 @@ const QUERY_LANDS_PAGINATED: string = `
   ) {
     name,
     contractAddress,
+    tokenId,
     category,
     parcel {
       x,

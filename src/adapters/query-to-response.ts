@@ -6,12 +6,14 @@ import { emoteFromQuery, landForResponse, landFromQuery, nameForResponse, nameFr
 export function transformWearableToResponseSchema(wearable: wearableFromQuery): wearableForResponse {
   return {
     urn: wearable.urn,
+    contractAddress: wearable.contractAddress,
     image: wearable.image,
     name: wearable.item.metadata.wearable.name,
     description: wearable.item.metadata.wearable.description,
     rarity: wearable.item.rarity,
     individualData: [{
       id: wearable.id,
+      tokenId: wearable.tokenId,
       transferredAt: wearable.transferredAt,
       price: wearable.item.price,
     }]
@@ -25,6 +27,8 @@ export function transformEmoteToResponseSchema(emote: emoteFromQuery): emoteForR
   return {
     urn: emote.urn,
     id: emote.id,
+    contractAddress: emote.contractAddress,
+    tokenId: emote.tokenId,
     image: emote.image,
     transferredAt: emote.transferredAt,
     name: emote.item.metadata.emote.name,
@@ -46,6 +50,7 @@ export function transformNameToResponseSchema(name: nameFromQuery): nameForRespo
   return {
     name: name.name,
     contractAddress: name.contractAddress,
+    tokenId: name.tokenId,
     price: price,
   }
 }
@@ -74,6 +79,7 @@ export function transformLandToResponseSchema(land: landFromQuery): landForRespo
   return {
     name: land.name,
     contractAddress: land.contractAddress,
+    tokenId: land.tokenId,
     category: land.category,
     x: x,
     y: y,
