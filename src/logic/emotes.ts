@@ -11,6 +11,8 @@ const QUERY_EMOTES: string = `
   ) {
     urn,
     id,
+    contractAddress,
+    tokenId,
     image,
     transferredAt,
     item {
@@ -37,6 +39,8 @@ const QUERY_EMOTES_PAGINATED: string = `
   ) {
     urn,
     id,
+    contractAddress,
+    tokenId,
     image,
     transferredAt,
     item {

@@ -25,6 +25,8 @@ export function transformEmoteToResponseSchema(emote: emoteFromQuery): emoteForR
   return {
     urn: emote.urn,
     id: emote.id,
+    contractAddress: emote.contractAddress,
+    tokenId: emote.tokenId,
     image: emote.image,
     transferredAt: emote.transferredAt,
     name: emote.item.metadata.emote.name,

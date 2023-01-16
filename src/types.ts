@@ -138,6 +138,8 @@ export interface emotesQueryResponse {
 export type emoteFromQuery = {
   urn: string,
   id: string,
+  contractAddress: string,
+  tokenId: string,
   image: string,
   transferredAt: number,
   item: {
@@ -155,6 +157,8 @@ export type emoteFromQuery = {
 export type emoteForResponse = {
   urn: string,
   id: string,
+  contractAddress: string,
+  tokenId: string,
   image: string,
   transferredAt: number,
   name: string,
