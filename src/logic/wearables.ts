@@ -4,6 +4,9 @@ import { runQuery } from "../ports/the-graph"
 import { transformWearableToResponseSchema } from "../adapters/query-to-response"
 import { cloneDeep } from 'lodash'
 
+/* 
+ * Extracts the non-base wearables from a profile and translate them to the new format
+ */
 export async function getValidNonBaseWearables(metadata: ProfileMetadata): Promise<string[]> {
     const wearablesInProfile: string[] = []
     for (const avatar of metadata.avatars) {
@@ -41,7 +44,9 @@ function isBaseWearable(wearable: string): boolean {
     return wearable.includes('base-avatars')
 }
 
-// Translates from the old id format into the new one
+/* 
+ * Translates from the old id format into the new one
+ */
 export async function translateWearablesIdFormat(wearableId: string): Promise<string | undefined> {
     if (!wearableId.startsWith('dcl://'))
         return wearableId
