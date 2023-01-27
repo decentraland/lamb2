@@ -92,7 +92,7 @@ export async function getWearablesForAddress(
   pageNum?: string | null,
   orderBy?: string | null
 ) {
-  const { theGraph, wearablesCaches } = components
+  const { wearablesCaches } = components
 
   // Retrieve wearables for id from cache. They are stored sorted by creation date
   const dclWearables = await retrieveWearablesFromCache(wearablesCaches.dclWearablesCache, id, components, getDCLWearablesToBeCached)
