@@ -7,9 +7,10 @@ export async function wearablesHandler(context: HandlerContextWithPath<'config' 
   const pageSize = context.url.searchParams.get('pageSize')
   const pageNum = context.url.searchParams.get('pageNum')
   const orderBy = context.url.searchParams.get('orderBy')
-
+  const includeTPW = context.url.searchParams.has('includeThirdParty')
+  
   // Get wearables response
-  const wearablesResponse = await getWearablesForAddress(context.components, id, pageSize, pageNum, orderBy)
+  const wearablesResponse = await getWearablesForAddress(context.components, id, includeTPW, pageSize, pageNum, orderBy)
 
   return {
     status: 200,

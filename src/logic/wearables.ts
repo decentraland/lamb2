@@ -87,6 +87,7 @@ const QUERY_WEARABLES: string = `
 export async function getWearablesForAddress(
   components: Pick<AppComponents, 'theGraph' | 'wearablesCaches' | 'fetch'>,
   id: string,
+  includeTPW: boolean,
   pageSize?: string | null,
   pageNum?: string | null,
   orderBy?: string | null
@@ -97,7 +98,9 @@ export async function getWearablesForAddress(
   const dclWearables = await retrieveWearablesFromCache(wearablesCaches.dclWearablesCache, id, components, getDCLWearablesToBeCached)
 
   // Retrieve third-party wearables for id from cache
-  const tpWearables = await retrieveWearablesFromCache(wearablesCaches.thirdPartyWearablesCache, id, components, getThirdPartyWearablesToBeCached)
+  let tpWearables: wearableForResponse[] = []
+  if (includeTPW)
+    tpWearables = await retrieveWearablesFromCache(wearablesCaches.thirdPartyWearablesCache, id, components, getThirdPartyWearablesToBeCached)
 
   // Concatenate both types of wearables
   let allWearables = [...tpWearables, ...dclWearables]
