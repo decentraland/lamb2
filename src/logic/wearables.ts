@@ -1,9 +1,15 @@
-import { AppComponents, ProfileMetadata, wearableFromQuery, wearablesQueryResponse, wearableForResponse } from "../types"
+import { AppComponents, ProfileMetadata, wearableFromQuery, wearablesQueryResponse, wearableForResponse, ThirdPartyAsset } from "../types"
 import { parseUrn } from '@dcl/urn-resolver'
-import { runQuery } from "../ports/the-graph"
-import { transformWearableToResponseSchema } from "../adapters/query-to-response"
+import { runQuery, TheGraphComponent } from "../ports/the-graph"
+import { transformThirdPartyAssetToResponseSchema, transformWearableToResponseSchema } from "../adapters/query-to-response"
 import { cloneDeep } from 'lodash'
+import { getThirdPartyWearables } from "./third-party-wearables"
+import LRU from 'lru-cache'
 
+
+/* 
+ * Extracts the non-base wearables from a profile and translate them to the new format
+ */
 export async function getValidNonBaseWearables(metadata: ProfileMetadata): Promise<string[]> {
     const wearablesInProfile: string[] = []
     for (const avatar of metadata.avatars) {
@@ -41,7 +47,9 @@ function isBaseWearable(wearable: string): boolean {
     return wearable.includes('base-avatars')
 }
 
-// Translates from the old id format into the new one
+/* 
+ * Translates from the old id format into the new one
+ */
 export async function translateWearablesIdFormat(wearableId: string): Promise<string | undefined> {
     if (!wearableId.startsWith('dcl://'))
         return wearableId
@@ -77,32 +85,25 @@ const QUERY_WEARABLES: string = `
 }`
 
 export async function getWearablesForAddress(
-  components: Pick<AppComponents, 'theGraph' | 'wearablesCache'>,
+  components: Pick<AppComponents, 'theGraph' | 'wearablesCaches' | 'fetch'>,
   id: string,
+  includeTPW: boolean,
   pageSize?: string | null,
   pageNum?: string | null,
   orderBy?: string | null
 ) {
-  const { theGraph, wearablesCache } = components
+  const { theGraph, wearablesCaches } = components
 
   // Retrieve wearables for id from cache. They are stored sorted by creation date
-  let allWearables = wearablesCache.get(id)
+  const dclWearables = await retrieveWearablesFromCache(wearablesCaches.dclWearablesCache, id, components, getDCLWearablesToBeCached)
 
-  // If it was a miss, a queries are done and the merged response is stored
-  if (!allWearables) {
-    // Set query
-    const query = QUERY_WEARABLES.replace('$owner', id.toLowerCase())
-    
-    // Query owned wearables from TheGraph for the address
-    const collectionsWearables = (await runQuery<wearablesQueryResponse>(theGraph.collectionsSubgraph, query, {})).nfts
-    const maticWearables = (await runQuery<wearablesQueryResponse>(theGraph.maticCollectionsSubgraph, query, {})).nfts
+  // Retrieve third-party wearables for id from cache
+  let tpWearables: wearableForResponse[] = []
+  if (includeTPW)
+    tpWearables = await retrieveWearablesFromCache(wearablesCaches.thirdPartyWearablesCache, id, components, getThirdPartyWearablesToBeCached)
 
-    // Merge the resonses and sort by creation date
-    allWearables = groupByURN(collectionsWearables.concat(maticWearables)).sort(compareByTransferredAt)
-
-    // Store the in the cache
-    wearablesCache.set(id, allWearables)
-  }
+  // Concatenate both types of wearables
+  let allWearables = [...tpWearables, ...dclWearables]
 
   // Set total amount of wearables
   let wearablesTotal = allWearables.length
@@ -121,11 +122,53 @@ export async function getWearablesForAddress(
   }
 }
 
+async function retrieveWearablesFromCache(
+  wearablesCache: LRU<string, wearableForResponse[]>, 
+  id: string, 
+  components: Pick<AppComponents, "theGraph" | "wearablesCaches" | "fetch">, 
+  getWearablesToBeCached: (id: string, components: Pick<AppComponents, "theGraph" | "wearablesCaches" | "fetch">, theGraph: TheGraphComponent) => Promise<wearableForResponse[]>
+) {
+  // Try to get them from cache  
+  let allWearables = wearablesCache.get(id)
+
+  // If it was a miss, a queries are done and the merged response is stored
+  if (!allWearables) {
+    // Get wearables
+    allWearables = await getWearablesToBeCached(id, components, components.theGraph)
+
+    // Store the in the cache
+    wearablesCache.set(id, allWearables)
+  }
+  return allWearables
+}
+
+async function getDCLWearablesToBeCached(id: string, components: Pick<AppComponents, "theGraph" | "fetch">) {
+  const { theGraph } = components
+
+  // Set query
+  const query = QUERY_WEARABLES.replace('$owner', id.toLowerCase())
+
+  // Query owned wearables from TheGraph for the address
+  const collectionsWearables = await runQuery<wearablesQueryResponse>(theGraph.collectionsSubgraph, query, {}).then((response) => response.nfts)
+  const maticWearables = await runQuery<wearablesQueryResponse>(theGraph.maticCollectionsSubgraph, query, {}).then((response) => response.nfts)
+
+  // Merge the wearables responses, sort them by transferred date and group them by urn
+  return groupWearablesByURN(collectionsWearables.concat(maticWearables)).sort(compareByTransferredAt)
+}
+
+async function getThirdPartyWearablesToBeCached(id: string, components: Pick<AppComponents, "theGraph" | "fetch">) {
+  // Get all third-party wearables
+  const tpWearables = await getThirdPartyWearables(components, id)
+
+  // Group third-party wearables by urn
+  return groupThirdPartyWearablesByURN(tpWearables)
+}
+
 /* 
  * Groups every wearable with the same URN. Each of them has some data which differentiates them as individuals.
  * That data is stored in an array binded to the corresponding urn. Returns an array of wearables in the response format.
  */
-function groupByURN(wearables: wearableFromQuery[]): wearableForResponse[] {
+function groupWearablesByURN(wearables: wearableFromQuery[]): wearableForResponse[] {
   // Initialize the map
   const wearablesByURN = new Map<string, wearableForResponse>()
 
@@ -134,7 +177,7 @@ function groupByURN(wearables: wearableFromQuery[]): wearableForResponse[] {
     if (wearablesByURN.has(wearable.urn)) {
       // The wearable was present in the map, its individual data is added to the individualData array for that wearable
       const wearableFromMap = wearablesByURN.get(wearable.urn)
-      wearableFromMap?.individualData.push({
+      wearableFromMap?.individualData?.push({
         id: wearable.id,
         tokenId: wearable.tokenId,
         transferredAt: wearable.transferredAt,
@@ -151,11 +194,44 @@ function groupByURN(wearables: wearableFromQuery[]): wearableForResponse[] {
 }
 
 /* 
+ * Groups every third-party wearable with the same URN. Each of them could have a different id.
+ * which is stored in an array binded to the corresponding urn. Returns an array of wearables in the response format.
+ */
+function groupThirdPartyWearablesByURN(tpWearables: ThirdPartyAsset[]): wearableForResponse[] {
+  // Initialize the map
+  const wearablesByURN = new Map<string, wearableForResponse>()
+
+  // Set the map with the wearables data
+  tpWearables.forEach(wearable => {
+    if (wearablesByURN.has(wearable.urn.decentraland)) {
+      // The wearable was present in the map, its individual data is added to the individualData array for that wearable
+      const wearableFromMap = wearablesByURN.get(wearable.urn.decentraland)
+      wearableFromMap?.individualData?.push({
+        id: wearable.id
+      })
+    } else {
+      // The wearable was not present in the map, it is added and its individualData array is initialized with its data
+      wearablesByURN.set(wearable.urn.decentraland, transformThirdPartyAssetToResponseSchema(wearable))
+    }
+  })
+
+  // Return the contents of the map as an array
+  return Array.from(wearablesByURN.values())
+}
+
+/* 
  * Returns a positive number if wearable1 is older than wearable2, zero if they are equal, and a negative
  * number if wearable2 is older than wearable1. Can be used to sort wearables by creationDate, descending
  */
 function compareByTransferredAt(wearable1: wearableForResponse, wearable2: wearableForResponse) {
-  return (wearable2.individualData[0].transferredAt - wearable1.individualData[0].transferredAt)
+  // TMP SOLUTION 
+  if(wearable1.individualData && 
+    wearable1.individualData[0].transferredAt && 
+    wearable2.individualData && 
+    wearable2.individualData[0].transferredAt)
+    return (wearable2.individualData[0].transferredAt - wearable1.individualData[0].transferredAt)
+  else
+    return 0
 }
 
 /* 

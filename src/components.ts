@@ -8,7 +8,7 @@ import { metricDeclarations } from "./metrics"
 import { createTheGraphComponent } from "./ports/the-graph"
 import { createContentComponent } from "./ports/content"
 import { createOwnershipCachesComponent } from "./ports/ownership-caches"
-import { createWearablesCache } from "./ports/wearables-cache"
+import { createWearablesCachesComponent } from "./ports/wearables-caches"
 
 // Initialize all the components of the app
 export async function initComponents(): Promise<AppComponents> {
@@ -31,8 +31,8 @@ export async function initComponents(): Promise<AppComponents> {
   // This component contains caches for ownership checking
   const ownershipCaches = await createOwnershipCachesComponent({ config })
 
-  // This cache contains every wearable for a requested adresses
-  const wearablesCache = await createWearablesCache({ config })
+  // This component contains caches for wearables checking
+  const wearablesCaches = await createWearablesCachesComponent({ config })
 
   return {
     config,
@@ -44,6 +44,6 @@ export async function initComponents(): Promise<AppComponents> {
     content,
     theGraph,
     ownershipCaches,
-    wearablesCache
+    wearablesCaches
   }
 }
