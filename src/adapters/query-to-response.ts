@@ -1,4 +1,4 @@
-import { emoteFromQuery, landForResponse, landFromQuery, nameForResponse, nameFromQuery, emoteForResponse, wearableFromQuery, wearableForResponse } from "../types";
+import { emoteFromQuery, landForResponse, landFromQuery, nameForResponse, nameFromQuery, emoteForResponse, wearableFromQuery, wearableForResponse, ThirdPartyAsset } from "../types";
 
 /* 
  * Adapts the result from the wearables query to the desired schema for the response
@@ -56,7 +56,7 @@ export function transformNameToResponseSchema(name: nameFromQuery): nameForRespo
 }
 
 /* 
- * Adapts the result from the landes query to the desired schema for the response
+ * Adapts the result from the lands query to the desired schema for the response
  */
 export function transformLandToResponseSchema(land: landFromQuery): landForResponse {
   // Set price depending on activeOrder. It could be null if is not at sale
@@ -86,5 +86,17 @@ export function transformLandToResponseSchema(land: landFromQuery): landForRespo
     description: description,
     price: price,
     image: land.image
+  }
+}
+
+/* 
+ * Adapts the response from a third-party resolver to /nfts/wearables endpoint response
+ */
+export function transformThirdPartyAssetToResponseSchema(asset: ThirdPartyAsset): wearableForResponse {
+  return {
+    urn: asset.urn.decentraland,
+    individualData: [{
+      id: asset.id
+    }]
   }
 }

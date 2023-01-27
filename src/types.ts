@@ -13,6 +13,7 @@ import { ContentComponent } from "./ports/content"
 import { OwnershipCachesComponent } from "./ports/ownership-caches"
 import { Variables } from "@well-known-components/thegraph-component"
 import LRU from 'lru-cache'
+import { WearablesCachesComponent } from "./ports/wearables-caches"
 
 export type GlobalContext = {
   components: BaseComponents
@@ -28,7 +29,7 @@ export type BaseComponents = {
   content: ContentComponent
   theGraph: TheGraphComponent
   ownershipCaches: OwnershipCachesComponent
-  wearablesCache: LRU<string, wearableForResponse[]>
+  wearablesCaches: WearablesCachesComponent
 }
 
 // components used in runtime
@@ -122,16 +123,16 @@ export type wearableFromQuery = {
 // The response is grouped by URN
 export type wearableForResponse = {
   urn: string,
-  contractAddress: string,
-  image: string,
-  name: string,
-  description: string,
-  rarity: string,
-  individualData: {
+  contractAddress?: string,
+  image?: string,
+  name?: string,
+  description?: string,
+  rarity?: string,
+  individualData?: {
     id: string,
-    tokenId: string,
-    transferredAt: number,
-    price: number
+    tokenId?: string,
+    transferredAt?: number,
+    price?: number
   }[]
 }
 
@@ -228,4 +229,19 @@ export type landForResponse = {
   description: string | undefined,
   price: string | null,
   image: string
+}
+
+export interface thirdPartyResolversResponse {
+  thirdParties: thirdPartyProvider[]
+}
+
+export type thirdPartyProvider = {
+  id: string,
+  resolver: string
+  // metadata: {
+  //   thirdParty: {
+  //     name: string,
+  //     description: string
+  //   }
+  // }
 }

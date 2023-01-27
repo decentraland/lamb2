@@ -1,7 +1,7 @@
 import { getWearablesForAddress } from '../../logic/wearables'
 import { HandlerContextWithPath } from '../../types'
 
-export async function wearablesHandler(context: HandlerContextWithPath<'config' | 'theGraph' | 'wearablesCache', '/nfts/wearables/:id'>) {
+export async function wearablesHandler(context: HandlerContextWithPath<'config' | 'theGraph' | 'wearablesCaches' | 'fetch', '/nfts/wearables/:id'>) {
   // Get request params
   const { id } = context.params
   const pageSize = context.url.searchParams.get('pageSize')
