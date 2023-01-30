@@ -128,6 +128,7 @@ export type wearableForResponse = {
   name?: string,
   description?: string,
   rarity?: string,
+  amount: number,
   individualData?: {
     id: string,
     tokenId?: string,

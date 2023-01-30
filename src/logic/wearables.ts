@@ -176,13 +176,14 @@ function groupWearablesByURN(wearables: wearableFromQuery[]): wearableForRespons
   wearables.forEach(wearable => {
     if (wearablesByURN.has(wearable.urn)) {
       // The wearable was present in the map, its individual data is added to the individualData array for that wearable
-      const wearableFromMap = wearablesByURN.get(wearable.urn)
+      const wearableFromMap = wearablesByURN.get(wearable.urn)!
       wearableFromMap?.individualData?.push({
         id: wearable.id,
         tokenId: wearable.tokenId,
         transferredAt: wearable.transferredAt,
         price: wearable.item.price  
       })
+      wearableFromMap.amount = wearableFromMap.amount + 1 
     } else {
       // The wearable was not present in the map, it is added and its individualData array is initialized with its data
       wearablesByURN.set(wearable.urn, transformWearableToResponseSchema(wearable))
@@ -205,10 +206,11 @@ function groupThirdPartyWearablesByURN(tpWearables: ThirdPartyAsset[]): wearable
   tpWearables.forEach(wearable => {
     if (wearablesByURN.has(wearable.urn.decentraland)) {
       // The wearable was present in the map, its individual data is added to the individualData array for that wearable
-      const wearableFromMap = wearablesByURN.get(wearable.urn.decentraland)
+      const wearableFromMap = wearablesByURN.get(wearable.urn.decentraland)!
       wearableFromMap?.individualData?.push({
         id: wearable.id
       })
+      wearableFromMap.amount = wearableFromMap.amount + 1
     } else {
       // The wearable was not present in the map, it is added and its individualData array is initialized with its data
       wearablesByURN.set(wearable.urn.decentraland, transformThirdPartyAssetToResponseSchema(wearable))
