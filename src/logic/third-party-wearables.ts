@@ -97,9 +97,6 @@ export async function getThirdPartyWearables(components: Pick<AppComponents, 'th
 
   // Get every resolver
   const tpProviders = (await runQuery<thirdPartyResolversResponse>(theGraph.thirdPartyRegistrySubgraph, QUERY_ALL_THIRD_PARTY_RESOLVERS, {})).thirdParties
-
-  // Get every athird-party wearable from each provider for the address, in parallel
-  const tpAssets: ThirdPartyAsset[] = []
   
   // Fetch assets asynchronously
   const providersPromises = tpProviders.map((provider: thirdPartyProvider) => {
@@ -117,3 +114,16 @@ const QUERY_ALL_THIRD_PARTY_RESOLVERS = `
   }
 }
 `
+
+export async function getWearablesForCollection(components: Pick<AppComponents, 'theGraph' | 'fetch'>, collectionId: string, address: string) {
+  // Get API for collection
+  const resolver = await createThirdPartyResolverForCollection(components, collectionId)  // COULD BE CACHED?
+
+  // Get owned wearables for the collection
+  const ownedTPWForCollection = await resolver.findWearablesByOwner(address)
+
+  return {
+    wearables: ownedTPWForCollection,
+    totalAmount: ownedTPWForCollection.length
+  }
+}
