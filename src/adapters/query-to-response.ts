@@ -16,7 +16,8 @@ export function transformWearableToResponseSchema(wearable: wearableFromQuery): 
       tokenId: wearable.tokenId,
       transferredAt: wearable.transferredAt,
       price: wearable.item.price,
-    }]
+    }],
+    amount: 1
   }
 }
 
@@ -97,6 +98,7 @@ export function transformThirdPartyAssetToResponseSchema(asset: ThirdPartyAsset)
     urn: asset.urn.decentraland,
     individualData: [{
       id: asset.id
-    }]
+    }],
+    amount:1
   }
 }
