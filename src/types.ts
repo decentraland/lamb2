@@ -133,7 +133,21 @@ export type wearableForResponse = {
     tokenId?: string
     transferredAt?: number
     price?: number
-  }[]
+  }[],
+  definition? : Definition
+}
+
+export type Definition = {
+  id: string,
+  description: string,
+  image: string,
+  thumbnail: string,
+  collectionAddress: string,
+  rarity: SVGFESpecularLightingElement,
+  createdAt: number,
+  updatedAt: number,
+  // data: {},
+  // i18n: {}
 }
 
 export interface emotesQueryResponse {

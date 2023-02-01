@@ -1,10 +1,11 @@
-import { AppComponents, wearableForResponse } from '../types'
+import { AppComponents, Definition, wearableForResponse } from '../types'
 import LRU from 'lru-cache'
 import { IBaseComponent } from '@well-known-components/interfaces'
 
 export type WearablesCachesComponent = IBaseComponent & {
   dclWearablesCache: LRU<string, wearableForResponse[]>
   thirdPartyWearablesCache: LRU<string, wearableForResponse[]>
+  definitionsCache: LRU<string, Definition>
 }
 
 export async function createWearablesCachesComponent(
@@ -20,6 +21,7 @@ export async function createWearablesCachesComponent(
     max: wearablesSize,
     ttl: wearablesAge
   })
+  const definitionsCache: LRU<string, Definition> = new LRU({ max: wearablesSize, ttl: wearablesAge })
 
   async function start() {}
 
@@ -28,6 +30,7 @@ export async function createWearablesCachesComponent(
   return {
     dclWearablesCache,
     thirdPartyWearablesCache,
+    definitionsCache,
     start,
     stop
   }
