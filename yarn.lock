@@ -827,9 +827,9 @@
     "@types/node-fetch" "^2.5.12"
     typed-url-params "^1.0.1"
 
-"@well-known-components/logger@^1.1.0":
-  version "1.1.0"
-  resolved "https://registry.npmjs.org/@well-known-components/logger/-/logger-1.1.0.tgz"
+"@well-known-components/logger@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@well-known-components/logger/-/logger-3.0.0.tgz#19532f6027de92a4e85ed2bf50f3c7171c177531"
 
 "@well-known-components/metrics@^1.1.3":
   version "1.1.3"
