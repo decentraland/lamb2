@@ -812,11 +812,11 @@
   dependencies:
     "@types/yargs-parser" "*"
 
-"@well-known-components/env-config-provider@^1.1.1":
-  version "1.1.1"
-  resolved "https://registry.npmjs.org/@well-known-components/env-config-provider/-/env-config-provider-1.1.1.tgz"
+"@well-known-components/env-config-provider@^1.2.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@well-known-components/env-config-provider/-/env-config-provider-1.2.0.tgz#bd170c0af24cd8a34ebff23245fe53466db7f8be"
   dependencies:
-    dotenv "^8.2.0"
+    dotenv "^16.0.1"
 
 "@well-known-components/http-server@^1.1.0", "@well-known-components/http-server@^1.1.6":
   version "1.1.6"
@@ -1437,9 +1437,9 @@ domexception@^2.0.1:
   dependencies:
     webidl-conversions "^5.0.0"
 
-dotenv@^8.2.0:
-  version "8.6.0"
-  resolved "https://registry.npmjs.org/dotenv/-/dotenv-8.6.0.tgz"
+dotenv@^16.0.1:
+  version "16.0.3"
+  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.0.3.tgz#115aec42bac5053db3c456db30cc243a5a836a07"
 
 ee-first@1.1.1:
   version "1.1.1"
