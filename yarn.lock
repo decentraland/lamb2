@@ -819,9 +819,9 @@
     on-finished "^2.4.1"
     path-to-regexp "^6.2.1"
 
-"@well-known-components/interfaces@^1.1.0", "@well-known-components/interfaces@^1.1.1":
-  version "1.1.1"
-  resolved "https://registry.npmjs.org/@well-known-components/interfaces/-/interfaces-1.1.1.tgz"
+"@well-known-components/interfaces@^1.1.0", "@well-known-components/interfaces@^1.1.3":
+  version "1.1.3"
+  resolved "https://registry.yarnpkg.com/@well-known-components/interfaces/-/interfaces-1.1.3.tgz#7f69c4f82366587a9adfb1e032e228fbe5852b26"
   dependencies:
     "@types/node" "^16.11.19"
     "@types/node-fetch" "^2.5.12"
