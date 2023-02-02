@@ -8,7 +8,7 @@ import type {
 } from '@well-known-components/interfaces'
 import { metricDeclarations } from './metrics'
 import { TheGraphComponent } from './ports/the-graph'
-import { Profile, IPFSv1, IPFSv2 } from '@dcl/schemas'
+import { Profile, IPFSv1, IPFSv2, I18N } from '@dcl/schemas'
 import { ContentComponent } from './ports/content'
 import { OwnershipCachesComponent } from './ports/ownership-caches'
 import { Variables } from '@well-known-components/thegraph-component'
@@ -133,21 +133,40 @@ export type wearableForResponse = {
     tokenId?: string
     transferredAt?: number
     price?: number
-  }[],
-  definition? : Definition
+  }[]
+  definition?: Definition
 }
 
 export type Definition = {
-  id: string,
-  description: string,
-  image: string,
-  thumbnail: string,
-  collectionAddress: string,
-  rarity: SVGFESpecularLightingElement,
-  createdAt: number,
-  updatedAt: number,
-  // data: {},
-  // i18n: {}
+  id: string
+  description: string
+  image: string
+  thumbnail: string
+  collectionAddress: string
+  rarity: string
+  createdAt: number
+  updatedAt: number
+  data: {
+    replaces: string[]
+    hides: string[]
+    tags: string[]
+    category: string
+    representations: Representation[]
+  }
+  i18n: I18N[]
+}
+
+type Representation = {
+  bodyShapes: string[]
+  mainFile: string
+  overrideReplaces: string[]
+  overrideHides: string[]
+  contents: Content[]
+}
+
+type Content = {
+  key: string
+  url: string
 }
 
 export interface emotesQueryResponse {
@@ -252,10 +271,4 @@ export interface thirdPartyResolversResponse {
 export type thirdPartyProvider = {
   id: string
   resolver: string
-  // metadata: {
-  //   thirdParty: {
-  //     name: string,
-  //     description: string
-  //   }
-  // }
 }
