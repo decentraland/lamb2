@@ -283,7 +283,7 @@ function compareByRarity(wearable1: wearableForResponse, wearable2: wearableForR
 /*
  * Looks for the definitions of the provided wearables' urns and add them to them.
  */
-async function decorateWearablesWithDefinitionsFromCache(
+export async function decorateWearablesWithDefinitionsFromCache(
   wearables: wearableForResponse[],
   components: Pick<AppComponents, 'content' | 'wearablesCaches'>
 ) {

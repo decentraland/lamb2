@@ -1,3 +1,4 @@
+import { transformThirdPartyAssetToResponseSchema } from '../adapters/query-to-response'
 import { runQuery } from '../ports/the-graph'
 import {
   AppComponents,
@@ -7,6 +8,7 @@ import {
   TPWResolver,
   thirdPartyProvider
 } from '../types'
+import { decorateWearablesWithDefinitionsFromCache } from './wearables'
 
 export async function createThirdPartyResolverForCollection(
   components: Pick<AppComponents, 'theGraph' | 'fetch'>,
@@ -23,11 +25,7 @@ export async function createThirdPartyResolverForCollection(
     findWearablesByOwner: async (owner) => {
       const assetsByOwner = await fetchAssets(components, thirdPartyResolverAPI, registryId, owner)
       if (!assetsByOwner) throw new Error(`Could not fetch assets for owner: ${owner}`)
-      return (
-        assetsByOwner
-          ?.filter((asset) => asset.urn.decentraland.startsWith(thirdPartyId))
-          .map((asset) => asset.urn.decentraland) ?? []
-      )
+      return assetsByOwner?.filter((asset) => asset.urn.decentraland.startsWith(thirdPartyId)) ?? []
     }
   }
 }
@@ -149,16 +147,26 @@ const QUERY_ALL_THIRD_PARTY_RESOLVERS = `
 }
 `
 
+/*
+ * Returns only third-party wearables for the specified collection id, owned by the provided address
+ */
 export async function getWearablesForCollection(
-  components: Pick<AppComponents, 'theGraph' | 'fetch'>,
+  components: Pick<AppComponents, 'theGraph' | 'fetch' | 'wearablesCaches' | 'content'>,
   collectionId: string,
-  address: string
+  address: string,
+  includeDefinitions: boolean
 ) {
   // Get API for collection
-  const resolver = await createThirdPartyResolverForCollection(components, collectionId) // COULD BE CACHED?
+  const resolver = await createThirdPartyResolverForCollection(components, collectionId)
 
   // Get owned wearables for the collection
-  const ownedTPWForCollection = await resolver.findWearablesByOwner(address)
+  let ownedTPWForCollection = (await resolver.findWearablesByOwner(address)).map(
+    transformThirdPartyAssetToResponseSchema
+  )
+
+  // Fetch for definitions, add it to the cache and add it to each wearable in the response
+  if (includeDefinitions)
+    ownedTPWForCollection = await decorateWearablesWithDefinitionsFromCache(ownedTPWForCollection, components)
 
   return {
     wearables: ownedTPWForCollection,

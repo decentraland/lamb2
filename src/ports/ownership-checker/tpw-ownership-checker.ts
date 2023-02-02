@@ -2,7 +2,7 @@ import { parseUrn } from '@dcl/urn-resolver'
 import { getCachedNFTsAndPendingCheckNFTs, fillCacheWithRecentlyCheckedWearables } from '../../logic/cache'
 import { mergeMapIntoMap } from '../../logic/maps'
 import { createThirdPartyResolverForCollection } from '../../logic/third-party-wearables'
-import { AppComponents, NFTsOwnershipChecker } from '../../types'
+import { AppComponents, NFTsOwnershipChecker, ThirdPartyAsset } from '../../types'
 
 export function createTPWOwnershipChecker(
   cmpnnts: Pick<AppComponents, 'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches'>
@@ -64,10 +64,12 @@ async function ownedThirdPartyWearables(
     const ownedTPW: Set<string> = new Set()
     for (const collectionId of collectionIds) {
       // Get API for collection
-      const resolver = await createThirdPartyResolverForCollection(components, collectionId) // COULD BE CACHED?
+      const resolver = await createThirdPartyResolverForCollection(components, collectionId)
 
       // Get owned wearables for the collection
-      const ownedTPWForCollection = await resolver.findWearablesByOwner(address)
+      const ownedTPWForCollection = (await resolver.findWearablesByOwner(address)).map(
+        (asset: ThirdPartyAsset) => asset.urn.decentraland
+      )
 
       // Add wearables for collection to all owned wearables set
       for (const tpw of ownedTPWForCollection) ownedTPW.add(tpw)

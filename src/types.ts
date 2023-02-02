@@ -71,7 +71,7 @@ export interface NFTsOwnershipChecker {
 }
 
 export interface TPWResolver {
-  findWearablesByOwner: (owner: string) => Promise<string[]>
+  findWearablesByOwner: (owner: string) => Promise<ThirdPartyAsset[]>
 }
 
 export type ThirdPartyAsset = {
