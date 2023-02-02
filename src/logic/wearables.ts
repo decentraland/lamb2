@@ -311,7 +311,6 @@ export async function decorateWearablesWithDefinitionsFromCache(
     definitionsByURN.set(definition.id.toLowerCase(), definition)
   })
 
-  console.log({ definitionsByURN })
   // Decorate provided wearables with definitions
   return wearables.map((wearable) => {
     return {
