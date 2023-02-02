@@ -4,7 +4,8 @@ import {
   wearableFromQuery,
   wearablesQueryResponse,
   wearableForResponse,
-  ThirdPartyAsset
+  ThirdPartyAsset,
+  Definition
 } from '../types'
 import { parseUrn } from '@dcl/urn-resolver'
 import { runQuery, TheGraphComponent } from '../ports/the-graph'
@@ -15,6 +16,7 @@ import {
 import { cloneDeep } from 'lodash'
 import { getThirdPartyWearables } from './third-party-wearables'
 import LRU from 'lru-cache'
+import { Entity, EntityType } from '@dcl/schemas'
 
 /*
  * Extracts the non-base wearables from a profile and translate them to the new format
@@ -91,9 +93,10 @@ const QUERY_WEARABLES: string = `
 }`
 
 export async function getWearablesForAddress(
-  components: Pick<AppComponents, 'theGraph' | 'wearablesCaches' | 'fetch'>,
+  components: Pick<AppComponents, 'theGraph' | 'wearablesCaches' | 'fetch' | 'content'>,
   id: string,
   includeTPW: boolean,
+  includeDefinitions: boolean,
   pageSize?: string | null,
   pageNum?: string | null,
   orderBy?: string | null
@@ -133,6 +136,9 @@ export async function getWearablesForAddress(
       (parseInt(pageNum) - 1) * parseInt(pageSize),
       parseInt(pageNum) * parseInt(pageSize)
     )
+
+  // Fetch for definitions, add it to the cache and add it to each wearable in the response
+  if (includeDefinitions) allWearables = await decorateWearablesWithDefinitionsFromCache(allWearables, components)
 
   return {
     wearables: allWearables,
@@ -272,4 +278,92 @@ function compareByRarity(wearable1: wearableForResponse, wearable2: wearableForR
   const w1RarityValue = rarities.findIndex((rarity) => rarity === wearable1.rarity)
   const w2RarityValue = rarities.findIndex((rarity) => rarity === wearable2.rarity)
   return w2RarityValue - w1RarityValue
+}
+
+/*
+ * Looks for the definitions of the provided wearables' urns and add them to them.
+ */
+async function decorateWearablesWithDefinitionsFromCache(
+  wearables: wearableForResponse[],
+  components: Pick<AppComponents, 'content' | 'wearablesCaches'>
+) {
+  const { definitionsCache } = components.wearablesCaches
+
+  // Try to get them from cache. If present add them to the map, if not add them to an array to fetch later
+  const notCachedURNs: string[] = []
+  const definitionsByURN = new Map<string, Definition>()
+  wearables.forEach((wearable) => {
+    const definition = definitionsCache.get(wearable.urn)
+    if (definition) definitionsByURN.set(wearable.urn, definition)
+    else notCachedURNs.push(wearable.urn)
+  })
+
+  // Fetch entities for non-cached urns
+  const entities: Entity[] = await components.content.fetchEntitiesByPointers(EntityType.WEARABLE, notCachedURNs)
+
+  // Translate entities to definitions
+  const translatedDefinitions: Definition[] = entities.map((entity) => {
+    const metadata = entity.metadata
+    const representations = metadata.data.representations.map((representation: any) =>
+      mapRepresentation(components, representation, entity)
+    )
+    const externalImage = createExternalContentUrl(components, entity, metadata.image)
+    const thumbnail = createExternalContentUrl(components, entity, metadata.thumbnail)!
+    const image = externalImage ?? metadata.image
+
+    return {
+      ...metadata,
+      thumbnail,
+      image,
+      data: {
+        ...metadata.data,
+        representations
+      }
+    }
+  })
+
+  // Store new definitions in cache and in map
+  translatedDefinitions.forEach((definition) => {
+    definitionsCache.set(definition.id.toLowerCase(), definition)
+    definitionsByURN.set(definition.id.toLowerCase(), definition)
+  })
+
+  console.log({ definitionsByURN })
+  // Decorate provided wearables with definitions
+  return wearables.map((wearable) => {
+    return {
+      ...wearable,
+      definition: definitionsByURN.get(wearable.urn)
+    }
+  })
+}
+
+function mapRepresentation<T>(
+  components: Pick<AppComponents, 'content'>,
+  metadataRepresentation: T & { contents: string[] },
+  entity: Entity
+): T & { contents: { key: string; url: string }[] } {
+  const newContents = metadataRepresentation.contents.map((fileName) => ({
+    key: fileName,
+    url: createExternalContentUrl(components, entity, fileName)!
+  }))
+  return {
+    ...metadataRepresentation,
+    contents: newContents
+  }
+}
+
+function createExternalContentUrl(
+  components: Pick<AppComponents, 'content'>,
+  entity: Entity,
+  fileName: string | undefined
+): string | undefined {
+  const hash = findHashForFile(entity, fileName)
+  if (hash) return components.content.getExternalContentServerUrl() + `/contents/` + hash
+  return undefined
+}
+
+function findHashForFile(entity: Entity, fileName: string | undefined) {
+  if (fileName) return entity.content?.find((item) => item.file === fileName)?.hash
+  return undefined
 }
