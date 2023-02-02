@@ -17,6 +17,7 @@ import { cloneDeep } from 'lodash'
 import { getThirdPartyWearables } from './third-party-wearables'
 import LRU from 'lru-cache'
 import { Entity, EntityType } from '@dcl/schemas'
+import { extractDefinitionFromEntity } from '../adapters/definitions'
 
 /*
  * Extracts the non-base wearables from a profile and translate them to the new format
@@ -302,25 +303,7 @@ export async function decorateWearablesWithDefinitionsFromCache(
   const entities: Entity[] = await components.content.fetchEntitiesByPointers(EntityType.WEARABLE, notCachedURNs)
 
   // Translate entities to definitions
-  const translatedDefinitions: Definition[] = entities.map((entity) => {
-    const metadata = entity.metadata
-    const representations = metadata.data.representations.map((representation: any) =>
-      mapRepresentation(components, representation, entity)
-    )
-    const externalImage = createExternalContentUrl(components, entity, metadata.image)
-    const thumbnail = createExternalContentUrl(components, entity, metadata.thumbnail)!
-    const image = externalImage ?? metadata.image
-
-    return {
-      ...metadata,
-      thumbnail,
-      image,
-      data: {
-        ...metadata.data,
-        representations
-      }
-    }
-  })
+  const translatedDefinitions: Definition[] = entities.map((entity) => extractDefinitionFromEntity(components, entity))
 
   // Store new definitions in cache and in map
   translatedDefinitions.forEach((definition) => {
@@ -336,34 +319,4 @@ export async function decorateWearablesWithDefinitionsFromCache(
       definition: definitionsByURN.get(wearable.urn)
     }
   })
-}
-
-function mapRepresentation<T>(
-  components: Pick<AppComponents, 'content'>,
-  metadataRepresentation: T & { contents: string[] },
-  entity: Entity
-): T & { contents: { key: string; url: string }[] } {
-  const newContents = metadataRepresentation.contents.map((fileName) => ({
-    key: fileName,
-    url: createExternalContentUrl(components, entity, fileName)!
-  }))
-  return {
-    ...metadataRepresentation,
-    contents: newContents
-  }
-}
-
-function createExternalContentUrl(
-  components: Pick<AppComponents, 'content'>,
-  entity: Entity,
-  fileName: string | undefined
-): string | undefined {
-  const hash = findHashForFile(entity, fileName)
-  if (hash) return components.content.getExternalContentServerUrl() + `/contents/` + hash
-  return undefined
-}
-
-function findHashForFile(entity: Entity, fileName: string | undefined) {
-  if (fileName) return entity.content?.find((item) => item.file === fileName)?.hash
-  return undefined
 }
