@@ -290,17 +290,11 @@ export async function decorateWearablesWithDefinitionsFromCache(
 ) {
   const { definitionsCache } = components.wearablesCaches
 
-  // Try to get them from cache. If present add them to the map, if not add them to an array to fetch later
-  const notCachedURNs: string[] = []
-  const definitionsByURN = new Map<string, Definition>()
-  wearables.forEach((wearable) => {
-    const definition = definitionsCache.get(wearable.urn)
-    if (definition) definitionsByURN.set(wearable.urn, definition)
-    else notCachedURNs.push(wearable.urn)
-  })
+  // Get a map with the definitions from the cache and an array with the non-cached urns
+  const { nonCachedURNs, definitionsByURN } = getDefinitionsFromCache(wearables, definitionsCache)
 
   // Fetch entities for non-cached urns
-  const entities: Entity[] = await components.content.fetchEntitiesByPointers(EntityType.WEARABLE, notCachedURNs)
+  const entities: Entity[] = await components.content.fetchEntitiesByPointers(EntityType.WEARABLE, nonCachedURNs)
 
   // Translate entities to definitions
   const translatedDefinitions: Definition[] = entities.map((entity) => extractDefinitionFromEntity(components, entity))
@@ -318,4 +312,22 @@ export async function decorateWearablesWithDefinitionsFromCache(
       definition: definitionsByURN.get(wearable.urn)
     }
   })
+}
+
+/*
+ * Try to get the definitions from cache. Present ones are retrieved as a map urn -> definition.
+ * Not present ones are retrieved as an array to fetch later
+ */
+function getDefinitionsFromCache(wearables: wearableForResponse[], definitionsCache: LRU<string, Definition>) {
+  const nonCachedURNs: string[] = []
+  const definitionsByURN = new Map<string, Definition>()
+  wearables.forEach((wearable) => {
+    const definition = definitionsCache.get(wearable.urn)
+    if (definition) {
+      definitionsByURN.set(wearable.urn, definition)
+    } else {
+      nonCachedURNs.push(wearable.urn)
+    }
+  })
+  return { nonCachedURNs, definitionsByURN }
 }
