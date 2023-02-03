@@ -1,6 +1,6 @@
-import { transformEmoteToResponseSchema, transformWearableToResponseSchema } from '../adapters/query-to-response'
+import { transformEmoteToResponseSchema } from '../adapters/query-to-response'
 import { runQuery } from '../ports/the-graph'
-import { AppComponents, emotesQueryResponse, wearablesQueryResponse } from '../types'
+import { AppComponents, emotesQueryResponse } from '../types'
 
 const QUERY_EMOTES: string = `
 {
@@ -67,8 +67,7 @@ export async function getEmotesForAddress(
   // Set query depending on pagination
   let query
   if (pageSize && pageNum) {
-    query = QUERY_EMOTES_PAGINATED
-      .replace('$owner', id.toLowerCase())
+    query = QUERY_EMOTES_PAGINATED.replace('$owner', id.toLowerCase())
       .replace('$first', `${pageSize}`)
       .replace('$skip', `${(parseInt(pageNum) - 1) * parseInt(pageSize)}`)
   } else {
@@ -76,5 +75,7 @@ export async function getEmotesForAddress(
   }
 
   // Query owned names from TheGraph for the address
-  return (await runQuery<emotesQueryResponse>(theGraph.maticCollectionsSubgraph, query, {})).nfts.map(transformEmoteToResponseSchema)
+  return (await runQuery<emotesQueryResponse>(theGraph.maticCollectionsSubgraph, query, {})).nfts.map(
+    transformEmoteToResponseSchema
+  )
 }

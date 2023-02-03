@@ -1,19 +1,18 @@
-import type { IFetchComponent } from "@well-known-components/http-server"
+import type { IFetchComponent } from '@well-known-components/http-server'
 import type {
   IConfigComponent,
   ILoggerComponent,
   IHttpServerComponent,
   IBaseComponent,
-  IMetricsComponent,
-} from "@well-known-components/interfaces"
-import { metricDeclarations } from "./metrics"
-import { TheGraphComponent } from "./ports/the-graph"
+  IMetricsComponent
+} from '@well-known-components/interfaces'
+import { metricDeclarations } from './metrics'
+import { TheGraphComponent } from './ports/the-graph'
 import { Profile, IPFSv1, IPFSv2 } from '@dcl/schemas'
-import { ContentComponent } from "./ports/content"
-import { OwnershipCachesComponent } from "./ports/ownership-caches"
-import { Variables } from "@well-known-components/thegraph-component"
-import LRU from 'lru-cache'
-import { WearablesCachesComponent } from "./ports/wearables-caches"
+import { ContentComponent } from './ports/content'
+import { OwnershipCachesComponent } from './ports/ownership-caches'
+import { Variables } from '@well-known-components/thegraph-component'
+import { WearablesCachesComponent } from './ports/wearables-caches'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -95,44 +94,44 @@ export type ThirdPartyAssets = {
  * Function used to fetch TheGraph
  * @public
  */
- export type QueryGraph = <T = any>(query: string, variables?: Variables, remainingAttempts?: number) => Promise<T>
- 
+export type QueryGraph = <T = any>(query: string, variables?: Variables, remainingAttempts?: number) => Promise<T>
+
 export interface wearablesQueryResponse {
   nfts: wearableFromQuery[]
 }
 
 export type wearableFromQuery = {
-  urn: string,
-  id: string,
-  contractAddress: string,
-  tokenId: string,
-  image: string,
-  transferredAt: number,
+  urn: string
+  id: string
+  contractAddress: string
+  tokenId: string
+  image: string
+  transferredAt: number
   item: {
     metadata: {
       wearable: {
-        name: string,
+        name: string
         description: string
       }
     }
-    rarity: string,
+    rarity: string
     price: number
   }
 }
 
 // The response is grouped by URN
 export type wearableForResponse = {
-  urn: string,
-  contractAddress?: string,
-  image?: string,
-  name?: string,
-  description?: string,
-  rarity?: string,
-  amount: number,
+  urn: string
+  contractAddress?: string
+  image?: string
+  name?: string
+  description?: string
+  rarity?: string
+  amount: number
   individualData?: {
-    id: string,
-    tokenId?: string,
-    transferredAt?: number,
+    id: string
+    tokenId?: string
+    transferredAt?: number
     price?: number
   }[]
 }
@@ -142,34 +141,34 @@ export interface emotesQueryResponse {
 }
 
 export type emoteFromQuery = {
-  urn: string,
-  id: string,
-  contractAddress: string,
-  tokenId: string,
-  image: string,
-  transferredAt: number,
+  urn: string
+  id: string
+  contractAddress: string
+  tokenId: string
+  image: string
+  transferredAt: number
   item: {
     metadata: {
       emote: {
-        name: string,
+        name: string
         description: string
       }
     }
-    rarity: string,
+    rarity: string
     price: number
   }
 }
 
 export type emoteForResponse = {
-  urn: string,
-  id: string,
-  contractAddress: string,
-  tokenId: string,
-  image: string,
-  transferredAt: number,
-  name: string,
-  description: string,
-  rarity: string,
+  urn: string
+  id: string
+  contractAddress: string
+  tokenId: string
+  image: string
+  transferredAt: number
+  name: string
+  description: string
+  rarity: string
   price: number
 }
 
@@ -178,18 +177,18 @@ export interface namesQueryResponse {
 }
 
 export type nameFromQuery = {
-  name: string,
-  contractAddress: string,
-  tokenId: string,
+  name: string
+  contractAddress: string
+  tokenId: string
   activeOrder: {
     price: string
   }
 }
 
 export type nameForResponse = {
-  name: string,
-  contractAddress: string,
-  tokenId: string,
+  name: string
+  contractAddress: string
+  tokenId: string
   price: string | null
 }
 
@@ -198,13 +197,13 @@ export interface landsQueryResponse {
 }
 
 export type landFromQuery = {
-  name: string,
-  contractAddress: string,
-  tokenId: string,
-  category: string,
+  name: string
+  contractAddress: string
+  tokenId: string
+  category: string
   parcel: {
-    x: string,
-    y: string,
+    x: string
+    y: string
     data: {
       description: string
     }
@@ -213,22 +212,22 @@ export type landFromQuery = {
     data: {
       description: string
     }
-  },
+  }
   activeOrder: {
     price: string
-  },
+  }
   image: string
 }
 
 export type landForResponse = {
-  name: string,
-  contractAddress: string,
-  tokenId: string,
-  category: string,
-  x?: string,
-  y?: string,
-  description: string | undefined,
-  price: string | null,
+  name: string
+  contractAddress: string
+  tokenId: string
+  category: string
+  x?: string
+  y?: string
+  description: string | undefined
+  price: string | null
   image: string
 }
 
@@ -237,7 +236,7 @@ export interface thirdPartyResolversResponse {
 }
 
 export type thirdPartyProvider = {
-  id: string,
+  id: string
   resolver: string
   // metadata: {
   //   thirdParty: {

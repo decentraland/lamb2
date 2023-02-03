@@ -1,28 +1,30 @@
-import { IMetricsComponent } from "@well-known-components/interfaces"
-import { validateMetricsDeclaration } from "@well-known-components/metrics"
+import { IMetricsComponent } from '@well-known-components/interfaces'
+import { validateMetricsDeclaration } from '@well-known-components/metrics'
 import { getDefaultHttpMetrics } from '@well-known-components/metrics/dist/http'
+import { metricDeclarations as logMetricDeclarations } from '@well-known-components/logger'
 
 export const metricDeclarations = {
   ...getDefaultHttpMetrics(),
+  ...logMetricDeclarations,
   test_status_counter: {
-    help: "Count calls to ping",
+    help: 'Count calls to ping',
     type: IMetricsComponent.CounterType,
-    labelNames: ["pathname"]
+    labelNames: ['pathname']
   },
   profiles_counter: {
-    help: "Count calls to profiles",
+    help: 'Count calls to profiles',
     type: IMetricsComponent.CounterType,
-    labelNames: ["pathname", "ids"]
+    labelNames: ['pathname', 'ids']
   },
   subgraph_ok_total: {
-    help: "Count total calls to subgraph",
+    help: 'Count total calls to subgraph',
     type: IMetricsComponent.CounterType,
-    labelNames: ["url"]
+    labelNames: ['url']
   },
   subgraph_errors_total: {
-    help: "Count total calls to subgraph",
+    help: 'Count total calls to subgraph',
     type: IMetricsComponent.CounterType,
-    labelNames: ["url", "errorMessage"]
+    labelNames: ['url', 'errorMessage']
   },
   dcl_lamb2_server_build_info: {
     help: 'Lamb2 server static build info.',

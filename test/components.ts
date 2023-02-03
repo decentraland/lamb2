@@ -1,15 +1,16 @@
 // This file is the "test-environment" analogous for src/components.ts
 // Here we define the test components to be used in the testing environment
 
-import { createRunner, createLocalFetchCompoment } from "@well-known-components/test-helpers"
+import { createRunner, createLocalFetchCompoment } from '@well-known-components/test-helpers'
 
-import { main } from "../src/service"
-import { QueryGraph, TestComponents } from "../src/types"
-import { initComponents as originalInitComponents } from "../src/components"
-import { EntityType } from "dcl-catalyst-commons"
-import { ISubgraphComponent } from "@well-known-components/thegraph-component"
-import { TheGraphComponent } from "../src/ports/the-graph"
-import { createDotEnvConfigComponent } from "@well-known-components/env-config-provider"
+import { main } from '../src/service'
+import { QueryGraph, TestComponents } from '../src/types'
+import { initComponents as originalInitComponents } from '../src/components'
+import { ISubgraphComponent } from '@well-known-components/thegraph-component'
+import { TheGraphComponent } from '../src/ports/the-graph'
+import { createDotEnvConfigComponent } from '@well-known-components/env-config-provider'
+import { createTestMetricsComponent } from '@well-known-components/metrics'
+import { metricDeclarations } from '../src/metrics'
 
 /**
  * Behaves like Jest "describe" function, used to describe a test for a
@@ -20,7 +21,7 @@ import { createDotEnvConfigComponent } from "@well-known-components/env-config-p
  */
 export const test = createRunner<TestComponents>({
   main,
-  initComponents,
+  initComponents
 })
 
 export const createMockSubgraphComponent = (mock?: QueryGraph): ISubgraphComponent => ({
@@ -38,23 +39,15 @@ export function createTestTheGraphComponent(): TheGraphComponent {
   }
 }
 
-// export const buildTheGraphComponent = (subGraphs?: Partial<SubGraphs>): TheGraphComponent => ({
-//   ...defaultTheGraphComponent,
-//   ...subGraphs
-// })
-
 async function initComponents(): Promise<TestComponents> {
   const components = await originalInitComponents()
 
-  // const { config } = components
-  const config = await createDotEnvConfigComponent({}, {COMMIT_HASH: 'commit_hash'})
-
-  // components.theGraph = defaultTheGraphComponent
+  const config = await createDotEnvConfigComponent({}, { COMMIT_HASH: 'commit_hash' })
 
   return {
     ...components,
     config: config,
-    localFetch: await createLocalFetchCompoment(config),
+    metrics: createTestMetricsComponent(metricDeclarations),
+    localFetch: await createLocalFetchCompoment(config)
   }
 }
-

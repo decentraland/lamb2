@@ -1,7 +1,17 @@
-import { runQuery } from "../ports/the-graph"
-import { AppComponents, thirdPartyResolversResponse, ThirdPartyAsset, ThirdPartyAssets, TPWResolver, thirdPartyProvider } from "../types"
+import { runQuery } from '../ports/the-graph'
+import {
+  AppComponents,
+  thirdPartyResolversResponse,
+  ThirdPartyAsset,
+  ThirdPartyAssets,
+  TPWResolver,
+  thirdPartyProvider
+} from '../types'
 
-export async function createThirdPartyResolverForCollection(components: Pick<AppComponents, "theGraph" | "fetch">, collectionId: string): Promise<TPWResolver> {
+export async function createThirdPartyResolverForCollection(
+  components: Pick<AppComponents, 'theGraph' | 'fetch'>,
+  collectionId: string
+): Promise<TPWResolver> {
   // Parse collection Id
   const { thirdPartyId, registryId } = parseCollectionId(collectionId)
 
@@ -22,7 +32,7 @@ export async function createThirdPartyResolverForCollection(components: Pick<App
   }
 }
 
-function parseCollectionId(collectionId: string): { thirdPartyId: string, registryId: string} {
+function parseCollectionId(collectionId: string): { thirdPartyId: string; registryId: string } {
   const parts = collectionId.split(':')
 
   // TODO: [TPW] Use urn parser here
@@ -42,8 +52,15 @@ function parseCollectionId(collectionId: string): { thirdPartyId: string, regist
  * Returns the third party resolver API to be used to query assets from any collection
  * of given third party integration
  */
-async function findThirdPartyResolver(components: Pick<AppComponents, "theGraph">, id: string): Promise<string | undefined> {
-  const queryResponse = await runQuery<{ thirdParties: [{ resolver: string }] }>(components.theGraph.thirdPartyRegistrySubgraph, QUERY_THIRD_PARTY_RESOLVER, { id })
+async function findThirdPartyResolver(
+  components: Pick<AppComponents, 'theGraph'>,
+  id: string
+): Promise<string | undefined> {
+  const queryResponse = await runQuery<{ thirdParties: [{ resolver: string }] }>(
+    components.theGraph.thirdPartyRegistrySubgraph,
+    QUERY_THIRD_PARTY_RESOLVER,
+    { id }
+  )
   return queryResponse.thirdParties[0]?.resolver
 }
 
@@ -56,16 +73,23 @@ query ThirdPartyResolver($id: String!) {
 }
 `
 
-async function fetchAssets(components: Pick<AppComponents, "fetch">, thirdPartyResolverURL: string, registryId: string, owner: string) {
+async function fetchAssets(
+  components: Pick<AppComponents, 'fetch'>,
+  thirdPartyResolverURL: string,
+  registryId: string,
+  owner: string
+) {
   let baseUrl: string | undefined = buildRegistryOwnerUrl(thirdPartyResolverURL, registryId, owner)
   const allAssets: ThirdPartyAsset[] = []
   try {
     do {
-      const response = await components.fetch.fetch(baseUrl, { timeout: 5000})
+      const response = await components.fetch.fetch(baseUrl, { timeout: 5000 })
       const responseVal = await response.json()
-      const assetsByOwner = (responseVal) as ThirdPartyAssets
+      const assetsByOwner = responseVal as ThirdPartyAssets
       if (!assetsByOwner) {
-        console.error(`No assets found with owner: ${owner}, url: ${thirdPartyResolverURL} and registryId: ${registryId} at ${baseUrl}`)
+        console.error(
+          `No assets found with owner: ${owner}, url: ${thirdPartyResolverURL} and registryId: ${registryId} at ${baseUrl}`
+        )
         break
       }
 
@@ -78,7 +102,9 @@ async function fetchAssets(components: Pick<AppComponents, "fetch">, thirdPartyR
 
     return allAssets
   } catch (err) {
-    console.error(`Error fetching assets with owner: ${owner}, url: ${thirdPartyResolverURL} and registryId: ${registryId} (${baseUrl}). ${err}`)
+    console.error(
+      `Error fetching assets with owner: ${owner}, url: ${thirdPartyResolverURL} and registryId: ${registryId} (${baseUrl}). ${err}`
+    )
     return []
   }
 }
@@ -88,23 +114,31 @@ function buildRegistryOwnerUrl(thirdPartyResolverURL: string, registryId: string
   return `${baseUrl}/registry/${registryId}/address/${owner}/assets`
 }
 
-
 /*
  * Returns all third-party wearables for an address
  */
-export async function getThirdPartyWearables(components: Pick<AppComponents, 'theGraph' | 'fetch'>, userAddress: string) {
+export async function getThirdPartyWearables(
+  components: Pick<AppComponents, 'theGraph' | 'fetch'>,
+  userAddress: string
+) {
   const { theGraph } = components
 
   // Get every resolver
-  const tpProviders = (await runQuery<thirdPartyResolversResponse>(theGraph.thirdPartyRegistrySubgraph, QUERY_ALL_THIRD_PARTY_RESOLVERS, {})).thirdParties
-  
+  const tpProviders = (
+    await runQuery<thirdPartyResolversResponse>(
+      theGraph.thirdPartyRegistrySubgraph,
+      QUERY_ALL_THIRD_PARTY_RESOLVERS,
+      {}
+    )
+  ).thirdParties
+
   // Fetch assets asynchronously
   const providersPromises = tpProviders.map((provider: thirdPartyProvider) => {
     return fetchAssets(components, provider.resolver, parseCollectionId(provider.id).registryId, userAddress)
   })
 
   return (await Promise.all(providersPromises)).flat()
-} 
+}
 
 const QUERY_ALL_THIRD_PARTY_RESOLVERS = `
 {
@@ -115,9 +149,13 @@ const QUERY_ALL_THIRD_PARTY_RESOLVERS = `
 }
 `
 
-export async function getWearablesForCollection(components: Pick<AppComponents, 'theGraph' | 'fetch'>, collectionId: string, address: string) {
+export async function getWearablesForCollection(
+  components: Pick<AppComponents, 'theGraph' | 'fetch'>,
+  collectionId: string,
+  address: string
+) {
   // Get API for collection
-  const resolver = await createThirdPartyResolverForCollection(components, collectionId)  // COULD BE CACHED?
+  const resolver = await createThirdPartyResolverForCollection(components, collectionId) // COULD BE CACHED?
 
   // Get owned wearables for the collection
   const ownedTPWForCollection = await resolver.findWearablesByOwner(address)
