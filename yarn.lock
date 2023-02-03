@@ -282,7 +282,7 @@
     ajv-errors "^3.0.0"
     ajv-keywords "^5.1.0"
 
-"@dcl/schemas@^6.4.2":
+"@dcl/schemas@^6.4.2", "@dcl/schemas@^6.6.0":
   version "6.6.0"
   resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-6.6.0.tgz#8ecbc4ee3b873c24447a39492aec9726cf3c5987"
   dependencies:
