@@ -1,4 +1,4 @@
-import { transformThirdPartyAssetToResponseSchema } from '../adapters/query-to-response'
+import { transformThirdPartyAssetToWearableForCache } from '../adapters/nfts'
 import { runQuery } from '../ports/the-graph'
 import {
   AppComponents,
@@ -161,7 +161,7 @@ export async function getWearablesForCollection(
 
   // Get owned wearables for the collection
   let ownedTPWForCollection = (await resolver.findWearablesByOwner(address)).map(
-    transformThirdPartyAssetToResponseSchema
+    transformThirdPartyAssetToWearableForCache
   )
 
   // Fetch for definitions, add it to the cache and add it to each wearable in the response

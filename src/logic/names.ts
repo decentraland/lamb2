@@ -1,4 +1,4 @@
-import { transformNameToResponseSchema } from '../adapters/query-to-response'
+import { transformNameToResponseSchema } from '../adapters/nfts'
 import { runQuery } from '../ports/the-graph'
 import { AppComponents, namesQueryResponse } from '../types'
 
