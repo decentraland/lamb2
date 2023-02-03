@@ -103,18 +103,9 @@ export interface wearablesQueryResponse {
 export type wearableFromQuery = {
   urn: string
   id: string
-  contractAddress: string
   tokenId: string
-  image: string
   transferredAt: number
   item: {
-    metadata: {
-      wearable: {
-        name: string
-        description: string
-      }
-    }
-    rarity: string
     price: number
   }
 }
@@ -122,11 +113,6 @@ export type wearableFromQuery = {
 // The response is grouped by URN
 export type wearableForResponse = {
   urn: string
-  contractAddress?: string
-  image?: string
-  name?: string
-  description?: string
-  rarity?: string
   amount: number
   individualData?: {
     id: string

@@ -76,18 +76,9 @@ const QUERY_WEARABLES: string = `
   ) {
     urn,
     id,
-    contractAddress,
     tokenId,
-    image,
     transferredAt,
     item {
-      metadata {
-        wearable {
-          name,
-          description
-        }
-      },
-      rarity,
       price
     }
   }
@@ -128,9 +119,6 @@ export async function getWearablesForAddress(
   // Set total amount of wearables
   const wearablesTotal = allWearables.length
 
-  // Sort them by another field if specified
-  if (orderBy === 'rarity') allWearables = cloneDeep(allWearables).sort(compareByRarity)
-
   // Virtually paginate the response if required
   if (pageSize && pageNum)
     allWearables = allWearables.slice(
@@ -139,7 +127,14 @@ export async function getWearablesForAddress(
     )
 
   // Fetch for definitions, add it to the cache and add it to each wearable in the response
-  if (includeDefinitions) allWearables = await decorateWearablesWithDefinitionsFromCache(allWearables, components)
+  if (includeDefinitions) {
+    allWearables = await decorateWearablesWithDefinitionsFromCache(allWearables, components)
+
+    // Sort them by another field if specified
+    if (orderBy === 'rarity') {
+      allWearables = cloneDeep(allWearables).sort(compareByRarity)
+    }
+  }
 
   return {
     wearables: allWearables,
@@ -272,13 +267,17 @@ function compareByTransferredAt(wearable1: wearableForResponse, wearable2: weara
 
 /*
  * Returns a positive number if wearable1 has a lower rarity than wearable2, zero if they are equal, and a negative
- * number if wearable2 has a lower rarity than wearable1. Can be used to sort wearables by rarity, descending
+ * number if wearable2 has a lower rarity than wearable1. Can be used to sort wearables by rarity, descending.
+ * It is only aplicable when definitions are being include in the response, if it's not include it will return 0.
  */
 function compareByRarity(wearable1: wearableForResponse, wearable2: wearableForResponse) {
   const rarities = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic', 'unique']
-  const w1RarityValue = rarities.findIndex((rarity) => rarity === wearable1.rarity)
-  const w2RarityValue = rarities.findIndex((rarity) => rarity === wearable2.rarity)
-  return w2RarityValue - w1RarityValue
+  if (wearable1.definition && wearable2.definition) {
+    const w1RarityValue = rarities.findIndex((rarity) => rarity === wearable1.definition!.rarity)
+    const w2RarityValue = rarities.findIndex((rarity) => rarity === wearable2.definition!.rarity!)
+    return w2RarityValue - w1RarityValue
+  }
+  return 0
 }
 
 /*

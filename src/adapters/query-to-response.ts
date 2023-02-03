@@ -16,11 +16,6 @@ import {
 export function transformWearableToResponseSchema(wearable: wearableFromQuery): wearableForResponse {
   return {
     urn: wearable.urn,
-    contractAddress: wearable.contractAddress,
-    image: wearable.image,
-    name: wearable.item.metadata.wearable.name,
-    description: wearable.item.metadata.wearable.description,
-    rarity: wearable.item.rarity,
     individualData: [
       {
         id: wearable.id,
