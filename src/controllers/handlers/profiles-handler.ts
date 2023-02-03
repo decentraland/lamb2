@@ -1,8 +1,13 @@
-import { Request } from "node-fetch"
-import { getProfiles } from "../../logic/profiles"
-import { HandlerContextWithPath } from "../../types"
+import { Request } from 'node-fetch'
+import { getProfiles } from '../../logic/profiles'
+import { HandlerContextWithPath } from '../../types'
 
-export async function profilesHandler(context: HandlerContextWithPath<"metrics" | "content" | "theGraph" | "config" | "fetch" | "ownershipCaches", "/profiles">) {
+export async function profilesHandler(
+  context: HandlerContextWithPath<
+    'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches',
+    '/profiles'
+  >
+) {
   // Get the profile ids
   const body = await context.request.json()
   const ids = body.ids
@@ -11,7 +16,7 @@ export async function profilesHandler(context: HandlerContextWithPath<"metrics" 
   if (!ids) {
     return {
       status: 400,
-      body: "No profile ids were specified. Expected ids:string[] in body"
+      body: 'No profile ids were specified. Expected ids:string[] in body'
     }
   }
 

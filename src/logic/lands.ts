@@ -75,8 +75,7 @@ export async function getLandsForAddress(
   // Set query depending on pagination
   let query
   if (pageSize && pageNum) {
-    query = QUERY_LANDS_PAGINATED
-      .replace('$owner', id.toLowerCase())
+    query = QUERY_LANDS_PAGINATED.replace('$owner', id.toLowerCase())
       .replace('$first', `${pageSize}`)
       .replace('$skip', `${(parseInt(pageNum) - 1) * parseInt(pageSize)}`)
   } else {
@@ -84,6 +83,8 @@ export async function getLandsForAddress(
   }
 
   // Query owned lands from TheGraph for the address
-  const lands = (await runQuery<landsQueryResponse>(theGraph.ensSubgraph, query, {})).nfts.map(transformLandToResponseSchema)
+  const lands = (await runQuery<landsQueryResponse>(theGraph.ensSubgraph, query, {})).nfts.map(
+    transformLandToResponseSchema
+  )
   return lands
 }

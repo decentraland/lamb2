@@ -1,6 +1,6 @@
-import { Lifecycle } from "@well-known-components/interfaces"
-import { setupRouter } from "./controllers/routes"
-import { AppComponents, GlobalContext, TestComponents } from "./types"
+import { Lifecycle } from '@well-known-components/interfaces'
+import { setupRouter } from './controllers/routes'
+import { AppComponents, GlobalContext, TestComponents } from './types'
 
 // this function wires the business logic (adapters & controllers) with the components (ports)
 export async function main(program: Lifecycle.EntryPointParameters<AppComponents | TestComponents>) {
@@ -19,6 +19,6 @@ export async function main(program: Lifecycle.EntryPointParameters<AppComponents
   // start ports: db, listeners, synchronizations, etc
   await startComponents()
 
-  const commitHash = await components.config.getString('COMMIT_HASH') ?? ''
+  const commitHash = (await components.config.getString('COMMIT_HASH')) ?? ''
   components.metrics.observe('dcl_lamb2_server_build_info', { commitHash }, 1)
 }
