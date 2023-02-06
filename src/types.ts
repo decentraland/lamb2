@@ -106,21 +106,21 @@ export type wearableFromQuery = {
   tokenId: string
   transferredAt: number
   item: {
-    rarity: string,
+    rarity: string
     price: number
   }
 }
 
 export type wearableForCache = {
-  urn: string,
-  amount: number,
+  urn: string
+  amount: number
   individualData?: {
-    id: string,
-    tokenId?: string,
-    transferredAt?: number,
+    id: string
+    tokenId?: string
+    transferredAt?: number
     price?: number
-  }[],
-  rarity?: string  // Rarity added in the cache to being able to sort by it. It wont be included in the response since it already appears in the definition. It's optional because third-party wearables doesn't have rarity
+  }[]
+  rarity?: string // Rarity added in the cache to being able to sort by it. It wont be included in the response since it already appears in the definition. It's optional because third-party wearables doesn't have rarity
 }
 
 // The response is grouped by URN
