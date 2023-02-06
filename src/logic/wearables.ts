@@ -125,8 +125,6 @@ export async function getWearablesForAddress(
   // Sort them by another field if specified
   if (orderBy === 'rarity') allWearables = cloneDeep(allWearables).sort(compareByRarity)
 
-  console.log({ allWearables })
-
   // Virtually paginate the response if required
   if (pageSize && pageNum)
     allWearables = allWearables.slice(
@@ -298,7 +296,9 @@ export async function decorateWearablesWithDefinitionsFromCache(
   const { nonCachedURNs, definitionsByURN } = getDefinitionsFromCache(wearables, definitionsCache)
 
   // Fetch entities for non-cached urns
-  const entities: Entity[] = await components.content.fetchEntitiesByPointers(EntityType.WEARABLE, nonCachedURNs)
+  let entities: Entity[] = []
+  if (nonCachedURNs.length === 0)
+    entities = await components.content.fetchEntitiesByPointers(EntityType.WEARABLE, nonCachedURNs)
 
   // Translate entities to definitions
   const translatedDefinitions: Definition[] = entities.map((entity) => extractDefinitionFromEntity(components, entity))
@@ -333,5 +333,7 @@ function getDefinitionsFromCache(wearables: wearableForResponse[], definitionsCa
       nonCachedURNs.push(wearable.urn)
     }
   })
+
+  console.log({ nonCachedURNs, definitionsByURN })
   return { nonCachedURNs, definitionsByURN }
 }
