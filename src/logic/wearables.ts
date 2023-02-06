@@ -259,7 +259,6 @@ function groupThirdPartyWearablesByURN(tpWearables: ThirdPartyAsset[]): wearable
  * number if wearable2 is older than wearable1. Can be used to sort wearables by creationDate, descending
  */
 function compareByTransferredAt(wearable1: wearableForResponse, wearable2: wearableForResponse) {
-  // TMP SOLUTION
   if (
     wearable1.individualData &&
     wearable1.individualData[0].transferredAt &&
