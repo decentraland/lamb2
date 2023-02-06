@@ -7,20 +7,16 @@ import {
   emoteForResponse,
   wearableFromQuery,
   wearableForResponse,
-  ThirdPartyAsset
+  ThirdPartyAsset,
+  wearableForCache
 } from '../types'
 
 /*
- * Adapts the result from the wearables query to the desired schema for the response
+ * Adapts the result from the wearables query to the desired schema for the cache
  */
-export function transformWearableToResponseSchema(wearable: wearableFromQuery): wearableForResponse {
+export function transformWearableFromQueryToWearableForCache(wearable: wearableFromQuery): wearableForCache {
   return {
     urn: wearable.urn,
-    contractAddress: wearable.contractAddress,
-    image: wearable.image,
-    name: wearable.item.metadata.wearable.name,
-    description: wearable.item.metadata.wearable.description,
-    rarity: wearable.item.rarity,
     individualData: [
       {
         id: wearable.id,
@@ -29,7 +25,19 @@ export function transformWearableToResponseSchema(wearable: wearableFromQuery): 
         price: wearable.item.price
       }
     ],
+    rarity: wearable.item.rarity,
     amount: 1
+  }
+}
+
+/*
+ * Excludes the rarity field since it's already present in the definition field
+ */
+export function transformWearableForCacheToWearableForResponse(wearable: wearableForCache): wearableForResponse {
+  return {
+    urn: wearable.urn,
+    individualData: wearable.individualData,
+    amount: wearable.amount
   }
 }
 
@@ -101,7 +109,7 @@ export function transformLandToResponseSchema(land: landFromQuery): landForRespo
 /*
  * Adapts the response from a third-party resolver to /nfts/wearables endpoint response
  */
-export function transformThirdPartyAssetToResponseSchema(asset: ThirdPartyAsset): wearableForResponse {
+export function transformThirdPartyAssetToWearableForCache(asset: ThirdPartyAsset): wearableForCache {
   return {
     urn: asset.urn.decentraland,
     individualData: [

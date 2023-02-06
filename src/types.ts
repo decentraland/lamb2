@@ -8,7 +8,7 @@ import type {
 } from '@well-known-components/interfaces'
 import { metricDeclarations } from './metrics'
 import { TheGraphComponent } from './ports/the-graph'
-import { Profile, IPFSv1, IPFSv2 } from '@dcl/schemas'
+import { Profile, IPFSv1, IPFSv2, I18N } from '@dcl/schemas'
 import { ContentComponent } from './ports/content'
 import { OwnershipCachesComponent } from './ports/ownership-caches'
 import { Variables } from '@well-known-components/thegraph-component'
@@ -71,7 +71,7 @@ export interface NFTsOwnershipChecker {
 }
 
 export interface TPWResolver {
-  findWearablesByOwner: (owner: string) => Promise<string[]>
+  findWearablesByOwner: (owner: string) => Promise<ThirdPartyAsset[]>
 }
 
 export type ThirdPartyAsset = {
@@ -103,30 +103,16 @@ export interface wearablesQueryResponse {
 export type wearableFromQuery = {
   urn: string
   id: string
-  contractAddress: string
   tokenId: string
-  image: string
   transferredAt: number
   item: {
-    metadata: {
-      wearable: {
-        name: string
-        description: string
-      }
-    }
     rarity: string
     price: number
   }
 }
 
-// The response is grouped by URN
-export type wearableForResponse = {
+export type wearableForCache = {
   urn: string
-  contractAddress?: string
-  image?: string
-  name?: string
-  description?: string
-  rarity?: string
   amount: number
   individualData?: {
     id: string
@@ -134,6 +120,52 @@ export type wearableForResponse = {
     transferredAt?: number
     price?: number
   }[]
+  rarity?: string // Rarity added in the cache to being able to sort by it. It wont be included in the response since it already appears in the definition. It's optional because third-party wearables doesn't have rarity
+}
+
+// The response is grouped by URN
+export type wearableForResponse = {
+  urn: string
+  amount: number
+  individualData?: {
+    id: string
+    tokenId?: string
+    transferredAt?: number
+    price?: number
+  }[]
+  definition?: Definition
+}
+
+export type Definition = {
+  id: string
+  description: string
+  image: string
+  thumbnail: string
+  collectionAddress: string
+  rarity: string
+  createdAt: number
+  updatedAt: number
+  data: {
+    replaces: string[]
+    hides: string[]
+    tags: string[]
+    category: string
+    representations: Representation[]
+  }
+  i18n: I18N[]
+}
+
+type Representation = {
+  bodyShapes: string[]
+  mainFile: string
+  overrideReplaces: string[]
+  overrideHides: string[]
+  contents: Content[]
+}
+
+type Content = {
+  key: string
+  url: string
 }
 
 export interface emotesQueryResponse {
@@ -238,10 +270,4 @@ export interface thirdPartyResolversResponse {
 export type thirdPartyProvider = {
   id: string
   resolver: string
-  // metadata: {
-  //   thirdParty: {
-  //     name: string,
-  //     description: string
-  //   }
-  // }
 }

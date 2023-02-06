@@ -1,4 +1,4 @@
-import { transformLandToResponseSchema } from '../adapters/query-to-response'
+import { transformLandToResponseSchema } from '../adapters/nfts'
 import { runQuery } from '../ports/the-graph'
 import { AppComponents, landsQueryResponse } from '../types'
 

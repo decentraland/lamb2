@@ -4,17 +4,22 @@ import {
   wearableFromQuery,
   wearablesQueryResponse,
   wearableForResponse,
-  ThirdPartyAsset
+  ThirdPartyAsset,
+  Definition,
+  wearableForCache
 } from '../types'
 import { parseUrn } from '@dcl/urn-resolver'
 import { runQuery, TheGraphComponent } from '../ports/the-graph'
 import {
-  transformThirdPartyAssetToResponseSchema,
-  transformWearableToResponseSchema
-} from '../adapters/query-to-response'
+  transformThirdPartyAssetToWearableForCache,
+  transformWearableForCacheToWearableForResponse,
+  transformWearableFromQueryToWearableForCache
+} from '../adapters/nfts'
 import { cloneDeep } from 'lodash'
 import { getThirdPartyWearables } from './third-party-wearables'
 import LRU from 'lru-cache'
+import { Entity, EntityType } from '@dcl/schemas'
+import { extractDefinitionFromEntity } from '../adapters/definitions'
 
 /*
  * Extracts the non-base wearables from a profile and translate them to the new format
@@ -73,17 +78,9 @@ const QUERY_WEARABLES: string = `
   ) {
     urn,
     id,
-    contractAddress,
     tokenId,
-    image,
     transferredAt,
     item {
-      metadata {
-        wearable {
-          name,
-          description
-        }
-      },
       rarity,
       price
     }
@@ -91,9 +88,10 @@ const QUERY_WEARABLES: string = `
 }`
 
 export async function getWearablesForAddress(
-  components: Pick<AppComponents, 'theGraph' | 'wearablesCaches' | 'fetch'>,
+  components: Pick<AppComponents, 'theGraph' | 'wearablesCaches' | 'fetch' | 'content'>,
   id: string,
   includeTPW: boolean,
+  includeDefinitions: boolean,
   pageSize?: string | null,
   pageNum?: string | null,
   orderBy?: string | null
@@ -109,7 +107,7 @@ export async function getWearablesForAddress(
   )
 
   // Retrieve third-party wearables for id from cache
-  let tpWearables: wearableForResponse[] = []
+  let tpWearables: wearableForCache[] = []
   if (includeTPW)
     tpWearables = await retrieveWearablesFromCache(
       wearablesCaches.thirdPartyWearablesCache,
@@ -134,8 +132,15 @@ export async function getWearablesForAddress(
       parseInt(pageNum) * parseInt(pageSize)
     )
 
+  // Transform wearables to the response schema (exclude rarity)
+  let wearablesForResponse = allWearables.map(transformWearableForCacheToWearableForResponse)
+
+  // Fetch for definitions, add it to the cache and add it to each wearable in the response
+  if (includeDefinitions)
+    wearablesForResponse = await decorateWearablesWithDefinitionsFromCache(wearablesForResponse, components)
+
   return {
-    wearables: allWearables,
+    wearables: wearablesForResponse,
     totalAmount: wearablesTotal
   }
 }
@@ -148,7 +153,7 @@ async function retrieveWearablesFromCache(
     id: string,
     components: Pick<AppComponents, 'theGraph' | 'wearablesCaches' | 'fetch'>,
     theGraph: TheGraphComponent
-  ) => Promise<wearableForResponse[]>
+  ) => Promise<wearableForCache[]>
 ) {
   // Try to get them from cache
   let allWearables = wearablesCache.get(id)
@@ -194,9 +199,9 @@ async function getThirdPartyWearablesToBeCached(id: string, components: Pick<App
  * Groups every wearable with the same URN. Each of them has some data which differentiates them as individuals.
  * That data is stored in an array binded to the corresponding urn. Returns an array of wearables in the response format.
  */
-function groupWearablesByURN(wearables: wearableFromQuery[]): wearableForResponse[] {
+function groupWearablesByURN(wearables: wearableFromQuery[]): wearableForCache[] {
   // Initialize the map
-  const wearablesByURN = new Map<string, wearableForResponse>()
+  const wearablesByURN = new Map<string, wearableForCache>()
 
   // Set the map with the wearables data
   wearables.forEach((wearable) => {
@@ -212,7 +217,7 @@ function groupWearablesByURN(wearables: wearableFromQuery[]): wearableForRespons
       wearableFromMap.amount = wearableFromMap.amount + 1
     } else {
       // The wearable was not present in the map, it is added and its individualData array is initialized with its data
-      wearablesByURN.set(wearable.urn, transformWearableToResponseSchema(wearable))
+      wearablesByURN.set(wearable.urn, transformWearableFromQueryToWearableForCache(wearable))
     }
   })
 
@@ -224,9 +229,9 @@ function groupWearablesByURN(wearables: wearableFromQuery[]): wearableForRespons
  * Groups every third-party wearable with the same URN. Each of them could have a different id.
  * which is stored in an array binded to the corresponding urn. Returns an array of wearables in the response format.
  */
-function groupThirdPartyWearablesByURN(tpWearables: ThirdPartyAsset[]): wearableForResponse[] {
+function groupThirdPartyWearablesByURN(tpWearables: ThirdPartyAsset[]): wearableForCache[] {
   // Initialize the map
-  const wearablesByURN = new Map<string, wearableForResponse>()
+  const wearablesByURN = new Map<string, wearableForCache>()
 
   // Set the map with the wearables data
   tpWearables.forEach((wearable) => {
@@ -239,7 +244,7 @@ function groupThirdPartyWearablesByURN(tpWearables: ThirdPartyAsset[]): wearable
       wearableFromMap.amount = wearableFromMap.amount + 1
     } else {
       // The wearable was not present in the map, it is added and its individualData array is initialized with its data
-      wearablesByURN.set(wearable.urn.decentraland, transformThirdPartyAssetToResponseSchema(wearable))
+      wearablesByURN.set(wearable.urn.decentraland, transformThirdPartyAssetToWearableForCache(wearable))
     }
   })
 
@@ -252,7 +257,6 @@ function groupThirdPartyWearablesByURN(tpWearables: ThirdPartyAsset[]): wearable
  * number if wearable2 is older than wearable1. Can be used to sort wearables by creationDate, descending
  */
 function compareByTransferredAt(wearable1: wearableForResponse, wearable2: wearableForResponse) {
-  // TMP SOLUTION
   if (
     wearable1.individualData &&
     wearable1.individualData[0].transferredAt &&
@@ -263,13 +267,73 @@ function compareByTransferredAt(wearable1: wearableForResponse, wearable2: weara
   else return 0
 }
 
+const RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic', 'unique']
+
 /*
  * Returns a positive number if wearable1 has a lower rarity than wearable2, zero if they are equal, and a negative
- * number if wearable2 has a lower rarity than wearable1. Can be used to sort wearables by rarity, descending
+ * number if wearable2 has a lower rarity than wearable1. Can be used to sort wearables by rarity, descending.
+ * It is only aplicable when definitions are being include in the response, if it's not include it will return 0.
  */
-function compareByRarity(wearable1: wearableForResponse, wearable2: wearableForResponse) {
-  const rarities = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic', 'unique']
-  const w1RarityValue = rarities.findIndex((rarity) => rarity === wearable1.rarity)
-  const w2RarityValue = rarities.findIndex((rarity) => rarity === wearable2.rarity)
-  return w2RarityValue - w1RarityValue
+function compareByRarity(wearable1: wearableForCache, wearable2: wearableForCache) {
+  if (wearable1.rarity && wearable2.rarity) {
+    const w1RarityValue = RARITIES.findIndex((rarity) => rarity === wearable1.rarity)
+    const w2RarityValue = RARITIES.findIndex((rarity) => rarity === wearable2.rarity)
+    return w2RarityValue - w1RarityValue
+  }
+  return 0
+}
+
+/*
+ * Looks for the definitions of the provided wearables' urns and add them to them.
+ */
+export async function decorateWearablesWithDefinitionsFromCache(
+  wearables: wearableForResponse[],
+  components: Pick<AppComponents, 'content' | 'wearablesCaches'>
+) {
+  const { definitionsCache } = components.wearablesCaches
+
+  // Get a map with the definitions from the cache and an array with the non-cached urns
+  const { nonCachedURNs, definitionsByURN } = getDefinitionsFromCache(wearables, definitionsCache)
+
+  // Fetch entities for non-cached urns
+  let entities: Entity[] = []
+  if (nonCachedURNs.length === 0)
+    entities = await components.content.fetchEntitiesByPointers(EntityType.WEARABLE, nonCachedURNs)
+
+  // Translate entities to definitions
+  const translatedDefinitions: Definition[] = entities.map((entity) => extractDefinitionFromEntity(components, entity))
+
+  // Store new definitions in cache and in map
+  translatedDefinitions.forEach((definition) => {
+    definitionsCache.set(definition.id.toLowerCase(), definition)
+    definitionsByURN.set(definition.id.toLowerCase(), definition)
+  })
+
+  // Decorate provided wearables with definitions
+  return wearables.map((wearable) => {
+    return {
+      ...wearable,
+      definition: definitionsByURN.get(wearable.urn)
+    }
+  })
+}
+
+/*
+ * Try to get the definitions from cache. Present ones are retrieved as a map urn -> definition.
+ * Not present ones are retrieved as an array to fetch later
+ */
+function getDefinitionsFromCache(wearables: wearableForResponse[], definitionsCache: LRU<string, Definition>) {
+  const nonCachedURNs: string[] = []
+  const definitionsByURN = new Map<string, Definition>()
+  wearables.forEach((wearable) => {
+    const definition = definitionsCache.get(wearable.urn)
+    if (definition) {
+      definitionsByURN.set(wearable.urn, definition)
+    } else {
+      nonCachedURNs.push(wearable.urn)
+    }
+  })
+
+  console.log({ nonCachedURNs, definitionsByURN })
+  return { nonCachedURNs, definitionsByURN }
 }

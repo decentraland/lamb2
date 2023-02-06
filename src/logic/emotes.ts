@@ -1,4 +1,4 @@
-import { transformEmoteToResponseSchema } from '../adapters/query-to-response'
+import { transformEmoteToResponseSchema } from '../adapters/nfts'
 import { runQuery } from '../ports/the-graph'
 import { AppComponents, emotesQueryResponse } from '../types'
 
