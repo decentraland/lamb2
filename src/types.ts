@@ -96,6 +96,12 @@ export type ThirdPartyAssets = {
  */
 export type QueryGraph = <T = any>(query: string, variables?: Variables, remainingAttempts?: number) => Promise<T>
 
+export type CategoryResponse = {
+  nfts: {
+    category: string
+  }[]
+}
+
 export interface wearablesQueryResponse {
   nfts: wearableFromQuery[]
 }
@@ -202,12 +208,6 @@ export type emoteForResponse = {
   description: string
   rarity: string
   price: number
-}
-
-export type EmoteCategoryResponse = {
-  nfts: {
-    category: string
-  }[]
 }
 
 export interface namesQueryResponse {

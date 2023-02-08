@@ -1,6 +1,6 @@
 import { transformEmoteToResponseSchema } from '../adapters/nfts'
 import { runQuery, TheGraphComponent } from '../ports/the-graph'
-import { AppComponents, EmoteCategoryResponse, emoteForResponse, emotesQueryResponse } from '../types'
+import { AppComponents, CategoryResponse, emoteForResponse, emotesQueryResponse } from '../types'
 
 const QUERY_EMOTES: string = `
 {
@@ -59,9 +59,7 @@ const QUERY_EMOTES_PAGINATED: string = `
 const QUERY_EMOTES_TOTAL_AMOUNT = `
 {
   nfts(
-    where: { owner: "$owner", category: "emote" },
-    orderBy: transferredAt,
-    orderDirection: desc
+    where: { owner: "$owner", category: "emote" }
   ) {
     category
   }
@@ -116,7 +114,7 @@ function runQueryForTotalAmount(id: string, theGraph: TheGraphComponent) {
   const totalAmountQuery = QUERY_EMOTES_TOTAL_AMOUNT.replace('$owner', id.toLowerCase())
 
   // Query for every emote with one single field for minimum payload to calculate the total amount
-  return runQuery<EmoteCategoryResponse>(theGraph.maticCollectionsSubgraph, totalAmountQuery, {})
+  return runQuery<CategoryResponse>(theGraph.maticCollectionsSubgraph, totalAmountQuery, {})
 }
 
 /*
