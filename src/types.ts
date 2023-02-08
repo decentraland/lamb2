@@ -204,6 +204,12 @@ export type emoteForResponse = {
   price: number
 }
 
+export type EmoteCategoryResponse = {
+  nfts: {
+    category: string
+  }[]
+}
+
 export interface namesQueryResponse {
   nfts: nameFromQuery[]
 }
