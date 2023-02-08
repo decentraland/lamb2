@@ -53,22 +53,6 @@ export async function getNamesForAddress(
 ) {
   const { theGraph } = components
 
-  // // Set query depending on pagination
-  // let query
-  // if (pageSize && pageNum) {
-  //   query = QUERY_NAMES_PAGINATED.replace('$owner', id.toLowerCase())
-  //     .replace('$first', `${pageSize}`)
-  //     .replace('$skip', `${(parseInt(pageNum) - 1) * parseInt(pageSize)}`)
-  // } else {
-  //   query = QUERY_NAMES.replace('$owner', id.toLowerCase())
-  // }
-
-  // // Query owned names from TheGraph for the address
-  // const names = (await runQuery<namesQueryResponse>(theGraph.ensSubgraph, query, {})).nfts.map(
-  //   transformNameToResponseSchema
-  // )
-  // return names
-
   // If pagination is required, an extra query to retrieve the total amount of emotes is asynchronously made
   let query
   let names: nameForResponse[]
