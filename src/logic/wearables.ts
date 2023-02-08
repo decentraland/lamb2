@@ -297,7 +297,7 @@ export async function decorateWearablesWithDefinitionsFromCache(
 
   // Fetch entities for non-cached urns
   let entities: Entity[] = []
-  if (nonCachedURNs.length === 0)
+  if (nonCachedURNs.length !== 0)
     entities = await components.content.fetchEntitiesByPointers(EntityType.WEARABLE, nonCachedURNs)
 
   // Translate entities to definitions
