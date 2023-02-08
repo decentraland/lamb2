@@ -7,12 +7,13 @@ export async function landsHandler(context: HandlerContextWithPath<'config' | 't
   const pageSize = context.url.searchParams.get('pageSize')
   const pageNum = context.url.searchParams.get('pageNum')
 
-  const lands = await getLandsForAddress(context.components, id, pageSize, pageNum)
+  const landsResponse = await getLandsForAddress(context.components, id, pageSize, pageNum)
 
   return {
     status: 200,
     body: {
-      lands: lands,
+      lands: landsResponse.lands,
+      totalAmount: landsResponse.totalAmount,
       pageNum: pageNum,
       pageSize: pageSize
     }
