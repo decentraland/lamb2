@@ -22,7 +22,7 @@ export async function createThirdPartyResolverForCollection(
   if (!thirdPartyResolverAPI) throw new Error(`Could not find third party resolver for collectionId: ${collectionId}`)
 
   return {
-    findWearablesByOwner: async (owner) => {
+    findThirdPartyAssetsByOwner: async (owner) => {
       const assetsByOwner = await fetchAssets(components, thirdPartyResolverAPI, registryId, owner)
       if (!assetsByOwner) throw new Error(`Could not fetch assets for owner: ${owner}`)
       return assetsByOwner?.filter((asset) => asset.urn.decentraland.startsWith(thirdPartyId)) ?? []
@@ -160,7 +160,7 @@ export async function getWearablesForCollection(
   const resolver = await createThirdPartyResolverForCollection(components, collectionId)
 
   // Get owned wearables for the collection
-  let ownedTPWForCollection = (await resolver.findWearablesByOwner(address)).map(
+  let ownedTPWForCollection = (await resolver.findThirdPartyAssetsByOwner(address)).map(
     transformThirdPartyAssetToWearableForCache
   )
 

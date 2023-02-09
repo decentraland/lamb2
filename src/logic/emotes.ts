@@ -1,6 +1,7 @@
-import { transformEmoteToResponseSchema } from '../adapters/nfts'
+import { transformEmoteToResponseSchema, transformThirdPartyAssetToEmoteForResponse } from '../adapters/nfts'
 import { runQuery, TheGraphComponent } from '../ports/the-graph'
 import { AppComponents, CategoryResponse, EmoteForResponse, EmotesQueryResponse } from '../types'
+import { createThirdPartyResolverForCollection } from './third-party-wearables'
 
 const QUERY_EMOTES: string = `
 {
@@ -148,4 +149,23 @@ async function runQueryForAllEmotes(query: any, id: string, theGraph: TheGraphCo
   return (await runQuery<EmotesQueryResponse>(theGraph.maticCollectionsSubgraph, query, {})).nfts.map(
     transformEmoteToResponseSchema
   )
+}
+
+export async function getEmotesForCollection(
+  components: Pick<AppComponents, 'theGraph' | 'fetch' | 'content'>,
+  collectionId: string,
+  address: string
+) {
+  // Get API for collection
+  const resolver = await createThirdPartyResolverForCollection(components, collectionId)
+
+  // Get owned wearables for the collection
+  const ownedTPEForCollection = (await resolver.findThirdPartyAssetsByOwner(address)).map(
+    transformThirdPartyAssetToEmoteForResponse
+  )
+
+  return {
+    emotes: ownedTPEForCollection,
+    totalAmount: ownedTPEForCollection.length
+  }
 }

@@ -19,7 +19,7 @@ export async function wearablesHandler(
 
   let wearablesResponse
   if (collectionId) {
-    // If collectionId is present, only that collection thir-party wearables are sent
+    // If collectionId is present, only that collection third-party wearables are sent
     wearablesResponse = await getWearablesForCollection(context.components, collectionId, id, includeDefinitions)
   } else {
     // Get full cached wearables response

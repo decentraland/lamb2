@@ -71,7 +71,7 @@ export interface NFTsOwnershipChecker {
 }
 
 export interface TPWResolver {
-  findWearablesByOwner: (owner: string) => Promise<ThirdPartyAsset[]>
+  findThirdPartyAssetsByOwner: (owner: string) => Promise<ThirdPartyAsset[]>
 }
 
 export type ThirdPartyAsset = {
@@ -199,15 +199,16 @@ export type EmoteFromQuery = {
 
 export type EmoteForResponse = {
   urn: string
-  id: string
-  contractAddress: string
-  tokenId: string
-  image: string
-  transferredAt: number
-  name: string
-  description: string
-  rarity: string
-  price: number
+  id?: string
+  contractAddress?: string
+  tokenId?: string
+  image?: string
+  transferredAt?: number
+  name?: string
+  description?: string
+  rarity?: string
+  price?: number
+  amount: number
 }
 
 export interface NamesQueryResponse {
