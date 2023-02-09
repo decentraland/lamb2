@@ -102,11 +102,11 @@ export type CategoryResponse = {
   }[]
 }
 
-export interface wearablesQueryResponse {
-  nfts: wearableFromQuery[]
+export interface WearablesQueryResponse {
+  nfts: WearableFromQuery[]
 }
 
-export type wearableFromQuery = {
+export type WearableFromQuery = {
   urn: string
   id: string
   tokenId: string
@@ -117,7 +117,7 @@ export type wearableFromQuery = {
   }
 }
 
-export type wearableForCache = {
+export type WearableForCache = {
   urn: string
   amount: number
   individualData?: {
@@ -130,7 +130,7 @@ export type wearableForCache = {
 }
 
 // The response is grouped by URN
-export type wearableForResponse = {
+export type WearableForResponse = {
   urn: string
   amount: number
   individualData?: {
@@ -174,11 +174,11 @@ type Content = {
   url: string
 }
 
-export interface emotesQueryResponse {
-  nfts: emoteFromQuery[]
+export interface EmotesQueryResponse {
+  nfts: EmoteFromQuery[]
 }
 
-export type emoteFromQuery = {
+export type EmoteFromQuery = {
   urn: string
   id: string
   contractAddress: string
@@ -197,7 +197,7 @@ export type emoteFromQuery = {
   }
 }
 
-export type emoteForResponse = {
+export type EmoteForResponse = {
   urn: string
   id: string
   contractAddress: string
@@ -210,11 +210,11 @@ export type emoteForResponse = {
   price: number
 }
 
-export interface namesQueryResponse {
-  nfts: nameFromQuery[]
+export interface NamesQueryResponse {
+  nfts: NameFromQuery[]
 }
 
-export type nameFromQuery = {
+export type NameFromQuery = {
   name: string
   contractAddress: string
   tokenId: string
@@ -223,18 +223,18 @@ export type nameFromQuery = {
   }
 }
 
-export type nameForResponse = {
+export type NameForResponse = {
   name: string
   contractAddress: string
   tokenId: string
   price: string | null
 }
 
-export interface landsQueryResponse {
-  nfts: landFromQuery[]
+export interface LandsQueryResponse {
+  nfts: LandFromQuery[]
 }
 
-export type landFromQuery = {
+export type LandFromQuery = {
   name: string
   contractAddress: string
   tokenId: string
@@ -257,7 +257,7 @@ export type landFromQuery = {
   image: string
 }
 
-export type landForResponse = {
+export type LandForResponse = {
   name: string
   contractAddress: string
   tokenId: string
@@ -269,11 +269,11 @@ export type landForResponse = {
   image: string
 }
 
-export interface thirdPartyResolversResponse {
-  thirdParties: thirdPartyProvider[]
+export interface ThirdPartyResolversResponse {
+  thirdParties: ThirdPartyProvider[]
 }
 
-export type thirdPartyProvider = {
+export type ThirdPartyProvider = {
   id: string
   resolver: string
 }

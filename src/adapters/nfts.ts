@@ -1,20 +1,20 @@
 import {
-  emoteFromQuery,
-  landForResponse,
-  landFromQuery,
-  nameForResponse,
-  nameFromQuery,
-  emoteForResponse,
-  wearableFromQuery,
-  wearableForResponse,
+  EmoteFromQuery,
+  LandForResponse,
+  LandFromQuery,
+  NameForResponse,
+  NameFromQuery,
+  EmoteForResponse,
+  WearableFromQuery,
+  WearableForResponse,
   ThirdPartyAsset,
-  wearableForCache
+  WearableForCache
 } from '../types'
 
 /*
  * Adapts the result from the wearables query to the desired schema for the cache
  */
-export function transformWearableFromQueryToWearableForCache(wearable: wearableFromQuery): wearableForCache {
+export function transformWearableFromQueryToWearableForCache(wearable: WearableFromQuery): WearableForCache {
   return {
     urn: wearable.urn,
     individualData: [
@@ -33,7 +33,7 @@ export function transformWearableFromQueryToWearableForCache(wearable: wearableF
 /*
  * Excludes the rarity field since it's already present in the definition field
  */
-export function transformWearableForCacheToWearableForResponse(wearable: wearableForCache): wearableForResponse {
+export function transformWearableForCacheToWearableForResponse(wearable: WearableForCache): WearableForResponse {
   return {
     urn: wearable.urn,
     individualData: wearable.individualData,
@@ -44,7 +44,7 @@ export function transformWearableForCacheToWearableForResponse(wearable: wearabl
 /*
  * Adapts the result from the emotes query to the desired schema for the response
  */
-export function transformEmoteToResponseSchema(emote: emoteFromQuery): emoteForResponse {
+export function transformEmoteToResponseSchema(emote: EmoteFromQuery): EmoteForResponse {
   return {
     urn: emote.urn,
     id: emote.id,
@@ -62,7 +62,7 @@ export function transformEmoteToResponseSchema(emote: emoteFromQuery): emoteForR
 /*
  * Adapts the result from the names query to the desired schema for the response
  */
-export function transformNameToResponseSchema(name: nameFromQuery): nameForResponse {
+export function transformNameToResponseSchema(name: NameFromQuery): NameForResponse {
   // Set price depending on activeOrder. It could be null if is not at sale
   let price = null
   if (name.activeOrder) price = name.activeOrder.price
@@ -78,7 +78,7 @@ export function transformNameToResponseSchema(name: nameFromQuery): nameForRespo
 /*
  * Adapts the result from the lands query to the desired schema for the response
  */
-export function transformLandToResponseSchema(land: landFromQuery): landForResponse {
+export function transformLandToResponseSchema(land: LandFromQuery): LandForResponse {
   // Set price depending on activeOrder. It could be null if is not at sale
   let price = null
   if (land.activeOrder) price = land.activeOrder.price
@@ -109,7 +109,7 @@ export function transformLandToResponseSchema(land: landFromQuery): landForRespo
 /*
  * Adapts the response from a third-party resolver to /nfts/wearables endpoint response
  */
-export function transformThirdPartyAssetToWearableForCache(asset: ThirdPartyAsset): wearableForCache {
+export function transformThirdPartyAssetToWearableForCache(asset: ThirdPartyAsset): WearableForCache {
   return {
     urn: asset.urn.decentraland,
     individualData: [

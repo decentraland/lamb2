@@ -1,6 +1,6 @@
 import { transformEmoteToResponseSchema } from '../adapters/nfts'
 import { runQuery, TheGraphComponent } from '../ports/the-graph'
-import { AppComponents, CategoryResponse, emoteForResponse, emotesQueryResponse } from '../types'
+import { AppComponents, CategoryResponse, EmoteForResponse, EmotesQueryResponse } from '../types'
 
 const QUERY_EMOTES: string = `
 {
@@ -75,7 +75,7 @@ export async function getEmotesForAddress(
 
   // If pagination is required, an extra query to retrieve the total amount of emotes is asynchronously made
   let query
-  let emotes: emoteForResponse[]
+  let emotes: EmoteForResponse[]
   let totalAmount
   if (pageSize && pageNum) {
     // Get a promise for calculating total amount of owned emotes
@@ -133,7 +133,7 @@ function runQueryForPaginatedEmotes(
     .replace('$skip', `${(parseInt(pageNum) - 1) * parseInt(pageSize)}`)
 
   // Query owned names from TheGraph for the address
-  return runQuery<emotesQueryResponse>(theGraph.maticCollectionsSubgraph, query, {})
+  return runQuery<EmotesQueryResponse>(theGraph.maticCollectionsSubgraph, query, {})
 }
 
 /*
@@ -144,7 +144,7 @@ async function runQueryForAllEmotes(query: any, id: string, theGraph: TheGraphCo
   query = QUERY_EMOTES.replace('$owner', id.toLowerCase())
 
   // Query owned names from TheGraph for the address
-  return (await runQuery<emotesQueryResponse>(theGraph.maticCollectionsSubgraph, query, {})).nfts.map(
+  return (await runQuery<EmotesQueryResponse>(theGraph.maticCollectionsSubgraph, query, {})).nfts.map(
     transformEmoteToResponseSchema
   )
 }

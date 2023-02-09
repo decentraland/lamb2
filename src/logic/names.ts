@@ -1,6 +1,6 @@
 import { transformNameToResponseSchema } from '../adapters/nfts'
 import { runQuery, TheGraphComponent } from '../ports/the-graph'
-import { AppComponents, CategoryResponse, nameForResponse, namesQueryResponse } from '../types'
+import { AppComponents, CategoryResponse, NameForResponse, NamesQueryResponse } from '../types'
 
 const QUERY_NAMES: string = `
 {
@@ -55,7 +55,7 @@ export async function getNamesForAddress(
 
   // If pagination is required, an extra query to retrieve the total amount of emotes is asynchronously made
   let query
-  let names: nameForResponse[]
+  let names: NameForResponse[]
   let totalAmount
   if (pageSize && pageNum) {
     // Get a promise for calculating total amount of owned emotes
@@ -113,7 +113,7 @@ function runQueryForPaginatedNames(
     .replace('$skip', `${(parseInt(pageNum) - 1) * parseInt(pageSize)}`)
 
   // Query owned names from TheGraph for the address
-  return runQuery<namesQueryResponse>(theGraph.ensSubgraph, query, {})
+  return runQuery<NamesQueryResponse>(theGraph.ensSubgraph, query, {})
 }
 
 /*
@@ -124,5 +124,5 @@ async function runQueryForAllNames(query: any, id: string, theGraph: TheGraphCom
   query = QUERY_NAMES.replace('$owner', id.toLowerCase())
 
   // Query owned names from TheGraph for the address
-  return (await runQuery<namesQueryResponse>(theGraph.ensSubgraph, query, {})).nfts.map(transformNameToResponseSchema)
+  return (await runQuery<NamesQueryResponse>(theGraph.ensSubgraph, query, {})).nfts.map(transformNameToResponseSchema)
 }
