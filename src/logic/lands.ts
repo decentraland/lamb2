@@ -1,6 +1,6 @@
 import { transformLandToResponseSchema, transformNameToResponseSchema } from '../adapters/nfts'
 import { runQuery, TheGraphComponent } from '../ports/the-graph'
-import { AppComponents, CategoryResponse, landForResponse, landsQueryResponse, namesQueryResponse } from '../types'
+import { AppComponents, CategoryResponse, LandForResponse, LandsQueryResponse, NamesQueryResponse } from '../types'
 
 const QUERY_LANDS: string = `
 {
@@ -83,7 +83,7 @@ export async function getLandsForAddress(
 
   // If pagination is required, an extra query to retrieve the total amount of emotes is asynchronously made
   let query
-  let lands: landForResponse[]
+  let lands: LandForResponse[]
   let totalAmount
   if (pageSize && pageNum) {
     // Get a promise for calculating total amount of owned emotes
@@ -141,7 +141,7 @@ function runQueryForPaginatedLands(
     .replace('$skip', `${(parseInt(pageNum) - 1) * parseInt(pageSize)}`)
 
   // Query owned names from TheGraph for the address
-  return runQuery<landsQueryResponse>(theGraph.ensSubgraph, query, {})
+  return runQuery<LandsQueryResponse>(theGraph.ensSubgraph, query, {})
 }
 
 /*
@@ -152,5 +152,5 @@ async function runQueryForAllLands(query: any, id: string, theGraph: TheGraphCom
   query = QUERY_LANDS.replace('$owner', id.toLowerCase())
 
   // Query owned names from TheGraph for the address
-  return (await runQuery<landsQueryResponse>(theGraph.ensSubgraph, query, {})).nfts.map(transformLandToResponseSchema)
+  return (await runQuery<LandsQueryResponse>(theGraph.ensSubgraph, query, {})).nfts.map(transformLandToResponseSchema)
 }

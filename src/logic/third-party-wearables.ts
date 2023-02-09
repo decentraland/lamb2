@@ -2,11 +2,11 @@ import { transformThirdPartyAssetToWearableForCache } from '../adapters/nfts'
 import { runQuery } from '../ports/the-graph'
 import {
   AppComponents,
-  thirdPartyResolversResponse,
+  ThirdPartyResolversResponse,
   ThirdPartyAsset,
   ThirdPartyAssets,
   TPWResolver,
-  thirdPartyProvider
+  ThirdPartyProvider
 } from '../types'
 import { decorateWearablesWithDefinitionsFromCache } from './wearables'
 
@@ -123,7 +123,7 @@ export async function getThirdPartyWearables(
 
   // Get every resolver
   const tpProviders = (
-    await runQuery<thirdPartyResolversResponse>(
+    await runQuery<ThirdPartyResolversResponse>(
       theGraph.thirdPartyRegistrySubgraph,
       QUERY_ALL_THIRD_PARTY_RESOLVERS,
       {}
@@ -131,7 +131,7 @@ export async function getThirdPartyWearables(
   ).thirdParties
 
   // Fetch assets asynchronously
-  const providersPromises = tpProviders.map((provider: thirdPartyProvider) => {
+  const providersPromises = tpProviders.map((provider: ThirdPartyProvider) => {
     return fetchAssets(components, provider.resolver, parseCollectionId(provider.id).registryId, userAddress)
   })
 
