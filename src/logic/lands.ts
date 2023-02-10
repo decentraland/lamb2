@@ -67,7 +67,8 @@ const QUERY_LANDS_PAGINATED: string = `
 const QUERY_LANDS_TOTAL_AMOUNT: string = `
 {
   nfts(
-    where: { owner: "$owner", category_in: [parcel, estate] },
+    where: { owner: "$owner", category_in: [parcel, estate] }
+    first: 1000
   ) {
     category
   }

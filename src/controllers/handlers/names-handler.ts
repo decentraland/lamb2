@@ -7,12 +7,13 @@ export async function namesHandler(context: HandlerContextWithPath<'config' | 't
   const pageSize = context.url.searchParams.get('pageSize')
   const pageNum = context.url.searchParams.get('pageNum')
 
-  const names = await getNamesForAddress(context.components, id, pageSize, pageNum)
+  const namesResponse = await getNamesForAddress(context.components, id, pageSize, pageNum)
 
   return {
     status: 200,
     body: {
-      names: names,
+      names: namesResponse.names,
+      totalAmount: namesResponse.totalAmount,
       pageNum: pageNum,
       pageSize: pageSize
     }
