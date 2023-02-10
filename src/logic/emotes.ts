@@ -60,6 +60,7 @@ const QUERY_EMOTES_TOTAL_AMOUNT = `
 {
   nfts(
     where: { owner: "$owner", category: "emote" }
+    first: 1000
   ) {
     category
   }

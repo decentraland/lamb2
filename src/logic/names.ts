@@ -39,7 +39,8 @@ const QUERY_NAMES_PAGINATED: string = `
 const QUERY_NAMES_TOTAL_AMOUNT: string = `
 {
   nfts(
-    where: {owner: "$owner", category: "ens"} 
+    where: {owner: "$owner", category: "ens"}
+    first: 1000
   ) {
     category
   }
