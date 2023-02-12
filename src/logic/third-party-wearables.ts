@@ -1,3 +1,5 @@
+import { EntityType } from 'dcl-catalyst-commons'
+import { extractWearableDefinitionFromEntity } from '../adapters/definitions'
 import { transformThirdPartyAssetToWearableForCache } from '../adapters/nfts'
 import { runQuery } from '../ports/the-graph'
 import {
@@ -8,7 +10,7 @@ import {
   TPWResolver,
   ThirdPartyProvider
 } from '../types'
-import { decorateWearablesWithDefinitionsFromCache } from './wearables'
+import { decorateNFTsWithDefinitionsFromCache } from './definitions'
 
 export async function createThirdPartyResolverForCollection(
   components: Pick<AppComponents, 'theGraph' | 'fetch'>,
@@ -156,6 +158,8 @@ export async function getWearablesForCollection(
   address: string,
   includeDefinitions: boolean
 ) {
+  const { definitionsCache } = components.wearablesCaches
+
   // Get API for collection
   const resolver = await createThirdPartyResolverForCollection(components, collectionId)
 
@@ -166,7 +170,13 @@ export async function getWearablesForCollection(
 
   // Fetch for definitions, add it to the cache and add it to each wearable in the response
   if (includeDefinitions)
-    ownedTPWForCollection = await decorateWearablesWithDefinitionsFromCache(ownedTPWForCollection, components)
+    ownedTPWForCollection = await decorateNFTsWithDefinitionsFromCache(
+      ownedTPWForCollection,
+      components,
+      definitionsCache,
+      EntityType.EMOTE,
+      extractWearableDefinitionFromEntity
+    )
 
   return {
     wearables: ownedTPWForCollection,

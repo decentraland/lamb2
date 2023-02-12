@@ -5,7 +5,6 @@ import {
   WearablesQueryResponse,
   WearableForResponse,
   ThirdPartyAsset,
-  Definition,
   WearableForCache
 } from '../types'
 import { parseUrn } from '@dcl/urn-resolver'
@@ -18,8 +17,9 @@ import {
 import { cloneDeep } from 'lodash'
 import { getThirdPartyWearables } from './third-party-wearables'
 import LRU from 'lru-cache'
-import { Entity, EntityType } from '@dcl/schemas'
-import { extractDefinitionFromEntity } from '../adapters/definitions'
+import { EntityType } from '@dcl/schemas'
+import { extractWearableDefinitionFromEntity } from '../adapters/definitions'
+import { decorateNFTsWithDefinitionsFromCache } from './definitions'
 
 /*
  * Extracts the non-base wearables from a profile and translate them to the new format
@@ -137,7 +137,13 @@ export async function getWearablesForAddress(
 
   // Fetch for definitions, add it to the cache and add it to each wearable in the response
   if (includeDefinitions)
-    wearablesForResponse = await decorateWearablesWithDefinitionsFromCache(wearablesForResponse, components)
+    wearablesForResponse = await decorateNFTsWithDefinitionsFromCache(
+      wearablesForResponse,
+      components,
+      wearablesCaches.definitionsCache,
+      EntityType.WEARABLE,
+      extractWearableDefinitionFromEntity
+    )
 
   return {
     wearables: wearablesForResponse,
@@ -281,59 +287,4 @@ function compareByRarity(wearable1: WearableForCache, wearable2: WearableForCach
     return w2RarityValue - w1RarityValue
   }
   return 0
-}
-
-/*
- * Looks for the definitions of the provided wearables' urns and add them to them.
- */
-export async function decorateWearablesWithDefinitionsFromCache(
-  wearables: WearableForResponse[],
-  components: Pick<AppComponents, 'content' | 'wearablesCaches'>
-) {
-  const { definitionsCache } = components.wearablesCaches
-
-  // Get a map with the definitions from the cache and an array with the non-cached urns
-  const { nonCachedURNs, definitionsByURN } = getDefinitionsFromCache(wearables, definitionsCache)
-
-  // Fetch entities for non-cached urns
-  let entities: Entity[] = []
-  if (nonCachedURNs.length !== 0)
-    entities = await components.content.fetchEntitiesByPointers(EntityType.WEARABLE, nonCachedURNs)
-
-  // Translate entities to definitions
-  const translatedDefinitions: Definition[] = entities.map((entity) => extractDefinitionFromEntity(components, entity))
-
-  // Store new definitions in cache and in map
-  translatedDefinitions.forEach((definition) => {
-    definitionsCache.set(definition.id.toLowerCase(), definition)
-    definitionsByURN.set(definition.id.toLowerCase(), definition)
-  })
-
-  // Decorate provided wearables with definitions
-  return wearables.map((wearable) => {
-    return {
-      ...wearable,
-      definition: definitionsByURN.get(wearable.urn)
-    }
-  })
-}
-
-/*
- * Try to get the definitions from cache. Present ones are retrieved as a map urn -> definition.
- * Not present ones are retrieved as an array to fetch later
- */
-function getDefinitionsFromCache(wearables: WearableForResponse[], definitionsCache: LRU<string, Definition>) {
-  const nonCachedURNs: string[] = []
-  const definitionsByURN = new Map<string, Definition>()
-  wearables.forEach((wearable) => {
-    const definition = definitionsCache.get(wearable.urn)
-    if (definition) {
-      definitionsByURN.set(wearable.urn, definition)
-    } else {
-      nonCachedURNs.push(wearable.urn)
-    }
-  })
-
-  console.log({ nonCachedURNs, definitionsByURN })
-  return { nonCachedURNs, definitionsByURN }
 }

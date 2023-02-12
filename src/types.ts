@@ -13,6 +13,7 @@ import { ContentComponent } from './ports/content'
 import { OwnershipCachesComponent } from './ports/ownership-caches'
 import { Variables } from '@well-known-components/thegraph-component'
 import { WearablesCachesComponent } from './ports/wearables-caches'
+import { EmotesCachesComponent } from './ports/emotes-caches'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -29,6 +30,7 @@ export type BaseComponents = {
   theGraph: TheGraphComponent
   ownershipCaches: OwnershipCachesComponent
   wearablesCaches: WearablesCachesComponent
+  emotesCaches: EmotesCachesComponent
 }
 
 // components used in runtime
@@ -100,6 +102,11 @@ export type CategoryResponse = {
   nfts: {
     category: string
   }[]
+}
+
+export type UrnAndAmount = {
+  urn: string
+  amount: number
 }
 
 export interface WearablesQueryResponse {

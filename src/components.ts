@@ -9,6 +9,7 @@ import { createTheGraphComponent } from './ports/the-graph'
 import { createContentComponent } from './ports/content'
 import { createOwnershipCachesComponent } from './ports/ownership-caches'
 import { createWearablesCachesComponent } from './ports/wearables-caches'
+import { createEmotesCachesComponent } from './ports/emotes-caches'
 
 // Initialize all the components of the app
 export async function initComponents(): Promise<AppComponents> {
@@ -37,6 +38,9 @@ export async function initComponents(): Promise<AppComponents> {
   // This component contains caches for wearables checking
   const wearablesCaches = await createWearablesCachesComponent({ config })
 
+  // This component contains caches for emotes checking
+  const emotesCaches = await createEmotesCachesComponent({ config })
+
   return {
     config,
     logs,
@@ -47,6 +51,7 @@ export async function initComponents(): Promise<AppComponents> {
     content,
     theGraph,
     ownershipCaches,
-    wearablesCaches
+    wearablesCaches,
+    emotesCaches
   }
 }
