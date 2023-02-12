@@ -1,6 +1,6 @@
-import { transformLandToResponseSchema, transformNameToResponseSchema } from '../adapters/nfts'
+import { transformLandToResponseSchema } from '../adapters/nfts'
 import { runQuery, TheGraphComponent } from '../ports/the-graph'
-import { AppComponents, CategoryResponse, LandForResponse, LandsQueryResponse, NamesQueryResponse } from '../types'
+import { AppComponents, CategoryResponse, LandForResponse, LandsQueryResponse } from '../types'
 
 const QUERY_LANDS: string = `
 {

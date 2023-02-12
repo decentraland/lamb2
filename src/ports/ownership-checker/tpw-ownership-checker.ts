@@ -67,7 +67,7 @@ async function ownedThirdPartyWearables(
       const resolver = await createThirdPartyResolverForCollection(components, collectionId)
 
       // Get owned wearables for the collection
-      const ownedTPWForCollection = (await resolver.findWearablesByOwner(address)).map(
+      const ownedTPWForCollection = (await resolver.findThirdPartyAssetsByOwner(address)).map(
         (asset: ThirdPartyAsset) => asset.urn.decentraland
       )
 

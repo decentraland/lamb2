@@ -13,6 +13,7 @@ import { ContentComponent } from './ports/content'
 import { OwnershipCachesComponent } from './ports/ownership-caches'
 import { Variables } from '@well-known-components/thegraph-component'
 import { WearablesCachesComponent } from './ports/wearables-caches'
+import { EmotesCachesComponent } from './ports/emotes-caches'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -29,6 +30,7 @@ export type BaseComponents = {
   theGraph: TheGraphComponent
   ownershipCaches: OwnershipCachesComponent
   wearablesCaches: WearablesCachesComponent
+  emotesCaches: EmotesCachesComponent
 }
 
 // components used in runtime
@@ -71,7 +73,7 @@ export interface NFTsOwnershipChecker {
 }
 
 export interface TPWResolver {
-  findWearablesByOwner: (owner: string) => Promise<ThirdPartyAsset[]>
+  findThirdPartyAssetsByOwner: (owner: string) => Promise<ThirdPartyAsset[]>
 }
 
 export type ThirdPartyAsset = {
@@ -100,6 +102,11 @@ export type CategoryResponse = {
   nfts: {
     category: string
   }[]
+}
+
+export type UrnAndAmount = {
+  urn: string
+  amount: number
 }
 
 export interface WearablesQueryResponse {
@@ -199,15 +206,16 @@ export type EmoteFromQuery = {
 
 export type EmoteForResponse = {
   urn: string
-  id: string
-  contractAddress: string
-  tokenId: string
-  image: string
-  transferredAt: number
-  name: string
-  description: string
-  rarity: string
-  price: number
+  id?: string
+  contractAddress?: string
+  tokenId?: string
+  image?: string
+  transferredAt?: number
+  name?: string
+  description?: string
+  rarity?: string
+  price?: number
+  amount: number
 }
 
 export interface NamesQueryResponse {

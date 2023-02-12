@@ -1,3 +1,5 @@
+import { EntityType } from 'dcl-catalyst-commons'
+import { extractWearableDefinitionFromEntity } from '../adapters/definitions'
 import { transformThirdPartyAssetToWearableForCache } from '../adapters/nfts'
 import { runQuery } from '../ports/the-graph'
 import {
@@ -8,7 +10,7 @@ import {
   TPWResolver,
   ThirdPartyProvider
 } from '../types'
-import { decorateWearablesWithDefinitionsFromCache } from './wearables'
+import { decorateNFTsWithDefinitionsFromCache } from './definitions'
 
 export async function createThirdPartyResolverForCollection(
   components: Pick<AppComponents, 'theGraph' | 'fetch'>,
@@ -22,7 +24,7 @@ export async function createThirdPartyResolverForCollection(
   if (!thirdPartyResolverAPI) throw new Error(`Could not find third party resolver for collectionId: ${collectionId}`)
 
   return {
-    findWearablesByOwner: async (owner) => {
+    findThirdPartyAssetsByOwner: async (owner) => {
       const assetsByOwner = await fetchAssets(components, thirdPartyResolverAPI, registryId, owner)
       if (!assetsByOwner) throw new Error(`Could not fetch assets for owner: ${owner}`)
       return assetsByOwner?.filter((asset) => asset.urn.decentraland.startsWith(thirdPartyId)) ?? []
@@ -156,17 +158,25 @@ export async function getWearablesForCollection(
   address: string,
   includeDefinitions: boolean
 ) {
+  const { definitionsCache } = components.wearablesCaches
+
   // Get API for collection
   const resolver = await createThirdPartyResolverForCollection(components, collectionId)
 
   // Get owned wearables for the collection
-  let ownedTPWForCollection = (await resolver.findWearablesByOwner(address)).map(
+  let ownedTPWForCollection = (await resolver.findThirdPartyAssetsByOwner(address)).map(
     transformThirdPartyAssetToWearableForCache
   )
 
   // Fetch for definitions, add it to the cache and add it to each wearable in the response
   if (includeDefinitions)
-    ownedTPWForCollection = await decorateWearablesWithDefinitionsFromCache(ownedTPWForCollection, components)
+    ownedTPWForCollection = await decorateNFTsWithDefinitionsFromCache(
+      ownedTPWForCollection,
+      components,
+      definitionsCache,
+      EntityType.EMOTE,
+      extractWearableDefinitionFromEntity
+    )
 
   return {
     wearables: ownedTPWForCollection,

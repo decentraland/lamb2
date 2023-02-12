@@ -47,15 +47,16 @@ export function transformWearableForCacheToWearableForResponse(wearable: Wearabl
 export function transformEmoteToResponseSchema(emote: EmoteFromQuery): EmoteForResponse {
   return {
     urn: emote.urn,
-    id: emote.id,
-    contractAddress: emote.contractAddress,
-    tokenId: emote.tokenId,
-    image: emote.image,
-    transferredAt: emote.transferredAt,
-    name: emote.item.metadata.emote.name,
-    description: emote.item.metadata.emote.description,
-    rarity: emote.item.rarity,
-    price: emote.item.price
+    // id: emote.id,
+    // contractAddress: emote.contractAddress,
+    // tokenId: emote.tokenId,
+    // image: emote.image,
+    // transferredAt: emote.transferredAt,
+    // name: emote.item.metadata.emote.name,
+    // description: emote.item.metadata.emote.description,
+    // rarity: emote.item.rarity,
+    // price: emote.item.price
+    amount: 1
   }
 }
 
@@ -117,6 +118,16 @@ export function transformThirdPartyAssetToWearableForCache(asset: ThirdPartyAsse
         id: asset.id
       }
     ],
+    amount: 1
+  }
+}
+
+/*
+ * Adapts the response from a third-party resolver to /nfts/emotes endpoint response
+ */
+export function transformThirdPartyAssetToEmoteForResponse(asset: ThirdPartyAsset): EmoteForResponse {
+  return {
+    urn: asset.urn.decentraland,
     amount: 1
   }
 }
