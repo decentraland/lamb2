@@ -117,7 +117,7 @@ export async function createWearablesComponent({
 
         let wearableFromMap = wearablesByURN.get(wearable.urn)
         if (wearableFromMap) {
-          wearableFromMap.individualData!.push(individualData)
+          wearableFromMap.individualData.push(individualData)
           wearableFromMap.amount = wearableFromMap.amount + 1
         } else {
           wearableFromMap = {

@@ -62,9 +62,9 @@ export type HandlerContextWithPath<
 export type Context<Path extends string = any> = IHttpServerComponent.PathAwareContext<GlobalContext, Path>
 
 export type Pagination = {
-  pageSize: number | undefined
-  pageNum: number | undefined
-  orderBy: string | undefined
+  pageSize?: number
+  pageNum?: number
+  orderBy?: string
 }
 
 export type Filename = string
@@ -122,11 +122,12 @@ export type UrnAndAmount = {
 export type CachedWearable = {
   urn: string
   amount: number
-  individualData?: {
+  individualData: {
+    // TODO why is this nullable?
     id: string
-    tokenId?: string
-    transferredAt?: number
-    price?: number
+    tokenId?: string // TODO why is this nullable?
+    transferredAt?: number // TODO why is this nullable?
+    price?: number // TODO why is this nullable?
   }[]
   rarity: string
 }
@@ -134,7 +135,8 @@ export type CachedWearable = {
 export type CachedThirdPartyWearable = {
   urn: string
   amount: number
-  individualData?: {
+  individualData: {
+    // TODO same questions here
     id: string
     tokenId?: string
     transferredAt?: number
@@ -146,7 +148,7 @@ export type CachedThirdPartyWearable = {
 export type WearableForResponse = {
   urn: string
   amount: number
-  individualData?: {
+  individualData: {
     id: string
     tokenId?: string
     transferredAt?: number

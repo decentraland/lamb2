@@ -54,11 +54,8 @@ export async function getWearablesForAddress(
 
   return {
     wearables: allWearables.map((wearable: CachedThirdPartyWearable | CachedWearable): WearableForResponse => {
-      return {
-        urn: wearable.urn,
-        individualData: wearable.individualData,
-        amount: wearable.amount
-      }
+      const { urn, individualData, amount } = wearable
+      return { urn, individualData, amount }
     }),
     totalAmount: wearablesTotal
   }

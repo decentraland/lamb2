@@ -75,7 +75,7 @@ export async function createThirdPartyWearablesComponent({
         if (wearablesByURN.has(wearable.urn.decentraland)) {
           // The wearable was present in the map, its individual data is added to the individualData array for that wearable
           const wearableFromMap = wearablesByURN.get(wearable.urn.decentraland)!
-          wearableFromMap?.individualData?.push({
+          wearableFromMap?.individualData.push({
             id: wearable.id
           })
           wearableFromMap.amount = wearableFromMap.amount + 1
