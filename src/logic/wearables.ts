@@ -1,11 +1,12 @@
 import {
   AppComponents,
+  Pagination,
   ProfileMetadata,
-  WearableFromQuery,
-  WearablesQueryResponse,
-  WearableForResponse,
   ThirdPartyAsset,
-  WearableForCache
+  WearableForCache,
+  WearableForResponse,
+  WearableFromQuery,
+  WearablesQueryResponse
 } from '../types'
 import { parseUrn } from '@dcl/urn-resolver'
 import { runQuery, TheGraphComponent } from '../ports/the-graph'
@@ -20,6 +21,7 @@ import LRU from 'lru-cache'
 import { EntityType } from '@dcl/schemas'
 import { extractWearableDefinitionFromEntity } from '../adapters/definitions'
 import { decorateNFTsWithDefinitionsFromCache } from './definitions'
+import { ISubgraphComponent } from "@well-known-components/thegraph-component";
 
 /*
  * Extracts the non-base wearables from a profile and translate them to the new format
@@ -71,47 +73,58 @@ export async function translateWearablesIdFormat(wearableId: string): Promise<st
 
 const QUERY_WEARABLES: string = `
 {
-  nfts(
-    where: { owner: "$owner", category: "wearable"},
-    orderBy: transferredAt,
-    orderDirection: desc,
-  ) {
-    urn,
-    id,
-    tokenId,
-    transferredAt,
-    item {
-      rarity,
-      price
+  query fetchWearablesByOwner($owner: String, $idFrom: String) {
+    nfts(
+      where: { id_gt: $idFrom, owner: $owner, category: "wearable"},
+      orderBy: id,
+      orderDirection: asc,
+      first: 1000  
+    ) {
+      urn,
+      id,
+      tokenId,
+      category
+      transferredAt,
+      item {
+        rarity,
+        price
+      }
     }
-  }
-}`
+  }`
+
+async function runWearablesQuery(subgraph: ISubgraphComponent, owner: string, idFrom: string) {
+  const result = await runQuery<WearablesQueryResponse>(subgraph, QUERY_WEARABLES, {
+    owner: owner.toLowerCase(),
+    idFrom: idFrom
+  })
+  return result.nfts
+}
 
 export async function getWearablesForAddress(
-  components: Pick<AppComponents, 'theGraph' | 'wearablesCaches' | 'fetch' | 'content'>,
-  id: string,
+  components: Pick<AppComponents, 'theGraph' | 'wearablesCaches' | 'fetch' | 'content' | 'logs'>,
+  address: string,
   includeTPW: boolean,
   includeDefinitions: boolean,
-  pageSize?: string | null,
-  pageNum?: string | null,
-  orderBy?: string | null
+  pagination: Pagination
 ) {
+  const logger = components.logs.getLogger('wearables')
   const { wearablesCaches } = components
 
-  // Retrieve wearables for id from cache. They are stored sorted by creation date
+  // Retrieve wearables for address from cache. They are stored sorted by creation date
   const dclWearables = await retrieveWearablesFromCache(
     wearablesCaches.dclWearablesCache,
-    id,
+    address,
     components,
     getDCLWearablesToBeCached
   )
+  logger.debug(`dclWearables retrieved from cache: ${dclWearables.length}`)
 
-  // Retrieve third-party wearables for id from cache
+  // Retrieve third-party wearables for address from cache
   let tpWearables: WearableForCache[] = []
   if (includeTPW)
     tpWearables = await retrieveWearablesFromCache(
       wearablesCaches.thirdPartyWearablesCache,
-      id,
+      address,
       components,
       getThirdPartyWearablesToBeCached
     )
@@ -123,13 +136,13 @@ export async function getWearablesForAddress(
   const wearablesTotal = allWearables.length
 
   // Sort them by another field if specified
-  if (orderBy === 'rarity') allWearables = cloneDeep(allWearables).sort(compareByRarity)
+  if (pagination.orderBy === 'rarity') allWearables = cloneDeep(allWearables).sort(compareByRarity)
 
   // Virtually paginate the response if required
-  if (pageSize && pageNum)
+  if (pagination.pageSize && pagination.pageNum)
     allWearables = allWearables.slice(
-      (parseInt(pageNum) - 1) * parseInt(pageSize),
-      parseInt(pageNum) * parseInt(pageSize)
+      (pagination.pageNum - 1) * pagination.pageSize,
+      pagination.pageNum * pagination.pageSize
     )
 
   // Transform wearables to the response schema (exclude rarity)
@@ -178,16 +191,11 @@ async function retrieveWearablesFromCache(
 async function getDCLWearablesToBeCached(id: string, components: Pick<AppComponents, 'theGraph' | 'fetch'>) {
   const { theGraph } = components
 
-  // Set query
-  const query = QUERY_WEARABLES.replace('$owner', id.toLowerCase())
-
   // Query owned wearables from TheGraph for the address
-  const collectionsWearables = await runQuery<WearablesQueryResponse>(theGraph.collectionsSubgraph, query, {}).then(
-    (response) => response.nfts
-  )
-  const maticWearables = await runQuery<WearablesQueryResponse>(theGraph.maticCollectionsSubgraph, query, {}).then(
-    (response) => response.nfts
-  )
+  let idFrom = '';
+
+  const collectionsWearables = await runWearablesQuery(theGraph.collectionsSubgraph, id, '')
+  const maticWearables = await runWearablesQuery(theGraph.maticCollectionsSubgraph, id, '')
 
   // Merge the wearables responses, sort them by transferred date and group them by urn
   return groupWearablesByURN(collectionsWearables.concat(maticWearables)).sort(compareByTransferredAt)

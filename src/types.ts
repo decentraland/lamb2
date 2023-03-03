@@ -57,6 +57,12 @@ export type HandlerContextWithPath<
 
 export type Context<Path extends string = any> = IHttpServerComponent.PathAwareContext<GlobalContext, Path>
 
+export type Pagination = {
+  pageSize: number | undefined
+  pageNum: number | undefined
+  orderBy: string | undefined
+}
+
 export type Filename = string
 export type Filehash = IPFSv1 | IPFSv2
 export type WearableId = string // These ids are used as pointers on the content server

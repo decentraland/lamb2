@@ -1,6 +1,7 @@
 import { getWearablesForCollection } from '../../logic/third-party-wearables'
 import { getWearablesForAddress } from '../../logic/wearables'
-import { HandlerContextWithPath } from '../../types'
+import { HandlerContextWithPath, Pagination } from '../../types'
+import { parseInt } from "lodash";
 
 export async function wearablesHandler(
   context: HandlerContextWithPath<
@@ -12,9 +13,8 @@ export async function wearablesHandler(
   const { id } = context.params
   const includeTPW = context.url.searchParams.has('includeThirdParty')
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
-  const pageSize = context.url.searchParams.get('pageSize')
-  const pageNum = context.url.searchParams.get('pageNum')
-  const orderBy = context.url.searchParams.get('orderBy')
+
+  const pagination = paginationObject(context.url);
   const collectionId = context.url.searchParams.get('collectionId')
 
   let wearablesResponse
@@ -28,9 +28,7 @@ export async function wearablesHandler(
       id,
       includeTPW,
       includeDefinitions,
-      pageSize,
-      pageNum,
-      orderBy
+      pagination
     )
   }
 
@@ -39,8 +37,16 @@ export async function wearablesHandler(
     body: {
       wearables: wearablesResponse.wearables,
       totalAmount: wearablesResponse.totalAmount,
-      pageNum: pageNum,
-      pageSize: pageSize
+      pageNum: pagination.pageNum,
+      pageSize: pagination.pageSize
     }
   }
+}
+
+function paginationObject(url: URL): Pagination {
+  const pageSize = url.searchParams.has('pageSize') ? parseInt(url.searchParams.get('pageSize')!) : undefined
+  const pageNum = url.searchParams.has('pageNum') ? parseInt(url.searchParams.get('pageNum')!) : undefined
+  const orderBy = url.searchParams.get('orderBy') || undefined
+
+  return { pageSize, pageNum, orderBy };
 }
