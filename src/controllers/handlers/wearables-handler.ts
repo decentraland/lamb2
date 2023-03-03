@@ -4,7 +4,7 @@ import { HandlerContextWithPath, Pagination } from '../../types'
 
 export async function wearablesHandler(
   context: HandlerContextWithPath<
-    'config' | 'theGraph' | 'wearablesCaches' | 'fetch' | 'content' | 'logs',
+    'config' | 'theGraph' | 'thirdPartyComponent' | 'wearablesComponent' | 'definitions' | 'fetch' | 'content' | 'logs',
     '/nfts/wearables/:id'
   >
 ) {

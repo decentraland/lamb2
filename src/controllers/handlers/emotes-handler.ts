@@ -2,7 +2,10 @@ import { getEmotesForAddress, getEmotesForCollection } from '../../logic/emotes'
 import { HandlerContextWithPath } from '../../types'
 
 export async function emotesHandler(
-  context: HandlerContextWithPath<'config' | 'theGraph' | 'fetch' | 'content' | 'emotesCaches', '/nfts/emotes/:id'>
+  context: HandlerContextWithPath<
+    'config' | 'theGraph' | 'fetch' | 'content' | 'emotesCaches' | 'definitions',
+    '/nfts/emotes/:id'
+  >
 ) {
   // Get request params
   const { id } = context.params

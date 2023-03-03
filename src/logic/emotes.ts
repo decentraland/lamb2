@@ -1,9 +1,8 @@
-import { Entity, EntityType } from '@dcl/schemas'
-import { extractEmoteDefinitionFromEntity, extractWearableDefinitionFromEntity } from '../adapters/definitions'
+import { EntityType } from '@dcl/schemas'
+import { extractEmoteDefinitionFromEntity } from '../adapters/definitions'
 import { transformEmoteToResponseSchema, transformThirdPartyAssetToEmoteForResponse } from '../adapters/nfts'
 import { runQuery, TheGraphComponent } from '../ports/the-graph'
-import { AppComponents, CategoryResponse, Definition, EmoteForResponse, EmotesQueryResponse } from '../types'
-import { decorateNFTsWithDefinitionsFromCache } from './definitions'
+import { AppComponents, CategoryResponse, EmoteForResponse, EmotesQueryResponse } from '../types'
 import { createThirdPartyResolverForCollection } from './third-party-wearables'
 
 const QUERY_EMOTES: string = `
@@ -71,14 +70,12 @@ const QUERY_EMOTES_TOTAL_AMOUNT = `
 }`
 
 export async function getEmotesForAddress(
-  components: Pick<AppComponents, 'theGraph' | 'emotesCaches' | 'content'>,
+  { definitions, theGraph }: Pick<AppComponents, 'theGraph' | 'definitions'>,
   id: string,
   includeDefinitions: boolean,
   pageSize?: string | null,
   pageNum?: string | null
 ) {
-  const { theGraph, emotesCaches } = components
-
   // If pagination is required, an extra query to retrieve the total amount of emotes is asynchronously made
   let query
   let emotes: EmoteForResponse[]
@@ -99,22 +96,14 @@ export async function getEmotesForAddress(
     // Get emotes from the query response
     emotes = (await emotesPromise).nfts.map(transformEmoteToResponseSchema)
   } else {
-    // Get all owned emotes
     emotes = await runQueryForAllEmotes(query, id, theGraph)
 
-    // Set totalAmount from the query response
     totalAmount = emotes.length
   }
 
-  // Fetch for definitions, add it to the cache and add it to each emote in the response
-  if (includeDefinitions)
-    emotes = await decorateNFTsWithDefinitionsFromCache(
-      emotes,
-      components,
-      emotesCaches.definitionsCache,
-      EntityType.EMOTE,
-      extractEmoteDefinitionFromEntity
-    )
+  if (includeDefinitions) {
+    await definitions.decorateNFTsWithDefinitions(emotes, EntityType.EMOTE, extractEmoteDefinitionFromEntity)
+  }
 
   return {
     emotes,
@@ -166,12 +155,11 @@ async function runQueryForAllEmotes(query: any, id: string, theGraph: TheGraphCo
 }
 
 export async function getEmotesForCollection(
-  components: Pick<AppComponents, 'theGraph' | 'fetch' | 'content' | 'emotesCaches'>,
+  components: Pick<AppComponents, 'theGraph' | 'fetch' | 'content' | 'emotesCaches' | 'definitions'>,
   collectionId: string,
   address: string,
   includeDefinitions: boolean
 ) {
-  const { definitionsCache } = components.emotesCaches
   // Get API for collection
   const resolver = await createThirdPartyResolverForCollection(components, collectionId)
 
@@ -180,15 +168,13 @@ export async function getEmotesForCollection(
     transformThirdPartyAssetToEmoteForResponse
   )
 
-  // Fetch for definitions and add it to each wearable in the response
-  if (includeDefinitions)
-    ownedTPEForCollection = await decorateNFTsWithDefinitionsFromCache(
+  if (includeDefinitions) {
+    await components.definitions.decorateNFTsWithDefinitions(
       ownedTPEForCollection,
-      components,
-      definitionsCache,
       EntityType.EMOTE,
       extractEmoteDefinitionFromEntity
     )
+  }
 
   return {
     emotes: ownedTPEForCollection,

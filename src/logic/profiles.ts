@@ -1,10 +1,45 @@
 import { AppComponents, ProfileMetadata, Filename, Filehash, NFTsOwnershipChecker } from '../types'
 import { Entity, EntityType, Snapshots } from '@dcl/schemas'
 import { IConfigComponent } from '@well-known-components/interfaces'
-import { getBaseWearables, getValidNonBaseWearables, translateWearablesIdFormat } from './wearables'
 import { createWearablesOwnershipChecker } from '../ports/ownership-checker/wearables-ownership-checker'
 import { createNamesOwnershipChecker } from '../ports/ownership-checker/names-ownership-checker'
 import { createTPWOwnershipChecker } from '../ports/ownership-checker/tpw-ownership-checker'
+import { isBaseWearable } from './utils'
+import { parseUrn } from '@dcl/urn-resolver'
+
+export async function translateWearablesIdFormat(wearableId: string): Promise<string | undefined> {
+  if (!wearableId.startsWith('dcl://')) return wearableId
+
+  const parsed = await parseUrn(wearableId)
+  return parsed?.uri?.toString()
+}
+
+export async function getBaseWearables(wearables: string[]): Promise<string[]> {
+  // Filter base wearables
+  const baseWearables = wearables.filter(isBaseWearable)
+
+  // Translate old format ones to the new id format
+  const validBaseWearables = []
+  for (const wearableId of baseWearables) {
+    const translatedWearableId = await translateWearablesIdFormat(wearableId)
+    if (translatedWearableId) validBaseWearables.push(translatedWearableId)
+  }
+
+  return validBaseWearables
+}
+
+export async function getValidNonBaseWearables(metadata: ProfileMetadata): Promise<string[]> {
+  const wearablesInProfile: string[] = []
+  for (const avatar of metadata.avatars) {
+    for (const wearableId of avatar.avatar.wearables) {
+      if (!isBaseWearable(wearableId)) {
+        const translatedWearableId = await translateWearablesIdFormat(wearableId)
+        if (translatedWearableId) wearablesInProfile.push(translatedWearableId)
+      }
+    }
+  }
+  return wearablesInProfile.filter((wearableId) => !!wearableId)
+}
 
 export async function getProfiles(
   components: Pick<AppComponents, 'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches'>,

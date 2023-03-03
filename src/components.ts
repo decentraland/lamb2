@@ -8,8 +8,10 @@ import { metricDeclarations } from './metrics'
 import { createTheGraphComponent } from './ports/the-graph'
 import { createContentComponent } from './ports/content'
 import { createOwnershipCachesComponent } from './ports/ownership-caches'
-import { createWearablesCachesComponent } from './ports/wearables-caches'
 import { createEmotesCachesComponent } from './ports/emotes-caches'
+import { createWearablesComponent } from './ports/wearables-component'
+import { createThirdPartyWearablesComponent } from './ports/tp-component'
+import { createDefinitionsComponent } from './ports/definitions-component'
 
 // Initialize all the components of the app
 export async function initComponents(): Promise<AppComponents> {
@@ -32,13 +34,10 @@ export async function initComponents(): Promise<AppComponents> {
 
   const theGraph = await createTheGraphComponent({ config, logs, fetch, metrics })
 
-  // This component contains caches for ownership checking
   const ownershipCaches = await createOwnershipCachesComponent({ config })
-
-  // This component contains caches for wearables checking
-  const wearablesCaches = await createWearablesCachesComponent({ config })
-
-  // This component contains caches for emotes checking
+  const wearablesComponent = await createWearablesComponent({ theGraph, logs, config })
+  const thirdPartyComponent = await createThirdPartyWearablesComponent({ theGraph, logs, config, fetch })
+  const definitions = await createDefinitionsComponent({ config, content })
   const emotesCaches = await createEmotesCachesComponent({ config })
 
   return {
@@ -51,7 +50,9 @@ export async function initComponents(): Promise<AppComponents> {
     content,
     theGraph,
     ownershipCaches,
-    wearablesCaches,
+    wearablesComponent,
+    thirdPartyComponent,
+    definitions,
     emotesCaches
   }
 }

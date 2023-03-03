@@ -12,8 +12,10 @@ import { Profile, IPFSv1, IPFSv2, I18N } from '@dcl/schemas'
 import { ContentComponent } from './ports/content'
 import { OwnershipCachesComponent } from './ports/ownership-caches'
 import { Variables } from '@well-known-components/thegraph-component'
-import { WearablesCachesComponent } from './ports/wearables-caches'
 import { EmotesCachesComponent } from './ports/emotes-caches'
+import { WearablesComponent } from './ports/wearables-component'
+import { ThirdPartyWearablesComponent } from './ports/tp-component'
+import { DefinitionsComponent } from './ports/definitions-component'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -29,7 +31,9 @@ export type BaseComponents = {
   content: ContentComponent
   theGraph: TheGraphComponent
   ownershipCaches: OwnershipCachesComponent
-  wearablesCaches: WearablesCachesComponent
+  thirdPartyComponent: ThirdPartyWearablesComponent
+  wearablesComponent: WearablesComponent
+  definitions: DefinitionsComponent
   emotesCaches: EmotesCachesComponent
 }
 
@@ -115,22 +119,7 @@ export type UrnAndAmount = {
   amount: number
 }
 
-export interface WearablesQueryResponse {
-  nfts: WearableFromQuery[]
-}
-
-export type WearableFromQuery = {
-  urn: string
-  id: string
-  tokenId: string
-  transferredAt: number
-  item: {
-    rarity: string
-    price: number
-  }
-}
-
-export type WearableForCache = {
+export type CachedWearable = {
   urn: string
   amount: number
   individualData?: {
@@ -139,7 +128,18 @@ export type WearableForCache = {
     transferredAt?: number
     price?: number
   }[]
-  rarity?: string // Rarity added in the cache to being able to sort by it. It wont be included in the response since it already appears in the definition. It's optional because third-party wearables doesn't have rarity
+  rarity: string
+}
+
+export type CachedThirdPartyWearable = {
+  urn: string
+  amount: number
+  individualData?: {
+    id: string
+    tokenId?: string
+    transferredAt?: number
+    price?: number
+  }[]
 }
 
 // The response is grouped by URN
@@ -281,10 +281,6 @@ export type LandForResponse = {
   description: string | undefined
   price: string | null
   image: string
-}
-
-export interface ThirdPartyResolversResponse {
-  thirdParties: ThirdPartyProvider[]
 }
 
 export type ThirdPartyProvider = {
