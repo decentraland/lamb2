@@ -1,11 +1,10 @@
 import { getWearablesForCollection } from '../../logic/third-party-wearables'
 import { getWearablesForAddress } from '../../logic/wearables'
 import { HandlerContextWithPath, Pagination } from '../../types'
-import { parseInt } from "lodash";
 
 export async function wearablesHandler(
   context: HandlerContextWithPath<
-    'config' | 'theGraph' | 'wearablesCaches' | 'fetch' | 'content',
+    'config' | 'theGraph' | 'wearablesCaches' | 'fetch' | 'content' | 'logs',
     '/nfts/wearables/:id'
   >
 ) {
@@ -14,7 +13,7 @@ export async function wearablesHandler(
   const includeTPW = context.url.searchParams.has('includeThirdParty')
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
 
-  const pagination = paginationObject(context.url);
+  const pagination = paginationObject(context.url)
   const collectionId = context.url.searchParams.get('collectionId')
 
   let wearablesResponse
@@ -23,13 +22,7 @@ export async function wearablesHandler(
     wearablesResponse = await getWearablesForCollection(context.components, collectionId, id, includeDefinitions)
   } else {
     // Get full cached wearables response
-    wearablesResponse = await getWearablesForAddress(
-      context.components,
-      id,
-      includeTPW,
-      includeDefinitions,
-      pagination
-    )
+    wearablesResponse = await getWearablesForAddress(context.components, id, includeTPW, includeDefinitions, pagination)
   }
 
   return {
@@ -44,9 +37,9 @@ export async function wearablesHandler(
 }
 
 function paginationObject(url: URL): Pagination {
-  const pageSize = url.searchParams.has('pageSize') ? parseInt(url.searchParams.get('pageSize')!) : undefined
-  const pageNum = url.searchParams.has('pageNum') ? parseInt(url.searchParams.get('pageNum')!) : undefined
+  const pageSize = url.searchParams.has('pageSize') ? parseInt(url.searchParams.get('pageSize')!, 10) : undefined
+  const pageNum = url.searchParams.has('pageNum') ? parseInt(url.searchParams.get('pageNum')!, 10) : undefined
   const orderBy = url.searchParams.get('orderBy') || undefined
 
-  return { pageSize, pageNum, orderBy };
+  return { pageSize, pageNum, orderBy }
 }
