@@ -169,12 +169,13 @@ function addBaseUrlToSnapshots(baseUrl: string, snapshots: Snapshots, content: M
 }
 
 function addBaseUrlToSnapshot(baseUrl: string, snapshot: string, content: Map<string, string>): string {
+  const cleanedBaseUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/'
   if (content.has(snapshot)) {
     // Snapshot references a content file
     const hash = content.get(snapshot)!
-    return baseUrl + `/contents/${hash}`
+    return cleanedBaseUrl + `contents/${hash}`
   } else {
     // Snapshot is directly a hash
-    return baseUrl + `/contents/${snapshot}`
+    return cleanedBaseUrl + `contents/${snapshot}`
   }
 }
