@@ -3,6 +3,11 @@ import { EntityType } from '@dcl/schemas'
 import { extractWearableDefinitionFromEntity } from '../adapters/definitions'
 import { compareByRarity } from './utils'
 
+export type GetWearablesOptions = {
+  includeTPW: boolean
+  includeDefinitions: boolean
+}
+
 export async function getWearablesForAddress(
   {
     logs,
@@ -11,8 +16,7 @@ export async function getWearablesForAddress(
     definitions
   }: Pick<AppComponents, 'wearablesComponent' | 'thirdPartyComponent' | 'definitions' | 'logs'>,
   address: string,
-  includeTPW: boolean,
-  includeDefinitions: boolean,
+  { includeDefinitions, includeTPW }: GetWearablesOptions,
   pagination: Pagination
 ) {
   const logger = logs.getLogger('wearables')

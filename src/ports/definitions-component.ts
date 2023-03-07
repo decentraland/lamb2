@@ -1,4 +1,4 @@
-import { AppComponents, Definition, UrnAndAmount } from '../types'
+import { AppComponents, Definition } from '../types'
 import { IBaseComponent } from '@well-known-components/interfaces'
 import LRU from 'lru-cache'
 import { EntityType } from 'dcl-catalyst-commons'
@@ -6,10 +6,16 @@ import { Entity } from '@dcl/schemas'
 
 export type DefinitionsComponent = IBaseComponent & {
   decorateNFTsWithDefinitions: (
-    nfts: UrnAndAmount[],
+    nfts: NFT[],
     entityType: EntityType,
     extractDefinitionFromEntity: (components: Pick<AppComponents, 'content'>, entity: Entity) => Definition
   ) => Promise<void>
+}
+
+export type NFT = {
+  urn: string
+  amount: number
+  definition?: Definition
 }
 
 export async function createDefinitionsComponent({
@@ -22,45 +28,30 @@ export async function createDefinitionsComponent({
   const definitionsCache = new LRU<string, Definition>({ max: wearablesSize, ttl: wearablesAge })
 
   async function decorateNFTsWithDefinitions(
-    nfts: UrnAndAmount[],
+    nfts: NFT[],
     entityType: EntityType,
     extractDefinitionFromEntity: (components: Pick<AppComponents, 'content'>, entity: Entity) => Definition
   ) {
     const nonCachedURNs: string[] = []
-    const definitionsByURN = new Map<string, Definition>()
     nfts.forEach((nft) => {
       const definition = definitionsCache.get(nft.urn)
-      if (definition) {
-        definitionsByURN.set(nft.urn, definition)
-      } else {
+      if (!definition) {
         nonCachedURNs.push(nft.urn)
       }
     })
 
     // Fetch entities for non-cached urns
-    let entities: Entity[] = []
     if (nonCachedURNs.length !== 0) {
-      entities = await content.fetchEntitiesByPointers(entityType, nonCachedURNs)
+      const entities = await content.fetchEntitiesByPointers(entityType, nonCachedURNs)
+      for (const entity of entities) {
+        const definition = extractDefinitionFromEntity({ content }, entity)
+        definitionsCache.set(definition.id.toLowerCase(), definition)
+      }
     }
 
-    // Translate entities to definitions
-    const translatedDefinitions: Definition[] = entities.map((entity) =>
-      extractDefinitionFromEntity({ content }, entity)
-    )
-
-    // Store new definitions in cache and in map
-    translatedDefinitions.forEach((definition) => {
-      definitionsCache.set(definition.id.toLowerCase(), definition)
-      definitionsByURN.set(definition.id.toLowerCase(), definition)
-    })
-
-    // Decorate provided nfts with definitions
-    nfts.map((nft) => {
-      return {
-        ...nft,
-        definition: definitionsByURN.get(nft.urn)
-      }
-    })
+    for (const nft of nfts) {
+      nft.definition = definitionsCache.get(nft.urn)
+    }
   }
 
   return {

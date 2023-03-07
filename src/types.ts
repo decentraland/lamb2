@@ -114,19 +114,13 @@ export type CategoryResponse = {
   }[]
 }
 
-export type UrnAndAmount = {
-  urn: string
-  amount: number
-}
-
 export type CachedWearable = {
   urn: string
   amount: number
   individualData: {
-    // TODO why is this nullable?
     id: string
-    tokenId?: string // TODO why is this nullable?
-    transferredAt?: number // TODO why is this nullable?
+    tokenId: string
+    transferredAt: number
     price?: number // TODO why is this nullable?
   }[]
   rarity: string
