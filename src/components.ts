@@ -8,7 +8,6 @@ import { metricDeclarations } from './metrics'
 import { createTheGraphComponent } from './ports/the-graph'
 import { createContentComponent } from './ports/content'
 import { createOwnershipCachesComponent } from './ports/ownership-caches'
-import { createWearablesCachesComponent } from './ports/wearables-caches'
 import { createEmotesCachesComponent } from './ports/emotes-caches'
 import { createWearablesFetcherComponent } from './adapters/wearables-fetcher'
 import { createDefinitionsFetcherComponent } from './adapters/definitions-fetcher'
@@ -35,15 +34,8 @@ export async function initComponents(): Promise<AppComponents> {
 
   const theGraph = await createTheGraphComponent({ config, logs, fetch, metrics })
 
-  // This component contains caches for ownership checking
   const ownershipCaches = await createOwnershipCachesComponent({ config })
-
-  // This component contains caches for wearables checking
-  const wearablesCaches = await createWearablesCachesComponent({ config })
-
-  // This component contains caches for emotes checking
   const emotesCaches = await createEmotesCachesComponent({ config })
-
   const wearablesFetcher = await createWearablesFetcherComponent({ config, theGraph, logs })
   const thirdPartyWearablesFetcher = await createThirdPartyWearablesFetcherComponent({ config, logs, theGraph, fetch })
   const definitionsFetcher = await createDefinitionsFetcherComponent({ config, logs, content })
@@ -58,7 +50,6 @@ export async function initComponents(): Promise<AppComponents> {
     content,
     theGraph,
     ownershipCaches,
-    wearablesCaches,
     emotesCaches,
     wearablesFetcher,
     definitionsFetcher,

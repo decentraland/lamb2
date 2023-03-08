@@ -12,7 +12,6 @@ import { Profile, IPFSv1, IPFSv2, I18N } from '@dcl/schemas'
 import { ContentComponent } from './ports/content'
 import { OwnershipCachesComponent } from './ports/ownership-caches'
 import { Variables } from '@well-known-components/thegraph-component'
-import { WearablesCachesComponent } from './ports/wearables-caches'
 import { EmotesCachesComponent } from './ports/emotes-caches'
 import { WearablesFetcher } from './adapters/wearables-fetcher'
 import { DefinitionsFetcher } from './adapters/definitions-fetcher'
@@ -32,7 +31,6 @@ export type BaseComponents = {
   content: ContentComponent
   theGraph: TheGraphComponent
   ownershipCaches: OwnershipCachesComponent
-  wearablesCaches: WearablesCachesComponent
   wearablesFetcher: WearablesFetcher
   thirdPartyWearablesFetcher: ThirdPartyWearablesFetcher
   definitionsFetcher: DefinitionsFetcher
@@ -127,20 +125,7 @@ export type ThirdPartyWearable = {
   }[]
 }
 
-// The response is grouped by URN
-export type WearableForResponse = {
-  urn: string
-  amount: number
-  individualData?: {
-    id: string
-    tokenId?: string
-    transferredAt?: number
-    price?: number
-  }[]
-  definition?: Definition
-}
-
-// TODO: review this type:
+// TODO: review this type: (ref https://github.com/decentraland/catalyst/blob/main/lambdas/src/apis/collections/types.ts#L9)
 // http://localhost:7272/users/0x5447C87068b3d99F50a439f98a2B420585B34A93/wearables?includeDefinitions=true
 // https://peer-ec2.decentraland.org/lambdas/collections/wearables-by-owner/0x5447C87068b3d99F50a439f98a2B420585B34A93?includeDefinitions=true
 export type Definition = {
