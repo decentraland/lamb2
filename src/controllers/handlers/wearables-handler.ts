@@ -16,11 +16,11 @@ export async function wearablesHandler(
 
   const { totalAmount, wearables } = await wearablesFetcher.fetchByOwner(address, pagination)
 
-  const results: WearableResponse[] = wearables
   const definitions = includeDefinitions
     ? await definitionsFetcher.fetchWearablesDefinitions(wearables.map((w) => w.urn))
     : []
 
+  const results: WearableResponse[] = []
   for (let i = 0; i < wearables.length; ++i) {
     const { urn, amount, individualData, rarity } = wearables[i]
     results.push({
