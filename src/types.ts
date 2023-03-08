@@ -140,6 +140,9 @@ export type WearableForResponse = {
   definition?: Definition
 }
 
+// TODO: review this type:
+// http://localhost:7272/users/0x5447C87068b3d99F50a439f98a2B420585B34A93/wearables?includeDefinitions=true
+// https://peer-ec2.decentraland.org/lambdas/collections/wearables-by-owner/0x5447C87068b3d99F50a439f98a2B420585B34A93?includeDefinitions=true
 export type Definition = {
   id: string
   description: string
