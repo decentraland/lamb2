@@ -14,6 +14,9 @@ import { OwnershipCachesComponent } from './ports/ownership-caches'
 import { Variables } from '@well-known-components/thegraph-component'
 import { WearablesCachesComponent } from './ports/wearables-caches'
 import { EmotesCachesComponent } from './ports/emotes-caches'
+import { WearablesFetcher } from './adapters/wearables-fetcher'
+import { DefinitionsFetcher } from './adapters/definitions-fetcher'
+import { ThirdPartyWearablesFetcher } from './adapters/third-party-wearables-fetcher'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -30,6 +33,9 @@ export type BaseComponents = {
   theGraph: TheGraphComponent
   ownershipCaches: OwnershipCachesComponent
   wearablesCaches: WearablesCachesComponent
+  wearablesFetcher: WearablesFetcher
+  thirdPartyWearablesFetcher: ThirdPartyWearablesFetcher
+  definitionsFetcher: DefinitionsFetcher
   emotesCaches: EmotesCachesComponent
 }
 
@@ -84,14 +90,6 @@ export type ThirdPartyAsset = {
   }
 }
 
-export type ThirdPartyAssets = {
-  address: string
-  total: number
-  page: number
-  assets: ThirdPartyAsset[]
-  next?: string
-}
-
 /**
  * Function used to fetch TheGraph
  * @public
@@ -109,31 +107,24 @@ export type UrnAndAmount = {
   amount: number
 }
 
-export interface WearablesQueryResponse {
-  nfts: WearableFromQuery[]
-}
-
-export type WearableFromQuery = {
+export type Wearable = {
   urn: string
-  id: string
-  tokenId: string
-  transferredAt: number
-  item: {
-    rarity: string
-    price: number
-  }
-}
-
-export type WearableForCache = {
-  urn: string
-  amount: number
-  individualData?: {
+  amount: number // TODO: maybe this could be individualData.length
+  individualData: {
     id: string
-    tokenId?: string
-    transferredAt?: number
-    price?: number
+    tokenId: string
+    transferredAt: number
+    price: number
   }[]
-  rarity?: string // Rarity added in the cache to being able to sort by it. It wont be included in the response since it already appears in the definition. It's optional because third-party wearables doesn't have rarity
+  rarity: string
+}
+
+export type ThirdPartyWearable = {
+  urn: string
+  amount: number // TODO: maybe this could be individualData.length
+  individualData: {
+    id: string
+  }[]
 }
 
 // The response is grouped by URN
@@ -277,11 +268,22 @@ export type LandForResponse = {
   image: string
 }
 
-export interface ThirdPartyResolversResponse {
-  thirdParties: ThirdPartyProvider[]
+export type PaginatedResults<T> = {
+  status: number
+  body: {
+    elements: T[]
+    totalAmount: number
+    pageNum: number
+    pageSize: number
+  }
 }
 
-export type ThirdPartyProvider = {
-  id: string
-  resolver: string
+export type Limits = {
+  offset: number
+  limit: number
+}
+
+export type Pagination = Limits & {
+  pageSize: number
+  pageNum: number
 }

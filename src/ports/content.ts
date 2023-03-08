@@ -1,33 +1,26 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { AppComponents } from '../types'
 import { ContentAPI, ContentClient } from 'dcl-catalyst-client'
-import { EntityType } from 'dcl-catalyst-commons'
 import { Entity } from '@dcl/schemas'
 
 export type ContentComponent = IBaseComponent & {
   getExternalContentServerUrl(): string
-  fetchEntitiesByPointers(type: EntityType, pointers: string[]): Promise<Entity[]>
+  fetchEntitiesByPointers(pointers: string[]): Promise<Entity[]>
 }
 
 export async function createContentComponent(components: Pick<AppComponents, 'config'>): Promise<ContentComponent> {
   const contentServerURL = await getContentServerAddress(components)
   const contentClient: ContentAPI = new ContentClient({ contentUrl: contentServerURL })
 
-  async function start() {}
-
-  async function stop() {}
-
   function getExternalContentServerUrl(): string {
     return contentServerURL
   }
 
-  function fetchEntitiesByPointers(type: EntityType, pointers: string[]) {
-    return contentClient.fetchEntitiesByPointers(type, pointers)
+  function fetchEntitiesByPointers(pointers: string[]) {
+    return contentClient.fetchEntitiesByPointers(pointers)
   }
 
   return {
-    start,
-    stop,
     getExternalContentServerUrl,
     fetchEntitiesByPointers
   }

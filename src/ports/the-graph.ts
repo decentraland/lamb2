@@ -3,7 +3,7 @@ import { ISubgraphComponent, createSubgraphComponent } from '@well-known-compone
 import { AppComponents } from '../types'
 
 export type TheGraphComponent = IBaseComponent & {
-  collectionsSubgraph: ISubgraphComponent
+  ethereumCollectionsSubgraph: ISubgraphComponent
   maticCollectionsSubgraph: ISubgraphComponent
   ensSubgraph: ISubgraphComponent
   thirdPartyRegistrySubgraph: ISubgraphComponent
@@ -31,7 +31,7 @@ export async function createTheGraphComponent(
   const { config } = components
 
   const ethNetwork = await config.getString('ETH_NETWORK')
-  const collectionsSubgraphURL: string =
+  const ethereumCollectionsSubgraphURL: string =
     (await config.getString('COLLECTIONS_L1_SUBGRAPH_URL')) ??
     (ethNetwork === 'mainnet' ? DEFAULT_COLLECTIONS_SUBGRAPH_MAINNET : DEFAULT_COLLECTIONS_SUBGRAPH_ROPSTEN)
   const maticCollectionsSubgraphURL: string =
@@ -50,7 +50,7 @@ export async function createTheGraphComponent(
       ? DEFAULT_THIRD_PARTY_REGISTRY_SUBGRAPH_MATIC_MAINNET
       : DEFAULT_THIRD_PARTY_REGISTRY_SUBGRAPH_MATIC_MUMBAI)
 
-  const collectionsSubgraph = await createSubgraphComponent(components, collectionsSubgraphURL)
+  const ethereumCollectionsSubgraph = await createSubgraphComponent(components, ethereumCollectionsSubgraphURL)
   const maticCollectionsSubgraph = await createSubgraphComponent(components, maticCollectionsSubgraphURL)
   const ensSubgraph = await createSubgraphComponent(components, ensSubgraphURL)
   const thirdPartyRegistrySubgraph = await createSubgraphComponent(components, thirdPartyRegistrySubgraphURL)
@@ -62,7 +62,7 @@ export async function createTheGraphComponent(
   return {
     start,
     stop,
-    collectionsSubgraph,
+    ethereumCollectionsSubgraph,
     maticCollectionsSubgraph,
     ensSubgraph,
     thirdPartyRegistrySubgraph
