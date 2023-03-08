@@ -1,8 +1,7 @@
-import { Entity, EntityType } from '@dcl/schemas'
-import { extractEmoteDefinitionFromEntity, extractWearableDefinitionFromEntity } from '../adapters/definitions'
+import { extractEmoteDefinitionFromEntity } from '../adapters/definitions'
 import { transformEmoteToResponseSchema, transformThirdPartyAssetToEmoteForResponse } from '../adapters/nfts'
 import { runQuery, TheGraphComponent } from '../ports/the-graph'
-import { AppComponents, CategoryResponse, Definition, EmoteForResponse, EmotesQueryResponse } from '../types'
+import { AppComponents, CategoryResponse, EmoteForResponse, EmotesQueryResponse } from '../types'
 import { decorateNFTsWithDefinitionsFromCache } from './definitions'
 import { createThirdPartyResolverForCollection } from './third-party-wearables'
 
@@ -112,7 +111,6 @@ export async function getEmotesForAddress(
       emotes,
       components,
       emotesCaches.definitionsCache,
-      EntityType.EMOTE,
       extractEmoteDefinitionFromEntity
     )
 
@@ -186,7 +184,6 @@ export async function getEmotesForCollection(
       ownedTPEForCollection,
       components,
       definitionsCache,
-      EntityType.EMOTE,
       extractEmoteDefinitionFromEntity
     )
 

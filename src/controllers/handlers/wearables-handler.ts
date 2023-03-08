@@ -1,5 +1,4 @@
 import { paginationObject } from '../../logic/utils'
-import { getWearablesForAddress } from '../../logic/wearables'
 import { Definition, HandlerContextWithPath, PaginatedResults, ThirdPartyWearable, Wearable } from '../../types'
 
 // TODO: change this name
@@ -44,6 +43,7 @@ export async function wearablesHandler(
   }
 }
 
+// TODO: change this name
 type ThirdPartyWearableResponse = Pick<ThirdPartyWearable, 'urn' | 'amount' | 'individualData'> & {
   definition?: Definition
 }

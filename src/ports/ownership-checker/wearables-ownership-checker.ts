@@ -61,7 +61,7 @@ async function checkForWearablesOwnership(
   theGraph: TheGraphComponent,
   wearableIdsToCheck: [string, string[]][]
 ): Promise<{ owner: string; urns: string[] }[]> {
-  const ethereumWearablesOwnersPromise = getOwnedWearables(wearableIdsToCheck, theGraph.collectionsSubgraph)
+  const ethereumWearablesOwnersPromise = getOwnedWearables(wearableIdsToCheck, theGraph.ethereumCollectionsSubgraph)
   const maticWearablesOwnersPromise = getOwnedWearables(wearableIdsToCheck, theGraph.maticCollectionsSubgraph)
   const [ethereumWearablesOwners, maticWearablesOwners] = await Promise.all([
     ethereumWearablesOwnersPromise,
