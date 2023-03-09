@@ -257,5 +257,5 @@ export async function createThirdPartyWearablesFetcherComponent({
     start,
     fetchByOwner,
     fetchCollectionByOwner
-    }
+  }
 }
