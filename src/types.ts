@@ -16,6 +16,7 @@ import { EmotesCachesComponent } from './ports/emotes-caches'
 import { WearablesFetcher } from './adapters/wearables-fetcher'
 import { DefinitionsFetcher } from './adapters/definitions-fetcher'
 import { ThirdPartyWearablesFetcher } from './adapters/third-party-wearables-fetcher'
+import { EmotesFetcher } from './adapters/emotes-fetcher'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -33,6 +34,7 @@ export type BaseComponents = {
   ownershipCaches: OwnershipCachesComponent
   wearablesFetcher: WearablesFetcher
   thirdPartyWearablesFetcher: ThirdPartyWearablesFetcher
+  emotesFetcher: EmotesFetcher
   definitionsFetcher: DefinitionsFetcher
   emotesCaches: EmotesCachesComponent
 }
@@ -116,6 +118,8 @@ export type Wearable = {
   }[]
   rarity: string
 }
+
+export type Emote = Wearable
 
 export type ThirdPartyWearable = {
   urn: string

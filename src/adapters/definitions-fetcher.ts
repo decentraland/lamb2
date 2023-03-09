@@ -1,10 +1,11 @@
 import LRU from 'lru-cache'
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { AppComponents, Definition } from '../types'
-import { extractWearableDefinitionFromEntity } from './definitions'
+import { extractEmoteDefinitionFromEntity, extractWearableDefinitionFromEntity } from './definitions'
 
 export type DefinitionsFetcher = IBaseComponent & {
   fetchWearablesDefinitions(urns: string[]): Promise<(Definition | undefined)[]>
+  fetchEmotesDefinitions(urns: string[]): Promise<(Definition | undefined)[]>
 }
 
 export async function createDefinitionsFetcherComponent({
@@ -40,7 +41,28 @@ export async function createDefinitionsFetcherComponent({
     return urns.map((urn) => wearablesDefinitionsCache.get(urn.toLowerCase()))
   }
 
+  async function fetchEmotesDefinitions(urns: string[]): Promise<(Definition | undefined)[]> {
+    const nonCachedURNs: string[] = []
+    for (const urn of urns) {
+      const definition = wearablesDefinitionsCache.get(urn.toLowerCase())
+      if (!definition) {
+        nonCachedURNs.push(urn)
+      }
+    }
+
+    if (nonCachedURNs.length !== 0) {
+      const entities = await content.fetchEntitiesByPointers(nonCachedURNs)
+      for (const entity of entities) {
+        const definition = extractEmoteDefinitionFromEntity({ content }, entity)
+        wearablesDefinitionsCache.set(definition.id.toLowerCase(), definition)
+      }
+    }
+
+    return urns.map((urn) => wearablesDefinitionsCache.get(urn.toLowerCase()))
+  }
+
   return {
-    fetchWearablesDefinitions
+    fetchWearablesDefinitions,
+    fetchEmotesDefinitions
   }
 }
