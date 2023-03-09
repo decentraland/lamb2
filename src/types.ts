@@ -16,6 +16,7 @@ import { EmotesCachesComponent } from './ports/emotes-caches'
 import { WearablesFetcher } from './adapters/wearables-fetcher'
 import { DefinitionsFetcher } from './adapters/definitions-fetcher'
 import { ThirdPartyWearablesFetcher } from './adapters/third-party-wearables-fetcher'
+import { NamesFetcher } from './adapters/names-fetcher'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -34,6 +35,7 @@ export type BaseComponents = {
   wearablesFetcher: WearablesFetcher
   thirdPartyWearablesFetcher: ThirdPartyWearablesFetcher
   definitionsFetcher: DefinitionsFetcher
+  namesFetcher: NamesFetcher
   emotesCaches: EmotesCachesComponent
 }
 
@@ -64,7 +66,6 @@ export type Context<Path extends string = any> = IHttpServerComponent.PathAwareC
 export type Filename = string
 export type Filehash = IPFSv1 | IPFSv2
 export type WearableId = string // These ids are used as pointers on the content server
-export type Name = string
 
 export type ProfileMetadata = Profile & {
   timestamp: number
@@ -197,24 +198,11 @@ export type EmoteForResponse = {
   amount: number
 }
 
-export interface NamesQueryResponse {
-  nfts: NameFromQuery[]
-}
-
-export type NameFromQuery = {
+export type Name = {
   name: string
   contractAddress: string
   tokenId: string
-  activeOrder: {
-    price: string
-  }
-}
-
-export type NameForResponse = {
-  name: string
-  contractAddress: string
-  tokenId: string
-  price: string | null
+  price?: string
 }
 
 export interface LandsQueryResponse {

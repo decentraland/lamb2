@@ -12,6 +12,7 @@ import { createEmotesCachesComponent } from './ports/emotes-caches'
 import { createWearablesFetcherComponent } from './adapters/wearables-fetcher'
 import { createDefinitionsFetcherComponent } from './adapters/definitions-fetcher'
 import { createThirdPartyWearablesFetcherComponent } from './adapters/third-party-wearables-fetcher'
+import { createNamesFetcherComponent } from './adapters/names-fetcher'
 
 // Initialize all the components of the app
 export async function initComponents(): Promise<AppComponents> {
@@ -39,6 +40,7 @@ export async function initComponents(): Promise<AppComponents> {
   const wearablesFetcher = await createWearablesFetcherComponent({ config, theGraph, logs })
   const thirdPartyWearablesFetcher = await createThirdPartyWearablesFetcherComponent({ config, logs, theGraph, fetch })
   const definitionsFetcher = await createDefinitionsFetcherComponent({ config, logs, content })
+  const namesFetcher = await createNamesFetcherComponent({ logs, theGraph })
 
   return {
     config,
@@ -53,6 +55,7 @@ export async function initComponents(): Promise<AppComponents> {
     emotesCaches,
     wearablesFetcher,
     definitionsFetcher,
-    thirdPartyWearablesFetcher
+    thirdPartyWearablesFetcher,
+    namesFetcher
   }
 }

@@ -30,9 +30,7 @@ export const createMockSubgraphComponent = (mock?: QueryGraph): ISubgraphCompone
 
 export function createTestTheGraphComponent(): TheGraphComponent {
   return {
-    start: async () => {},
-    stop: async () => {},
-    collectionsSubgraph: createMockSubgraphComponent(),
+    ethereumCollectionsSubgraph: createMockSubgraphComponent(),
     maticCollectionsSubgraph: createMockSubgraphComponent(),
     ensSubgraph: createMockSubgraphComponent(),
     thirdPartyRegistrySubgraph: createMockSubgraphComponent()
