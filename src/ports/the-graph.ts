@@ -31,6 +31,7 @@ export async function createTheGraphComponent(
   const { config } = components
 
   const ethNetwork = await config.getString('ETH_NETWORK')
+  console.log(ethNetwork)
   const ethereumCollectionsSubgraphURL: string =
     (await config.getString('COLLECTIONS_L1_SUBGRAPH_URL')) ??
     (ethNetwork === 'mainnet' ? DEFAULT_COLLECTIONS_SUBGRAPH_MAINNET : DEFAULT_COLLECTIONS_SUBGRAPH_ROPSTEN)
@@ -41,12 +42,10 @@ export async function createTheGraphComponent(
       : DEFAULT_COLLECTIONS_SUBGRAPH_MATIC_MUMBAI)
   const ensSubgraphURL: string =
     (await config.getString('ENS_OWNER_PROVIDER_URL')) ??
-    (process.env.ETH_NETWORK === 'mainnet'
-      ? DEFAULT_ENS_OWNER_PROVIDER_URL_MAINNET
-      : DEFAULT_ENS_OWNER_PROVIDER_URL_ROPSTEN)
+    (ethNetwork === 'mainnet' ? DEFAULT_ENS_OWNER_PROVIDER_URL_MAINNET : DEFAULT_ENS_OWNER_PROVIDER_URL_ROPSTEN)
   const thirdPartyRegistrySubgraphURL: string =
     (await config.getString('THIRD_PARTY_REGISTRY_SUBGRAPH_URL')) ??
-    (process.env.ETH_NETWORK === 'mainnet'
+    (ethNetwork === 'mainnet'
       ? DEFAULT_THIRD_PARTY_REGISTRY_SUBGRAPH_MATIC_MAINNET
       : DEFAULT_THIRD_PARTY_REGISTRY_SUBGRAPH_MATIC_MUMBAI)
 
