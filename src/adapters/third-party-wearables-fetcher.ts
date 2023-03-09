@@ -2,7 +2,7 @@ import LRU from 'lru-cache'
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { AppComponents, Limits, ThirdPartyAsset, ThirdPartyWearable } from '../types'
 import { BlockchainCollectionThirdPartyCollection } from '@dcl/urn-resolver'
-import { parseUrn } from '../logic/utils'
+import { findAsync, parseUrn } from '../logic/utils'
 
 // TODO cache metrics
 
@@ -200,18 +200,6 @@ export async function createThirdPartyWearablesFetcherComponent({
     }
   }
 
-  async function fetchThirdParty(thirdPartyName: string) {
-    const thirdParties = (await thirdPartiesCache.fetch(0))!
-    for (const thirdParty of thirdParties) {
-      const urn = await parseUrn(thirdParty.id)
-      if (urn && urn.type === URN_THIRD_PARTY_NAME_TYPE && urn.thirdPartyName === thirdPartyName) {
-        return thirdParty
-      }
-    }
-
-    return undefined
-  }
-
   async function fetchCollectionByOwner(
     address: string,
     collectionUrn: BlockchainCollectionThirdPartyCollection,
@@ -234,8 +222,14 @@ export async function createThirdPartyWearablesFetcherComponent({
         }
       }
     }
+    const thirdParty = await findAsync(
+      (await thirdPartiesCache.fetch(0))!,
+      async (thirdParty: ThirdParty): Promise<boolean> => {
+        const urn = await parseUrn(thirdParty.id)
+        return !!urn && urn.type === URN_THIRD_PARTY_NAME_TYPE && urn.thirdPartyName === collectionUrn.thirdPartyName
+      }
+    )
 
-    const thirdParty = await fetchThirdParty(collectionUrn.thirdPartyName)
     if (!thirdParty) {
       // NOTE: currently lambdas return an empty array with status code 200 for this case
       throw new ThirdPartyFetcherError(
@@ -244,7 +238,13 @@ export async function createThirdPartyWearablesFetcherComponent({
       )
     }
 
-    results = groupThirdPartyWearablesByURN(await fetchAssets(address, thirdParty))
+    const assets = await fetchAssets(address, thirdParty)
+    results = groupThirdPartyWearablesByURN(
+      assets.filter((asset: ThirdPartyAsset) => {
+        const [collectionId, _] = asset.id.split(':')
+        return collectionId === collectionUrn.collectionId
+      })
+    )
 
     const totalAmount = results.length
     return {

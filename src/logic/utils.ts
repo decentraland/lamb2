@@ -25,3 +25,13 @@ export async function parseUrn(urn: string) {
     return null
   }
 }
+
+export async function findAsync<T>(elements: T[], f: (e: T) => Promise<boolean>): Promise<T | undefined> {
+  for (const e of elements) {
+    if (await f(e)) {
+      return e
+    }
+  }
+
+  return undefined
+}
