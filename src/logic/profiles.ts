@@ -89,6 +89,7 @@ export async function getProfiles(
       tpwOwnershipChecker
     )
   } catch (error) {
+    // TODO: logger
     console.log(error)
     return []
   }

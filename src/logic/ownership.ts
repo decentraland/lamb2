@@ -46,6 +46,7 @@ async function querySubgraphByFragments(
         result.set(owner, ownedNFTs)
       }
     } catch (error) {
+      // TODO: logger
       console.log(error)
     } finally {
       offset += nft_fragments_per_query
