@@ -30,7 +30,6 @@ export async function createTheGraphComponent(
   const { config } = components
 
   const ethNetwork = await config.getString('ETH_NETWORK')
-  console.log(ethNetwork)
   const ethereumCollectionsSubgraphURL: string =
     (await config.getString('COLLECTIONS_L1_SUBGRAPH_URL')) ??
     (ethNetwork === 'mainnet' ? DEFAULT_COLLECTIONS_SUBGRAPH_MAINNET : DEFAULT_COLLECTIONS_SUBGRAPH_GOERLI)
