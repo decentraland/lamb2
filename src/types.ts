@@ -256,13 +256,20 @@ export type LandForResponse = {
   image: string
 }
 
-export type PaginatedResults<T> = {
+export type PaginatedResponse<T> = {
   status: number
   body: {
     elements: T[]
     totalAmount: number
     pageNum: number
     pageSize: number
+  }
+}
+
+export type ErrorResponse = {
+  status: number
+  body: {
+    error: string
   }
 }
 

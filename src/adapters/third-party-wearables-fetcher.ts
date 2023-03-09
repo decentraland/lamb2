@@ -1,8 +1,25 @@
 import LRU from 'lru-cache'
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { AppComponents, Limits, ThirdPartyAsset, ThirdPartyWearable } from '../types'
+import { BlockchainCollectionThirdPartyCollection } from '@dcl/urn-resolver'
+import { parseUrn } from '../logic/utils'
 
 // TODO cache metrics
+
+const URN_THIRD_PARTY_NAME_TYPE = 'blockchain-collection-third-party-name'
+const URN_THIRD_PARTY_ASSET_TYPE = 'blockchain-collection-third-party'
+
+export enum ThirdPartyFetcherErrorCode {
+  CANNOT_LOAD_THIRD_PARTY_WEARABLES,
+  THIRD_PARTY_NOT_FOUND
+}
+
+export class ThirdPartyFetcherError extends Error {
+  constructor(public code: ThirdPartyFetcherErrorCode, message: string) {
+    super(message)
+    Error.captureStackTrace(this, this.constructor)
+  }
+}
 
 type ThirdPartyAssets = {
   address: string
@@ -18,8 +35,12 @@ export type ThirdPartyWearablesResult = {
 }
 
 export type ThirdPartyWearablesFetcher = IBaseComponent & {
-  // NOTE: the result will be always orderer by rarity
   fetchByOwner(address: string, limits: Limits): Promise<ThirdPartyWearablesResult>
+  fetchCollectionByOwner(
+    address: string,
+    collectionUrn: BlockchainCollectionThirdPartyCollection,
+    limits: Limits
+  ): Promise<ThirdPartyWearablesResult>
 }
 
 const QUERY_ALL_THIRD_PARTY_RESOLVERS = `
@@ -108,15 +129,14 @@ export async function createThirdPartyWearablesFetcherComponent({
     }
   })
 
-  async function fetchAssets(owner: string, thirdParty: ThirdParty) {
-    const parts = thirdParty.id.split(':')
-    if (parts.length !== 5) {
+  async function fetchAssets(owner: string, thirdParty: ThirdParty): Promise<ThirdPartyAsset[]> {
+    const urn = await parseUrn(thirdParty.id)
+    if (!urn || urn.type !== URN_THIRD_PARTY_NAME_TYPE) {
       throw new Error(`Couldn't parse third party id: ${thirdParty.id}`)
     }
-    const registryId = parts[4]
 
     const baseUrl = new URL(thirdParty.resolver).href.replace(/\/$/, '')
-    let url: string | undefined = `${baseUrl}/registry/${registryId}/address/${owner}/assets`
+    let url: string | undefined = `${baseUrl}/registry/${urn.thirdPartyName}/address/${owner}/assets`
 
     const allAssets: ThirdPartyAsset[] = []
     try {
@@ -167,13 +187,65 @@ export async function createThirdPartyWearablesFetcherComponent({
 
   async function fetchByOwner(address: string, { offset, limit }: Limits): Promise<ThirdPartyWearablesResult> {
     const results = await cache.fetch(address)
-    if (!results) {
-      // TODO: or should we throw instead?
-      return {
-        wearables: [],
-        totalAmount: 0
+    if (results === undefined) {
+      throw new ThirdPartyFetcherError(
+        ThirdPartyFetcherErrorCode.CANNOT_LOAD_THIRD_PARTY_WEARABLES,
+        `Cannot load third party wearables for ${address}`
+      )
+    }
+    const totalAmount = results.length
+    return {
+      wearables: results.slice(offset, offset + limit),
+      totalAmount
+    }
+  }
+
+  async function fetchThirdParty(thirdPartyName: string) {
+    const thirdParties = (await thirdPartiesCache.fetch(0))!
+    for (const thirdParty of thirdParties) {
+      const urn = await parseUrn(thirdParty.id)
+      if (urn && urn.type === URN_THIRD_PARTY_NAME_TYPE && urn.thirdPartyName === thirdPartyName) {
+        return thirdParty
       }
     }
+
+    return undefined
+  }
+
+  async function fetchCollectionByOwner(
+    address: string,
+    collectionUrn: BlockchainCollectionThirdPartyCollection,
+    { offset, limit }: Limits
+  ): Promise<ThirdPartyWearablesResult> {
+    let results: ThirdPartyWearable[] = []
+
+    const allWearables = cache.get(address)
+    if (allWearables) {
+      // NOTE: if third party wearables are in cache
+      for (const wearable of allWearables) {
+        const wearableUrn = await parseUrn(wearable.urn)
+        if (
+          wearableUrn &&
+          wearableUrn.type === URN_THIRD_PARTY_ASSET_TYPE &&
+          wearableUrn.collectionId === collectionUrn.collectionId &&
+          wearableUrn.thirdPartyName === collectionUrn.thirdPartyName
+        ) {
+          results.push(wearable)
+        }
+      }
+    }
+
+    const thirdParty = await fetchThirdParty(collectionUrn.thirdPartyName)
+    if (!thirdParty) {
+      // NOTE: currently lambdas return an empty array with status code 200 for this case
+      throw new ThirdPartyFetcherError(
+        ThirdPartyFetcherErrorCode.THIRD_PARTY_NOT_FOUND,
+        `Third Party not found ${collectionUrn.thirdPartyName}`
+      )
+    }
+
+    results = groupThirdPartyWearablesByURN(await fetchAssets(address, thirdParty))
+
     const totalAmount = results.length
     return {
       wearables: results.slice(offset, offset + limit),
@@ -183,6 +255,7 @@ export async function createThirdPartyWearablesFetcherComponent({
 
   return {
     start,
-    fetchByOwner
+    fetchByOwner,
+    fetchCollectionByOwner
   }
 }

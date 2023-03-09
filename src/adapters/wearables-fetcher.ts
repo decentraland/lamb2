@@ -8,6 +8,17 @@ const THE_GRAPH_PAGE_SIZE = 1000
 
 // TODO cache metrics
 
+export enum WearablesFetcherErrorCode {
+  CANNOT_FETCH_WEARABLES
+}
+
+export class WearablesFetcherError extends Error {
+  constructor(public code: WearablesFetcherErrorCode, message: string) {
+    super(message)
+    Error.captureStackTrace(this, this.constructor)
+  }
+}
+
 export type WearablesResult = {
   wearables: Wearable[]
   totalAmount: number
@@ -134,12 +145,11 @@ export async function createWearablesFetcherComponent({
 
   async function fetchByOwner(address: string, { offset, limit }: Limits): Promise<WearablesResult> {
     const results = await cache.fetch(address)
-    if (!results) {
-      // TODO: or should we throw instead?
-      return {
-        wearables: [],
-        totalAmount: 0
-      }
+    if (results === undefined) {
+      throw new WearablesFetcherError(
+        WearablesFetcherErrorCode.CANNOT_FETCH_WEARABLES,
+        `Cannot fetch wearables for ${address}`
+      )
     }
     const totalAmount = results.length
     return {
