@@ -1,15 +1,22 @@
-import { EmotesFetcherError, EmotesFetcherErrorCode } from '../../adapters/emotes-fetcher'
 import { paginationObject } from '../../logic/utils'
-import { Definition, Emote, ErrorResponse, HandlerContextWithPath, PaginatedResponse } from '../../types'
+import {
+  Definition,
+  ErrorResponse,
+  HandlerContextWithPath,
+  Item,
+  PaginatedResponse,
+  ItemFetcherError,
+  ItemFetcherErrorCode
+} from '../../types'
 
 // TODO: change this name
-type EmoteResponse = Pick<Emote, 'urn' | 'amount' | 'individualData' | 'rarity'> & {
+type ItemResponse = Pick<Item, 'urn' | 'amount' | 'individualData' | 'rarity'> & {
   definition?: Definition
 }
 
 export async function emotesHandler(
   context: HandlerContextWithPath<'logs' | 'emotesFetcher' | 'definitionsFetcher', '/users/:address/emotes'>
-): Promise<PaginatedResponse<EmoteResponse> | ErrorResponse> {
+): Promise<PaginatedResponse<ItemResponse> | ErrorResponse> {
   const { logs, definitionsFetcher, emotesFetcher } = context.components
   const { address } = context.params
   const logger = logs.getLogger('emotes-handler')
@@ -17,15 +24,15 @@ export async function emotesHandler(
   const pagination = paginationObject(context.url)
 
   try {
-    const { totalAmount, emotes } = await emotesFetcher.fetchByOwner(address, pagination)
+    const { totalAmount, items } = await emotesFetcher.fetchByOwner(address, pagination)
 
     const definitions = includeDefinitions
-      ? await definitionsFetcher.fetchEmotesDefinitions(emotes.map((w) => w.urn))
+      ? await definitionsFetcher.fetchEmotesDefinitions(items.map((item) => item.urn))
       : []
 
-    const results: EmoteResponse[] = []
-    for (let i = 0; i < emotes.length; ++i) {
-      const { urn, amount, individualData, rarity } = emotes[i]
+    const results: ItemResponse[] = []
+    for (let i = 0; i < items.length; ++i) {
+      const { urn, amount, individualData, rarity } = items[i]
       results.push({
         urn,
         amount,
@@ -45,9 +52,9 @@ export async function emotesHandler(
       }
     }
   } catch (err: any) {
-    if (err instanceof EmotesFetcherError) {
+    if (err instanceof ItemFetcherError) {
       switch (err.code) {
-        case EmotesFetcherErrorCode.CANNOT_FETCH_EMOTES: {
+        case ItemFetcherErrorCode.CANNOT_FETCH_ITEMS: {
           return {
             status: 502,
             body: {
