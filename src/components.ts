@@ -9,9 +9,9 @@ import { createTheGraphComponent } from './ports/the-graph'
 import { createContentComponent } from './ports/content'
 import { createOwnershipCachesComponent } from './ports/ownership-caches'
 import { createEmotesCachesComponent } from './ports/emotes-caches'
-import { createWearablesFetcherComponent } from './adapters/wearables-fetcher'
 import { createDefinitionsFetcherComponent } from './adapters/definitions-fetcher'
 import { createThirdPartyWearablesFetcherComponent } from './adapters/third-party-wearables-fetcher'
+import { createEmoteFetcherComponent, createWearableFetcherComponent } from './adapters/items-fetcher'
 import { createNamesFetcherComponent } from './adapters/names-fetcher'
 
 // Initialize all the components of the app
@@ -37,9 +37,10 @@ export async function initComponents(): Promise<AppComponents> {
 
   const ownershipCaches = await createOwnershipCachesComponent({ config })
   const emotesCaches = await createEmotesCachesComponent({ config })
-  const wearablesFetcher = await createWearablesFetcherComponent({ config, theGraph, logs })
+  const wearablesFetcher = await createWearableFetcherComponent({ config, theGraph, logs })
   const thirdPartyWearablesFetcher = await createThirdPartyWearablesFetcherComponent({ config, logs, theGraph, fetch })
   const definitionsFetcher = await createDefinitionsFetcherComponent({ config, logs, content })
+  const emotesFetcher = await createEmoteFetcherComponent({ config, theGraph, logs })
   const namesFetcher = await createNamesFetcherComponent({ logs, theGraph })
 
   return {
@@ -56,6 +57,7 @@ export async function initComponents(): Promise<AppComponents> {
     wearablesFetcher,
     definitionsFetcher,
     thirdPartyWearablesFetcher,
+    emotesFetcher,
     namesFetcher
   }
 }

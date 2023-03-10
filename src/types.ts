@@ -13,7 +13,6 @@ import { ContentComponent } from './ports/content'
 import { OwnershipCachesComponent } from './ports/ownership-caches'
 import { Variables } from '@well-known-components/thegraph-component'
 import { EmotesCachesComponent } from './ports/emotes-caches'
-import { WearablesFetcher } from './adapters/wearables-fetcher'
 import { DefinitionsFetcher } from './adapters/definitions-fetcher'
 import { ThirdPartyWearablesFetcher } from './adapters/third-party-wearables-fetcher'
 import { NamesFetcher } from './adapters/names-fetcher'
@@ -32,8 +31,9 @@ export type BaseComponents = {
   content: ContentComponent
   theGraph: TheGraphComponent
   ownershipCaches: OwnershipCachesComponent
-  wearablesFetcher: WearablesFetcher
+  wearablesFetcher: ItemFetcher
   thirdPartyWearablesFetcher: ThirdPartyWearablesFetcher
+  emotesFetcher: ItemFetcher
   definitionsFetcher: DefinitionsFetcher
   namesFetcher: NamesFetcher
   emotesCaches: EmotesCachesComponent
@@ -116,6 +116,39 @@ export type Wearable = {
     price: number
   }[]
   rarity: string
+}
+
+export type ItemFetcher = IBaseComponent & {
+  // NOTE: the result will be always orderer by rarity
+  fetchByOwner(address: string, limits: Limits): Promise<ItemsResult>
+}
+
+export enum ItemFetcherErrorCode {
+  CANNOT_FETCH_ITEMS
+}
+
+export class ItemFetcherError extends Error {
+  constructor(public code: ItemFetcherErrorCode, message: string) {
+    super(message)
+    Error.captureStackTrace(this, this.constructor)
+  }
+}
+
+export type Item = {
+  urn: string
+  amount: number // TODO: maybe this could be individualData.length
+  individualData: {
+    id: string
+    tokenId: string
+    transferredAt: number
+    price: number
+  }[]
+  rarity: string
+}
+
+export type ItemsResult = {
+  items: Item[]
+  totalAmount: number
 }
 
 export type ThirdPartyWearable = {

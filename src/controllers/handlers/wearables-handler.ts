@@ -1,23 +1,24 @@
 import { ThirdPartyFetcherError, ThirdPartyFetcherErrorCode } from '../../adapters/third-party-wearables-fetcher'
-import { WearablesFetcherError, WearablesFetcherErrorCode } from '../../adapters/wearables-fetcher'
 import { parseUrn, paginationObject } from '../../logic/utils'
 import {
   Definition,
   ErrorResponse,
   HandlerContextWithPath,
+  Item,
   PaginatedResponse,
   ThirdPartyWearable,
-  Wearable
+  ItemFetcherError,
+  ItemFetcherErrorCode
 } from '../../types'
 
 // TODO: change this name
-type WearableResponse = Pick<Wearable, 'urn' | 'amount' | 'individualData' | 'rarity'> & {
+type ItemResponse = Pick<Item, 'urn' | 'amount' | 'individualData' | 'rarity'> & {
   definition?: Definition
 }
 
 export async function wearablesHandler(
   context: HandlerContextWithPath<'logs' | 'wearablesFetcher' | 'definitionsFetcher', '/users/:address/wearables'>
-): Promise<PaginatedResponse<WearableResponse> | ErrorResponse> {
+): Promise<PaginatedResponse<ItemResponse> | ErrorResponse> {
   const { logs, definitionsFetcher, wearablesFetcher } = context.components
   const { address } = context.params
   const logger = logs.getLogger('wearables-handler')
@@ -25,15 +26,15 @@ export async function wearablesHandler(
   const pagination = paginationObject(context.url)
 
   try {
-    const { totalAmount, wearables } = await wearablesFetcher.fetchByOwner(address, pagination)
+    const { totalAmount, items } = await wearablesFetcher.fetchByOwner(address, pagination)
 
     const definitions = includeDefinitions
-      ? await definitionsFetcher.fetchWearablesDefinitions(wearables.map((w) => w.urn))
+      ? await definitionsFetcher.fetchWearablesDefinitions(items.map((item) => item.urn))
       : []
 
-    const results: WearableResponse[] = []
-    for (let i = 0; i < wearables.length; ++i) {
-      const { urn, amount, individualData, rarity } = wearables[i]
+    const results: ItemResponse[] = []
+    for (let i = 0; i < items.length; ++i) {
+      const { urn, amount, individualData, rarity } = items[i]
       results.push({
         urn,
         amount,
@@ -53,9 +54,9 @@ export async function wearablesHandler(
       }
     }
   } catch (err: any) {
-    if (err instanceof WearablesFetcherError) {
+    if (err instanceof ItemFetcherError) {
       switch (err.code) {
-        case WearablesFetcherErrorCode.CANNOT_FETCH_WEARABLES: {
+        case ItemFetcherErrorCode.CANNOT_FETCH_ITEMS: {
           return {
             status: 502,
             body: {

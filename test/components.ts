@@ -10,7 +10,7 @@ import { createDotEnvConfigComponent } from '@well-known-components/env-config-p
 import { createTestMetricsComponent } from '@well-known-components/metrics'
 import { metricDeclarations } from '../src/metrics'
 import { createLogComponent } from '@well-known-components/logger'
-import { createWearablesFetcherComponent } from '../src/adapters/wearables-fetcher'
+import { createWearableFetcherComponent } from '../src/adapters/items-fetcher'
 import { createTheGraphComponentMock } from './mocks/the-graph-mock'
 import { createContentComponentMock } from './mocks/content-mock'
 import { createDefinitionsFetcherComponent } from '../src/adapters/definitions-fetcher'
@@ -32,10 +32,10 @@ async function initComponents(): Promise<TestComponents> {
 
   const config = await createDotEnvConfigComponent({}, { COMMIT_HASH: 'commit_hash' })
   const logs = await createLogComponent({})
-  
+
   const theGraphMock = createTheGraphComponentMock()
   const contentMock = createContentComponentMock()
-  const wearablesFetcher = await createWearablesFetcherComponent({ config, theGraph: theGraphMock, logs })
+  const wearablesFetcher = await createWearableFetcherComponent({ config, theGraph: theGraphMock, logs })
   const definitionsFetcher = await createDefinitionsFetcherComponent({ config, content: contentMock, logs })
 
   return {

@@ -21,11 +21,8 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
   router.get('/users/:address/wearables', wearablesHandler)
   router.get('/users/:address/third-party-wearables', thirdPartyWearablesHandler)
   router.get('/users/:address/third-party-wearables/:collectionId', thirdPartyCollectionWearablesHandler)
-
+  router.get('/users/:address/emotes', emotesHandler)
   router.get('/users/:address/names', namesHandler)
-
-  router.get('/nfts/emotes/:id', emotesHandler)
-
   router.post('/profiles', profilesHandler)
   router.get('/nfts/lands/:id', landsHandler)
 
