@@ -18,3 +18,25 @@ export function generateWearables(quantity: number) {
 
     return generatedWearables
 }
+
+export function generateDefinitions(urns: string[]) {
+    return urns.map((urn) => ({
+        version: '1',
+        id: urn,
+        type: 'wearable',
+        pointers: ['0x0', '0x1'],
+        timestamp: Date.now() - TWO_DAYS,
+        content: [{
+            file: 'file',
+            hash: 'id'
+        }],
+        metadata: {
+            id: urn,
+            data: {
+                representations: [
+                    { contents: ['fileName'] }
+                ]
+            }
+        }
+    }))
+}

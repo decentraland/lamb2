@@ -1,5 +1,5 @@
 import { test } from '../components'
-import { generateWearables } from '../data/wearables'
+import { generateDefinitions, generateWearables } from '../data/wearables'
 import Wallet  from 'ethereumjs-wallet'
 
 // NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
@@ -87,6 +87,49 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
       elements: convertToDataModel(wearables),
+      pageNum: 1,
+      pageSize: 100,
+      totalAmount: 2
+    })
+  })
+
+  it('return wearables from both collections with includeDefinitions set', async () => {
+    const { localFetch, theGraph, content } = components
+    const wearables = generateWearables(2)
+    const definitions = generateDefinitions(wearables.map((wearable) => wearable.urn))
+
+    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[0]] })
+    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[1]] })
+    content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
+
+    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?includeDefinitions`)
+
+    expect(r.status).toBe(200)
+    expect(await r.json()).toEqual({
+      elements: convertToDataModel(wearables, definitions),
+      pageNum: 1,
+      pageSize: 100,
+      totalAmount: 2
+    })
+  })
+
+  it('return a wearable with definition and another one without definition', async () => {
+    const { localFetch, theGraph, content } = components
+    const wearables = generateWearables(2)
+    const definitions = generateDefinitions([wearables[0].urn])
+
+    // modify wearable urn to avoid cache hit
+    wearables[1] = { ...wearables[1], urn: 'anotherUrn' }
+
+    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[0]] })
+    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[1]] })
+    content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
+
+    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?includeDefinitions`)
+
+    expect(r.status).toBe(200)
+    expect(await r.json()).toEqual({
+      elements: convertToDataModel(wearables, definitions),
       pageNum: 1,
       pageSize: 100,
       totalAmount: 2
@@ -220,16 +263,30 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
   })
 })
 
-function convertToDataModel(wearables) {
-    return wearables.map(wearable => ({
-        urn: wearable.urn,
-        amount: 1,
-        individualData: [{
-            id: wearable.id,
-            tokenId: wearable.tokenId,
-            transferredAt: wearable.transferredAt,
-            price: wearable.item.price
-        }],
-        rarity: wearable.item.rarity
-    }))
+function convertToDataModel(wearables, definitions?) {
+  return wearables.map(wearable => {
+    const individualData = {
+      id: wearable.id,
+      tokenId: wearable.tokenId,
+      transferredAt: wearable.transferredAt,
+      price: wearable.item.price
+    };
+    const rarity = wearable.item.rarity;
+    const definition = definitions?.find(def => def.id === wearable.urn);
+    const definitionData = definition?.metadata?.data;
+
+    return {
+      urn: wearable.urn,
+      amount: 1,
+      individualData: [individualData],
+      rarity,
+      definition: definitionData && {
+        id: wearable.urn,
+        data: {
+          ...definitionData,
+          representations: [{ contents: [{ key: definitionData.representations[0]?.contents[0] }] }]
+        }
+      }
+    };
+  });
 }
