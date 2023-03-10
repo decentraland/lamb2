@@ -2,6 +2,7 @@ import { EmoteCategory, Entity } from '@dcl/schemas'
 import { AppComponents } from '../types'
 
 export function extractWearableDefinitionFromEntity(components: Pick<AppComponents, 'content'>, entity: Entity) {
+  // TODO: metadata can be null according to the schema, should we add a check before access?
   const metadata = entity.metadata
   const representations = metadata.data.representations.map((representation: any) =>
     mapRepresentation(components, representation, entity)

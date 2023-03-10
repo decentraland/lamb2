@@ -16,6 +16,7 @@ export async function createContentComponent(components: Pick<AppComponents, 'co
     return contentServerURL
   }
 
+  // TODO: typed response
   function fetchEntitiesByPointers(pointers: string[]) {
     return contentClient.fetchEntitiesByPointers(pointers)
   }

@@ -1,12 +1,4 @@
-import {
-  EmoteFromQuery,
-  LandForResponse,
-  LandFromQuery,
-  NameForResponse,
-  NameFromQuery,
-  EmoteForResponse,
-  ThirdPartyAsset
-} from '../types'
+import { EmoteFromQuery, LandForResponse, LandFromQuery, EmoteForResponse, ThirdPartyAsset } from '../types'
 
 /*
  * Adapts the result from the emotes query to the desired schema for the response
@@ -24,22 +16,6 @@ export function transformEmoteToResponseSchema(emote: EmoteFromQuery): EmoteForR
     // rarity: emote.item.rarity,
     // price: emote.item.price
     amount: 1
-  }
-}
-
-/*
- * Adapts the result from the names query to the desired schema for the response
- */
-export function transformNameToResponseSchema(name: NameFromQuery): NameForResponse {
-  // Set price depending on activeOrder. It could be null if is not at sale
-  let price = null
-  if (name.activeOrder) price = name.activeOrder.price
-
-  return {
-    name: name.name,
-    contractAddress: name.contractAddress,
-    tokenId: name.tokenId,
-    price: price
   }
 }
 

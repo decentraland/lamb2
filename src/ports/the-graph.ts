@@ -74,6 +74,7 @@ export async function runQuery<QueryResult>(
     //   `Failed to execute the following query to the subgraph ${this.urls[query.subgraph]} ${query.description}'.`,
     //   error
     // )
+    // TODO: logger
     console.log(error)
     throw new Error('Internal server error')
   }
