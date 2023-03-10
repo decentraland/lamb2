@@ -262,6 +262,32 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
+  it('return wearables from cache on second call for the same address', async () => {
+    const { localFetch, theGraph } = components
+    const wearables = generateWearables(7)
+    const wallet = Wallet.generate().getAddressString()
+
+    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[0], wearables[1], wearables[2], wearables[3]] })
+    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[4], wearables[5], wearables[6]] })
+
+    const r = await localFetch.fetch(`/users/${wallet}/wearables?pageSize=7&pageNum=1`)
+    const rBody = await r.json()
+
+    expect(r.status).toBe(200)
+    expect(rBody).toEqual({
+      elements: convertToDataModel(wearables),
+      pageNum: 1,
+      pageSize: 7,
+      totalAmount: 7
+    })
+
+    const r2 = await localFetch.fetch(`/users/${wallet}/wearables?pageSize=7&pageNum=1`)
+    expect(r2.status).toBe(r.status)
+    expect(await r2.json()).toEqual(rBody)
+    expect(theGraph.ethereumCollectionsSubgraph.query).toHaveBeenCalledTimes(1)
+    expect(theGraph.maticCollectionsSubgraph.query).toHaveBeenCalledTimes(1)
+  })
+
   it('return an error when wearables cannot be fetched from ethereum collection', async () => {
     const { localFetch, theGraph } = components
 
@@ -291,7 +317,6 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
   it('return a generic error when an unexpected error occurs (definitions cannot be fetched)', async () => {
     const { localFetch, theGraph, content } = components
     const wearables = generateWearables(2)
-    const definitions = generateDefinitions([wearables[0].urn])
 
     // modify wearable urn to avoid cache hit
     wearables[1] = { ...wearables[1], urn: 'anotherUrn' }
@@ -309,30 +334,31 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
   })
 })
 
-function convertToDataModel(wearables, definitions?) {
+function convertToDataModel(wearables, definitions = undefined) {
   return wearables.map(wearable => {
     const individualData = {
       id: wearable.id,
       tokenId: wearable.tokenId,
       transferredAt: wearable.transferredAt,
       price: wearable.item.price
-    };
-    const rarity = wearable.item.rarity;
-    const definition = definitions?.find(def => def.id === wearable.urn);
-    const definitionData = definition?.metadata?.data;
+    }
+    const rarity = wearable.item.rarity
+    const definition = definitions?.find(def => def.id === wearable.urn)
+    const definitionData = definition?.metadata?.data
 
     return {
       urn: wearable.urn,
       amount: 1,
       individualData: [individualData],
       rarity,
-      definition: definitionData && {
+      ...(definitions ? { definition: definitionData && {
         id: wearable.urn,
         data: {
           ...definitionData,
           representations: [{ contents: [{ key: definitionData.representations[0]?.contents[0] }] }]
         }
-      }
-    };
-  });
+      }} : {})
+    }
+  })
 }
+
