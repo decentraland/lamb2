@@ -21,8 +21,10 @@ type ItemFromQuery = {
   }
 }
 
-const QUERY_EMOTES = createQueryForCategory('emote')
-const QUERY_WEARABLES = createQueryForCategory('wearable')
+const QUERIES: Record<ItemCategory, string> = {
+  emote: createQueryForCategory('emote'),
+  wearable: createQueryForCategory('wearable')
+}
 
 function groupItemsByURN(items: ItemFromQuery[]): Item[] {
   const itemsByURN = new Map<string, Item>()
@@ -83,7 +85,7 @@ async function runItemsQuery(
   const owner = address.toLowerCase()
   let idFrom = ''
   let result: ItemsQueryResponse
-  const query = category === 'wearable' ? QUERY_WEARABLES : QUERY_EMOTES
+  const query = QUERIES[category]
   do {
     result = await subgraph.query<ItemsQueryResponse>(query, {
       owner,
