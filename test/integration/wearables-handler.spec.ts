@@ -261,6 +261,52 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
       totalAmount: 7
     })
   })
+
+  it('return an error when wearables cannot be fetched from ethereum collection', async () => {
+    const { localFetch, theGraph } = components
+
+    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce(undefined)
+
+    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables`)
+
+    expect(r.status).toBe(502)
+    expect(await r.json()).toEqual({
+      error: 'Cannot fetch wearables right now'
+    })
+  })
+
+  it('return an error when wearables cannot be fetched from matic collection', async () => {
+    const { localFetch, theGraph } = components
+
+    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce(undefined)
+
+    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables`)
+
+    expect(r.status).toBe(502)
+    expect(await r.json()).toEqual({
+      error: 'Cannot fetch wearables right now'
+    })
+  })
+
+  it('return a generic error when an unexpected error occurs (definitions cannot be fetched)', async () => {
+    const { localFetch, theGraph, content } = components
+    const wearables = generateWearables(2)
+    const definitions = generateDefinitions([wearables[0].urn])
+
+    // modify wearable urn to avoid cache hit
+    wearables[1] = { ...wearables[1], urn: 'anotherUrn' }
+
+    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[0]] })
+    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[1]] })
+    content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(undefined)
+
+    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?includeDefinitions`)
+
+    expect(r.status).toBe(500)
+    expect(await r.json()).toEqual({
+      error: 'Internal Server Error'
+    })
+  })
 })
 
 function convertToDataModel(wearables, definitions?) {
