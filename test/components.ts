@@ -1,7 +1,7 @@
 // This file is the "test-environment" analogous for src/components.ts
 // Here we define the test components to be used in the testing environment
 
-import { createRunner, createLocalFetchCompoment } from '@well-known-components/test-helpers'
+import { createRunner, createLocalFetchCompoment, defaultServerConfig } from '@well-known-components/test-helpers'
 
 import { main } from '../src/service'
 import { TestComponents } from '../src/types'
@@ -10,7 +10,7 @@ import { createDotEnvConfigComponent } from '@well-known-components/env-config-p
 import { createTestMetricsComponent } from '@well-known-components/metrics'
 import { metricDeclarations } from '../src/metrics'
 import { createLogComponent } from '@well-known-components/logger'
-import { createWearableFetcherComponent } from '../src/adapters/items-fetcher'
+import { createEmoteFetcherComponent, createWearableFetcherComponent } from '../src/adapters/items-fetcher'
 import { createTheGraphComponentMock } from './mocks/the-graph-mock'
 import { createContentComponentMock } from './mocks/content-mock'
 import { createDefinitionsFetcherComponent } from '../src/adapters/definitions-fetcher'
@@ -28,15 +28,21 @@ export const test = createRunner<TestComponents>({
 })
 
 async function initComponents(): Promise<TestComponents> {
-  const components = await originalInitComponents()
+  const defaultFetchConfig = defaultServerConfig()
+  const config = await createDotEnvConfigComponent({}, { COMMIT_HASH: 'commit_hash', ...defaultFetchConfig })
+  const fetch = await createLocalFetchCompoment(config)
+  const theGraphMock = createTheGraphComponentMock()
 
-  const config = await createDotEnvConfigComponent({}, { COMMIT_HASH: 'commit_hash' })
+  const components = await originalInitComponents(fetch, theGraphMock)
+
   const logs = await createLogComponent({})
 
-  const theGraphMock = createTheGraphComponentMock()
   const contentMock = createContentComponentMock()
   const wearablesFetcher = await createWearableFetcherComponent({ config, theGraph: theGraphMock, logs })
+  const emotesFetcher = await createEmoteFetcherComponent({ config, theGraph: theGraphMock, logs })
   const definitionsFetcher = await createDefinitionsFetcherComponent({ config, content: contentMock, logs })
+
+  jest.spyOn(theGraphMock.thirdPartyRegistrySubgraph, 'query').mockResolvedValueOnce({ thirdParties: [] })
 
   return {
     ...components,
@@ -46,6 +52,7 @@ async function initComponents(): Promise<TestComponents> {
     theGraph: theGraphMock,
     content: contentMock,
     wearablesFetcher,
+    emotesFetcher,
     definitionsFetcher
   }
 }
