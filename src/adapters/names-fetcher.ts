@@ -47,7 +47,7 @@ interface NamesQueryResponse {
   nfts: NameFromQuery[]
 }
 
-type NameFromQuery = {
+export type NameFromQuery = {
   id: string
   name: string
   contractAddress: string
