@@ -1,6 +1,6 @@
 import { test } from '../components'
 import { generateDefinitions, generateWearables } from '../data/wearables'
-import Wallet  from 'ethereumjs-wallet'
+import Wallet from 'ethereumjs-wallet'
 
 // NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
 test('wearables-handler: GET /users/:address/wearables should', function ({ components }) {
@@ -147,7 +147,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel([ wearables[0], wearables[1]]),
+      elements: convertToDataModel([wearables[0], wearables[1]]),
       pageNum: 1,
       pageSize: 2,
       totalAmount: 4
@@ -165,7 +165,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel([ wearables[2], wearables[3]]),
+      elements: convertToDataModel([wearables[2], wearables[3]]),
       pageNum: 2,
       pageSize: 2,
       totalAmount: 4
@@ -183,7 +183,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel([ wearables[0], wearables[1]]),
+      elements: convertToDataModel([wearables[0], wearables[1]]),
       pageNum: 1,
       pageSize: 2,
       totalAmount: 4
@@ -201,7 +201,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel([ wearables[2], wearables[3]]),
+      elements: convertToDataModel([wearables[2], wearables[3]]),
       pageNum: 2,
       pageSize: 2,
       totalAmount: 4
@@ -219,7 +219,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel([ wearables[0], wearables[1], wearables[2]]),
+      elements: convertToDataModel([wearables[0], wearables[1], wearables[2]]),
       pageNum: 1,
       pageSize: 3,
       totalAmount: 7
@@ -237,7 +237,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel([ wearables[3], wearables[4], wearables[5]]),
+      elements: convertToDataModel([wearables[3], wearables[4], wearables[5]]),
       pageNum: 2,
       pageSize: 3,
       totalAmount: 7
@@ -255,7 +255,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel([ wearables[6]]),
+      elements: convertToDataModel([wearables[6]]),
       pageNum: 3,
       pageSize: 3,
       totalAmount: 7
@@ -351,13 +351,15 @@ function convertToDataModel(wearables, definitions = undefined) {
       amount: 1,
       individualData: [individualData],
       rarity,
-      ...(definitions ? { definition: definitionData && {
-        id: wearable.urn,
-        data: {
-          ...definitionData,
-          representations: [{ contents: [{ key: definitionData.representations[0]?.contents[0] }] }]
+      ...(definitions ? {
+        definition: definitionData && {
+          id: wearable.urn,
+          data: {
+            ...definitionData,
+            representations: [{ contents: [{ key: definitionData.representations[0]?.contents[0] }] }]
+          }
         }
-      }} : {})
+      } : {})
     }
   })
 }
