@@ -1,6 +1,8 @@
 import { test } from '../components'
 import { generateDefinitions, generateEmotes } from '../data/emotes'
 import Wallet from 'ethereumjs-wallet'
+import { ItemFromQuery } from '../../src/adapters/items-fetcher'
+import { Item } from '../../src/types'
 
 // NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
 test('emotes-handler: GET /users/:address/emotes should', function ({ components }) {
@@ -214,7 +216,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
   })
 })
 
-function convertToDataModel(emotes, definitions = undefined) {
+function convertToDataModel(emotes: ItemFromQuery[], definitions = undefined): Item[] {
   return emotes.map(emote => {
     const individualData = {
       id: emote.id,

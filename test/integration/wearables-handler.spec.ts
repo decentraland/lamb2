@@ -1,6 +1,8 @@
 import { test } from '../components'
 import { generateDefinitions, generateWearables } from '../data/wearables'
 import Wallet from 'ethereumjs-wallet'
+import { ItemFromQuery } from '../../src/adapters/items-fetcher'
+import { Item } from '../../src/types'
 
 // NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
 test('wearables-handler: GET /users/:address/wearables should', function ({ components }) {
@@ -334,7 +336,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
   })
 })
 
-function convertToDataModel(wearables, definitions = undefined) {
+function convertToDataModel(wearables: ItemFromQuery[], definitions = undefined): Item[] {
   return wearables.map(wearable => {
     const individualData = {
       id: wearable.id,

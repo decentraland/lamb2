@@ -10,7 +10,7 @@ type ItemsQueryResponse = {
   nfts: ItemFromQuery[]
 }
 
-type ItemFromQuery = {
+export type ItemFromQuery = {
   urn: string
   id: string
   tokenId: string
