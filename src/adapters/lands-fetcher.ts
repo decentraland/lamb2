@@ -179,21 +179,3 @@ export async function createLANDsFetcherComponent({
     fetchByOwner
   }
 }
-
-// const QUERY_LANDS_OLD: string = `
-//   query fetchLANDsByOwner($owner: String, $idFrom: String) {
-//     nfts(
-//       where: {owner: $owner, category: "ens", id_gt: $idFrom }
-//       orderBy: id,
-//       orderDirection: asc,
-//       first: ${THE_GRAPH_PAGE_SIZE}
-//     ) {
-//       id,
-//       land,
-//       contractAddress,
-//       tokenId,
-//       activeOrder {
-//         price
-//       }
-//     }
-// }`
