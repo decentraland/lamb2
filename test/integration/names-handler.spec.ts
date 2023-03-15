@@ -11,7 +11,6 @@ test('names-handler: GET /users/:address/names should', function ({ components }
   it('return empty when no names are found', async () => {
     const { localFetch, theGraph } = components
 
-    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
     theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/names`)
