@@ -67,11 +67,11 @@ const QUERY_ALL_THIRD_PARTY_RESOLVERS = `
 //     }
 //  ]
 
-type ThirdPartyResolversResponse = {
+export type ThirdPartyResolversResponse = {
   thirdParties: ThirdParty[]
 }
 
-type ThirdParty = {
+export type ThirdParty = {
   id: string
   resolver: string
 }

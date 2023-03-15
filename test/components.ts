@@ -4,7 +4,7 @@
 import { createRunner, createLocalFetchCompoment, defaultServerConfig } from '@well-known-components/test-helpers'
 
 import { main } from '../src/service'
-import { TestComponents } from '../src/types'
+import { AppComponents, TestComponents } from '../src/types'
 import { initComponents as originalInitComponents } from '../src/components'
 import { createDotEnvConfigComponent } from '@well-known-components/env-config-provider'
 import { createTestMetricsComponent } from '@well-known-components/metrics'
@@ -14,6 +14,8 @@ import { createEmoteFetcherComponent, createWearableFetcherComponent } from '../
 import { createTheGraphComponentMock } from './mocks/the-graph-mock'
 import { createContentComponentMock } from './mocks/content-mock'
 import { createDefinitionsFetcherComponent } from '../src/adapters/definitions-fetcher'
+import { IFetchComponent } from '@well-known-components/http-server'
+import { TheGraphComponent } from '../src/ports/the-graph'
 
 /**
  * Behaves like Jest "describe" function, used to describe a test for a
@@ -27,11 +29,19 @@ export const test = createRunner<TestComponents>({
   initComponents
 })
 
-async function initComponents(): Promise<TestComponents> {
+export function testWithComponents(preConfigureComponents: () => { fetchComponent?: IFetchComponent, theGraphComponent?: TheGraphComponent }) {
+  const preConfiguredComponents = preConfigureComponents()
+  return createRunner<TestComponents>({
+    main,
+    initComponents: () => initComponents(preConfiguredComponents.fetchComponent, preConfiguredComponents.theGraphComponent)
+  })
+}
+
+async function initComponents(fetchComponent?: IFetchComponent, theGraphComponent?: TheGraphComponent): Promise<TestComponents> {
   const defaultFetchConfig = defaultServerConfig()
   const config = await createDotEnvConfigComponent({}, { COMMIT_HASH: 'commit_hash', ...defaultFetchConfig })
-  const fetch = await createLocalFetchCompoment(config)
-  const theGraphMock = createTheGraphComponentMock()
+  const fetch = fetchComponent ? fetchComponent : await createLocalFetchCompoment(config)
+  const theGraphMock = theGraphComponent ? theGraphComponent : createTheGraphComponentMock()
 
   const components = await originalInitComponents(fetch, theGraphMock)
 
