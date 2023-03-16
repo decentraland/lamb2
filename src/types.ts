@@ -17,6 +17,7 @@ import { DefinitionsFetcher } from './adapters/definitions-fetcher'
 import { ThirdPartyWearablesFetcher } from './adapters/third-party-wearables-fetcher'
 import { NamesFetcher } from './adapters/names-fetcher'
 import { LANDsFetcher } from './adapters/lands-fetcher'
+import { WearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -39,6 +40,9 @@ export type BaseComponents = {
   namesFetcher: NamesFetcher
   emotesCaches: EmotesCachesComponent
   landsFetcher: LANDsFetcher
+
+  // old components
+  wearablesCaches: WearablesCachesComponent
 }
 
 // components used in runtime
