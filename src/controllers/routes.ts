@@ -27,7 +27,7 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
   router.get('/users/:address/lands', landsHandler)
   router.post('/profiles', profilesHandler)
 
-  // router.get('/nfts/wearables/:address', wearablesHandler)
+  // old routes to be deprecated
   router.get('/nfts/wearables/:id', oldWearablesHandler)
   router.get('/nfts/names/:address', async (context) => {
     const res = await namesHandler(context)
