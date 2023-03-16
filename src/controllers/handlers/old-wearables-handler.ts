@@ -1,19 +1,8 @@
-import {
-  AppComponents,
-  ProfileMetadata,
-  ThirdPartyAsset,
-  EmoteFromQuery,
-  LandForResponse,
-  LandFromQuery,
-  EmoteForResponse,
-  TPWResolver,
-  HandlerContextWithPath
-} from '../../types'
-import { parseUrn } from '@dcl/urn-resolver'
+import { AppComponents, ThirdPartyAsset, TPWResolver, HandlerContextWithPath } from '../../types'
 import { runQuery, TheGraphComponent } from '../../ports/the-graph'
 import { cloneDeep } from 'lodash'
 import LRU from 'lru-cache'
-import { EmoteCategory, Entity, I18N } from '@dcl/schemas'
+import { Entity, I18N } from '@dcl/schemas'
 
 import { EntityType } from 'dcl-catalyst-commons'
 import { IBaseComponent } from '@well-known-components/interfaces'
@@ -49,22 +38,6 @@ type ThirdPartyAssets = {
 
 type ThirdPartyResolversResponse = {
   thirdParties: ThirdPartyProvider[]
-}
-
-type NameFromQuery = {
-  name: string
-  contractAddress: string
-  tokenId: string
-  activeOrder: {
-    price: string
-  }
-}
-
-type NameForResponse = {
-  name: string
-  contractAddress: string
-  tokenId: string
-  price: string | null
 }
 
 type WearableForCache = {
@@ -161,7 +134,7 @@ export async function createWearablesCachesComponent(
   }
 }
 
-export async function createThirdPartyResolverForCollection(
+async function createThirdPartyResolverForCollection(
   components: Pick<AppComponents, 'theGraph' | 'fetch'>,
   collectionId: string
 ): Promise<TPWResolver> {
@@ -309,10 +282,7 @@ function buildRegistryOwnerUrl(thirdPartyResolverURL: string, registryId: string
 /*
  * Returns all third-party wearables for an address
  */
-export async function getThirdPartyWearables(
-  components: Pick<AppComponents, 'theGraph' | 'fetch'>,
-  userAddress: string
-) {
+async function getThirdPartyWearables(components: Pick<AppComponents, 'theGraph' | 'fetch'>, userAddress: string) {
   const { theGraph } = components
 
   // Get every resolver
@@ -344,7 +314,7 @@ const QUERY_ALL_THIRD_PARTY_RESOLVERS = `
 /*
  * Returns only third-party wearables for the specified collection id, owned by the provided address
  */
-export async function getWearablesForCollection(
+async function getWearablesForCollection(
   components: Pick<AppComponents, 'theGraph' | 'fetch' | 'wearablesCaches' | 'content'>,
   collectionId: string,
   address: string,
@@ -379,7 +349,7 @@ export async function getWearablesForCollection(
 /*
  * Adapts the result from the wearables query to the desired schema for the cache
  */
-export function transformWearableFromQueryToWearableForCache(wearable: WearableFromQuery): WearableForCache {
+function transformWearableFromQueryToWearableForCache(wearable: WearableFromQuery): WearableForCache {
   return {
     urn: wearable.urn,
     individualData: [
@@ -398,7 +368,7 @@ export function transformWearableFromQueryToWearableForCache(wearable: WearableF
 /*
  * Excludes the rarity field since it's already present in the definition field
  */
-export function transformWearableForCacheToWearableForResponse(wearable: WearableForCache): WearableForResponse {
+function transformWearableForCacheToWearableForResponse(wearable: WearableForCache): WearableForResponse {
   return {
     urn: wearable.urn,
     individualData: wearable.individualData,
@@ -407,75 +377,9 @@ export function transformWearableForCacheToWearableForResponse(wearable: Wearabl
 }
 
 /*
- * Adapts the result from the emotes query to the desired schema for the response
- */
-export function transformEmoteToResponseSchema(emote: EmoteFromQuery): EmoteForResponse {
-  return {
-    urn: emote.urn,
-    // id: emote.id,
-    // contractAddress: emote.contractAddress,
-    // tokenId: emote.tokenId,
-    // image: emote.image,
-    // transferredAt: emote.transferredAt,
-    // name: emote.item.metadata.emote.name,
-    // description: emote.item.metadata.emote.description,
-    // rarity: emote.item.rarity,
-    // price: emote.item.price
-    amount: 1
-  }
-}
-
-/*
- * Adapts the result from the names query to the desired schema for the response
- */
-export function transformNameToResponseSchema(name: NameFromQuery): NameForResponse {
-  // Set price depending on activeOrder. It could be null if is not at sale
-  let price = null
-  if (name.activeOrder) price = name.activeOrder.price
-
-  return {
-    name: name.name,
-    contractAddress: name.contractAddress,
-    tokenId: name.tokenId,
-    price: price
-  }
-}
-
-/*
- * Adapts the result from the lands query to the desired schema for the response
- */
-export function transformLandToResponseSchema(land: LandFromQuery): LandForResponse {
-  // Set price depending on activeOrder. It could be null if is not at sale
-  let price = null
-  if (land.activeOrder) price = land.activeOrder.price
-
-  // Set category dependent fields
-  let x, y, description
-  if (land.category === 'parcel') {
-    x = land.parcel.x
-    y = land.parcel.y
-    if (land.parcel.data) description = land.parcel.data.description
-  } else if (land.category === 'estate') {
-    if (land.estate.data) description = land.estate.data.description
-  }
-
-  return {
-    name: land.name,
-    contractAddress: land.contractAddress,
-    tokenId: land.tokenId,
-    category: land.category,
-    x: x,
-    y: y,
-    description: description,
-    price: price,
-    image: land.image
-  }
-}
-
-/*
  * Adapts the response from a third-party resolver to /nfts/wearables endpoint response
  */
-export function transformThirdPartyAssetToWearableForCache(asset: ThirdPartyAsset): WearableForCache {
+function transformThirdPartyAssetToWearableForCache(asset: ThirdPartyAsset): WearableForCache {
   return {
     urn: asset.urn.decentraland,
     individualData: [
@@ -487,17 +391,7 @@ export function transformThirdPartyAssetToWearableForCache(asset: ThirdPartyAsse
   }
 }
 
-/*
- * Adapts the response from a third-party resolver to /nfts/emotes endpoint response
- */
-export function transformThirdPartyAssetToEmoteForResponse(asset: ThirdPartyAsset): EmoteForResponse {
-  return {
-    urn: asset.urn.decentraland,
-    amount: 1
-  }
-}
-
-export function extractWearableDefinitionFromEntity(components: Pick<AppComponents, 'content'>, entity: Entity) {
+function extractWearableDefinitionFromEntity(components: Pick<AppComponents, 'content'>, entity: Entity) {
   const metadata = entity.metadata
   const representations = metadata.data.representations.map((representation: any) =>
     mapRepresentation(components, representation, entity)
@@ -547,50 +441,10 @@ function findHashForFile(entity: Entity, fileName: string | undefined) {
   return undefined
 }
 
-export function extractEmoteDefinitionFromEntity(components: Pick<AppComponents, 'content'>, entity: Entity) {
-  const metadata = entity.metadata
-
-  // Extract data depending on if it is a new emote or and old one
-  let extractedMetadata = metadata
-  let emoteDataADR74
-  if ('emoteDataADR74' in metadata) {
-    const representations = metadata.emoteDataADR74.representations.map((representation: any) =>
-      mapRepresentation(components, representation, entity)
-    )
-    emoteDataADR74 = {
-      ...metadata.emoteDataADR74,
-      representations
-    }
-  } else {
-    const { data, emoteDataV0, ...restOfMetadata } = metadata as any
-    const representations = metadata.data.representations.map((representation: any) =>
-      mapRepresentation(components, representation, entity)
-    )
-    extractedMetadata = restOfMetadata
-    emoteDataADR74 = {
-      category: EmoteCategory.DANCE,
-      tags: metadata.data.tags,
-      loop: 'emoteDataV0' in metadata ? (metadata as any).emoteDataV0.loop : false,
-      representations
-    }
-  }
-
-  const externalImage = createExternalContentUrl(components, entity, metadata.image)
-  const thumbnail = createExternalContentUrl(components, entity, metadata.thumbnail)!
-  const image = externalImage ?? metadata.image
-
-  return {
-    ...extractedMetadata,
-    thumbnail,
-    image,
-    emoteDataADR74
-  }
-}
-
 /*
  * Looks for the definitions of the provided emotes' urns and add them to them.
  */
-export async function decorateNFTsWithDefinitionsFromCache(
+async function decorateNFTsWithDefinitionsFromCache(
   nfts: UrnAndAmount[],
   components: Pick<AppComponents, 'content'>,
   definitionsCache: LRU<string, Definition>,
@@ -622,54 +476,6 @@ export async function decorateNFTsWithDefinitionsFromCache(
   })
 }
 
-/*
- * Extracts the non-base wearables from a profile and translate them to the new format
- */
-export async function getValidNonBaseWearables(metadata: ProfileMetadata): Promise<string[]> {
-  const wearablesInProfile: string[] = []
-  for (const avatar of metadata.avatars) {
-    for (const wearableId of avatar.avatar.wearables) {
-      if (!isBaseWearable(wearableId)) {
-        const translatedWearableId = await translateWearablesIdFormat(wearableId)
-        if (translatedWearableId) wearablesInProfile.push(translatedWearableId)
-      }
-    }
-  }
-  const filteredWearables = wearablesInProfile.filter((wearableId): wearableId is string => !!wearableId)
-  return filteredWearables
-}
-
-/*
- * Filters base wearables from a wearables array and translate them to the new id format
- */
-export async function getBaseWearables(wearables: string[]): Promise<string[]> {
-  // Filter base wearables
-  const baseWearables = wearables.filter(isBaseWearable)
-
-  // Translate old format ones to the new id format
-  const validBaseWearables = []
-  for (const wearableId of baseWearables) {
-    const translatedWearableId = await translateWearablesIdFormat(wearableId)
-    if (translatedWearableId) validBaseWearables.push(translatedWearableId)
-  }
-
-  return validBaseWearables
-}
-
-function isBaseWearable(wearable: string): boolean {
-  return wearable.includes('base-avatars')
-}
-
-/*
- * Translates from the old id format into the new one
- */
-export async function translateWearablesIdFormat(wearableId: string): Promise<string | undefined> {
-  if (!wearableId.startsWith('dcl://')) return wearableId
-
-  const parsed = await parseUrn(wearableId)
-  return parsed?.uri?.toString()
-}
-
 const QUERY_WEARABLES: string = `
 {
   nfts(
@@ -688,7 +494,7 @@ const QUERY_WEARABLES: string = `
   }
 }`
 
-export async function getWearablesForAddress(
+async function getWearablesForAddress(
   components: Pick<AppComponents, 'theGraph' | 'wearablesCaches' | 'fetch' | 'content'>,
   id: string,
   includeTPW: boolean,
