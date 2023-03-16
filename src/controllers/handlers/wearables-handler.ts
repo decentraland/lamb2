@@ -1,46 +1,245 @@
-import { getWearablesForCollection } from '../../logic/third-party-wearables'
-import { getWearablesForAddress } from '../../logic/wearables'
-import { HandlerContextWithPath } from '../../types'
+import { ThirdPartyFetcherError, ThirdPartyFetcherErrorCode } from '../../adapters/third-party-wearables-fetcher'
+import { parseUrn, paginationObject } from '../../logic/utils'
+import {
+  Definition,
+  ErrorResponse,
+  HandlerContextWithPath,
+  Item,
+  PaginatedResponse,
+  ThirdPartyWearable,
+  ItemFetcherError,
+  ItemFetcherErrorCode
+} from '../../types'
+
+// TODO: change this name
+type ItemResponse = Pick<Item, 'urn' | 'amount' | 'individualData' | 'rarity'> & {
+  definition?: Definition
+}
 
 export async function wearablesHandler(
-  context: HandlerContextWithPath<
-    'config' | 'theGraph' | 'wearablesCaches' | 'fetch' | 'content',
-    '/nfts/wearables/:id'
-  >
-) {
-  // Get request params
-  const { id } = context.params
-  const includeTPW = context.url.searchParams.has('includeThirdParty')
+  context: HandlerContextWithPath<'logs' | 'wearablesFetcher' | 'definitionsFetcher', '/users/:address/wearables'>
+): Promise<PaginatedResponse<ItemResponse> | ErrorResponse> {
+  const { logs, definitionsFetcher, wearablesFetcher } = context.components
+  const { address } = context.params
+  const logger = logs.getLogger('wearables-handler')
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
-  const pageSize = context.url.searchParams.get('pageSize')
-  const pageNum = context.url.searchParams.get('pageNum')
-  const orderBy = context.url.searchParams.get('orderBy')
-  const collectionId = context.url.searchParams.get('collectionId')
+  const pagination = paginationObject(context.url)
 
-  let wearablesResponse
-  if (collectionId) {
-    // If collectionId is present, only that collection third-party wearables are sent
-    wearablesResponse = await getWearablesForCollection(context.components, collectionId, id, includeDefinitions)
-  } else {
-    // Get full cached wearables response
-    wearablesResponse = await getWearablesForAddress(
-      context.components,
-      id,
-      includeTPW,
-      includeDefinitions,
-      pageSize,
-      pageNum,
-      orderBy
-    )
+  try {
+    const { totalAmount, items } = await wearablesFetcher.fetchByOwner(address, pagination)
+
+    const definitions = includeDefinitions
+      ? await definitionsFetcher.fetchWearablesDefinitions(items.map((item) => item.urn))
+      : []
+
+    const results: ItemResponse[] = []
+    for (let i = 0; i < items.length; ++i) {
+      const { urn, amount, individualData, rarity } = items[i]
+      results.push({
+        urn,
+        amount,
+        individualData,
+        rarity,
+        definition: includeDefinitions ? definitions[i] : undefined
+      })
+    }
+
+    return {
+      status: 200,
+      body: {
+        elements: results,
+        totalAmount: totalAmount,
+        pageNum: pagination.pageNum,
+        pageSize: pagination.pageSize
+      }
+    }
+  } catch (err: any) {
+    if (err instanceof ItemFetcherError) {
+      switch (err.code) {
+        case ItemFetcherErrorCode.CANNOT_FETCH_ITEMS: {
+          return {
+            status: 502,
+            body: {
+              error: 'Cannot fetch wearables right now'
+            }
+          }
+        }
+      }
+    } else {
+      logger.error(err)
+      return {
+        status: 500,
+        body: {
+          error: 'Internal Server Error'
+        }
+      }
+    }
+  }
+}
+
+// TODO: change this name
+type ThirdPartyWearableResponse = Pick<ThirdPartyWearable, 'urn' | 'amount' | 'individualData'> & {
+  definition?: Definition
+}
+
+export async function thirdPartyWearablesHandler(
+  context: HandlerContextWithPath<
+    'thirdPartyWearablesFetcher' | 'definitionsFetcher' | 'logs',
+    '/users/:address/third-party-wearables'
+  >
+): Promise<PaginatedResponse<ThirdPartyWearableResponse> | ErrorResponse> {
+  const { thirdPartyWearablesFetcher, definitionsFetcher, logs } = context.components
+  const { address } = context.params
+  const logger = logs.getLogger('third-party-wearables-handler')
+  const includeDefinitions = context.url.searchParams.has('includeDefinitions')
+  const pagination = paginationObject(context.url)
+
+  try {
+    const { totalAmount, wearables } = await thirdPartyWearablesFetcher.fetchByOwner(address, pagination)
+
+    const definitions = includeDefinitions
+      ? await definitionsFetcher.fetchWearablesDefinitions(wearables.map((w) => w.urn))
+      : []
+
+    const results: ThirdPartyWearableResponse[] = []
+    for (let i = 0; i < wearables.length; ++i) {
+      const { urn, amount, individualData } = wearables[i]
+      results.push({
+        urn,
+        amount,
+        individualData,
+        definition: includeDefinitions ? definitions[i] : undefined
+      })
+    }
+
+    return {
+      status: 200,
+      body: {
+        elements: results,
+        totalAmount: totalAmount,
+        pageNum: pagination.pageNum,
+        pageSize: pagination.pageSize
+      }
+    }
+  } catch (err: any) {
+    if (err instanceof ThirdPartyFetcherError) {
+      switch (err.code) {
+        case ThirdPartyFetcherErrorCode.CANNOT_LOAD_THIRD_PARTY_WEARABLES: {
+          return {
+            status: 502,
+            body: {
+              error: 'Cannot fetch third parties right now'
+            }
+          }
+        }
+        case ThirdPartyFetcherErrorCode.THIRD_PARTY_NOT_FOUND: {
+          return {
+            status: 502,
+            body: {
+              error: 'Cannot fetch third parties right now'
+            }
+          }
+        }
+      }
+    } else {
+      logger.error(err)
+      return {
+        status: 500,
+        body: {
+          error: 'Internal Server Error'
+        }
+      }
+    }
+  }
+}
+
+export async function thirdPartyCollectionWearablesHandler(
+  context: HandlerContextWithPath<
+    'thirdPartyWearablesFetcher' | 'definitionsFetcher' | 'logs',
+    '/users/:address/third-party-wearables/:collectionId'
+  >
+): Promise<PaginatedResponse<ThirdPartyWearableResponse> | ErrorResponse> {
+  const { thirdPartyWearablesFetcher, definitionsFetcher, logs } = context.components
+  const logger = logs.getLogger('third-party-collections-handler')
+  const { address, collectionId } = context.params
+
+  const urn = await parseUrn(collectionId)
+  if (!urn) {
+    return {
+      status: 400,
+      body: {
+        error: 'Invalid collection id: not a valid URN'
+      }
+    }
   }
 
-  return {
-    status: 200,
-    body: {
-      wearables: wearablesResponse.wearables,
-      totalAmount: wearablesResponse.totalAmount,
-      pageNum: pageNum,
-      pageSize: pageSize
+  if (urn.type !== 'blockchain-collection-third-party-collection') {
+    return {
+      status: 400,
+      body: {
+        error: 'Invalid collection id: not a blockchain-collection-third-party-collection URN'
+      }
+    }
+  }
+
+  const includeDefinitions = context.url.searchParams.has('includeDefinitions')
+  const pagination = paginationObject(context.url)
+
+  try {
+    const { totalAmount, wearables } = await thirdPartyWearablesFetcher.fetchCollectionByOwner(address, urn, pagination)
+
+    const definitions = includeDefinitions
+      ? await definitionsFetcher.fetchWearablesDefinitions(wearables.map((w) => w.urn))
+      : []
+
+    const results: ThirdPartyWearableResponse[] = []
+    for (let i = 0; i < wearables.length; ++i) {
+      const { urn, amount, individualData } = wearables[i]
+      results.push({
+        urn,
+        amount,
+        individualData,
+        definition: includeDefinitions ? definitions[i] : undefined
+      })
+    }
+
+    return {
+      status: 200,
+      body: {
+        elements: results,
+        totalAmount: totalAmount,
+        pageNum: pagination.pageNum,
+        pageSize: pagination.pageSize
+      }
+    }
+  } catch (err: any) {
+    if (err instanceof ThirdPartyFetcherError) {
+      switch (err.code) {
+        case ThirdPartyFetcherErrorCode.CANNOT_LOAD_THIRD_PARTY_WEARABLES: {
+          return {
+            status: 502,
+            body: {
+              error: 'Cannot fetch third parties right now'
+            }
+          }
+        }
+        case ThirdPartyFetcherErrorCode.THIRD_PARTY_NOT_FOUND: {
+          return {
+            status: 502,
+            body: {
+              error: 'Cannot fetch third parties right now'
+            }
+          }
+        }
+      }
+    } else {
+      logger.error(err)
+      return {
+        status: 500,
+        body: {
+          error: 'Internal Server Error'
+        }
+      }
     }
   }
 }

@@ -1,16 +1,19 @@
 // This file is the "test-environment" analogous for src/components.ts
 // Here we define the test components to be used in the testing environment
 
-import { createRunner, createLocalFetchCompoment } from '@well-known-components/test-helpers'
+import { createRunner, createLocalFetchCompoment, defaultServerConfig } from '@well-known-components/test-helpers'
 
 import { main } from '../src/service'
-import { QueryGraph, TestComponents } from '../src/types'
+import { TestComponents } from '../src/types'
 import { initComponents as originalInitComponents } from '../src/components'
-import { ISubgraphComponent } from '@well-known-components/thegraph-component'
-import { TheGraphComponent } from '../src/ports/the-graph'
 import { createDotEnvConfigComponent } from '@well-known-components/env-config-provider'
 import { createTestMetricsComponent } from '@well-known-components/metrics'
 import { metricDeclarations } from '../src/metrics'
+import { createLogComponent } from '@well-known-components/logger'
+import { createEmoteFetcherComponent, createWearableFetcherComponent } from '../src/adapters/items-fetcher'
+import { createTheGraphComponentMock } from './mocks/the-graph-mock'
+import { createContentComponentMock } from './mocks/content-mock'
+import { createDefinitionsFetcherComponent } from '../src/adapters/definitions-fetcher'
 
 /**
  * Behaves like Jest "describe" function, used to describe a test for a
@@ -24,30 +27,32 @@ export const test = createRunner<TestComponents>({
   initComponents
 })
 
-export const createMockSubgraphComponent = (mock?: QueryGraph): ISubgraphComponent => ({
-  query: mock ?? (jest.fn() as jest.MockedFunction<QueryGraph>)
-})
-
-export function createTestTheGraphComponent(): TheGraphComponent {
-  return {
-    start: async () => {},
-    stop: async () => {},
-    collectionsSubgraph: createMockSubgraphComponent(),
-    maticCollectionsSubgraph: createMockSubgraphComponent(),
-    ensSubgraph: createMockSubgraphComponent(),
-    thirdPartyRegistrySubgraph: createMockSubgraphComponent()
-  }
-}
-
 async function initComponents(): Promise<TestComponents> {
-  const components = await originalInitComponents()
+  const defaultFetchConfig = defaultServerConfig()
+  const config = await createDotEnvConfigComponent({}, { COMMIT_HASH: 'commit_hash', ...defaultFetchConfig })
+  const fetch = await createLocalFetchCompoment(config)
+  const theGraphMock = createTheGraphComponentMock()
 
-  const config = await createDotEnvConfigComponent({}, { COMMIT_HASH: 'commit_hash' })
+  const components = await originalInitComponents(fetch, theGraphMock)
+
+  const logs = await createLogComponent({})
+
+  const contentMock = createContentComponentMock()
+  const wearablesFetcher = await createWearableFetcherComponent({ config, theGraph: theGraphMock, logs })
+  const emotesFetcher = await createEmoteFetcherComponent({ config, theGraph: theGraphMock, logs })
+  const definitionsFetcher = await createDefinitionsFetcherComponent({ config, content: contentMock, logs })
+
+  jest.spyOn(theGraphMock.thirdPartyRegistrySubgraph, 'query').mockResolvedValueOnce({ thirdParties: [] })
 
   return {
     ...components,
     config: config,
     metrics: createTestMetricsComponent(metricDeclarations),
-    localFetch: await createLocalFetchCompoment(config)
+    localFetch: await createLocalFetchCompoment(config),
+    theGraph: theGraphMock,
+    content: contentMock,
+    wearablesFetcher,
+    emotesFetcher,
+    definitionsFetcher
   }
 }

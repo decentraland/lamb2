@@ -12,8 +12,12 @@ import { Profile, IPFSv1, IPFSv2, I18N } from '@dcl/schemas'
 import { ContentComponent } from './ports/content'
 import { OwnershipCachesComponent } from './ports/ownership-caches'
 import { Variables } from '@well-known-components/thegraph-component'
-import { WearablesCachesComponent } from './ports/wearables-caches'
 import { EmotesCachesComponent } from './ports/emotes-caches'
+import { DefinitionsFetcher } from './adapters/definitions-fetcher'
+import { ThirdPartyWearablesFetcher } from './adapters/third-party-wearables-fetcher'
+import { NamesFetcher } from './adapters/names-fetcher'
+import { LANDsFetcher } from './adapters/lands-fetcher'
+import { WearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -29,8 +33,16 @@ export type BaseComponents = {
   content: ContentComponent
   theGraph: TheGraphComponent
   ownershipCaches: OwnershipCachesComponent
-  wearablesCaches: WearablesCachesComponent
+  wearablesFetcher: ItemFetcher
+  thirdPartyWearablesFetcher: ThirdPartyWearablesFetcher
+  emotesFetcher: ItemFetcher
+  definitionsFetcher: DefinitionsFetcher
+  namesFetcher: NamesFetcher
   emotesCaches: EmotesCachesComponent
+  landsFetcher: LANDsFetcher
+
+  // old components
+  wearablesCaches: WearablesCachesComponent
 }
 
 // components used in runtime
@@ -60,7 +72,6 @@ export type Context<Path extends string = any> = IHttpServerComponent.PathAwareC
 export type Filename = string
 export type Filehash = IPFSv1 | IPFSv2
 export type WearableId = string // These ids are used as pointers on the content server
-export type Name = string
 
 export type ProfileMetadata = Profile & {
   timestamp: number
@@ -84,14 +95,6 @@ export type ThirdPartyAsset = {
   }
 }
 
-export type ThirdPartyAssets = {
-  address: string
-  total: number
-  page: number
-  assets: ThirdPartyAsset[]
-  next?: string
-}
-
 /**
  * Function used to fetch TheGraph
  * @public
@@ -109,46 +112,62 @@ export type UrnAndAmount = {
   amount: number
 }
 
-export interface WearablesQueryResponse {
-  nfts: WearableFromQuery[]
+export type Wearable = {
+  urn: string
+  amount: number // TODO: maybe this could be individualData.length
+  individualData: {
+    id: string
+    tokenId: string
+    transferredAt: number
+    price: number
+  }[]
+  rarity: string
 }
 
-export type WearableFromQuery = {
-  urn: string
-  id: string
-  tokenId: string
-  transferredAt: number
-  item: {
-    rarity: string
-    price: number
+export type ItemFetcher = IBaseComponent & {
+  // NOTE: the result will be always orderer by rarity
+  fetchByOwner(address: string, limits: Limits): Promise<ItemsResult>
+}
+
+export enum ItemFetcherErrorCode {
+  CANNOT_FETCH_ITEMS
+}
+
+export class ItemFetcherError extends Error {
+  constructor(public code: ItemFetcherErrorCode, message: string) {
+    super(message)
+    Error.captureStackTrace(this, this.constructor)
   }
 }
 
-export type WearableForCache = {
+export type Item = {
   urn: string
-  amount: number
-  individualData?: {
+  amount: number // TODO: maybe this could be individualData.length
+  individualData: {
     id: string
-    tokenId?: string
-    transferredAt?: number
-    price?: number
+    tokenId: string
+    transferredAt: number
+    price: number
   }[]
-  rarity?: string // Rarity added in the cache to being able to sort by it. It wont be included in the response since it already appears in the definition. It's optional because third-party wearables doesn't have rarity
+  rarity: string
 }
 
-// The response is grouped by URN
-export type WearableForResponse = {
-  urn: string
-  amount: number
-  individualData?: {
-    id: string
-    tokenId?: string
-    transferredAt?: number
-    price?: number
-  }[]
-  definition?: Definition
+export type ItemsResult = {
+  items: Item[]
+  totalAmount: number
 }
 
+export type ThirdPartyWearable = {
+  urn: string
+  amount: number // TODO: maybe this could be individualData.length
+  individualData: {
+    id: string
+  }[]
+}
+
+// TODO: review this type: (ref https://github.com/decentraland/catalyst/blob/main/lambdas/src/apis/collections/types.ts#L9)
+// http://localhost:7272/users/0x5447C87068b3d99F50a439f98a2B420585B34A93/wearables?includeDefinitions=true
+// https://peer-ec2.decentraland.org/lambdas/collections/wearables-by-owner/0x5447C87068b3d99F50a439f98a2B420585B34A93?includeDefinitions=true
 export type Definition = {
   id: string
   description: string
@@ -218,24 +237,11 @@ export type EmoteForResponse = {
   amount: number
 }
 
-export interface NamesQueryResponse {
-  nfts: NameFromQuery[]
-}
-
-export type NameFromQuery = {
+export type Name = {
   name: string
   contractAddress: string
   tokenId: string
-  activeOrder: {
-    price: string
-  }
-}
-
-export type NameForResponse = {
-  name: string
-  contractAddress: string
-  tokenId: string
-  price: string | null
+  price?: string
 }
 
 export interface LandsQueryResponse {
@@ -277,11 +283,29 @@ export type LandForResponse = {
   image: string
 }
 
-export interface ThirdPartyResolversResponse {
-  thirdParties: ThirdPartyProvider[]
+export type PaginatedResponse<T> = {
+  status: number
+  body: {
+    elements: T[]
+    totalAmount: number
+    pageNum: number
+    pageSize: number
+  }
 }
 
-export type ThirdPartyProvider = {
-  id: string
-  resolver: string
+export type ErrorResponse = {
+  status: number
+  body: {
+    error: string
+  }
+}
+
+export type Limits = {
+  offset: number
+  limit: number
+}
+
+export type Pagination = Limits & {
+  pageSize: number
+  pageNum: number
 }

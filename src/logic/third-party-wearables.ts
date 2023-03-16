@@ -1,17 +1,13 @@
-import { EntityType } from 'dcl-catalyst-commons'
-import { extractWearableDefinitionFromEntity } from '../adapters/definitions'
-import { transformThirdPartyAssetToWearableForCache } from '../adapters/nfts'
 import { runQuery } from '../ports/the-graph'
-import {
-  AppComponents,
-  ThirdPartyResolversResponse,
-  ThirdPartyAsset,
-  ThirdPartyAssets,
-  TPWResolver,
-  ThirdPartyProvider
-} from '../types'
-import { decorateNFTsWithDefinitionsFromCache } from './definitions'
+import { AppComponents, ThirdPartyAsset, TPWResolver } from '../types'
 
+type ThirdPartyAssets = {
+  address: string
+  total: number
+  page: number
+  assets: ThirdPartyAsset[]
+  next?: string
+}
 export async function createThirdPartyResolverForCollection(
   components: Pick<AppComponents, 'theGraph' | 'fetch'>,
   collectionId: string
@@ -112,74 +108,4 @@ async function fetchAssets(
 function buildRegistryOwnerUrl(thirdPartyResolverURL: string, registryId: string, owner: string): string {
   const baseUrl = new URL(thirdPartyResolverURL).href.replace(/\/$/, '')
   return `${baseUrl}/registry/${registryId}/address/${owner}/assets`
-}
-
-/*
- * Returns all third-party wearables for an address
- */
-export async function getThirdPartyWearables(
-  components: Pick<AppComponents, 'theGraph' | 'fetch'>,
-  userAddress: string
-) {
-  const { theGraph } = components
-
-  // Get every resolver
-  const tpProviders = (
-    await runQuery<ThirdPartyResolversResponse>(
-      theGraph.thirdPartyRegistrySubgraph,
-      QUERY_ALL_THIRD_PARTY_RESOLVERS,
-      {}
-    )
-  ).thirdParties
-
-  // Fetch assets asynchronously
-  const providersPromises = tpProviders.map((provider: ThirdPartyProvider) => {
-    return fetchAssets(components, provider.resolver, parseCollectionId(provider.id).registryId, userAddress)
-  })
-
-  return (await Promise.all(providersPromises)).flat()
-}
-
-const QUERY_ALL_THIRD_PARTY_RESOLVERS = `
-{
-  thirdParties(where: {isApproved: true}) {
-    id,
-    resolver
-  }
-}
-`
-
-/*
- * Returns only third-party wearables for the specified collection id, owned by the provided address
- */
-export async function getWearablesForCollection(
-  components: Pick<AppComponents, 'theGraph' | 'fetch' | 'wearablesCaches' | 'content'>,
-  collectionId: string,
-  address: string,
-  includeDefinitions: boolean
-) {
-  const { definitionsCache } = components.wearablesCaches
-
-  // Get API for collection
-  const resolver = await createThirdPartyResolverForCollection(components, collectionId)
-
-  // Get owned wearables for the collection
-  let ownedTPWForCollection = (await resolver.findThirdPartyAssetsByOwner(address)).map(
-    transformThirdPartyAssetToWearableForCache
-  )
-
-  // Fetch for definitions, add it to the cache and add it to each wearable in the response
-  if (includeDefinitions)
-    ownedTPWForCollection = await decorateNFTsWithDefinitionsFromCache(
-      ownedTPWForCollection,
-      components,
-      definitionsCache,
-      EntityType.EMOTE,
-      extractWearableDefinitionFromEntity
-    )
-
-  return {
-    wearables: ownedTPWForCollection,
-    totalAmount: ownedTPWForCollection.length
-  }
 }
