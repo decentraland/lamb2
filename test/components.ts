@@ -52,7 +52,10 @@ async function initComponents(fetchComponent?: IFetchComponent, theGraphComponen
   const emotesFetcher = await createEmoteFetcherComponent({ config, theGraph: theGraphMock, logs })
   const definitionsFetcher = await createDefinitionsFetcherComponent({ config, content: contentMock, logs })
 
-  jest.spyOn(theGraphMock.thirdPartyRegistrySubgraph, 'query').mockResolvedValueOnce({ thirdParties: [] })
+  console.log('theGraphMock.thirdPartyRegistrySubgraph 0', theGraphMock.thirdPartyRegistrySubgraph)
+  
+  // jest.spyOn(theGraphMock.thirdPartyRegistrySubgraph, 'query').mockResolvedValueOnce({ thirdParties: [] })
+  theGraphMock.thirdPartyRegistrySubgraph.query = jest.fn().mockResolvedValue({ thirdParties: [] })
 
   return {
     ...components,

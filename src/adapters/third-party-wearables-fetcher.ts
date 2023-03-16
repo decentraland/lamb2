@@ -115,12 +115,16 @@ export async function createThirdPartyWearablesFetcherComponent({
     ttl: 1000 * 60 * 60 * 6, // 6 hours
     fetchMethod: async function (_: number, staleValue: ThirdParty[]) {
       try {
+        console.log('theGraph.thirdPartyRegistrySubgraph.query 1', theGraph.thirdPartyRegistrySubgraph.query)
+
         const tpProviders = (
           await theGraph.thirdPartyRegistrySubgraph.query<ThirdPartyResolversResponse>(
             QUERY_ALL_THIRD_PARTY_RESOLVERS,
             {}
           )
         ).thirdParties
+
+        console.log('RESULT', tpProviders)
         return tpProviders
       } catch (err: any) {
         logger.error(err)
@@ -171,6 +175,7 @@ export async function createThirdPartyWearablesFetcherComponent({
     ttl: wearablesAge,
     fetchMethod: async function (owner: string, _staleValue: ThirdPartyWearable[]) {
       const thirdParties = thirdPartiesCache.get(0)!
+      console.log('DEBUG THIRD PARTY CACHE', thirdParties)
 
       // TODO: test if stateValue is keept in case of an exception
       const thirdPartyAssets = await Promise.all(
@@ -182,6 +187,7 @@ export async function createThirdPartyWearablesFetcherComponent({
   })
 
   async function start() {
+    console.log('START')
     await thirdPartiesCache.fetch(0)
   }
 
