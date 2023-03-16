@@ -40,7 +40,7 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
         names: res.body.elements,
         totalAmount: res.body.totalAmount,
         pageNum: res.body.pageNum,
-        pageSize: res.body.pageNum
+        pageSize: res.body.pageSize
       }
     }
   })
@@ -55,7 +55,7 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
         lands: res.body.elements,
         totalAmount: res.body.totalAmount,
         pageNum: res.body.pageNum,
-        pageSize: res.body.pageNum
+        pageSize: res.body.pageSize
       }
     }
   })
@@ -70,7 +70,7 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
         emotes: res.body.elements,
         totalAmount: res.body.totalAmount,
         pageNum: res.body.pageNum,
-        pageSize: res.body.pageNum
+        pageSize: res.body.pageSize
       }
     }
   })
