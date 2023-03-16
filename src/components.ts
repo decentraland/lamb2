@@ -14,6 +14,7 @@ import { createThirdPartyWearablesFetcherComponent } from './adapters/third-part
 import { createEmoteFetcherComponent, createWearableFetcherComponent } from './adapters/items-fetcher'
 import { createNamesFetcherComponent } from './adapters/names-fetcher'
 import { createLANDsFetcherComponent } from './adapters/lands-fetcher'
+import { createWearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -50,6 +51,9 @@ export async function initComponents(
   const namesFetcher = await createNamesFetcherComponent({ logs, theGraph })
   const landsFetcher = await createLANDsFetcherComponent({ logs, theGraph })
 
+  // old components
+  const wearablesCaches = await createWearablesCachesComponent({ config })
+
   return {
     config,
     logs,
@@ -66,6 +70,7 @@ export async function initComponents(
     thirdPartyWearablesFetcher,
     emotesFetcher,
     namesFetcher,
-    landsFetcher
+    landsFetcher,
+    wearablesCaches
   }
 }

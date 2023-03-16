@@ -78,7 +78,7 @@ export async function wearablesHandler(
 }
 
 // TODO: change this name
-type ThirdPartyWearableResponse = Pick<ThirdPartyWearable, 'urn' | 'amount' | 'individualData'> & {
+export type ThirdPartyWearableResponse = Pick<ThirdPartyWearable, 'urn' | 'amount' | 'individualData'> & {
   definition?: Definition
 }
 
