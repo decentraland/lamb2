@@ -43,8 +43,6 @@ async function initComponents(fetchComponent?: IFetchComponent, theGraphComponen
   const fetch = fetchComponent ? fetchComponent : await createLocalFetchCompoment(config)
   const theGraphMock = theGraphComponent ? theGraphComponent : createTheGraphComponentMock()
 
-  const res = await theGraphMock.thirdPartyRegistrySubgraph.query('any')
-  console.log('res', typeof res, res)
   const components = await originalInitComponents(fetch, theGraphMock)
 
   const logs = await createLogComponent({})

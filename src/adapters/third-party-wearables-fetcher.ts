@@ -67,11 +67,11 @@ const QUERY_ALL_THIRD_PARTY_RESOLVERS = `
 //     }
 //  ]
 
-export type ThirdPartyResolversResponse = {
+type ThirdPartyResolversResponse = {
   thirdParties: ThirdParty[]
 }
 
-export type ThirdParty = {
+type ThirdParty = {
   id: string
   resolver: string
 }
@@ -121,7 +121,6 @@ export async function createThirdPartyWearablesFetcherComponent({
             {}
           )
         ).thirdParties
-
         return tpProviders
       } catch (err: any) {
         logger.error(err)
