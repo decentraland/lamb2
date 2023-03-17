@@ -4,7 +4,7 @@
 import { createRunner, createLocalFetchCompoment, defaultServerConfig } from '@well-known-components/test-helpers'
 
 import { main } from '../src/service'
-import { AppComponents, TestComponents } from '../src/types'
+import { TestComponents } from '../src/types'
 import { initComponents as originalInitComponents } from '../src/components'
 import { createDotEnvConfigComponent } from '@well-known-components/env-config-provider'
 import { createTestMetricsComponent } from '@well-known-components/metrics'
@@ -43,6 +43,8 @@ async function initComponents(fetchComponent?: IFetchComponent, theGraphComponen
   const fetch = fetchComponent ? fetchComponent : await createLocalFetchCompoment(config)
   const theGraphMock = theGraphComponent ? theGraphComponent : createTheGraphComponentMock()
 
+  const res = await theGraphMock.thirdPartyRegistrySubgraph.query('any')
+  console.log('res', typeof res, res)
   const components = await originalInitComponents(fetch, theGraphMock)
 
   const logs = await createLogComponent({})
@@ -51,12 +53,7 @@ async function initComponents(fetchComponent?: IFetchComponent, theGraphComponen
   const wearablesFetcher = await createWearableFetcherComponent({ config, theGraph: theGraphMock, logs })
   const emotesFetcher = await createEmoteFetcherComponent({ config, theGraph: theGraphMock, logs })
   const definitionsFetcher = await createDefinitionsFetcherComponent({ config, content: contentMock, logs })
-
-  console.log('theGraphMock.thirdPartyRegistrySubgraph 0', theGraphMock.thirdPartyRegistrySubgraph)
   
-  // jest.spyOn(theGraphMock.thirdPartyRegistrySubgraph, 'query').mockResolvedValueOnce({ thirdParties: [] })
-  theGraphMock.thirdPartyRegistrySubgraph.query = jest.fn().mockResolvedValue({ thirdParties: [] })
-
   return {
     ...components,
     config: config,
