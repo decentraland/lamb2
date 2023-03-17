@@ -40,3 +40,37 @@ export function generateDefinitions(urns: string[]) {
         }
     }))
 }
+
+export function generateThirdPartyWearables(quantity: number) {
+    const generatedThirdPartyWearables = []
+    for (let i = 0; i < quantity; i++) {
+        generatedThirdPartyWearables.push({
+            id: 'id-' + i,
+            amount: 1,
+            urn: {
+                decentraland: 'urn-' + i
+            }
+        })
+    }
+
+    return generatedThirdPartyWearables
+}
+
+export function getThirdPartyProviders() {
+    return {
+        thirdParties: [
+            {
+                id: "urn:decentraland:matic:collections-thirdparty:baby-doge-coin",
+                resolver: "https://decentraland-api.babydoge.com/v1"
+            },
+            {
+                id: "urn:decentraland:matic:collections-thirdparty:cryptoavatars",
+                resolver: "https://api.cryptoavatars.io/"
+            },
+            {
+                id: "urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip",
+                resolver: "https://wearables-api.unxd.com"
+            }
+        ]
+    }
+}
