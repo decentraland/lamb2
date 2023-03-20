@@ -1,8 +1,5 @@
 import { ISubgraphComponent } from '@well-known-components/thegraph-component'
-import { ItemFromQuery } from '../adapters/items-fetcher'
-import { LAND, LANDFromQuery } from '../adapters/lands-fetcher'
-import { NameFromQuery } from '../adapters/names-fetcher'
-import { AppComponents, Item, Name } from '../types'
+import { AppComponents, Item, LAND, Name } from '../types'
 import { compareByRarity } from './utils'
 
 const THE_GRAPH_PAGE_SIZE = 1000
@@ -77,6 +74,30 @@ const QUERY_LANDS: string = `
     }
   }`
 
+export type LANDFromQuery = {
+  id: string
+  contractAddress: string
+  tokenId: string
+  category: string
+  name: string | null
+  parcel?: {
+    x: string
+    y: string
+    data?: {
+      description?: string
+    }
+  }
+  estate?: {
+    data?: {
+      description?: string
+    }
+  }
+  activeOrder?: {
+    price: string
+  }
+  image: string
+}
+
 export async function fetchAllLANDs(components: Pick<AppComponents, 'theGraph'>, owner: string): Promise<LAND[]> {
   return fetchAllNFTs<LAND, LANDFromQuery>(components.theGraph.ensSubgraph, QUERY_LANDS, owner, (land) => {
     const { name, contractAddress, tokenId, category, parcel, estate, image, activeOrder } = land
@@ -116,6 +137,16 @@ const QUERY_NAMES_PAGINATED: string = `
       }
     }
 }`
+
+export type NameFromQuery = {
+  id: string
+  name: string
+  contractAddress: string
+  tokenId: string
+  activeOrder?: {
+    price: string
+  }
+}
 
 export async function fetchAllNames(components: Pick<AppComponents, 'theGraph'>, owner: string): Promise<Name[]> {
   return fetchAllNFTs<Name, NameFromQuery>(components.theGraph.ensSubgraph, QUERY_NAMES_PAGINATED, owner, (n) => {
@@ -182,6 +213,17 @@ function createQueryForCategory(category: ItemCategory) {
 const QUERIES: Record<ItemCategory, string> = {
   emote: createQueryForCategory('emote'),
   wearable: createQueryForCategory('wearable')
+}
+
+export type ItemFromQuery = {
+  urn: string
+  id: string
+  tokenId: string
+  transferredAt: number
+  item: {
+    rarity: string
+    price: number
+  }
 }
 
 export async function fetchAllEmotes(components: Pick<AppComponents, 'theGraph'>, owner: string): Promise<Item[]> {

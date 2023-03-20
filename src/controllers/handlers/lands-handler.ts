@@ -1,7 +1,6 @@
 import { FetcherError, FetcherErrorCode } from '../../adapters/elements-fetcher'
-import { LAND } from '../../adapters/lands-fetcher'
 import { paginationObject } from '../../logic/utils'
-import { ErrorResponse, HandlerContextWithPath, PaginatedResponse } from '../../types'
+import { ErrorResponse, HandlerContextWithPath, LAND, PaginatedResponse } from '../../types'
 
 export async function landsHandler(
   context: HandlerContextWithPath<'landsFetcher' | 'logs', '/users/:address/lands'>

@@ -15,8 +15,6 @@ import { Variables } from '@well-known-components/thegraph-component'
 import { EmotesCachesComponent } from './ports/emotes-caches'
 import { DefinitionsFetcher } from './adapters/definitions-fetcher'
 import { ThirdPartyWearablesFetcher } from './adapters/third-party-wearables-fetcher'
-import { NamesFetcher } from './adapters/names-fetcher'
-import { LAND, LANDsFetcher } from './adapters/lands-fetcher'
 import { WearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
 import { ElementsFetcher } from './adapters/elements-fetcher'
 
@@ -243,6 +241,18 @@ export type Name = {
   contractAddress: string
   tokenId: string
   price?: string
+}
+
+export type LAND = {
+  contractAddress: string
+  tokenId: string
+  category: string
+  name?: string
+  x?: string
+  y?: string
+  description?: string
+  price?: string
+  image?: string
 }
 
 export interface LandsQueryResponse {
