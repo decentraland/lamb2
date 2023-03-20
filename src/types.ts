@@ -16,8 +16,9 @@ import { EmotesCachesComponent } from './ports/emotes-caches'
 import { DefinitionsFetcher } from './adapters/definitions-fetcher'
 import { ThirdPartyWearablesFetcher } from './adapters/third-party-wearables-fetcher'
 import { NamesFetcher } from './adapters/names-fetcher'
-import { LANDsFetcher } from './adapters/lands-fetcher'
+import { LAND, LANDsFetcher } from './adapters/lands-fetcher'
 import { WearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
+import { ElementsFetcher } from './adapters/elements-fetcher'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -33,13 +34,13 @@ export type BaseComponents = {
   content: ContentComponent
   theGraph: TheGraphComponent
   ownershipCaches: OwnershipCachesComponent
-  wearablesFetcher: ItemFetcher
+  wearablesFetcher: ElementsFetcher<Item>
   thirdPartyWearablesFetcher: ThirdPartyWearablesFetcher
-  emotesFetcher: ItemFetcher
+  emotesFetcher: ElementsFetcher<Item>
   definitionsFetcher: DefinitionsFetcher
-  namesFetcher: NamesFetcher
   emotesCaches: EmotesCachesComponent
-  landsFetcher: LANDsFetcher
+  namesFetcher: ElementsFetcher<Name>
+  landsFetcher: ElementsFetcher<LAND>
 
   // old components
   wearablesCaches: WearablesCachesComponent

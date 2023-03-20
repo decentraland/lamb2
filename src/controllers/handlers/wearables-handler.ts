@@ -1,3 +1,4 @@
+import { FetcherError, FetcherErrorCode } from '../../adapters/elements-fetcher'
 import { ThirdPartyFetcherError, ThirdPartyFetcherErrorCode } from '../../adapters/third-party-wearables-fetcher'
 import { parseUrn, paginationObject } from '../../logic/utils'
 import {
@@ -26,15 +27,15 @@ export async function wearablesHandler(
   const pagination = paginationObject(context.url)
 
   try {
-    const { totalAmount, items } = await wearablesFetcher.fetchByOwner(address, pagination)
+    const { totalAmount, elements } = await wearablesFetcher.fetchByOwner(address, pagination)
 
     const definitions = includeDefinitions
-      ? await definitionsFetcher.fetchWearablesDefinitions(items.map((item) => item.urn))
+      ? await definitionsFetcher.fetchWearablesDefinitions(elements.map((element) => element.urn))
       : []
 
     const results: ItemResponse[] = []
-    for (let i = 0; i < items.length; ++i) {
-      const { urn, amount, individualData, rarity } = items[i]
+    for (let i = 0; i < elements.length; ++i) {
+      const { urn, amount, individualData, rarity } = elements[i]
       results.push({
         urn,
         amount,
@@ -54,9 +55,9 @@ export async function wearablesHandler(
       }
     }
   } catch (err: any) {
-    if (err instanceof ItemFetcherError) {
+    if (err instanceof FetcherError) {
       switch (err.code) {
-        case ItemFetcherErrorCode.CANNOT_FETCH_ITEMS: {
+        case FetcherErrorCode.CANNOT_FETCH_ELEMENTS: {
           return {
             status: 502,
             body: {

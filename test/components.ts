@@ -14,6 +14,8 @@ import { createEmoteFetcherComponent, createWearableFetcherComponent } from '../
 import { createTheGraphComponentMock } from './mocks/the-graph-mock'
 import { createContentComponentMock } from './mocks/content-mock'
 import { createDefinitionsFetcherComponent } from '../src/adapters/definitions-fetcher'
+import { createElementsFetcherComponent } from '../src/adapters/elements-fetcher'
+import { fetchAllEmotes, fetchAllWearables } from '../src/logic/fetch-nfts'
 
 /**
  * Behaves like Jest "describe" function, used to describe a test for a
@@ -38,8 +40,12 @@ async function initComponents(): Promise<TestComponents> {
   const logs = await createLogComponent({})
 
   const contentMock = createContentComponentMock()
-  const wearablesFetcher = await createWearableFetcherComponent({ config, theGraph: theGraphMock, logs })
-  const emotesFetcher = await createEmoteFetcherComponent({ config, theGraph: theGraphMock, logs })
+  const wearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
+    fetchAllWearables({ theGraph: theGraphMock }, address)
+  )
+  const emotesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
+    fetchAllEmotes({ theGraph: theGraphMock }, address)
+  )
   const definitionsFetcher = await createDefinitionsFetcherComponent({ config, content: contentMock, logs })
 
   jest.spyOn(theGraphMock.thirdPartyRegistrySubgraph, 'query').mockResolvedValueOnce({ thirdParties: [] })

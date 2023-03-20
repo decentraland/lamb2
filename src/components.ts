@@ -12,9 +12,9 @@ import { createEmotesCachesComponent } from './ports/emotes-caches'
 import { createDefinitionsFetcherComponent } from './adapters/definitions-fetcher'
 import { createThirdPartyWearablesFetcherComponent } from './adapters/third-party-wearables-fetcher'
 import { createEmoteFetcherComponent, createWearableFetcherComponent } from './adapters/items-fetcher'
-import { createNamesFetcherComponent } from './adapters/names-fetcher'
-import { createLANDsFetcherComponent } from './adapters/lands-fetcher'
 import { createWearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
+import { createElementsFetcherComponent } from './adapters/elements-fetcher'
+import { fetchAllEmotes, fetchAllLANDs, fetchAllNames, fetchAllWearables } from './logic/fetch-nfts'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -44,12 +44,16 @@ export async function initComponents(
 
   const ownershipCaches = await createOwnershipCachesComponent({ config })
   const emotesCaches = await createEmotesCachesComponent({ config })
-  const wearablesFetcher = await createWearableFetcherComponent({ config, theGraph, logs })
   const thirdPartyWearablesFetcher = await createThirdPartyWearablesFetcherComponent({ config, logs, theGraph, fetch })
   const definitionsFetcher = await createDefinitionsFetcherComponent({ config, logs, content })
-  const emotesFetcher = await createEmoteFetcherComponent({ config, theGraph, logs })
-  const namesFetcher = await createNamesFetcherComponent({ logs, theGraph })
-  const landsFetcher = await createLANDsFetcherComponent({ logs, theGraph })
+  const wearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
+    fetchAllWearables({ theGraph }, address)
+  )
+  const emotesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
+    fetchAllEmotes({ theGraph }, address)
+  )
+  const namesFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllNames({ theGraph }, address))
+  const landsFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllLANDs({ theGraph }, address))
 
   // old components
   const wearablesCaches = await createWearablesCachesComponent({ config })

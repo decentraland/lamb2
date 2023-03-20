@@ -1,13 +1,6 @@
+import { FetcherError, FetcherErrorCode } from '../../adapters/elements-fetcher'
 import { paginationObject } from '../../logic/utils'
-import {
-  Definition,
-  ErrorResponse,
-  HandlerContextWithPath,
-  Item,
-  PaginatedResponse,
-  ItemFetcherError,
-  ItemFetcherErrorCode
-} from '../../types'
+import { Definition, ErrorResponse, HandlerContextWithPath, Item, PaginatedResponse } from '../../types'
 
 // TODO: change this name
 type ItemResponse = Pick<Item, 'urn' | 'amount' | 'individualData' | 'rarity'> & {
@@ -24,15 +17,15 @@ export async function emotesHandler(
   const pagination = paginationObject(context.url)
 
   try {
-    const { totalAmount, items } = await emotesFetcher.fetchByOwner(address, pagination)
+    const { totalAmount, elements } = await emotesFetcher.fetchByOwner(address, pagination)
 
     const definitions = includeDefinitions
-      ? await definitionsFetcher.fetchEmotesDefinitions(items.map((item) => item.urn))
+      ? await definitionsFetcher.fetchEmotesDefinitions(elements.map((element) => element.urn))
       : []
 
     const results: ItemResponse[] = []
-    for (let i = 0; i < items.length; ++i) {
-      const { urn, amount, individualData, rarity } = items[i]
+    for (let i = 0; i < elements.length; ++i) {
+      const { urn, amount, individualData, rarity } = elements[i]
       results.push({
         urn,
         amount,
@@ -52,9 +45,9 @@ export async function emotesHandler(
       }
     }
   } catch (err: any) {
-    if (err instanceof ItemFetcherError) {
+    if (err instanceof FetcherError) {
       switch (err.code) {
-        case ItemFetcherErrorCode.CANNOT_FETCH_ITEMS: {
+        case FetcherErrorCode.CANNOT_FETCH_ELEMENTS: {
           return {
             status: 502,
             body: {

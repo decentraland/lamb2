@@ -2,6 +2,7 @@ import LRU from 'lru-cache'
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { AppComponents, Limits } from '../types'
 import { ISubgraphComponent } from '@well-known-components/thegraph-component'
+import { fetchAllLANDs } from '../logic/fetch-nfts'
 
 export type LANDsResult = {
   lands: LAND[]
@@ -133,27 +134,28 @@ export async function createLANDsFetcherComponent({
     ttl: 600000, // 10 minutes
     fetchMethod: async function (address: string, staleValue: LAND[]) {
       try {
-        const lands = await runLANDquery(theGraph.ensSubgraph, address)
+        return fetchAllLANDs({ theGraph }, address)
+        // const lands = await runLANDquery(theGraph.ensSubgraph, address)
 
-        return lands.map((land) => {
-          const { name, contractAddress, tokenId, category, parcel, estate, image, activeOrder } = land
+        // return lands.map((land) => {
+        //   const { name, contractAddress, tokenId, category, parcel, estate, image, activeOrder } = land
 
-          const isParcel = category === 'parcel'
-          const x = isParcel ? parcel?.x : undefined
-          const y = isParcel ? parcel?.x : undefined
-          const description = isParcel ? parcel?.data?.description : estate?.data?.description
-          return {
-            name: name === null ? undefined : name,
-            contractAddress,
-            tokenId,
-            category,
-            x,
-            y,
-            description,
-            price: activeOrder ? activeOrder.price : undefined,
-            image
-          }
-        })
+        //   const isParcel = category === 'parcel'
+        //   const x = isParcel ? parcel?.x : undefined
+        //   const y = isParcel ? parcel?.x : undefined
+        //   const description = isParcel ? parcel?.data?.description : estate?.data?.description
+        //   return {
+        //     name: name === null ? undefined : name,
+        //     contractAddress,
+        //     tokenId,
+        //     category,
+        //     x,
+        //     y,
+        //     description,
+        //     price: activeOrder ? activeOrder.price : undefined,
+        //     image
+        //   }
+        // })
       } catch (err: any) {
         logger.error(err)
         return staleValue

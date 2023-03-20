@@ -1,4 +1,5 @@
-import { LAND, LANDsFetcherError, LANDsFetcherErrorCode } from '../../adapters/lands-fetcher'
+import { FetcherError, FetcherErrorCode } from '../../adapters/elements-fetcher'
+import { LAND } from '../../adapters/lands-fetcher'
 import { paginationObject } from '../../logic/utils'
 import { ErrorResponse, HandlerContextWithPath, PaginatedResponse } from '../../types'
 
@@ -11,20 +12,20 @@ export async function landsHandler(
   const logger = logs.getLogger('lands-handler')
 
   try {
-    const { lands, totalAmount } = await landsFetcher.fetchByOwner(address, pagination)
+    const { elements, totalAmount } = await landsFetcher.fetchByOwner(address, pagination)
     return {
       status: 200,
       body: {
-        elements: lands,
+        elements,
         totalAmount,
         pageNum: pagination.pageNum,
         pageSize: pagination.pageSize
       }
     }
   } catch (err: any) {
-    if (err instanceof LANDsFetcherError) {
+    if (err instanceof FetcherError) {
       switch (err.code) {
-        case LANDsFetcherErrorCode.CANNOT_FETCH_LANDS: {
+        case FetcherErrorCode.CANNOT_FETCH_ELEMENTS: {
           return {
             status: 502,
             body: {
