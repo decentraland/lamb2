@@ -15,6 +15,8 @@ import { createContentComponentMock } from './mocks/content-mock'
 import { createDefinitionsFetcherComponent } from '../src/adapters/definitions-fetcher'
 import { createElementsFetcherComponent } from '../src/adapters/elements-fetcher'
 import { fetchAllEmotes, fetchAllWearables } from '../src/logic/fetch-nfts'
+import { IFetchComponent } from '@well-known-components/http-server'
+import { TheGraphComponent } from '../src/ports/the-graph'
 
 /**
  * Behaves like Jest "describe" function, used to describe a test for a
@@ -28,11 +30,19 @@ export const test = createRunner<TestComponents>({
   initComponents
 })
 
-async function initComponents(): Promise<TestComponents> {
+export function testWithComponents(preConfigureComponents: () => { fetchComponent?: IFetchComponent, theGraphComponent?: TheGraphComponent }) {
+  const preConfiguredComponents = preConfigureComponents()
+  return createRunner<TestComponents>({
+    main,
+    initComponents: () => initComponents(preConfiguredComponents.fetchComponent, preConfiguredComponents.theGraphComponent)
+  })
+}
+
+async function initComponents(fetchComponent?: IFetchComponent, theGraphComponent?: TheGraphComponent): Promise<TestComponents> {
   const defaultFetchConfig = defaultServerConfig()
   const config = await createDotEnvConfigComponent({}, { COMMIT_HASH: 'commit_hash', ...defaultFetchConfig })
-  const fetch = await createLocalFetchCompoment(config)
-  const theGraphMock = createTheGraphComponentMock()
+  const fetch = fetchComponent ? fetchComponent : await createLocalFetchCompoment(config)
+  const theGraphMock = theGraphComponent ? theGraphComponent : createTheGraphComponentMock()
 
   const components = await originalInitComponents(fetch, theGraphMock)
 
@@ -46,8 +56,6 @@ async function initComponents(): Promise<TestComponents> {
     fetchAllEmotes({ theGraph: theGraphMock }, address)
   )
   const definitionsFetcher = await createDefinitionsFetcherComponent({ config, content: contentMock, logs })
-
-  jest.spyOn(theGraphMock.thirdPartyRegistrySubgraph, 'query').mockResolvedValueOnce({ thirdParties: [] })
 
   return {
     ...components,
