@@ -8,7 +8,6 @@ import { metricDeclarations } from './metrics'
 import { createTheGraphComponent, TheGraphComponent } from './ports/the-graph'
 import { createContentComponent } from './ports/content'
 import { createOwnershipCachesComponent } from './ports/ownership-caches'
-import { createEmotesCachesComponent } from './ports/emotes-caches'
 import { createDefinitionsFetcherComponent } from './adapters/definitions-fetcher'
 import { createWearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
 import { createElementsFetcherComponent } from './adapters/elements-fetcher'
@@ -48,7 +47,6 @@ export async function initComponents(
     : await createTheGraphComponent({ config, logs, fetch, metrics })
 
   const ownershipCaches = await createOwnershipCachesComponent({ config })
-  const emotesCaches = await createEmotesCachesComponent({ config })
   const thirdPartyProvidersFetcher = createThirdPartyProvidersFetcherComponent({ logs, theGraph })
   const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllThirdPartyWearables({ theGraph, thirdPartyProvidersFetcher, fetch, logs }, address)
@@ -76,7 +74,6 @@ export async function initComponents(
     content,
     theGraph,
     ownershipCaches,
-    emotesCaches,
     wearablesFetcher,
     definitionsFetcher,
     thirdPartyWearablesFetcher,

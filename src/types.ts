@@ -12,7 +12,6 @@ import { Profile, IPFSv1, IPFSv2, I18N } from '@dcl/schemas'
 import { ContentComponent } from './ports/content'
 import { OwnershipCachesComponent } from './ports/ownership-caches'
 import { Variables } from '@well-known-components/thegraph-component'
-import { EmotesCachesComponent } from './ports/emotes-caches'
 import { DefinitionsFetcher } from './adapters/definitions-fetcher'
 import { WearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
 import { ElementsFetcher } from './adapters/elements-fetcher'
@@ -37,7 +36,6 @@ export type BaseComponents = {
   thirdPartyWearablesFetcher: ElementsFetcher<ThirdPartyWearable>
   emotesFetcher: ElementsFetcher<Item>
   definitionsFetcher: DefinitionsFetcher
-  emotesCaches: EmotesCachesComponent
   namesFetcher: ElementsFetcher<Name>
   landsFetcher: ElementsFetcher<LAND>
 
