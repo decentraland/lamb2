@@ -33,7 +33,7 @@ export function createElementsFetcherComponent<T>(
   const cache = new LRU<string, T[]>({
     max: 1000,
     ttl: 600000, // 10 minutes
-    fetchMethod: async function (address: string, staleValue: T[]) {
+    fetchMethod: async function (address: string, staleValue: T[] | undefined) {
       try {
         const es = await fetchAllOwnedElements(address)
         return es
@@ -48,20 +48,20 @@ export function createElementsFetcherComponent<T>(
     async fetchByOwner(address: string, { offset, limit }: Limits): Promise<ElementsResult<T>> {
       const allElements = await cache.fetch(address)
 
-      if (allElements === undefined) {
-        throw new FetcherError(FetcherErrorCode.CANNOT_FETCH_ELEMENTS, `Cannot fetch elements for ${address}`)
+      if (allElements) {
+        const totalAmount = allElements.length
+        return {
+          elements: allElements.slice(offset, offset + limit),
+          totalAmount
+        }
       }
 
-      const totalAmount = allElements.length
-      return {
-        elements: allElements.slice(offset, offset + limit),
-        totalAmount
-      }
+      throw new FetcherError(FetcherErrorCode.CANNOT_FETCH_ELEMENTS, `Cannot fetch elements for ${address}`)
     },
     async fetchAllByOwner(address: string): Promise<ElementsResult<T>> {
       const elements = await cache.fetch(address)
 
-      if (elements === undefined) {
+      if (elements === undefined || !elements) {
         throw new FetcherError(FetcherErrorCode.CANNOT_FETCH_ELEMENTS, `Cannot fetch elements for ${address}`)
       }
 

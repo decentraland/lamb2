@@ -41,7 +41,7 @@ export function createThirdPartyProvidersFetcherComponent({
   const thirdPartiesCache = new LRU<number, ThirdParty[]>({
     max: 1,
     ttl: 1000 * 60 * 60 * 6, // 6 hours
-    fetchMethod: async function (_: number, staleValue: ThirdParty[]) {
+    fetchMethod: async function (_: number, staleValue: ThirdParty[] | undefined) {
       try {
         const tpProviders = (
           await theGraph.thirdPartyRegistrySubgraph.query<ThirdPartyResolversResponse>(

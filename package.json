@@ -11,7 +11,6 @@
   "devDependencies": {
     "@dcl/eslint-config": "^1.1.0",
     "@types/lodash": "^4.14.191",
-    "@types/lru-cache": "^7.10.10",
     "@types/node": "^18.11.18",
     "@well-known-components/test-helpers": "^1.4.0",
     "ethereumjs-wallet": "^1.0.2",
@@ -37,6 +36,6 @@
     "dcl-catalyst-client": "^14.0.9",
     "dcl-catalyst-commons": "9.0.16",
     "lodash": "^4.17.21",
-    "lru-cache": "^7.14.1"
+    "lru-cache": "^8.0.4"
   }
 }
