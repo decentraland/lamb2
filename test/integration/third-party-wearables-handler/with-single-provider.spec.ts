@@ -3,8 +3,6 @@ import { generateDefinitions, generateThirdPartyWearables, getThirdPartyProvider
 import Wallet from 'ethereumjs-wallet'
 import { createTheGraphComponentMock } from '../../mocks/the-graph-mock'
 
-const SUITE_TITLE_PREFIX = ''
-
 // NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
 testWithComponents(() => {
   const theGraphMock = createTheGraphComponentMock()
@@ -61,9 +59,11 @@ testWithComponents(() => {
     const wearables = generateThirdPartyWearables(2)
 
     fetch.fetch = jest.fn()
-      .mockResolvedValueOnce({ ok: true, json: () => ({
-        assets: wearables
-      })})
+      .mockResolvedValueOnce({
+        ok: true, json: () => ({
+          assets: wearables
+        })
+      })
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/third-party-wearables`)
 
@@ -83,9 +83,11 @@ testWithComponents(() => {
 
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
     fetch.fetch = jest.fn()
-      .mockResolvedValueOnce({ ok: true, json: () => ({
-        assets: wearables
-      })})
+      .mockResolvedValueOnce({
+        ok: true, json: () => ({
+          assets: wearables
+        })
+      })
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/third-party-wearables?includeDefinitions`)
 
@@ -106,9 +108,11 @@ testWithComponents(() => {
 
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
     fetch.fetch = jest.fn()
-      .mockResolvedValueOnce({ ok: true, json: () => ({
-        assets: wearables
-      })})
+      .mockResolvedValueOnce({
+        ok: true, json: () => ({
+          assets: wearables
+        })
+      })
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/third-party-wearables?includeDefinitions`)
 
@@ -129,9 +133,11 @@ testWithComponents(() => {
 
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
     fetch.fetch = jest.fn()
-      .mockResolvedValue({ ok: true, json: () => ({
-        assets: wearables
-      })})
+      .mockResolvedValue({
+        ok: true, json: () => ({
+          assets: wearables
+        })
+      })
 
     const firstResponse = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/third-party-wearables?includeDefinitions`)
     const secondResponse = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/third-party-wearables?includeDefinitions`)
@@ -154,9 +160,11 @@ testWithComponents(() => {
     const wearables = generateThirdPartyWearables(7)
 
     fetch.fetch = jest.fn()
-      .mockResolvedValueOnce({ ok: true, json: () => ({
-        assets: wearables
-      })})
+      .mockResolvedValueOnce({
+        ok: true, json: () => ({
+          assets: wearables
+        })
+      })
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/third-party-wearables?pageSize=3`)
 
@@ -174,9 +182,11 @@ testWithComponents(() => {
     const wearables = generateThirdPartyWearables(7)
 
     fetch.fetch = jest.fn()
-      .mockResolvedValueOnce({ ok: true, json: () => ({
-        assets: wearables
-      })})
+      .mockResolvedValueOnce({
+        ok: true, json: () => ({
+          assets: wearables
+        })
+      })
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/third-party-wearables?pageNum=2&pageSize=3`)
 
@@ -194,9 +204,11 @@ testWithComponents(() => {
     const wearables = generateThirdPartyWearables(7)
 
     fetch.fetch = jest.fn()
-      .mockResolvedValueOnce({ ok: true, json: () => ({
-        assets: wearables
-      })})
+      .mockResolvedValueOnce({
+        ok: true, json: () => ({
+          assets: wearables
+        })
+      })
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/third-party-wearables?pageNum=3&pageSize=3`)
 

@@ -14,9 +14,9 @@ import { OwnershipCachesComponent } from './ports/ownership-caches'
 import { Variables } from '@well-known-components/thegraph-component'
 import { EmotesCachesComponent } from './ports/emotes-caches'
 import { DefinitionsFetcher } from './adapters/definitions-fetcher'
-import { ThirdPartyWearablesFetcher } from './adapters/third-party-wearables-fetcher'
 import { WearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
 import { ElementsFetcher } from './adapters/elements-fetcher'
+import { ThirdPartyProvidersFetcher } from './adapters/third-party-providers-fetcher'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -33,7 +33,8 @@ export type BaseComponents = {
   theGraph: TheGraphComponent
   ownershipCaches: OwnershipCachesComponent
   wearablesFetcher: ElementsFetcher<Item>
-  thirdPartyWearablesFetcher: ThirdPartyWearablesFetcher
+  thirdPartyProvidersFetcher: ThirdPartyProvidersFetcher
+  thirdPartyWearablesFetcher: ElementsFetcher<ThirdPartyWearable>
   emotesFetcher: ElementsFetcher<Item>
   definitionsFetcher: DefinitionsFetcher
   emotesCaches: EmotesCachesComponent
@@ -319,4 +320,33 @@ export type Limits = {
 export type Pagination = Limits & {
   pageSize: number
   pageNum: number
+}
+
+export type ThirdParty = {
+  id: string
+  resolver: string
+}
+
+export type ThirdPartyResolversResponse = {
+  thirdParties: ThirdParty[]
+}
+
+export enum ThirdPartyFetcherErrorCode {
+  CANNOT_LOAD_THIRD_PARTY_WEARABLES,
+  THIRD_PARTY_NOT_FOUND
+}
+
+export class ThirdPartyFetcherError extends Error {
+  constructor(public code: ThirdPartyFetcherErrorCode, message: string) {
+    super(message)
+    Error.captureStackTrace(this, this.constructor)
+  }
+}
+
+export type ThirdPartyAssets = {
+  address: string
+  total: number
+  page: number
+  assets: ThirdPartyAsset[]
+  next?: string
 }

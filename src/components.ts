@@ -10,10 +10,16 @@ import { createContentComponent } from './ports/content'
 import { createOwnershipCachesComponent } from './ports/ownership-caches'
 import { createEmotesCachesComponent } from './ports/emotes-caches'
 import { createDefinitionsFetcherComponent } from './adapters/definitions-fetcher'
-import { createThirdPartyWearablesFetcherComponent } from './adapters/third-party-wearables-fetcher'
 import { createWearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
 import { createElementsFetcherComponent } from './adapters/elements-fetcher'
-import { fetchAllEmotes, fetchAllLANDs, fetchAllNames, fetchAllWearables } from './logic/fetch-nfts'
+import {
+  fetchAllEmotes,
+  fetchAllLANDs,
+  fetchAllNames,
+  fetchAllThirdPartyWearables,
+  fetchAllWearables
+} from './logic/fetch-nfts'
+import { createThirdPartyProvidersFetcherComponent } from './adapters/third-party-providers-fetcher'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -43,7 +49,10 @@ export async function initComponents(
 
   const ownershipCaches = await createOwnershipCachesComponent({ config })
   const emotesCaches = await createEmotesCachesComponent({ config })
-  const thirdPartyWearablesFetcher = await createThirdPartyWearablesFetcherComponent({ config, logs, theGraph, fetch })
+  const thirdPartyProvidersFetcher = createThirdPartyProvidersFetcherComponent({ logs, theGraph })
+  const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
+    fetchAllThirdPartyWearables({ theGraph, thirdPartyProvidersFetcher, fetch, logs }, address)
+  )
   const definitionsFetcher = await createDefinitionsFetcherComponent({ config, logs, content })
   const wearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllWearables({ theGraph }, address)
@@ -74,6 +83,7 @@ export async function initComponents(
     emotesFetcher,
     namesFetcher,
     landsFetcher,
-    wearablesCaches
+    wearablesCaches,
+    thirdPartyProvidersFetcher
   }
 }

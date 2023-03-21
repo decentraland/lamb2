@@ -1,5 +1,5 @@
 import { FetcherError, FetcherErrorCode } from '../../adapters/elements-fetcher'
-import { ThirdPartyFetcherError, ThirdPartyFetcherErrorCode } from '../../adapters/third-party-wearables-fetcher'
+import { fetchAllThirdPartyWearablesCollection } from '../../logic/fetch-nfts'
 import { parseUrn, paginationObject } from '../../logic/utils'
 import {
   Definition,
@@ -7,9 +7,9 @@ import {
   HandlerContextWithPath,
   Item,
   PaginatedResponse,
-  ThirdPartyWearable,
-  ItemFetcherError,
-  ItemFetcherErrorCode
+  ThirdPartyFetcherError,
+  ThirdPartyFetcherErrorCode,
+  ThirdPartyWearable
 } from '../../types'
 
 // TODO: change this name
@@ -66,13 +66,12 @@ export async function wearablesHandler(
           }
         }
       }
-    } else {
-      logger.error(err)
-      return {
-        status: 500,
-        body: {
-          error: 'Internal Server Error'
-        }
+    }
+    logger.error(err)
+    return {
+      status: 500,
+      body: {
+        error: 'Internal Server Error'
       }
     }
   }
@@ -85,26 +84,26 @@ type ThirdPartyWearableResponse = Pick<ThirdPartyWearable, 'urn' | 'amount' | 'i
 
 export async function thirdPartyWearablesHandler(
   context: HandlerContextWithPath<
-    'thirdPartyWearablesFetcher' | 'definitionsFetcher' | 'logs',
+    'definitionsFetcher' | 'logs' | 'thirdPartyWearablesFetcher',
     '/users/:address/third-party-wearables'
   >
 ): Promise<PaginatedResponse<ThirdPartyWearableResponse> | ErrorResponse> {
-  const { thirdPartyWearablesFetcher, definitionsFetcher, logs } = context.components
+  const { definitionsFetcher, logs, thirdPartyWearablesFetcher } = context.components
   const { address } = context.params
   const logger = logs.getLogger('third-party-wearables-handler')
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
   const pagination = paginationObject(context.url)
 
   try {
-    const { totalAmount, wearables } = await thirdPartyWearablesFetcher.fetchByOwner(address, pagination)
+    const { totalAmount, elements } = await thirdPartyWearablesFetcher.fetchByOwner(address, pagination)
 
     const definitions = includeDefinitions
-      ? await definitionsFetcher.fetchWearablesDefinitions(wearables.map((w) => w.urn))
+      ? await definitionsFetcher.fetchWearablesDefinitions(elements.map((w) => w.urn))
       : []
 
     const results: ThirdPartyWearableResponse[] = []
-    for (let i = 0; i < wearables.length; ++i) {
-      const { urn, amount, individualData } = wearables[i]
+    for (let i = 0; i < elements.length; ++i) {
+      const { urn, amount, individualData } = elements[i]
       results.push({
         urn,
         amount,
@@ -123,9 +122,9 @@ export async function thirdPartyWearablesHandler(
       }
     }
   } catch (err: any) {
-    if (err instanceof ThirdPartyFetcherError) {
+    if (err instanceof FetcherError) {
       switch (err.code) {
-        case ThirdPartyFetcherErrorCode.CANNOT_LOAD_THIRD_PARTY_WEARABLES: {
+        case FetcherErrorCode.CANNOT_FETCH_ELEMENTS: {
           return {
             status: 502,
             body: {
@@ -133,22 +132,21 @@ export async function thirdPartyWearablesHandler(
             }
           }
         }
-        case ThirdPartyFetcherErrorCode.THIRD_PARTY_NOT_FOUND: {
-          return {
-            status: 502,
-            body: {
-              error: 'Cannot fetch third parties right now'
-            }
-          }
-        }
+        // case ThirdPartyFetcherErrorCode.THIRD_PARTY_NOT_FOUND: {
+        //   return {
+        //     status: 502,
+        //     body: {
+        //       error: 'Cannot fetch third parties right now'
+        //     }
+        //   }
+        // }
       }
-    } else {
-      logger.error(err)
-      return {
-        status: 500,
-        body: {
-          error: 'Internal Server Error'
-        }
+    }
+    logger.error(err)
+    return {
+      status: 500,
+      body: {
+        error: 'Internal Server Error'
       }
     }
   }
@@ -156,11 +154,11 @@ export async function thirdPartyWearablesHandler(
 
 export async function thirdPartyCollectionWearablesHandler(
   context: HandlerContextWithPath<
-    'thirdPartyWearablesFetcher' | 'definitionsFetcher' | 'logs',
+    'definitionsFetcher' | 'logs' | 'thirdPartyWearablesFetcher' | 'thirdPartyProvidersFetcher' | 'theGraph' | 'fetch',
     '/users/:address/third-party-wearables/:collectionId'
   >
 ): Promise<PaginatedResponse<ThirdPartyWearableResponse> | ErrorResponse> {
-  const { thirdPartyWearablesFetcher, definitionsFetcher, logs } = context.components
+  const { definitionsFetcher, logs } = context.components
   const logger = logs.getLogger('third-party-collections-handler')
   const { address, collectionId } = context.params
 
@@ -187,15 +185,20 @@ export async function thirdPartyCollectionWearablesHandler(
   const pagination = paginationObject(context.url)
 
   try {
-    const { totalAmount, wearables } = await thirdPartyWearablesFetcher.fetchCollectionByOwner(address, urn, pagination)
+    const { totalAmount, elements } = await fetchAllThirdPartyWearablesCollection(
+      context.components,
+      address,
+      urn,
+      pagination
+    )
 
     const definitions = includeDefinitions
-      ? await definitionsFetcher.fetchWearablesDefinitions(wearables.map((w) => w.urn))
+      ? await definitionsFetcher.fetchWearablesDefinitions(elements.map((w) => w.urn))
       : []
 
     const results: ThirdPartyWearableResponse[] = []
-    for (let i = 0; i < wearables.length; ++i) {
-      const { urn, amount, individualData } = wearables[i]
+    for (let i = 0; i < elements.length; ++i) {
+      const { urn, amount, individualData } = elements[i]
       results.push({
         urn,
         amount,
@@ -233,13 +236,12 @@ export async function thirdPartyCollectionWearablesHandler(
           }
         }
       }
-    } else {
-      logger.error(err)
-      return {
-        status: 500,
-        body: {
-          error: 'Internal Server Error'
-        }
+    }
+    logger.error(err)
+    return {
+      status: 500,
+      body: {
+        error: 'Internal Server Error'
       }
     }
   }

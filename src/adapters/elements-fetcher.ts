@@ -9,10 +9,12 @@ export type ElementsResult<T> = {
 
 export type ElementsFetcher<T> = IBaseComponent & {
   fetchByOwner(address: string, limits: Limits): Promise<ElementsResult<T>>
+  fetchAllByOwner(address: string): Promise<ElementsResult<T>>
 }
 
 export enum FetcherErrorCode {
-  CANNOT_FETCH_ELEMENTS
+  CANNOT_FETCH_ELEMENTS,
+  THIRD_PARTY_NOT_FOUND
 }
 
 export class FetcherError extends Error {
@@ -42,21 +44,32 @@ export function createElementsFetcherComponent<T>(
     }
   })
 
-  async function fetchByOwner(address: string, { offset, limit }: Limits): Promise<ElementsResult<T>> {
-    const allElements = await cache.fetch(address)
-
-    if (allElements === undefined) {
-      throw new FetcherError(FetcherErrorCode.CANNOT_FETCH_ELEMENTS, `Cannot fetch elements for ${address}`)
-    }
-
-    const totalAmount = allElements.length
-    return {
-      elements: allElements.slice(offset, offset + limit),
-      totalAmount
-    }
-  }
-
   return {
-    fetchByOwner
+    async fetchByOwner(address: string, { offset, limit }: Limits): Promise<ElementsResult<T>> {
+      const allElements = await cache.fetch(address)
+
+      if (allElements === undefined) {
+        throw new FetcherError(FetcherErrorCode.CANNOT_FETCH_ELEMENTS, `Cannot fetch elements for ${address}`)
+      }
+
+      const totalAmount = allElements.length
+      return {
+        elements: allElements.slice(offset, offset + limit),
+        totalAmount
+      }
+    },
+    async fetchAllByOwner(address: string): Promise<ElementsResult<T>> {
+      const elements = await cache.fetch(address)
+
+      if (elements === undefined) {
+        throw new FetcherError(FetcherErrorCode.CANNOT_FETCH_ELEMENTS, `Cannot fetch elements for ${address}`)
+      }
+
+      const totalAmount = elements.length
+      return {
+        elements,
+        totalAmount
+      }
+    }
   }
 }

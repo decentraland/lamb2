@@ -56,13 +56,12 @@ export async function emotesHandler(
           }
         }
       }
-    } else {
-      logger.error(err)
-      return {
-        status: 500,
-        body: {
-          error: 'Internal Server Error'
-        }
+    }
+    logger.error(err)
+    return {
+      status: 500,
+      body: {
+        error: 'Internal Server Error'
       }
     }
   }
