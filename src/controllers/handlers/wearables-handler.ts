@@ -231,7 +231,7 @@ export async function thirdPartyCollectionWearablesHandler(
           return {
             status: 502,
             body: {
-              error: 'Cannot fetch third parties right now'
+              error: 'Cannot fetch third parties right now. Third party not found'
             }
           }
         }
