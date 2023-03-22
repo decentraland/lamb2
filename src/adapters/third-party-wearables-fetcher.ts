@@ -215,7 +215,6 @@ export async function createThirdPartyWearablesFetcherComponent({
         if (
           wearableUrn &&
           wearableUrn.type === URN_THIRD_PARTY_ASSET_TYPE &&
-          // wearableUrn.collectionId === thirdPartyNameUrn.collectionId &&
           wearableUrn.thirdPartyName === thirdPartyNameUrn.thirdPartyName
         ) {
           results.push(wearable)
