@@ -1,5 +1,9 @@
-import { FetcherError, FetcherErrorCode } from '../../adapters/elements-fetcher'
-import { fetchThirdPartyWearablesFromThirdPartyName } from '../../logic/fetch-third-party-wearables'
+import { FetcherError } from '../../adapters/elements-fetcher'
+import { ThirdPartyProviderError } from '../../adapters/third-party-providers-fetcher'
+import {
+  fetchThirdPartyWearablesFromThirdPartyName,
+  ThirdPartyNotFoundError
+} from '../../logic/fetch-third-party-wearables'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { parseUrn } from '../../logic/utils'
 import { Definition, ErrorResponse, HandlerContextWithPath, PaginatedResponse, ThirdPartyWearable } from '../../types'
@@ -49,22 +53,17 @@ export async function thirdPartyWearablesHandler(
     }
   } catch (err: any) {
     if (err instanceof FetcherError) {
-      switch (err.code) {
-        case FetcherErrorCode.CANNOT_FETCH_ELEMENTS: {
-          return {
-            status: 502,
-            body: {
-              error: 'Cannot fetch third parties right now'
-            }
-          }
+      return {
+        status: 502,
+        body: {
+          error: 'Cannot fetch third partiy wearables right now'
         }
-        case FetcherErrorCode.THIRD_PARTY_NOT_FOUND: {
-          return {
-            status: 502,
-            body: {
-              error: 'Cannot fetch third parties right now'
-            }
-          }
+      }
+    } else if (err instanceof ThirdPartyProviderError) {
+      return {
+        status: 502,
+        body: {
+          error: 'Cannot fetch third parties right now'
         }
       }
     }
@@ -142,22 +141,24 @@ export async function thirdPartyCollectionWearablesHandler(
     }
   } catch (err: any) {
     if (err instanceof FetcherError) {
-      switch (err.code) {
-        case FetcherErrorCode.CANNOT_FETCH_ELEMENTS: {
-          return {
-            status: 502,
-            body: {
-              error: 'Cannot fetch third parties right now'
-            }
-          }
+      return {
+        status: 502,
+        body: {
+          error: 'Cannot fetch third partiy wearables right now'
         }
-        case FetcherErrorCode.THIRD_PARTY_NOT_FOUND: {
-          return {
-            status: 502,
-            body: {
-              error: 'Cannot fetch third parties right now. Third party not found'
-            }
-          }
+      }
+    } else if (err instanceof ThirdPartyProviderError) {
+      return {
+        status: 502,
+        body: {
+          error: 'Cannot fetch third parties right now'
+        }
+      }
+    } else if (ThirdPartyNotFoundError) {
+      return {
+        status: 502,
+        body: {
+          error: 'Third party not found'
         }
       }
     }

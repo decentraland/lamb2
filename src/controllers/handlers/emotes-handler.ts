@@ -1,4 +1,4 @@
-import { FetcherError, FetcherErrorCode } from '../../adapters/elements-fetcher'
+import { FetcherError } from '../../adapters/elements-fetcher'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { Definition, ErrorResponse, HandlerContextWithPath, Item, PaginatedResponse } from '../../types'
 
@@ -40,14 +40,10 @@ export async function emotesHandler(
     }
   } catch (err: any) {
     if (err instanceof FetcherError) {
-      switch (err.code) {
-        case FetcherErrorCode.CANNOT_FETCH_ELEMENTS: {
-          return {
-            status: 502,
-            body: {
-              error: 'Cannot fetch emotes right now'
-            }
-          }
+      return {
+        status: 502,
+        body: {
+          error: 'Cannot fetch emotes right now'
         }
       }
     }

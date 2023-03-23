@@ -11,14 +11,8 @@ export type ElementsFetcher<T> = IBaseComponent & {
   fetchOwnedElements(address: string): Promise<T[]>
 }
 
-export enum FetcherErrorCode {
-  CANNOT_FETCH_ELEMENTS,
-  THIRD_PARTY_NOT_FOUND,
-  CANNOT_FETCH_THIRD_PARTIES
-}
-
 export class FetcherError extends Error {
-  constructor(public code: FetcherErrorCode, message: string) {
+  constructor(message: string) {
     super(message)
     Error.captureStackTrace(this, this.constructor)
   }
@@ -52,7 +46,7 @@ export function createElementsFetcherComponent<T>(
         return allElements
       }
 
-      throw new FetcherError(FetcherErrorCode.CANNOT_FETCH_ELEMENTS, `Cannot fetch elements for ${address}`)
+      throw new FetcherError(`Cannot fetch elements for ${address}`)
     }
   }
 }

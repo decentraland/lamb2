@@ -122,22 +122,6 @@ export type Wearable = {
   rarity: string
 }
 
-export type ItemFetcher = IBaseComponent & {
-  // NOTE: the result will be always orderer by rarity
-  fetchByOwner(address: string, limits: Limits): Promise<ItemsResult>
-}
-
-export enum ItemFetcherErrorCode {
-  CANNOT_FETCH_ITEMS
-}
-
-export class ItemFetcherError extends Error {
-  constructor(public code: ItemFetcherErrorCode, message: string) {
-    super(message)
-    Error.captureStackTrace(this, this.constructor)
-  }
-}
-
 export type Item = {
   urn: string
   amount: number // TODO: maybe this could be individualData.length
