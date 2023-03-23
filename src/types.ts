@@ -85,67 +85,11 @@ export interface TPWResolver {
   findThirdPartyAssetsByOwner: (owner: string) => Promise<ThirdPartyAsset[]>
 }
 
-export type ThirdPartyAsset = {
-  id: string
-  amount: number
-  urn: {
-    decentraland: string
-  }
-}
-
 /**
  * Function used to fetch TheGraph
  * @public
  */
 export type QueryGraph = <T = any>(query: string, variables?: Variables, remainingAttempts?: number) => Promise<T>
-
-export type CategoryResponse = {
-  nfts: {
-    category: string
-  }[]
-}
-
-export type UrnAndAmount = {
-  urn: string
-  amount: number
-}
-
-export type Wearable = {
-  urn: string
-  amount: number // TODO: maybe this could be individualData.length
-  individualData: {
-    id: string
-    tokenId: string
-    transferredAt: number
-    price: number
-  }[]
-  rarity: string
-}
-
-export type Item = {
-  urn: string
-  amount: number // TODO: maybe this could be individualData.length
-  individualData: {
-    id: string
-    tokenId: string
-    transferredAt: number
-    price: number
-  }[]
-  rarity: string
-}
-
-export type ItemsResult = {
-  items: Item[]
-  totalAmount: number
-}
-
-export type ThirdPartyWearable = {
-  urn: string
-  amount: number // TODO: maybe this could be individualData.length
-  individualData: {
-    id: string
-  }[]
-}
 
 // TODO: review this type: (ref https://github.com/decentraland/catalyst/blob/main/lambdas/src/apis/collections/types.ts#L9)
 // http://localhost:7272/users/0x5447C87068b3d99F50a439f98a2B420585B34A93/wearables?includeDefinitions=true
@@ -182,41 +126,24 @@ type Content = {
   url: string
 }
 
-export interface EmotesQueryResponse {
-  nfts: EmoteFromQuery[]
-}
-
-export type EmoteFromQuery = {
+export type Item = {
   urn: string
-  id: string
-  contractAddress: string
-  tokenId: string
-  image: string
-  transferredAt: number
-  item: {
-    metadata: {
-      emote: {
-        name: string
-        description: string
-      }
-    }
-    rarity: string
+  amount: number // TODO: maybe this could be individualData.length
+  individualData: {
+    id: string
+    tokenId: string
+    transferredAt: number
     price: number
-  }
+  }[]
+  rarity: string
 }
 
-export type EmoteForResponse = {
+export type ThirdPartyWearable = {
   urn: string
-  id?: string
-  contractAddress?: string
-  tokenId?: string
-  image?: string
-  transferredAt?: number
-  name?: string
-  description?: string
-  rarity?: string
-  price?: number
-  amount: number
+  amount: number // TODO: maybe this could be individualData.length
+  individualData: {
+    id: string
+  }[]
 }
 
 export type Name = {
@@ -236,45 +163,6 @@ export type LAND = {
   description?: string
   price?: string
   image?: string
-}
-
-export interface LandsQueryResponse {
-  nfts: LandFromQuery[]
-}
-
-export type LandFromQuery = {
-  name: string
-  contractAddress: string
-  tokenId: string
-  category: string
-  parcel: {
-    x: string
-    y: string
-    data: {
-      description: string
-    }
-  }
-  estate: {
-    data: {
-      description: string
-    }
-  }
-  activeOrder: {
-    price: string
-  }
-  image: string
-}
-
-export type LandForResponse = {
-  name: string
-  contractAddress: string
-  tokenId: string
-  category: string
-  x?: string
-  y?: string
-  description: string | undefined
-  price: string | null
-  image: string
 }
 
 export type PaginatedResponse<T> = {
@@ -309,8 +197,12 @@ export type ThirdParty = {
   resolver: string
 }
 
-export type ThirdPartyResolversResponse = {
-  thirdParties: ThirdParty[]
+export type ThirdPartyAsset = {
+  id: string
+  amount: number
+  urn: {
+    decentraland: string
+  }
 }
 
 export type ThirdPartyAssets = {

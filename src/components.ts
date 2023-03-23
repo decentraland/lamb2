@@ -12,10 +12,10 @@ import { createDefinitionsFetcherComponent } from './adapters/definitions-fetche
 import { createWearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
 import { createElementsFetcherComponent } from './adapters/elements-fetcher'
 import { createThirdPartyProvidersFetcherComponent } from './adapters/third-party-providers-fetcher'
-import { fetchAllThirdPartyWearables } from './logic/fetch-third-party-wearables'
-import { fetchAllEmotes, fetchAllWearables } from './logic/fetch-items'
-import { fetchAllNames } from './logic/fetch-names'
-import { fetchAllLANDs } from './logic/fetch-lands'
+import { fetchAllThirdPartyWearables } from './logic/fetch-elements/fetch-third-party-wearables'
+import { fetchAllEmotes, fetchAllWearables } from './logic/fetch-elements/fetch-items'
+import { fetchAllNames } from './logic/fetch-elements/fetch-names'
+import { fetchAllLANDs } from './logic/fetch-elements/fetch-lands'
 
 // Initialize all the components of the app
 export async function initComponents(

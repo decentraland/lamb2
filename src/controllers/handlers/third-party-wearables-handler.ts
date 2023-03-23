@@ -3,7 +3,7 @@ import { ThirdPartyProviderError } from '../../adapters/third-party-providers-fe
 import {
   fetchThirdPartyWearablesFromThirdPartyName,
   ThirdPartyNotFoundError
-} from '../../logic/fetch-third-party-wearables'
+} from '../../logic/fetch-elements/fetch-third-party-wearables'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { parseUrn } from '../../logic/utils'
 import { Definition, ErrorResponse, HandlerContextWithPath, PaginatedResponse, ThirdPartyWearable } from '../../types'

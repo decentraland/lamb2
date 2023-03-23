@@ -2,7 +2,7 @@ import { BlockchainCollectionThirdPartyName } from '@dcl/urn-resolver'
 import { IBaseComponent } from '@well-known-components/interfaces'
 import LRU from 'lru-cache'
 import { findAsync, parseUrn } from '../logic/utils'
-import { AppComponents, ThirdParty, ThirdPartyResolversResponse } from '../types'
+import { AppComponents, ThirdParty } from '../types'
 
 const QUERY_ALL_THIRD_PARTY_RESOLVERS = `
 {
@@ -20,6 +20,10 @@ export class ThirdPartyProviderError extends Error {
     super(message)
     Error.captureStackTrace(this, this.constructor)
   }
+}
+
+type ThirdPartyResolversQueryResults = {
+  thirdParties: ThirdParty[]
 }
 
 // Example:
@@ -55,7 +59,7 @@ export function createThirdPartyProvidersFetcherComponent({
     fetchMethod: async function (_: number, staleValue: ThirdParty[] | undefined) {
       try {
         const tpProviders = (
-          await theGraph.thirdPartyRegistrySubgraph.query<ThirdPartyResolversResponse>(
+          await theGraph.thirdPartyRegistrySubgraph.query<ThirdPartyResolversQueryResults>(
             QUERY_ALL_THIRD_PARTY_RESOLVERS,
             {}
           )

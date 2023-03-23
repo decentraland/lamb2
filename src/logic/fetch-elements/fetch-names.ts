@@ -1,4 +1,4 @@
-import { AppComponents, Name } from '../types'
+import { AppComponents, Name } from '../../types'
 import { fetchAllNFTs, THE_GRAPH_PAGE_SIZE } from './fetch-elements'
 
 const QUERY_NAMES_PAGINATED: string = `

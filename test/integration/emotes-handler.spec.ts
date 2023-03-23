@@ -2,7 +2,7 @@ import { test } from '../components'
 import { generateDefinitions, generateEmotes } from '../data/emotes'
 import Wallet from 'ethereumjs-wallet'
 import { Item } from '../../src/types'
-import { ItemFromQuery } from '../../src/logic/fetch-items'
+import { ItemFromQuery } from '../../src/logic/fetch-elements/fetch-items'
 
 // NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
 test('emotes-handler: GET /users/:address/emotes should', function ({ components }) {

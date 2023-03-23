@@ -1,6 +1,6 @@
-import { AppComponents, Item } from '../types'
+import { AppComponents, Item } from '../../types'
 import { fetchAllNFTs, THE_GRAPH_PAGE_SIZE } from './fetch-elements'
-import { compareByRarity } from './utils'
+import { compareByRarity } from '../utils'
 
 function groupItemsByURN(items: ItemFromQuery[]): Item[] {
   const itemsByURN = new Map<string, Item>()

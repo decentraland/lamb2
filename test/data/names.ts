@@ -1,4 +1,4 @@
-import { NameFromQuery } from "../../src/logic/fetch-names"
+import { NameFromQuery } from "../../src/logic/fetch-elements/fetch-names"
 
 export function generateNames(quantity: number): NameFromQuery[] {
   const generatedNames: NameFromQuery[] = []

@@ -1,4 +1,4 @@
-import { AppComponents, LAND } from '../types'
+import { AppComponents, LAND } from '../../types'
 import { fetchAllNFTs, THE_GRAPH_PAGE_SIZE } from './fetch-elements'
 
 const QUERY_LANDS: string = `
