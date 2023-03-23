@@ -1,4 +1,4 @@
-import { BlockchainCollectionThirdPartyCollection, parseUrn } from '@dcl/urn-resolver'
+import { BlockchainCollectionThirdPartyName, parseUrn } from '@dcl/urn-resolver'
 import { FetcherError, FetcherErrorCode } from '../adapters/elements-fetcher'
 import { AppComponents, ThirdParty, ThirdPartyAsset, ThirdPartyAssets, ThirdPartyWearable } from '../types'
 import { findAsync } from './utils'
@@ -93,7 +93,7 @@ export async function fetchAllThirdPartyWearablesCollection(
     'thirdPartyWearablesFetcher' | 'thirdPartyProvidersFetcher' | 'fetch' | 'logs' | 'theGraph'
   >,
   address: string,
-  collectionUrn: BlockchainCollectionThirdPartyCollection
+  thirdPartyNameUrn: BlockchainCollectionThirdPartyName
 ): Promise<ThirdPartyWearable[]> {
   let results: ThirdPartyWearable[] = []
 
@@ -105,8 +105,7 @@ export async function fetchAllThirdPartyWearablesCollection(
       if (
         wearableUrn &&
         wearableUrn.type === URN_THIRD_PARTY_ASSET_TYPE &&
-        wearableUrn.collectionId === collectionUrn.collectionId &&
-        wearableUrn.thirdPartyName === collectionUrn.thirdPartyName
+        wearableUrn.thirdPartyName === thirdPartyNameUrn.thirdPartyName
       ) {
         results.push(wearable)
       }
@@ -118,7 +117,7 @@ export async function fetchAllThirdPartyWearablesCollection(
     await components.thirdPartyProvidersFetcher.get(),
     async (thirdParty: ThirdParty): Promise<boolean> => {
       const urn = await parseUrn(thirdParty.id)
-      return !!urn && urn.type === URN_THIRD_PARTY_NAME_TYPE && urn.thirdPartyName === collectionUrn.thirdPartyName
+      return !!urn && urn.type === URN_THIRD_PARTY_NAME_TYPE && urn.thirdPartyName === thirdPartyNameUrn.thirdPartyName
     }
   )
 
@@ -126,17 +125,12 @@ export async function fetchAllThirdPartyWearablesCollection(
     // NOTE: currently lambdas return an empty array with status code 200 for this case
     throw new FetcherError(
       FetcherErrorCode.THIRD_PARTY_NOT_FOUND,
-      `Third Party not found ${collectionUrn.thirdPartyName}`
+      `Third Party not found ${thirdPartyNameUrn.thirdPartyName}`
     )
   }
 
   const assets = await fetchAssets(components, address, thirdParty)
-  results = groupThirdPartyWearablesByURN(
-    assets.filter((asset: ThirdPartyAsset) => {
-      const [collectionId, _] = asset.id.split(':')
-      return collectionId === collectionUrn.collectionId
-    })
-  )
+  results = groupThirdPartyWearablesByURN(assets)
 
   return results
 }

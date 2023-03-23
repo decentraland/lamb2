@@ -156,7 +156,10 @@ export async function thirdPartyCollectionWearablesHandler(
   const logger = logs.getLogger('third-party-collections-handler')
   const { address, collectionId } = context.params
 
-  const urn = await parseUrn(collectionId)
+  // Strip the last part (the 6th part) if a collection contract id is specified
+  const collectionIdCleaned = collectionId.split(':').slice(0, 5).join(':')
+
+  const urn = await parseUrn(collectionIdCleaned)
   if (!urn) {
     return {
       status: 400,
@@ -166,11 +169,12 @@ export async function thirdPartyCollectionWearablesHandler(
     }
   }
 
-  if (urn.type !== 'blockchain-collection-third-party-collection') {
+  if (urn.type !== 'blockchain-collection-third-party-name') {
     return {
       status: 400,
       body: {
-        error: 'Invalid collection id: not a blockchain-collection-third-party-collection URN'
+        error:
+          'Invalid collection id: not a blockchain-collection-third-party-name nor blockchain-collection-third-party-collection URN'
       }
     }
   }
@@ -219,7 +223,7 @@ export async function thirdPartyCollectionWearablesHandler(
           return {
             status: 502,
             body: {
-              error: 'Cannot fetch third parties right now'
+              error: 'Cannot fetch third parties right now. Third party not found'
             }
           }
         }

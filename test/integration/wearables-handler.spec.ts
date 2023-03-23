@@ -95,7 +95,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
-  it.only('return wearables from both collections with includeDefinitions set', async () => {
+  it('return wearables from both collections with includeDefinitions set', async () => {
     const { localFetch, theGraph, content } = components
     const wearables = generateWearables(2)
     const definitions = generateDefinitions(wearables.map((wearable) => wearable.urn))
