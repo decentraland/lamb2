@@ -1,9 +1,10 @@
 import { FetcherError, FetcherErrorCode } from '../../adapters/elements-fetcher'
+import { fetchAndPaginate } from '../../logic/fetch-paginated'
 import { paginationObject } from '../../logic/utils'
 import { Definition, ErrorResponse, HandlerContextWithPath, Item, PaginatedResponse } from '../../types'
 
 // TODO: change this name
-type ItemResponse = Pick<Item, 'urn' | 'amount' | 'individualData' | 'rarity'> & {
+type ItemResponse = Item & {
   definition?: Definition
 }
 
@@ -17,31 +18,25 @@ export async function emotesHandler(
   const pagination = paginationObject(context.url)
 
   try {
-    const { totalAmount, elements } = await emotesFetcher.fetchByOwner(address, pagination)
+    const page = await fetchAndPaginate<ItemResponse>(address, emotesFetcher.fetchOwnedElements, pagination)
 
-    const definitions = includeDefinitions
-      ? await definitionsFetcher.fetchEmotesDefinitions(elements.map((element) => element.urn))
-      : []
-
-    const results: ItemResponse[] = []
-    for (let i = 0; i < elements.length; ++i) {
-      const { urn, amount, individualData, rarity } = elements[i]
-      results.push({
-        urn,
-        amount,
-        individualData,
-        rarity,
-        definition: includeDefinitions ? definitions[i] : undefined
-      })
+    if (includeDefinitions) {
+      const wearables = page.elements
+      const definitions = await definitionsFetcher.fetchEmotesDefinitions(wearables.map((wearable) => wearable.urn))
+      const results: ItemResponse[] = []
+      for (let i = 0; i < wearables.length; ++i) {
+        results.push({
+          ...wearables[i],
+          definition: includeDefinitions ? definitions[i] : undefined
+        })
+      }
+      page.elements = results
     }
 
     return {
       status: 200,
       body: {
-        elements: results,
-        totalAmount: totalAmount,
-        pageNum: pagination.pageNum,
-        pageSize: pagination.pageSize
+        ...page
       }
     }
   } catch (err: any) {

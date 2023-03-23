@@ -14,7 +14,7 @@ import { createTheGraphComponentMock } from './mocks/the-graph-mock'
 import { createContentComponentMock } from './mocks/content-mock'
 import { createDefinitionsFetcherComponent } from '../src/adapters/definitions-fetcher'
 import { createElementsFetcherComponent } from '../src/adapters/elements-fetcher'
-import { fetchAllEmotes, fetchAllWearables } from '../src/logic/fetch-nfts'
+import { fetchAllEmotes, fetchAllWearables } from '../src/logic/fetch-items'
 import { IFetchComponent } from '@well-known-components/http-server'
 import { TheGraphComponent } from '../src/ports/the-graph'
 

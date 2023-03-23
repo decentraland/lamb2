@@ -1,4 +1,5 @@
 import { FetcherError, FetcherErrorCode } from '../../adapters/elements-fetcher'
+import { fetchAndPaginate } from '../../logic/fetch-paginated'
 import { paginationObject } from '../../logic/utils'
 import { ErrorResponse, HandlerContextWithPath, Name, PaginatedResponse } from '../../types'
 
@@ -11,14 +12,11 @@ export async function namesHandler(
   const logger = logs.getLogger('names-handler')
 
   try {
-    const { elements, totalAmount } = await namesFetcher.fetchByOwner(address, pagination)
+    const page = await fetchAndPaginate<Name>(address, namesFetcher.fetchOwnedElements, pagination)
     return {
       status: 200,
       body: {
-        elements,
-        totalAmount,
-        pageNum: pagination.pageNum,
-        pageSize: pagination.pageSize
+        ...page
       }
     }
   } catch (err: any) {

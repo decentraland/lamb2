@@ -1,6 +1,6 @@
 import LRU from 'lru-cache'
 import { IBaseComponent } from '@well-known-components/interfaces'
-import { AppComponents, Limits } from '../types'
+import { AppComponents } from '../types'
 
 export type ElementsResult<T> = {
   elements: T[]
@@ -8,8 +8,7 @@ export type ElementsResult<T> = {
 }
 
 export type ElementsFetcher<T> = IBaseComponent & {
-  fetchByOwner(address: string, limits: Limits): Promise<ElementsResult<T>>
-  fetchAllByOwner(address: string): Promise<ElementsResult<T>>
+  fetchOwnedElements(address: string): Promise<T[]>
 }
 
 export enum FetcherErrorCode {
@@ -45,31 +44,14 @@ export function createElementsFetcherComponent<T>(
   })
 
   return {
-    async fetchByOwner(address: string, { offset, limit }: Limits): Promise<ElementsResult<T>> {
+    async fetchOwnedElements(address: string) {
       const allElements = await cache.fetch(address)
 
       if (allElements) {
-        const totalAmount = allElements.length
-        return {
-          elements: allElements.slice(offset, offset + limit),
-          totalAmount
-        }
+        return allElements
       }
 
       throw new FetcherError(FetcherErrorCode.CANNOT_FETCH_ELEMENTS, `Cannot fetch elements for ${address}`)
-    },
-    async fetchAllByOwner(address: string): Promise<ElementsResult<T>> {
-      const elements = await cache.fetch(address)
-
-      if (elements === undefined || !elements) {
-        throw new FetcherError(FetcherErrorCode.CANNOT_FETCH_ELEMENTS, `Cannot fetch elements for ${address}`)
-      }
-
-      const totalAmount = elements.length
-      return {
-        elements,
-        totalAmount
-      }
     }
   }
 }

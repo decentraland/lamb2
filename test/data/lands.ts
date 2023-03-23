@@ -1,4 +1,4 @@
-import { LANDFromQuery } from "../../src/logic/fetch-nfts"
+import { LANDFromQuery } from "../../src/logic/fetch-lands"
 
 export function generateLANDs(quantity: number): LANDFromQuery[] {
   const generatedLANDs: LANDFromQuery[] = []

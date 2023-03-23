@@ -1,7 +1,7 @@
 import { test } from '../components'
 import { generateWearables } from '../data/wearables'
 import Wallet from 'ethereumjs-wallet'
-import { NameFromQuery } from '../../src/logic/fetch-nfts'
+import { NameFromQuery } from '../../src/logic/fetch-names'
 import { Name } from '../../src/types'
 import { generateNames } from '../data/names'
 

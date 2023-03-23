@@ -11,14 +11,11 @@ import { createOwnershipCachesComponent } from './ports/ownership-caches'
 import { createDefinitionsFetcherComponent } from './adapters/definitions-fetcher'
 import { createWearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
 import { createElementsFetcherComponent } from './adapters/elements-fetcher'
-import {
-  fetchAllEmotes,
-  fetchAllLANDs,
-  fetchAllNames,
-  fetchAllThirdPartyWearables,
-  fetchAllWearables
-} from './logic/fetch-nfts'
 import { createThirdPartyProvidersFetcherComponent } from './adapters/third-party-providers-fetcher'
+import { fetchAllThirdPartyWearables } from './logic/fetch-third-party-wearables'
+import { fetchAllEmotes, fetchAllWearables } from './logic/fetch-items'
+import { fetchAllNames } from './logic/fetch-names'
+import { fetchAllLANDs } from './logic/fetch-lands'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -61,7 +58,7 @@ export async function initComponents(
   const namesFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllNames({ theGraph }, address))
   const landsFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllLANDs({ theGraph }, address))
 
-  // old components
+  // old component for old wearable endpoint. Remove in future
   const wearablesCaches = await createWearablesCachesComponent({ config })
 
   return {

@@ -1,4 +1,4 @@
-import { NameFromQuery } from "../../src/logic/fetch-nfts"
+import { NameFromQuery } from "../../src/logic/fetch-names"
 
 export function generateNames(quantity: number): NameFromQuery[] {
   const generatedNames: NameFromQuery[] = []

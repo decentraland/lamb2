@@ -1,5 +1,6 @@
 import { FetcherError, FetcherErrorCode } from '../../adapters/elements-fetcher'
-import { fetchAllThirdPartyWearablesCollection } from '../../logic/fetch-nfts'
+import { fetchAllThirdPartyWearablesCollection } from '../../logic/fetch-third-party-wearables'
+import { fetchAndPaginate } from '../../logic/fetch-paginated'
 import { parseUrn, paginationObject } from '../../logic/utils'
 import {
   Definition,
@@ -13,7 +14,7 @@ import {
 } from '../../types'
 
 // TODO: change this name
-type ItemResponse = Pick<Item, 'urn' | 'amount' | 'individualData' | 'rarity'> & {
+type ItemResponse = Item & {
   definition?: Definition
 }
 
@@ -27,31 +28,25 @@ export async function wearablesHandler(
   const pagination = paginationObject(context.url)
 
   try {
-    const { totalAmount, elements } = await wearablesFetcher.fetchByOwner(address, pagination)
+    const page = await fetchAndPaginate<Item>(address, wearablesFetcher.fetchOwnedElements, pagination)
 
-    const definitions = includeDefinitions
-      ? await definitionsFetcher.fetchWearablesDefinitions(elements.map((element) => element.urn))
-      : []
-
-    const results: ItemResponse[] = []
-    for (let i = 0; i < elements.length; ++i) {
-      const { urn, amount, individualData, rarity } = elements[i]
-      results.push({
-        urn,
-        amount,
-        individualData,
-        rarity,
-        definition: includeDefinitions ? definitions[i] : undefined
-      })
+    if (includeDefinitions) {
+      const wearables = page.elements
+      const definitions = await definitionsFetcher.fetchWearablesDefinitions(wearables.map((wearable) => wearable.urn))
+      const results: ItemResponse[] = []
+      for (let i = 0; i < wearables.length; ++i) {
+        results.push({
+          ...wearables[i],
+          definition: includeDefinitions ? definitions[i] : undefined
+        })
+      }
+      page.elements = results
     }
 
     return {
       status: 200,
       body: {
-        elements: results,
-        totalAmount: totalAmount,
-        pageNum: pagination.pageNum,
-        pageSize: pagination.pageSize
+        ...page
       }
     }
   } catch (err: any) {
@@ -78,7 +73,7 @@ export async function wearablesHandler(
 }
 
 // TODO: change this name
-type ThirdPartyWearableResponse = Pick<ThirdPartyWearable, 'urn' | 'amount' | 'individualData'> & {
+type ThirdPartyWearableResponse = ThirdPartyWearable & {
   definition?: Definition
 }
 
@@ -95,30 +90,29 @@ export async function thirdPartyWearablesHandler(
   const pagination = paginationObject(context.url)
 
   try {
-    const { totalAmount, elements } = await thirdPartyWearablesFetcher.fetchByOwner(address, pagination)
+    const page = await fetchAndPaginate<ThirdPartyWearable>(
+      address,
+      thirdPartyWearablesFetcher.fetchOwnedElements,
+      pagination
+    )
 
-    const definitions = includeDefinitions
-      ? await definitionsFetcher.fetchWearablesDefinitions(elements.map((w) => w.urn))
-      : []
-
-    const results: ThirdPartyWearableResponse[] = []
-    for (let i = 0; i < elements.length; ++i) {
-      const { urn, amount, individualData } = elements[i]
-      results.push({
-        urn,
-        amount,
-        individualData,
-        definition: includeDefinitions ? definitions[i] : undefined
-      })
+    if (includeDefinitions) {
+      const wearables = page.elements
+      const definitions = await definitionsFetcher.fetchWearablesDefinitions(wearables.map((wearable) => wearable.urn))
+      const results: ThirdPartyWearableResponse[] = []
+      for (let i = 0; i < wearables.length; ++i) {
+        results.push({
+          ...wearables[i],
+          definition: includeDefinitions ? definitions[i] : undefined
+        })
+      }
+      page.elements = results
     }
 
     return {
       status: 200,
       body: {
-        elements: results,
-        totalAmount: totalAmount,
-        pageNum: pagination.pageNum,
-        pageSize: pagination.pageSize
+        ...page
       }
     }
   } catch (err: any) {
@@ -185,35 +179,29 @@ export async function thirdPartyCollectionWearablesHandler(
   const pagination = paginationObject(context.url)
 
   try {
-    const { totalAmount, elements } = await fetchAllThirdPartyWearablesCollection(
-      context.components,
+    const page = await fetchAndPaginate<ThirdPartyWearable>(
       address,
-      urn,
+      (address: string) => fetchAllThirdPartyWearablesCollection(context.components, address, urn),
       pagination
     )
 
-    const definitions = includeDefinitions
-      ? await definitionsFetcher.fetchWearablesDefinitions(elements.map((w) => w.urn))
-      : []
-
-    const results: ThirdPartyWearableResponse[] = []
-    for (let i = 0; i < elements.length; ++i) {
-      const { urn, amount, individualData } = elements[i]
-      results.push({
-        urn,
-        amount,
-        individualData,
-        definition: includeDefinitions ? definitions[i] : undefined
-      })
+    if (includeDefinitions) {
+      const wearables = page.elements
+      const definitions = await definitionsFetcher.fetchWearablesDefinitions(wearables.map((wearable) => wearable.urn))
+      const results: ThirdPartyWearableResponse[] = []
+      for (let i = 0; i < wearables.length; ++i) {
+        results.push({
+          ...wearables[i],
+          definition: includeDefinitions ? definitions[i] : undefined
+        })
+      }
+      page.elements = results
     }
 
     return {
       status: 200,
       body: {
-        elements: results,
-        totalAmount: totalAmount,
-        pageNum: pagination.pageNum,
-        pageSize: pagination.pageSize
+        ...page
       }
     }
   } catch (err: any) {

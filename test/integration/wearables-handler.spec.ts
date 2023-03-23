@@ -2,7 +2,7 @@ import { test } from '../components'
 import { generateDefinitions, generateWearables } from '../data/wearables'
 import Wallet from 'ethereumjs-wallet'
 import { Item } from '../../src/types'
-import { ItemFromQuery } from '../../src/logic/fetch-nfts'
+import { ItemFromQuery } from '../../src/logic/fetch-items'
 
 // NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
 test('wearables-handler: GET /users/:address/wearables should', function ({ components }) {
@@ -95,7 +95,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
-  it('return wearables from both collections with includeDefinitions set', async () => {
+  it.only('return wearables from both collections with includeDefinitions set', async () => {
     const { localFetch, theGraph, content } = components
     const wearables = generateWearables(2)
     const definitions = generateDefinitions(wearables.map((wearable) => wearable.urn))
