@@ -1,6 +1,9 @@
+import { BlockchainCollectionThirdPartyName } from '@dcl/urn-resolver'
 import { IBaseComponent } from '@well-known-components/interfaces'
 import LRU from 'lru-cache'
+import { findAsync, parseUrn } from '../logic/utils'
 import { AppComponents, ThirdParty, ThirdPartyResolversResponse } from '../types'
+import { FetcherError, FetcherErrorCode } from './elements-fetcher'
 
 const QUERY_ALL_THIRD_PARTY_RESOLVERS = `
 {
@@ -10,6 +13,8 @@ const QUERY_ALL_THIRD_PARTY_RESOLVERS = `
   }
 }
 `
+
+const URN_THIRD_PARTY_NAME_TYPE = 'blockchain-collection-third-party-name'
 
 // Example:
 //   "thirdParties": [
@@ -28,8 +33,8 @@ const QUERY_ALL_THIRD_PARTY_RESOLVERS = `
 //  ]
 
 export type ThirdPartyProvidersFetcher = IBaseComponent & {
-  get(): Promise<ThirdParty[]>
-  // TODO Expose fetch?
+  getAll(): Promise<ThirdParty[]>
+  get(thirdPartyNameUrn: BlockchainCollectionThirdPartyName): Promise<ThirdParty | undefined>
 }
 
 export function createThirdPartyProvidersFetcherComponent({
@@ -56,12 +61,29 @@ export function createThirdPartyProvidersFetcherComponent({
       }
     }
   })
+
+  async function getAll() {
+    const thirdParties = await thirdPartiesCache.fetch(0)
+    if (thirdParties) {
+      return thirdParties
+    }
+    throw new FetcherError(FetcherErrorCode.CANNOT_FETCH_THIRD_PARTIES, `Cannot fetch third party providers`)
+  }
+
   return {
     async start() {
       await thirdPartiesCache.fetch(0)
     },
-    async get() {
-      return thirdPartiesCache.get(0)!
+    getAll,
+    async get(thirdPartyNameUrn: BlockchainCollectionThirdPartyName) {
+      const thirdParty = await findAsync(await getAll(), async (thirdParty: ThirdParty): Promise<boolean> => {
+        const urn = await parseUrn(thirdParty.id)
+        return (
+          !!urn && urn.type === URN_THIRD_PARTY_NAME_TYPE && urn.thirdPartyName === thirdPartyNameUrn.thirdPartyName
+        )
+      })
+
+      return thirdParty
     }
   }
 }

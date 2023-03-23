@@ -1,7 +1,6 @@
 import { BlockchainCollectionThirdPartyName, parseUrn } from '@dcl/urn-resolver'
 import { FetcherError, FetcherErrorCode } from '../adapters/elements-fetcher'
 import { AppComponents, ThirdParty, ThirdPartyAsset, ThirdPartyAssets, ThirdPartyWearable } from '../types'
-import { findAsync } from './utils'
 
 const URN_THIRD_PARTY_NAME_TYPE = 'blockchain-collection-third-party-name'
 const URN_THIRD_PARTY_ASSET_TYPE = 'blockchain-collection-third-party'
@@ -77,7 +76,7 @@ export async function fetchAllThirdPartyWearables(
   components: Pick<AppComponents, 'theGraph' | 'thirdPartyProvidersFetcher' | 'fetch' | 'logs'>,
   owner: string
 ): Promise<ThirdPartyWearable[]> {
-  const thirdParties = await components.thirdPartyProvidersFetcher.get()
+  const thirdParties = await components.thirdPartyProvidersFetcher.getAll()
 
   // TODO: test if stateValue is keept in case of an exception
   const thirdPartyAssets = await Promise.all(
@@ -87,7 +86,7 @@ export async function fetchAllThirdPartyWearables(
   return groupThirdPartyWearablesByURN(thirdPartyAssets.flat())
 }
 
-export async function fetchAllThirdPartyWearablesCollection(
+export async function fetchThirdPartyWearablesFromThirdPartyName(
   components: Pick<
     AppComponents,
     'thirdPartyWearablesFetcher' | 'thirdPartyProvidersFetcher' | 'fetch' | 'logs' | 'theGraph'
@@ -95,11 +94,11 @@ export async function fetchAllThirdPartyWearablesCollection(
   address: string,
   thirdPartyNameUrn: BlockchainCollectionThirdPartyName
 ): Promise<ThirdPartyWearable[]> {
-  let results: ThirdPartyWearable[] = []
+  const results: ThirdPartyWearable[] = []
 
   const allWearables = await components.thirdPartyWearablesFetcher.fetchOwnedElements(address)
+
   if (allWearables) {
-    // NOTE: if third party wearables are in cache
     for (const wearable of allWearables) {
       const wearableUrn = await parseUrn(wearable.urn)
       if (
@@ -112,14 +111,7 @@ export async function fetchAllThirdPartyWearablesCollection(
     }
   }
 
-  const thirdParty = await findAsync(
-    // TODO: review this (await thirdPartiesCache.fetch(0))!,
-    await components.thirdPartyProvidersFetcher.get(),
-    async (thirdParty: ThirdParty): Promise<boolean> => {
-      const urn = await parseUrn(thirdParty.id)
-      return !!urn && urn.type === URN_THIRD_PARTY_NAME_TYPE && urn.thirdPartyName === thirdPartyNameUrn.thirdPartyName
-    }
-  )
+  const thirdParty = await components.thirdPartyProvidersFetcher.get(thirdPartyNameUrn)
 
   if (!thirdParty) {
     // NOTE: currently lambdas return an empty array with status code 200 for this case
@@ -128,9 +120,6 @@ export async function fetchAllThirdPartyWearablesCollection(
       `Third Party not found ${thirdPartyNameUrn.thirdPartyName}`
     )
   }
-
-  const assets = await fetchAssets(components, address, thirdParty)
-  results = groupThirdPartyWearablesByURN(assets)
 
   return results
 }

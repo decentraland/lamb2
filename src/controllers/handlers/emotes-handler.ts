@@ -1,6 +1,5 @@
 import { FetcherError, FetcherErrorCode } from '../../adapters/elements-fetcher'
-import { fetchAndPaginate } from '../../logic/fetch-paginated'
-import { paginationObject } from '../../logic/utils'
+import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { Definition, ErrorResponse, HandlerContextWithPath, Item, PaginatedResponse } from '../../types'
 
 // TODO: change this name

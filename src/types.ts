@@ -329,18 +329,6 @@ export type ThirdPartyResolversResponse = {
   thirdParties: ThirdParty[]
 }
 
-export enum ThirdPartyFetcherErrorCode {
-  CANNOT_LOAD_THIRD_PARTY_WEARABLES,
-  THIRD_PARTY_NOT_FOUND
-}
-
-export class ThirdPartyFetcherError extends Error {
-  constructor(public code: ThirdPartyFetcherErrorCode, message: string) {
-    super(message)
-    Error.captureStackTrace(this, this.constructor)
-  }
-}
-
 export type ThirdPartyAssets = {
   address: string
   total: number

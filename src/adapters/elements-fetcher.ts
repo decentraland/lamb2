@@ -1,6 +1,6 @@
 import LRU from 'lru-cache'
-import { IBaseComponent } from '@well-known-components/interfaces'
 import { AppComponents } from '../types'
+import { IBaseComponent } from '@well-known-components/interfaces'
 
 export type ElementsResult<T> = {
   elements: T[]
@@ -13,7 +13,8 @@ export type ElementsFetcher<T> = IBaseComponent & {
 
 export enum FetcherErrorCode {
   CANNOT_FETCH_ELEMENTS,
-  THIRD_PARTY_NOT_FOUND
+  THIRD_PARTY_NOT_FOUND,
+  CANNOT_FETCH_THIRD_PARTIES
 }
 
 export class FetcherError extends Error {
