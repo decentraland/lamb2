@@ -54,7 +54,7 @@ export type LANDFromQuery = {
   activeOrder?: {
     price: string
   }
-  image: string
+  image?: string
 }
 
 export async function fetchAllLANDs(components: Pick<AppComponents, 'theGraph'>, owner: string): Promise<LAND[]> {
@@ -63,7 +63,7 @@ export async function fetchAllLANDs(components: Pick<AppComponents, 'theGraph'>,
 
     const isParcel = category === 'parcel'
     const x = isParcel ? parcel?.x : undefined
-    const y = isParcel ? parcel?.x : undefined
+    const y = isParcel ? parcel?.y : undefined
     const description = isParcel ? parcel?.data?.description : estate?.data?.description
     return {
       name: name === null ? undefined : name,

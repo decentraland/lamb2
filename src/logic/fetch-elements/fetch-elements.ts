@@ -19,7 +19,7 @@ export async function fetchAllNFTs<T, E extends NFT>(
   const elements = []
 
   const owner = address.toLowerCase()
-  let idFrom = ''
+  let idFrom: string = ''
   let result: QueryResults<E>
   do {
     result = await subgraph.query<QueryResults<E>>(query, {
@@ -35,7 +35,13 @@ export async function fetchAllNFTs<T, E extends NFT>(
       elements.push(nft)
     }
 
-    idFrom = elements[elements.length - 1].id
+    const idFromLastElement = elements[elements.length - 1].id
+
+    if (!idFromLastElement) {
+      throw new Error('Error getting id from last entity from previous page')
+    }
+
+    idFrom = idFromLastElement
   } while (result.nfts.length === THE_GRAPH_PAGE_SIZE)
   return elements.map(mapToModel)
 }
