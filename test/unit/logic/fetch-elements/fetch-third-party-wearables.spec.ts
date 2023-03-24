@@ -1,7 +1,7 @@
 import { test } from '../../../components'
 import { fetchAllThirdPartyWearables, fetchThirdPartyWearablesFromThirdPartyName, ThirdPartyNotFoundError } from '../../../../src/logic/fetch-elements/fetch-third-party-wearables'
 import { ThirdPartyAsset, ThirdPartyWearable } from '../../../../src/types'
-import { BlockchainCollectionThirdPartyName, parseUrn } from '@dcl/urn-resolver'
+import { parseUrn } from '@dcl/urn-resolver'
 
 describe('fetchAllThirdPartyWearables', () => {
   test('resolver apis is called correctly', function ({ components }) {

@@ -82,7 +82,7 @@ export function createThirdPartyProvidersFetcherComponent({
 
   return {
     async start() {
-      await thirdPartiesCache.fetch(0)
+      await getAll()
     },
     getAll,
     async get(thirdPartyNameUrn: BlockchainCollectionThirdPartyName) {

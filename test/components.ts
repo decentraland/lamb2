@@ -43,6 +43,24 @@ async function initComponents(fetchComponent?: IFetchComponent, theGraphComponen
   const config = await createDotEnvConfigComponent({}, { COMMIT_HASH: 'commit_hash', ...defaultFetchConfig })
   const fetch = fetchComponent ? fetchComponent : await createLocalFetchCompoment(config)
   const theGraphMock = theGraphComponent ? theGraphComponent : createTheGraphComponentMock()
+  if (!theGraphComponent) {
+    jest.spyOn(theGraphMock.thirdPartyRegistrySubgraph, 'query').mockResolvedValue({
+      thirdParties: [
+        {
+          id: "urn:decentraland:matic:collections-thirdparty:baby-doge-coin",
+          resolver: "https://decentraland-api.babydoge.com/v1"
+        },
+        {
+          id: "urn:decentraland:matic:collections-thirdparty:cryptoavatars",
+          resolver: "https://api.cryptoavatars.io/"
+        },
+        {
+          id: "urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip",
+          resolver: "https://wearables-api.unxd.com"
+        }
+      ]
+    })
+  }
 
   const components = await originalInitComponents(fetch, theGraphMock)
 

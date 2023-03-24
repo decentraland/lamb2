@@ -117,7 +117,6 @@ describe('fetchWearables', () => {
       ] as ItemFromQuery[]
     })
     const wearables = await fetchAllWearables({ theGraph }, 'anOwner')
-    console.log(wearables)
     expect(wearables).toEqual([
       {
         urn: 'urn1',
