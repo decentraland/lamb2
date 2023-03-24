@@ -10,12 +10,11 @@ type QueryResults<E extends NFT> = {
 
 export const THE_GRAPH_PAGE_SIZE = 1000
 
-export async function fetchAllNFTs<T, E extends NFT>(
+export async function fetchAllNFTs<E extends NFT>(
   subgraph: ISubgraphComponent,
   query: string,
-  address: string,
-  mapToModel: (e: E) => T
-): Promise<T[]> {
+  address: string
+): Promise<E[]> {
   const elements = []
 
   const owner = address.toLowerCase()
@@ -43,5 +42,5 @@ export async function fetchAllNFTs<T, E extends NFT>(
 
     idFrom = idFromLastElement
   } while (result.nfts.length === THE_GRAPH_PAGE_SIZE)
-  return elements.map(mapToModel)
+  return elements
 }

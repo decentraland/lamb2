@@ -58,9 +58,8 @@ export type LANDFromQuery = {
 }
 
 export async function fetchAllLANDs(components: Pick<AppComponents, 'theGraph'>, owner: string): Promise<LAND[]> {
-  return fetchAllNFTs<LAND, LANDFromQuery>(components.theGraph.ensSubgraph, QUERY_LANDS, owner, (land) => {
+  return (await fetchAllNFTs<LANDFromQuery>(components.theGraph.ensSubgraph, QUERY_LANDS, owner)).map((land) => {
     const { name, contractAddress, tokenId, category, parcel, estate, image, activeOrder } = land
-
     const isParcel = category === 'parcel'
     const x = isParcel ? parcel?.x : undefined
     const y = isParcel ? parcel?.y : undefined

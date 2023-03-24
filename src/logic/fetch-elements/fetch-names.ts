@@ -30,7 +30,7 @@ export type NameFromQuery = {
 }
 
 export async function fetchAllNames(components: Pick<AppComponents, 'theGraph'>, owner: string): Promise<Name[]> {
-  return fetchAllNFTs<Name, NameFromQuery>(components.theGraph.ensSubgraph, QUERY_NAMES_PAGINATED, owner, (n) => {
+  return (await fetchAllNFTs<NameFromQuery>(components.theGraph.ensSubgraph, QUERY_NAMES_PAGINATED, owner)).map((n) => {
     const { name, contractAddress, tokenId, activeOrder } = n
     return {
       name,

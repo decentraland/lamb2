@@ -69,27 +69,24 @@ export type ItemFromQuery = {
 }
 
 export async function fetchAllEmotes(components: Pick<AppComponents, 'theGraph'>, owner: string): Promise<Item[]> {
-  const emotes = await fetchAllNFTs<ItemFromQuery, ItemFromQuery>(
+  const emotes = await fetchAllNFTs<ItemFromQuery>(
     components.theGraph.maticCollectionsSubgraph,
     QUERIES['emote'],
-    owner,
-    (n) => n
+    owner
   )
   return groupItemsByURN(emotes).sort(compareByRarity)
 }
 
 export async function fetchAllWearables(components: Pick<AppComponents, 'theGraph'>, owner: string): Promise<Item[]> {
-  const ethereumWearables = await fetchAllNFTs<ItemFromQuery, ItemFromQuery>(
+  const ethereumWearables = await fetchAllNFTs<ItemFromQuery>(
     components.theGraph.ethereumCollectionsSubgraph,
     QUERIES['emote'],
-    owner,
-    (n) => n
+    owner
   )
-  const maticWearables = await fetchAllNFTs<ItemFromQuery, ItemFromQuery>(
+  const maticWearables = await fetchAllNFTs<ItemFromQuery>(
     components.theGraph.maticCollectionsSubgraph,
     QUERIES['wearable'],
-    owner,
-    (n) => n
+    owner
   )
   return groupItemsByURN(ethereumWearables.concat(maticWearables)).sort(compareByRarity)
 }
