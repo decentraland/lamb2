@@ -27,6 +27,7 @@ async function fetchAssets(
         logger.error(`Http status ${response.status} from ${url}`)
         break
       }
+
       const responseVal = await response.json()
       const assetsByOwner = responseVal as ThirdPartyAssets
       if (!assetsByOwner) {

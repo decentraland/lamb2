@@ -1,6 +1,5 @@
 import { createLogComponent } from "@well-known-components/logger"
 import { createElementsFetcherComponent } from "../../../src/adapters/elements-fetcher"
-import * as LRU from 'lru-cache'
 
 it('when fetch successes, it returns the elements', async () => {
   const logs = await createLogComponent({})
