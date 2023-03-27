@@ -1,6 +1,6 @@
 import { createLogComponent } from "@well-known-components/logger"
 import { createTheGraphComponentMock } from "../../mocks/the-graph-mock"
-import { createThirdPartyProvidersFetcherComponent, ThirdPartyProviderError } from "../../../src/adapters/third-party-providers-fetcher"
+import { createThirdPartyProvidersFetcherComponent, ThirdPartyProviderFetcherError } from "../../../src/adapters/third-party-providers-fetcher"
 import { parseUrn } from "@dcl/urn-resolver"
 
 it('fails to start if fetch fails', async () => {
@@ -8,7 +8,7 @@ it('fails to start if fetch fails', async () => {
   const theGraph = createTheGraphComponentMock()
   jest.spyOn(theGraph.thirdPartyRegistrySubgraph, 'query').mockRejectedValue({})
   const thirdPartyProviders = createThirdPartyProvidersFetcherComponent({ logs, theGraph })
-  await expect(thirdPartyProviders.start({ started: jest.fn(), live: jest.fn(), getComponents: jest.fn() })).rejects.toThrow(ThirdPartyProviderError)
+  await expect(thirdPartyProviders.start({ started: jest.fn(), live: jest.fn(), getComponents: jest.fn() })).rejects.toThrow(ThirdPartyProviderFetcherError)
 })
 
 it('if fetch success, it starts ok', async () => {

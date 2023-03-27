@@ -1,3 +1,5 @@
+import { ThirdPartyWearable } from "../../src/types"
+
 const TWO_DAYS = (2 * 24 * 60 * 60 * 1000)
 
 export function generateWearables(quantity: number) {
@@ -41,7 +43,7 @@ export function generateDefinitions(urns: string[]) {
     }))
 }
 
-export function generateThirdPartyWearables(quantity: number) {
+export function generateThirdPartyWearables(quantity: number): ThirdPartyWearable[] {
     const generatedThirdPartyWearables = []
     for (let i = 0; i < quantity; i++) {
         generatedThirdPartyWearables.push({
@@ -52,7 +54,6 @@ export function generateThirdPartyWearables(quantity: number) {
             }
         })
     }
-
     return generatedThirdPartyWearables
 }
 

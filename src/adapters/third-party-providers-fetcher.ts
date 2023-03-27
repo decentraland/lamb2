@@ -15,7 +15,7 @@ const QUERY_ALL_THIRD_PARTY_RESOLVERS = `
 
 const URN_THIRD_PARTY_NAME_TYPE = 'blockchain-collection-third-party-name'
 
-export class ThirdPartyProviderError extends Error {
+export class ThirdPartyProviderFetcherError extends Error {
   constructor(message: string) {
     super(message)
     Error.captureStackTrace(this, this.constructor)
@@ -77,7 +77,7 @@ export function createThirdPartyProvidersFetcherComponent({
     if (thirdParties) {
       return thirdParties
     }
-    throw new ThirdPartyProviderError(`Cannot fetch third party providers`)
+    throw new ThirdPartyProviderFetcherError(`Cannot fetch third party providers`)
   }
 
   return {

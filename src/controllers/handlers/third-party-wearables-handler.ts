@@ -1,5 +1,5 @@
 import { FetcherError } from '../../adapters/elements-fetcher'
-import { ThirdPartyProviderError } from '../../adapters/third-party-providers-fetcher'
+import { ThirdPartyProviderFetcherError } from '../../adapters/third-party-providers-fetcher'
 import {
   fetchThirdPartyWearablesFromThirdPartyName,
   ThirdPartyNotFoundError
@@ -59,7 +59,7 @@ export async function thirdPartyWearablesHandler(
           error: 'Cannot fetch third partiy wearables right now'
         }
       }
-    } else if (err instanceof ThirdPartyProviderError) {
+    } else if (err instanceof ThirdPartyProviderFetcherError) {
       return {
         status: 502,
         body: {
@@ -147,7 +147,7 @@ export async function thirdPartyCollectionWearablesHandler(
           error: 'Cannot fetch third partiy wearables right now'
         }
       }
-    } else if (err instanceof ThirdPartyProviderError) {
+    } else if (err instanceof ThirdPartyProviderFetcherError) {
       return {
         status: 502,
         body: {
