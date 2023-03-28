@@ -8,7 +8,7 @@ import type {
 } from '@well-known-components/interfaces'
 import { metricDeclarations } from './metrics'
 import { TheGraphComponent } from './ports/the-graph'
-import { Profile, IPFSv1, IPFSv2, I18N } from '@dcl/schemas'
+import { Profile, IPFSv1, IPFSv2, I18N, Wearable, WearableRepresentation, Emote, EmoteRepresentationADR74 } from '@dcl/schemas'
 import { ContentComponent } from './ports/content'
 import { OwnershipCachesComponent } from './ports/ownership-caches'
 import { Variables } from '@well-known-components/thegraph-component'
@@ -35,7 +35,8 @@ export type BaseComponents = {
   thirdPartyProvidersFetcher: ThirdPartyProvidersFetcher
   thirdPartyWearablesFetcher: ElementsFetcher<ThirdPartyWearable>
   emotesFetcher: ElementsFetcher<Item>
-  definitionsFetcher: DefinitionsFetcher
+  emoteDefinitionsFetcher: DefinitionsFetcher<EmoteDefinition>
+  wearableDefinitionsFetcher: DefinitionsFetcher<WearableDefinition>
   namesFetcher: ElementsFetcher<Name>
   landsFetcher: ElementsFetcher<LAND>
 
@@ -90,41 +91,6 @@ export interface TPWResolver {
  * @public
  */
 export type QueryGraph = <T = any>(query: string, variables?: Variables, remainingAttempts?: number) => Promise<T>
-
-// TODO: review this type: (ref https://github.com/decentraland/catalyst/blob/main/lambdas/src/apis/collections/types.ts#L9)
-// http://localhost:7272/users/0x5447C87068b3d99F50a439f98a2B420585B34A93/wearables?includeDefinitions=true
-// https://peer-ec2.decentraland.org/lambdas/collections/wearables-by-owner/0x5447C87068b3d99F50a439f98a2B420585B34A93?includeDefinitions=true
-export type Definition = {
-  id: string
-  description: string
-  image: string
-  thumbnail: string
-  collectionAddress: string
-  rarity: string
-  createdAt: number
-  updatedAt: number
-  data: {
-    replaces: string[]
-    hides: string[]
-    tags: string[]
-    category: string
-    representations: Representation[]
-  }
-  i18n: I18N[]
-}
-
-type Representation = {
-  bodyShapes: string[]
-  mainFile: string
-  overrideReplaces: string[]
-  overrideHides: string[]
-  contents: Content[]
-}
-
-type Content = {
-  key: string
-  url: string
-}
 
 export type Item = {
   urn: string
@@ -211,4 +177,23 @@ export type ThirdPartyAssets = {
   page: number
   assets: ThirdPartyAsset[]
   next?: string
+}
+
+export type WearableDefinition = Omit<Wearable, 'data'> & {
+  data: Omit<Wearable['data'], 'representations'> & {
+    representations: WearableDefinitionRepresentation[]
+  }
+}
+export type WearableDefinitionRepresentation = Omit<WearableRepresentation, 'contents'> & {
+  contents: { key: string; url: string }[]
+}
+
+export type EmoteDefinition = Omit<Emote, 'emoteDataADR74'> & {
+  emoteDataADR74: Omit<Emote['emoteDataADR74'], 'representations'> & {
+    representations: EmoteDefinitionRepresentation[]
+  }
+}
+
+export type EmoteDefinitionRepresentation = Omit<EmoteRepresentationADR74, 'contents'> & {
+  contents: { key: string; url: string }[]
 }

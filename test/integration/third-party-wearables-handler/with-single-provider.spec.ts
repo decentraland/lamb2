@@ -1,5 +1,5 @@
 import { testWithComponents } from '../../components'
-import { generateDefinitions, generateThirdPartyWearables, getThirdPartyProviders } from '../../data/wearables'
+import { generateWearableContentDefinitions, generateThirdPartyWearables, getThirdPartyProviders } from '../../data/wearables'
 import Wallet from 'ethereumjs-wallet'
 import { createTheGraphComponentMock } from '../../mocks/the-graph-mock'
 
@@ -79,7 +79,7 @@ testWithComponents(() => {
   it('return wearables when found with definitions when set', async () => {
     const { localFetch, fetch, content } = components
     const wearables = generateThirdPartyWearables(2)
-    const definitions = generateDefinitions(wearables.map(wearable => wearable.urn.decentraland))
+    const definitions = generateWearableContentDefinitions(wearables.map(wearable => wearable.urn.decentraland))
 
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
     fetch.fetch = jest.fn()
@@ -104,7 +104,7 @@ testWithComponents(() => {
     const { localFetch, fetch, content } = components
     const wearables = generateThirdPartyWearables(2)
     wearables[0].urn.decentraland = 'non-cached-urn'
-    const definitions = generateDefinitions([wearables[1].urn.decentraland])
+    const definitions = generateWearableContentDefinitions([wearables[1].urn.decentraland])
 
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
     fetch.fetch = jest.fn()
@@ -129,7 +129,7 @@ testWithComponents(() => {
     const { localFetch, fetch, content } = components
     const wearables = generateThirdPartyWearables(1)
     wearables[0].urn.decentraland = 'to-be-cached-urn'
-    const definitions = generateDefinitions([wearables[0].urn.decentraland])
+    const definitions = generateWearableContentDefinitions([wearables[0].urn.decentraland])
 
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
     fetch.fetch = jest.fn()

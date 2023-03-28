@@ -1,16 +1,20 @@
+import { WearableDefinition } from '@dcl/schemas'
 import { FetcherError } from '../../adapters/elements-fetcher'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
-import { Definition, ErrorResponse, HandlerContextWithPath, Item, PaginatedResponse } from '../../types'
+import { ErrorResponse, HandlerContextWithPath, Item, PaginatedResponse } from '../../types'
 
 // TODO: change this name
 type ItemResponse = Item & {
-  definition?: Definition
+  definition?: WearableDefinition
 }
 
 export async function wearablesHandler(
-  context: HandlerContextWithPath<'logs' | 'wearablesFetcher' | 'definitionsFetcher', '/users/:address/wearables'>
+  context: HandlerContextWithPath<
+    'logs' | 'wearablesFetcher' | 'wearableDefinitionsFetcher',
+    '/users/:address/wearables'
+  >
 ): Promise<PaginatedResponse<ItemResponse> | ErrorResponse> {
-  const { logs, definitionsFetcher, wearablesFetcher } = context.components
+  const { logs, wearableDefinitionsFetcher, wearablesFetcher } = context.components
   const { address } = context.params
   const logger = logs.getLogger('wearables-handler')
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
@@ -21,7 +25,9 @@ export async function wearablesHandler(
 
     if (includeDefinitions) {
       const wearables = page.elements
-      const definitions = await definitionsFetcher.fetchWearablesDefinitions(wearables.map((wearable) => wearable.urn))
+      const definitions = await wearableDefinitionsFetcher.fetchItemsDefinitions(
+        wearables.map((wearable) => wearable.urn)
+      )
       const results: ItemResponse[] = []
       for (let i = 0; i < wearables.length; ++i) {
         results.push({

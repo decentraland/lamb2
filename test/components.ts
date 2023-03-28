@@ -12,11 +12,12 @@ import { metricDeclarations } from '../src/metrics'
 import { createLogComponent } from '@well-known-components/logger'
 import { createTheGraphComponentMock } from './mocks/the-graph-mock'
 import { createContentComponentMock } from './mocks/content-mock'
-import { createDefinitionsFetcherComponent } from '../src/adapters/definitions-fetcher'
 import { createElementsFetcherComponent } from '../src/adapters/elements-fetcher'
 import { fetchAllEmotes, fetchAllWearables } from '../src/logic/fetch-elements/fetch-items'
 import { IFetchComponent } from '@well-known-components/http-server'
 import { TheGraphComponent } from '../src/ports/the-graph'
+import { extractEmoteDefinitionFromEntity, extractWearableDefinitionFromEntity } from '../src/adapters/definitions'
+import { createEmoteDefinitionsFetcherComponent, createWearableDefinitionsFetcherComponent } from '../src/adapters/definitions-fetcher'
 
 /**
  * Behaves like Jest "describe" function, used to describe a test for a
@@ -73,7 +74,13 @@ async function initComponents(fetchComponent?: IFetchComponent, theGraphComponen
   const emotesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllEmotes({ theGraph: theGraphMock }, address)
   )
-  const definitionsFetcher = await createDefinitionsFetcherComponent({ config, content: contentMock, logs })
+
+  const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent(
+    { config, logs, content: contentMock }
+  )
+  const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent(
+    { config, logs, content: contentMock }
+  )
 
   return {
     ...components,
@@ -84,6 +91,7 @@ async function initComponents(fetchComponent?: IFetchComponent, theGraphComponen
     content: contentMock,
     wearablesFetcher,
     emotesFetcher,
-    definitionsFetcher
+    wearableDefinitionsFetcher,
+    emoteDefinitionsFetcher
   }
 }

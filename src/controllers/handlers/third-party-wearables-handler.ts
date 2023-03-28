@@ -6,20 +6,26 @@ import {
 } from '../../logic/fetch-elements/fetch-third-party-wearables'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { parseUrn } from '../../logic/utils'
-import { Definition, ErrorResponse, HandlerContextWithPath, PaginatedResponse, ThirdPartyWearable } from '../../types'
+import {
+  ErrorResponse,
+  HandlerContextWithPath,
+  PaginatedResponse,
+  ThirdPartyWearable,
+  WearableDefinition
+} from '../../types'
 
 // TODO: change this name
 type ThirdPartyWearableResponse = ThirdPartyWearable & {
-  definition?: Definition
+  definition?: WearableDefinition
 }
 
 export async function thirdPartyWearablesHandler(
   context: HandlerContextWithPath<
-    'definitionsFetcher' | 'logs' | 'thirdPartyWearablesFetcher',
+    'wearableDefinitionsFetcher' | 'logs' | 'thirdPartyWearablesFetcher',
     '/users/:address/third-party-wearables'
   >
 ): Promise<PaginatedResponse<ThirdPartyWearableResponse> | ErrorResponse> {
-  const { definitionsFetcher, logs, thirdPartyWearablesFetcher } = context.components
+  const { wearableDefinitionsFetcher, logs, thirdPartyWearablesFetcher } = context.components
   const { address } = context.params
   const logger = logs.getLogger('third-party-wearables-handler')
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
@@ -34,7 +40,9 @@ export async function thirdPartyWearablesHandler(
 
     if (includeDefinitions) {
       const wearables = page.elements
-      const definitions = await definitionsFetcher.fetchWearablesDefinitions(wearables.map((wearable) => wearable.urn))
+      const definitions = await wearableDefinitionsFetcher.fetchItemsDefinitions(
+        wearables.map((wearable) => wearable.urn)
+      )
       const results: ThirdPartyWearableResponse[] = []
       for (let i = 0; i < wearables.length; ++i) {
         results.push({
@@ -79,11 +87,16 @@ export async function thirdPartyWearablesHandler(
 
 export async function thirdPartyCollectionWearablesHandler(
   context: HandlerContextWithPath<
-    'definitionsFetcher' | 'logs' | 'thirdPartyWearablesFetcher' | 'thirdPartyProvidersFetcher' | 'theGraph' | 'fetch',
+    | 'wearableDefinitionsFetcher'
+    | 'logs'
+    | 'thirdPartyWearablesFetcher'
+    | 'thirdPartyProvidersFetcher'
+    | 'theGraph'
+    | 'fetch',
     '/users/:address/third-party-wearables/:collectionId'
   >
 ): Promise<PaginatedResponse<ThirdPartyWearableResponse> | ErrorResponse> {
-  const { definitionsFetcher, logs } = context.components
+  const { wearableDefinitionsFetcher, logs } = context.components
   const logger = logs.getLogger('third-party-collections-handler')
   const { address, collectionId } = context.params
 
@@ -122,7 +135,9 @@ export async function thirdPartyCollectionWearablesHandler(
 
     if (includeDefinitions) {
       const wearables = page.elements
-      const definitions = await definitionsFetcher.fetchWearablesDefinitions(wearables.map((wearable) => wearable.urn))
+      const definitions = await wearableDefinitionsFetcher.fetchItemsDefinitions(
+        wearables.map((wearable) => wearable.urn)
+      )
       const results: ThirdPartyWearableResponse[] = []
       for (let i = 0; i < wearables.length; ++i) {
         results.push({

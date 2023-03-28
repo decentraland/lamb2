@@ -1,16 +1,17 @@
+import { EmoteDefinition } from '@dcl/schemas'
 import { FetcherError } from '../../adapters/elements-fetcher'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
-import { Definition, ErrorResponse, HandlerContextWithPath, Item, PaginatedResponse } from '../../types'
+import { ErrorResponse, HandlerContextWithPath, Item, PaginatedResponse } from '../../types'
 
 // TODO: change this name
 type ItemResponse = Item & {
-  definition?: Definition
+  definition?: EmoteDefinition
 }
 
 export async function emotesHandler(
-  context: HandlerContextWithPath<'logs' | 'emotesFetcher' | 'definitionsFetcher', '/users/:address/emotes'>
+  context: HandlerContextWithPath<'logs' | 'emotesFetcher' | 'emoteDefinitionsFetcher', '/users/:address/emotes'>
 ): Promise<PaginatedResponse<ItemResponse> | ErrorResponse> {
-  const { logs, definitionsFetcher, emotesFetcher } = context.components
+  const { logs, emoteDefinitionsFetcher, emotesFetcher } = context.components
   const { address } = context.params
   const logger = logs.getLogger('emotes-handler')
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
@@ -20,12 +21,12 @@ export async function emotesHandler(
     const page = await fetchAndPaginate<ItemResponse>(address, emotesFetcher.fetchOwnedElements, pagination)
 
     if (includeDefinitions) {
-      const wearables = page.elements
-      const definitions = await definitionsFetcher.fetchEmotesDefinitions(wearables.map((wearable) => wearable.urn))
+      const emotes = page.elements
+      const definitions = await emoteDefinitionsFetcher.fetchItemsDefinitions(emotes.map((emote) => emote.urn))
       const results: ItemResponse[] = []
-      for (let i = 0; i < wearables.length; ++i) {
+      for (let i = 0; i < emotes.length; ++i) {
         results.push({
-          ...wearables[i],
+          ...emotes[i],
           definition: includeDefinitions ? definitions[i] : undefined
         })
       }

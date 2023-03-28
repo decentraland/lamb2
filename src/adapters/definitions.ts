@@ -1,8 +1,10 @@
-import { EmoteCategory, Entity } from '@dcl/schemas'
+import { EmoteCategory, EmoteDefinition, Entity, WearableDefinition } from '@dcl/schemas'
 import { AppComponents } from '../types'
 
-export function extractWearableDefinitionFromEntity(components: Pick<AppComponents, 'content'>, entity: Entity) {
-  // TODO: metadata can be null according to the schema, should we add a check before access?
+export function extractWearableDefinitionFromEntity(
+  components: Pick<AppComponents, 'content'>,
+  entity: Entity
+): WearableDefinition {
   const metadata = entity.metadata
   const representations = metadata.data.representations.map((representation: any) =>
     mapRepresentation(components, representation, entity)
@@ -52,7 +54,10 @@ function findHashForFile(entity: Entity, fileName: string | undefined) {
   return undefined
 }
 
-export function extractEmoteDefinitionFromEntity(components: Pick<AppComponents, 'content'>, entity: Entity) {
+export function extractEmoteDefinitionFromEntity(
+  components: Pick<AppComponents, 'content'>,
+  entity: Entity
+): EmoteDefinition {
   const metadata = entity.metadata
 
   // Extract data depending on if it is a new emote or and old one

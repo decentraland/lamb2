@@ -1,3 +1,5 @@
+import { Entity, EntityType, Wearable } from "@dcl/schemas"
+import { ThirdPartyAsset, WearableDefinition } from "../../src/types"
 import { ThirdPartyWearable } from "../../src/types"
 
 const TWO_DAYS = (2 * 24 * 60 * 60 * 1000)
@@ -21,12 +23,12 @@ export function generateWearables(quantity: number) {
     return generatedWearables
 }
 
-export function generateDefinitions(urns: string[]) {
+export function generateWearableContentDefinitions(urns: string[]): Entity[] {
     return urns.map((urn) => ({
         version: '1',
         id: urn,
-        type: 'wearable',
-        pointers: ['0x0', '0x1'],
+        type: EntityType.WEARABLE,
+        pointers: [urn],
         timestamp: Date.now() - TWO_DAYS,
         content: [{
             file: 'file',
@@ -39,11 +41,11 @@ export function generateDefinitions(urns: string[]) {
                     { contents: ['fileName'] }
                 ]
             }
-        }
+        } as Wearable
     }))
 }
 
-export function generateThirdPartyWearables(quantity: number): ThirdPartyWearable[] {
+export function generateThirdPartyWearables(quantity: number): ThirdPartyAsset[] {
     const generatedThirdPartyWearables = []
     for (let i = 0; i < quantity; i++) {
         generatedThirdPartyWearables.push({

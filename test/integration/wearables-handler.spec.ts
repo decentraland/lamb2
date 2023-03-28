@@ -1,5 +1,5 @@
 import { test } from '../components'
-import { generateDefinitions, generateWearables } from '../data/wearables'
+import { generateWearableContentDefinitions, generateWearables } from '../data/wearables'
 import Wallet from 'ethereumjs-wallet'
 import { Item } from '../../src/types'
 import { ItemFromQuery } from '../../src/logic/fetch-elements/fetch-items'
@@ -98,7 +98,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
   it('return wearables from both collections with includeDefinitions set', async () => {
     const { localFetch, theGraph, content } = components
     const wearables = generateWearables(2)
-    const definitions = generateDefinitions(wearables.map((wearable) => wearable.urn))
+    const definitions = generateWearableContentDefinitions(wearables.map((wearable) => wearable.urn))
 
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[0]] })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[1]] })
@@ -118,7 +118,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
   it('return a wearable with definition and another one without definition', async () => {
     const { localFetch, theGraph, content } = components
     const wearables = generateWearables(2)
-    const definitions = generateDefinitions([wearables[0].urn])
+    const definitions = generateWearableContentDefinitions([wearables[0].urn])
 
     // modify wearable urn to avoid cache hit
     wearables[1] = { ...wearables[1], urn: 'anotherUrn' }

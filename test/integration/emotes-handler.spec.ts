@@ -1,5 +1,5 @@
 import { test } from '../components'
-import { generateDefinitions, generateEmotes } from '../data/emotes'
+import { generateEmoteContentDefinitions, generateEmotes } from '../data/emotes'
 import Wallet from 'ethereumjs-wallet'
 import { Item } from '../../src/types'
 import { ItemFromQuery } from '../../src/logic/fetch-elements/fetch-items'
@@ -59,7 +59,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
   it('return emotes with includeDefinitions set', async () => {
     const { localFetch, theGraph, content } = components
     const emotes = generateEmotes(1)
-    const definitions = generateDefinitions(emotes.map((emote) => emote.urn))
+    const definitions = generateEmoteContentDefinitions(emotes.map((emote) => emote.urn))
 
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
@@ -78,7 +78,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
   it('return a emote with definition and another one without definition', async () => {
     const { localFetch, theGraph, content } = components
     const emotes = generateEmotes(2)
-    const definitions = generateDefinitions([emotes[0].urn])
+    const definitions = generateEmoteContentDefinitions([emotes[0].urn])
 
     // modify emote urn to avoid cache hit
     emotes[1] = { ...emotes[1], urn: 'anotherUrn' }
