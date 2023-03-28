@@ -6,8 +6,7 @@ it('when fetch successes, it returns the elements', async () => {
   const expectedElements = [1, 2, 3]
   const expectedAddress = 'anAddress'
   const fetcher = createElementsFetcherComponent<number>({ logs }, async (address: string) => {
-
-    return address === expectedAddress ? expectedElements : []
+    return expectedElements
   })
   const elements = await fetcher.fetchOwnedElements(expectedAddress)
 
@@ -21,8 +20,8 @@ it('it fetches the elements for the specified address', async () => {
   const addressA = 'addressA'
   const addressB = 'addressB'
   const elementsByAddress = {
-    addressA: elementsA,
-    addressB: elementsB
+    addressa: elementsA,
+    addressb: elementsB
   }
   const fetcher = createElementsFetcherComponent<number>({ logs }, async (address: string) => {
     return elementsByAddress[address]
@@ -44,19 +43,19 @@ it('when fetches fail and there is no stale value, it throws error', async () =>
 
 })
 
-it('result is cached', async () => {
+it('result is cached (no case sensitive)', async () => {
   const logs = await createLogComponent({})
   const expectedAddress = 'anAddress'
   let i = 0
   const fetcher = createElementsFetcherComponent<number>({ logs }, async (address: string) => {
     if (i === 0) {
+      i++
       return [0]
     }
-    i++
     return [1]
   })
 
   expect(await fetcher.fetchOwnedElements(expectedAddress)).toEqual([0])
-  expect(await fetcher.fetchOwnedElements(expectedAddress)).toEqual([0])
+  expect(await fetcher.fetchOwnedElements(expectedAddress.toUpperCase())).toEqual([0])
 
 })

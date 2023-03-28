@@ -147,7 +147,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     })
   })
 
-  it('return emotes from cache on second call for the same address', async () => {
+  it('return emotes from cache on second call for the same address (case insensitive)', async () => {
     const { localFetch, theGraph } = components
     const emotes = generateEmotes(7)
     const wallet = Wallet.generate().getAddressString()
@@ -165,7 +165,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
       totalAmount: 7
     })
 
-    const r2 = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=7&pageNum=1`)
+    const r2 = await localFetch.fetch(`/users/${wallet.toUpperCase()}/emotes?pageSize=7&pageNum=1`)
     expect(r2.status).toBe(r.status)
     expect(await r2.json()).toEqual(rBody)
     expect(theGraph.maticCollectionsSubgraph.query).toHaveBeenCalledTimes(1)

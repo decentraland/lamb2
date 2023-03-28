@@ -272,7 +272,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[0], wearables[1], wearables[2], wearables[3]] })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[4], wearables[5], wearables[6]] })
 
-    const r = await localFetch.fetch(`/users/${wallet}/wearables?pageSize=7&pageNum=1`)
+    const r = await localFetch.fetch(`/users/${wallet.toUpperCase()}/wearables?pageSize=7&pageNum=1`)
     const rBody = await r.json()
 
     expect(r.status).toBe(200)

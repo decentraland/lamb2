@@ -1,6 +1,6 @@
-import LRU from 'lru-cache'
 import { AppComponents } from '../types'
 import { IBaseComponent } from '@well-known-components/interfaces'
+import { createLowerCaseKeysCache } from './lowercase-keys-cache'
 
 export type ElementsResult<T> = {
   elements: T[]
@@ -24,7 +24,7 @@ export function createElementsFetcherComponent<T>(
 ): ElementsFetcher<T> {
   const logger = logs.getLogger('elements-fetcher')
 
-  const cache = new LRU<string, T[]>({
+  const cache = createLowerCaseKeysCache<T[]>({
     max: 1000,
     ttl: 600000, // 10 minutes
     fetchMethod: async function (address: string, staleValue: T[] | undefined) {

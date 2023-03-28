@@ -1,8 +1,8 @@
-import LRU from 'lru-cache'
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { AppComponents } from '../types'
 import { EmoteDefinition, Entity, WearableDefinition } from '@dcl/schemas'
 import { extractEmoteDefinitionFromEntity, extractWearableDefinitionFromEntity } from './definitions'
+import { createLowerCaseKeysCache } from './lowercase-keys-cache'
 
 export type DefinitionsFetcher<T extends WearableDefinition | EmoteDefinition> = IBaseComponent & {
   fetchItemsDefinitions(urns: string[]): Promise<(T | undefined)[]>
@@ -15,17 +15,13 @@ async function createDefinitionsFetcherComponent<T extends WearableDefinition | 
   const itemsSize = (await config.getNumber('ITEMS_CACHE_MAX_SIZE')) ?? 1000
   const itemsAge = (await config.getNumber('ITEMS_CACHE_MAX_AGE')) ?? 600000 // 10 minutes by default
 
-  // TODO create lower case cache, get/set wrapped to set the key to lowercase
-  const itemDefinitionsCache = new LRU<string, T>({
-    max: itemsSize,
-    ttl: itemsAge
-  })
+  const itemDefinitionsCache = createLowerCaseKeysCache<T>({ max: itemsSize, ttl: itemsAge })
 
   return {
     async fetchItemsDefinitions(urns: string[]): Promise<(T | undefined)[]> {
       const nonCachedURNs: string[] = []
       for (const urn of urns) {
-        const definition = itemDefinitionsCache.get(urn.toLowerCase())
+        const definition = itemDefinitionsCache.get(urn)
         if (!definition) {
           nonCachedURNs.push(urn)
         }
@@ -35,11 +31,11 @@ async function createDefinitionsFetcherComponent<T extends WearableDefinition | 
         const entities = await content.fetchEntitiesByPointers(nonCachedURNs)
         for (const entity of entities) {
           const definition = entityMapper({ content }, entity)
-          itemDefinitionsCache.set(definition.id.toLowerCase(), definition)
+          itemDefinitionsCache.set(definition.id, definition)
         }
       }
 
-      return urns.map((urn) => itemDefinitionsCache.get(urn.toLowerCase()))
+      return urns.map((urn) => itemDefinitionsCache.get(urn))
     }
   }
 }
