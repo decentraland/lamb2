@@ -8,7 +8,15 @@ import type {
 } from '@well-known-components/interfaces'
 import { metricDeclarations } from './metrics'
 import { TheGraphComponent } from './ports/the-graph'
-import { Profile, IPFSv1, IPFSv2, I18N, Wearable, WearableRepresentation, Emote, EmoteRepresentationADR74 } from '@dcl/schemas'
+import {
+  Profile,
+  IPFSv1,
+  IPFSv2,
+  Wearable,
+  WearableRepresentation,
+  Emote,
+  EmoteRepresentationADR74
+} from '@dcl/schemas'
 import { ContentComponent } from './ports/content'
 import { OwnershipCachesComponent } from './ports/ownership-caches'
 import { Variables } from '@well-known-components/thegraph-component'
