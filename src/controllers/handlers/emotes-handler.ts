@@ -1,75 +1,58 @@
-import { paginationObject } from '../../logic/utils'
-import {
-  Definition,
-  ErrorResponse,
-  HandlerContextWithPath,
-  Item,
-  PaginatedResponse,
-  ItemFetcherError,
-  ItemFetcherErrorCode
-} from '../../types'
+import { EmoteDefinition } from '@dcl/schemas'
+import { FetcherError } from '../../adapters/elements-fetcher'
+import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
+import { ErrorResponse, HandlerContextWithPath, Item, PaginatedResponse } from '../../types'
 
 // TODO: change this name
-type ItemResponse = Pick<Item, 'urn' | 'amount' | 'individualData' | 'rarity'> & {
-  definition?: Definition
+type ItemResponse = Item & {
+  definition?: EmoteDefinition
 }
 
 export async function emotesHandler(
-  context: HandlerContextWithPath<'logs' | 'emotesFetcher' | 'definitionsFetcher', '/users/:address/emotes'>
+  context: HandlerContextWithPath<'logs' | 'emotesFetcher' | 'emoteDefinitionsFetcher', '/users/:address/emotes'>
 ): Promise<PaginatedResponse<ItemResponse> | ErrorResponse> {
-  const { logs, definitionsFetcher, emotesFetcher } = context.components
+  const { logs, emoteDefinitionsFetcher, emotesFetcher } = context.components
   const { address } = context.params
   const logger = logs.getLogger('emotes-handler')
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
   const pagination = paginationObject(context.url)
 
   try {
-    const { totalAmount, items } = await emotesFetcher.fetchByOwner(address, pagination)
+    const page = await fetchAndPaginate<ItemResponse>(address, emotesFetcher.fetchOwnedElements, pagination)
 
-    const definitions = includeDefinitions
-      ? await definitionsFetcher.fetchEmotesDefinitions(items.map((item) => item.urn))
-      : []
-
-    const results: ItemResponse[] = []
-    for (let i = 0; i < items.length; ++i) {
-      const { urn, amount, individualData, rarity } = items[i]
-      results.push({
-        urn,
-        amount,
-        individualData,
-        rarity,
-        definition: includeDefinitions ? definitions[i] : undefined
-      })
+    if (includeDefinitions) {
+      const emotes = page.elements
+      const definitions = await emoteDefinitionsFetcher.fetchItemsDefinitions(emotes.map((emote) => emote.urn))
+      const results: ItemResponse[] = []
+      for (let i = 0; i < emotes.length; ++i) {
+        results.push({
+          ...emotes[i],
+          definition: includeDefinitions ? definitions[i] : undefined
+        })
+      }
+      page.elements = results
     }
 
     return {
       status: 200,
       body: {
-        elements: results,
-        totalAmount: totalAmount,
-        pageNum: pagination.pageNum,
-        pageSize: pagination.pageSize
+        ...page
       }
     }
   } catch (err: any) {
-    if (err instanceof ItemFetcherError) {
-      switch (err.code) {
-        case ItemFetcherErrorCode.CANNOT_FETCH_ITEMS: {
-          return {
-            status: 502,
-            body: {
-              error: 'Cannot fetch emotes right now'
-            }
-          }
+    if (err instanceof FetcherError) {
+      return {
+        status: 502,
+        body: {
+          error: 'Cannot fetch emotes right now'
         }
       }
-    } else {
-      logger.error(err)
-      return {
-        status: 500,
-        body: {
-          error: 'Internal Server Error'
-        }
+    }
+    logger.error(err)
+    return {
+      status: 500,
+      body: {
+        error: 'Internal Server Error'
       }
     }
   }

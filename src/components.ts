@@ -8,13 +8,17 @@ import { metricDeclarations } from './metrics'
 import { createTheGraphComponent, TheGraphComponent } from './ports/the-graph'
 import { createContentComponent } from './ports/content'
 import { createOwnershipCachesComponent } from './ports/ownership-caches'
-import { createEmotesCachesComponent } from './ports/emotes-caches'
-import { createDefinitionsFetcherComponent } from './adapters/definitions-fetcher'
-import { createThirdPartyWearablesFetcherComponent } from './adapters/third-party-wearables-fetcher'
-import { createEmoteFetcherComponent, createWearableFetcherComponent } from './adapters/items-fetcher'
-import { createNamesFetcherComponent } from './adapters/names-fetcher'
-import { createLANDsFetcherComponent } from './adapters/lands-fetcher'
+import {
+  createEmoteDefinitionsFetcherComponent,
+  createWearableDefinitionsFetcherComponent
+} from './adapters/definitions-fetcher'
 import { createWearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
+import { createElementsFetcherComponent } from './adapters/elements-fetcher'
+import { createThirdPartyProvidersFetcherComponent } from './adapters/third-party-providers-fetcher'
+import { fetchAllThirdPartyWearables } from './logic/fetch-elements/fetch-third-party-wearables'
+import { fetchAllEmotes, fetchAllWearables } from './logic/fetch-elements/fetch-items'
+import { fetchAllNames } from './logic/fetch-elements/fetch-names'
+import { fetchAllLANDs } from './logic/fetch-elements/fetch-lands'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -43,15 +47,22 @@ export async function initComponents(
     : await createTheGraphComponent({ config, logs, fetch, metrics })
 
   const ownershipCaches = await createOwnershipCachesComponent({ config })
-  const emotesCaches = await createEmotesCachesComponent({ config })
-  const wearablesFetcher = await createWearableFetcherComponent({ config, theGraph, logs })
-  const thirdPartyWearablesFetcher = await createThirdPartyWearablesFetcherComponent({ config, logs, theGraph, fetch })
-  const definitionsFetcher = await createDefinitionsFetcherComponent({ config, logs, content })
-  const emotesFetcher = await createEmoteFetcherComponent({ config, theGraph, logs })
-  const namesFetcher = await createNamesFetcherComponent({ logs, theGraph })
-  const landsFetcher = await createLANDsFetcherComponent({ logs, theGraph })
+  const thirdPartyProvidersFetcher = createThirdPartyProvidersFetcherComponent({ logs, theGraph })
+  const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
+    fetchAllThirdPartyWearables({ theGraph, thirdPartyProvidersFetcher, fetch, logs }, address)
+  )
+  const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent({ config, logs, content })
+  const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent({ config, logs, content })
+  const wearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
+    fetchAllWearables({ theGraph }, address)
+  )
+  const emotesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
+    fetchAllEmotes({ theGraph }, address)
+  )
+  const namesFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllNames({ theGraph }, address))
+  const landsFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllLANDs({ theGraph }, address))
 
-  // old components
+  // old component for old wearable endpoint. Remove in future
   const wearablesCaches = await createWearablesCachesComponent({ config })
 
   return {
@@ -64,13 +75,14 @@ export async function initComponents(
     content,
     theGraph,
     ownershipCaches,
-    emotesCaches,
     wearablesFetcher,
-    definitionsFetcher,
+    wearableDefinitionsFetcher,
+    emoteDefinitionsFetcher,
     thirdPartyWearablesFetcher,
     emotesFetcher,
     namesFetcher,
     landsFetcher,
-    wearablesCaches
+    wearablesCaches,
+    thirdPartyProvidersFetcher
   }
 }

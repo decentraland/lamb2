@@ -10,12 +10,14 @@ import { createDotEnvConfigComponent } from '@well-known-components/env-config-p
 import { createTestMetricsComponent } from '@well-known-components/metrics'
 import { metricDeclarations } from '../src/metrics'
 import { createLogComponent } from '@well-known-components/logger'
-import { createEmoteFetcherComponent, createWearableFetcherComponent } from '../src/adapters/items-fetcher'
 import { createTheGraphComponentMock } from './mocks/the-graph-mock'
 import { createContentComponentMock } from './mocks/content-mock'
-import { createDefinitionsFetcherComponent } from '../src/adapters/definitions-fetcher'
+import { createElementsFetcherComponent } from '../src/adapters/elements-fetcher'
+import { fetchAllEmotes, fetchAllWearables } from '../src/logic/fetch-elements/fetch-items'
 import { IFetchComponent } from '@well-known-components/http-server'
 import { TheGraphComponent } from '../src/ports/the-graph'
+import { extractEmoteDefinitionFromEntity, extractWearableDefinitionFromEntity } from '../src/adapters/definitions'
+import { createEmoteDefinitionsFetcherComponent, createWearableDefinitionsFetcherComponent } from '../src/adapters/definitions-fetcher'
 
 /**
  * Behaves like Jest "describe" function, used to describe a test for a
@@ -42,16 +44,44 @@ async function initComponents(fetchComponent?: IFetchComponent, theGraphComponen
   const config = await createDotEnvConfigComponent({}, { COMMIT_HASH: 'commit_hash', ...defaultFetchConfig })
   const fetch = fetchComponent ? fetchComponent : await createLocalFetchCompoment(config)
   const theGraphMock = theGraphComponent ? theGraphComponent : createTheGraphComponentMock()
+  if (!theGraphComponent) {
+    jest.spyOn(theGraphMock.thirdPartyRegistrySubgraph, 'query').mockResolvedValue({
+      thirdParties: [
+        {
+          id: "urn:decentraland:matic:collections-thirdparty:baby-doge-coin",
+          resolver: "https://decentraland-api.babydoge.com/v1"
+        },
+        {
+          id: "urn:decentraland:matic:collections-thirdparty:cryptoavatars",
+          resolver: "https://api.cryptoavatars.io/"
+        },
+        {
+          id: "urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip",
+          resolver: "https://wearables-api.unxd.com"
+        }
+      ]
+    })
+  }
 
   const components = await originalInitComponents(fetch, theGraphMock)
 
   const logs = await createLogComponent({})
 
   const contentMock = createContentComponentMock()
-  const wearablesFetcher = await createWearableFetcherComponent({ config, theGraph: theGraphMock, logs })
-  const emotesFetcher = await createEmoteFetcherComponent({ config, theGraph: theGraphMock, logs })
-  const definitionsFetcher = await createDefinitionsFetcherComponent({ config, content: contentMock, logs })
-  
+  const wearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
+    fetchAllWearables({ theGraph: theGraphMock }, address)
+  )
+  const emotesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
+    fetchAllEmotes({ theGraph: theGraphMock }, address)
+  )
+
+  const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent(
+    { config, logs, content: contentMock }
+  )
+  const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent(
+    { config, logs, content: contentMock }
+  )
+
   return {
     ...components,
     config: config,
@@ -61,6 +91,7 @@ async function initComponents(fetchComponent?: IFetchComponent, theGraphComponen
     content: contentMock,
     wearablesFetcher,
     emotesFetcher,
-    definitionsFetcher
+    wearableDefinitionsFetcher,
+    emoteDefinitionsFetcher
   }
 }

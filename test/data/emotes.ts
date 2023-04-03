@@ -1,3 +1,5 @@
+import { Emote, Entity, EntityType } from "@dcl/schemas"
+
 const TWO_DAYS = (2 * 24 * 60 * 60 * 1000)
 
 export function generateEmotes(quantity: number) {
@@ -19,12 +21,12 @@ export function generateEmotes(quantity: number) {
   return generatedEmotes
 }
 
-export function generateDefinitions(urns: string[]) {
+export function generateEmoteContentDefinitions(urns: string[]): Entity[] {
   return urns.map((urn) => ({
     version: '1',
     id: urn,
-    type: 'emote',
-    pointers: ['0x0', '0x1'],
+    type: EntityType.EMOTE,
+    pointers: ['urn:emote'],
     timestamp: Date.now() - TWO_DAYS,
     content: [{
       file: 'file',
@@ -37,6 +39,6 @@ export function generateDefinitions(urns: string[]) {
           { contents: ['fileName'] }
         ]
       }
-    }
+    } as Emote
   }))
 }

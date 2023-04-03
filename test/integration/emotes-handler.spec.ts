@@ -1,8 +1,8 @@
 import { test } from '../components'
-import { generateDefinitions, generateEmotes } from '../data/emotes'
+import { generateEmoteContentDefinitions, generateEmotes } from '../data/emotes'
 import Wallet from 'ethereumjs-wallet'
-import { ItemFromQuery } from '../../src/adapters/items-fetcher'
 import { Item } from '../../src/types'
+import { ItemFromQuery } from '../../src/logic/fetch-elements/fetch-items'
 
 // NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
 test('emotes-handler: GET /users/:address/emotes should', function ({ components }) {
@@ -59,7 +59,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
   it('return emotes with includeDefinitions set', async () => {
     const { localFetch, theGraph, content } = components
     const emotes = generateEmotes(1)
-    const definitions = generateDefinitions(emotes.map((emote) => emote.urn))
+    const definitions = generateEmoteContentDefinitions(emotes.map((emote) => emote.urn))
 
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
@@ -78,7 +78,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
   it('return a emote with definition and another one without definition', async () => {
     const { localFetch, theGraph, content } = components
     const emotes = generateEmotes(2)
-    const definitions = generateDefinitions([emotes[0].urn])
+    const definitions = generateEmoteContentDefinitions([emotes[0].urn])
 
     // modify emote urn to avoid cache hit
     emotes[1] = { ...emotes[1], urn: 'anotherUrn' }
@@ -147,7 +147,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     })
   })
 
-  it('return emotes from cache on second call for the same address', async () => {
+  it('return emotes from cache on second call for the same address (case insensitive)', async () => {
     const { localFetch, theGraph } = components
     const emotes = generateEmotes(7)
     const wallet = Wallet.generate().getAddressString()
@@ -165,7 +165,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
       totalAmount: 7
     })
 
-    const r2 = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=7&pageNum=1`)
+    const r2 = await localFetch.fetch(`/users/${wallet.toUpperCase()}/emotes?pageSize=7&pageNum=1`)
     expect(r2.status).toBe(r.status)
     expect(await r2.json()).toEqual(rBody)
     expect(theGraph.maticCollectionsSubgraph.query).toHaveBeenCalledTimes(1)

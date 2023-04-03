@@ -1,10 +1,9 @@
 import { test } from '../components'
-import { generateDefinitions, generateWearables } from '../data/wearables'
+import { generateWearables } from '../data/wearables'
 import Wallet from 'ethereumjs-wallet'
-import { NameFromQuery } from '../../src/adapters/names-fetcher'
+import { NameFromQuery } from '../../src/logic/fetch-elements/fetch-names'
 import { Name } from '../../src/types'
 import { generateNames } from '../data/names'
-import { generateEmotes } from '../data/emotes'
 
 // NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
 test('names-handler: GET /users/:address/names should', function ({ components }) {

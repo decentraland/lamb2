@@ -1,8 +1,9 @@
 import { test } from '../components'
 import { generateWearables } from '../data/wearables'
 import Wallet from 'ethereumjs-wallet'
-import { LAND, LANDFromQuery } from '../../src/adapters/lands-fetcher'
 import { generateLANDs } from '../data/lands'
+import { LANDFromQuery } from '../../src/logic/fetch-elements/fetch-lands'
+import { LAND } from '../../src/types'
 
 // NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
 test('lands-handler: GET /users/:address/lands should', function ({ components }) {

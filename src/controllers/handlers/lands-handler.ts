@@ -1,6 +1,6 @@
-import { LAND, LANDsFetcherError, LANDsFetcherErrorCode } from '../../adapters/lands-fetcher'
-import { paginationObject } from '../../logic/utils'
-import { ErrorResponse, HandlerContextWithPath, PaginatedResponse } from '../../types'
+import { FetcherError } from '../../adapters/elements-fetcher'
+import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
+import { ErrorResponse, HandlerContextWithPath, LAND, PaginatedResponse } from '../../types'
 
 export async function landsHandler(
   context: HandlerContextWithPath<'landsFetcher' | 'logs', '/users/:address/lands'>
@@ -11,35 +11,27 @@ export async function landsHandler(
   const logger = logs.getLogger('lands-handler')
 
   try {
-    const { lands, totalAmount } = await landsFetcher.fetchByOwner(address, pagination)
+    const page = await fetchAndPaginate<LAND>(address, landsFetcher.fetchOwnedElements, pagination)
     return {
       status: 200,
       body: {
-        elements: lands,
-        totalAmount,
-        pageNum: pagination.pageNum,
-        pageSize: pagination.pageSize
+        ...page
       }
     }
   } catch (err: any) {
-    if (err instanceof LANDsFetcherError) {
-      switch (err.code) {
-        case LANDsFetcherErrorCode.CANNOT_FETCH_LANDS: {
-          return {
-            status: 502,
-            body: {
-              error: 'Cannot fetch lands right now'
-            }
-          }
+    if (err instanceof FetcherError) {
+      return {
+        status: 502,
+        body: {
+          error: 'Cannot fetch lands right now'
         }
       }
-    } else {
-      logger.error(err)
-      return {
-        status: 500,
-        body: {
-          error: 'Internal Server Error'
-        }
+    }
+    logger.error(err)
+    return {
+      status: 500,
+      body: {
+        error: 'Internal Server Error'
       }
     }
   }

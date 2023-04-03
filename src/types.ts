@@ -8,16 +8,22 @@ import type {
 } from '@well-known-components/interfaces'
 import { metricDeclarations } from './metrics'
 import { TheGraphComponent } from './ports/the-graph'
-import { Profile, IPFSv1, IPFSv2, I18N } from '@dcl/schemas'
+import {
+  Profile,
+  IPFSv1,
+  IPFSv2,
+  Wearable,
+  WearableRepresentation,
+  Emote,
+  EmoteRepresentationADR74
+} from '@dcl/schemas'
 import { ContentComponent } from './ports/content'
 import { OwnershipCachesComponent } from './ports/ownership-caches'
 import { Variables } from '@well-known-components/thegraph-component'
-import { EmotesCachesComponent } from './ports/emotes-caches'
 import { DefinitionsFetcher } from './adapters/definitions-fetcher'
-import { ThirdPartyWearablesFetcher } from './adapters/third-party-wearables-fetcher'
-import { NamesFetcher } from './adapters/names-fetcher'
-import { LANDsFetcher } from './adapters/lands-fetcher'
 import { WearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
+import { ElementsFetcher } from './adapters/elements-fetcher'
+import { ThirdPartyProvidersFetcher } from './adapters/third-party-providers-fetcher'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -33,13 +39,14 @@ export type BaseComponents = {
   content: ContentComponent
   theGraph: TheGraphComponent
   ownershipCaches: OwnershipCachesComponent
-  wearablesFetcher: ItemFetcher
-  thirdPartyWearablesFetcher: ThirdPartyWearablesFetcher
-  emotesFetcher: ItemFetcher
-  definitionsFetcher: DefinitionsFetcher
-  namesFetcher: NamesFetcher
-  emotesCaches: EmotesCachesComponent
-  landsFetcher: LANDsFetcher
+  wearablesFetcher: ElementsFetcher<Item>
+  thirdPartyProvidersFetcher: ThirdPartyProvidersFetcher
+  thirdPartyWearablesFetcher: ElementsFetcher<ThirdPartyWearable>
+  emotesFetcher: ElementsFetcher<Item>
+  emoteDefinitionsFetcher: DefinitionsFetcher<EmoteDefinition>
+  wearableDefinitionsFetcher: DefinitionsFetcher<WearableDefinition>
+  namesFetcher: ElementsFetcher<Name>
+  landsFetcher: ElementsFetcher<LAND>
 
   // old components
   wearablesCaches: WearablesCachesComponent
@@ -87,58 +94,11 @@ export interface TPWResolver {
   findThirdPartyAssetsByOwner: (owner: string) => Promise<ThirdPartyAsset[]>
 }
 
-export type ThirdPartyAsset = {
-  id: string
-  amount: number
-  urn: {
-    decentraland: string
-  }
-}
-
 /**
  * Function used to fetch TheGraph
  * @public
  */
 export type QueryGraph = <T = any>(query: string, variables?: Variables, remainingAttempts?: number) => Promise<T>
-
-export type CategoryResponse = {
-  nfts: {
-    category: string
-  }[]
-}
-
-export type UrnAndAmount = {
-  urn: string
-  amount: number
-}
-
-export type Wearable = {
-  urn: string
-  amount: number // TODO: maybe this could be individualData.length
-  individualData: {
-    id: string
-    tokenId: string
-    transferredAt: number
-    price: number
-  }[]
-  rarity: string
-}
-
-export type ItemFetcher = IBaseComponent & {
-  // NOTE: the result will be always orderer by rarity
-  fetchByOwner(address: string, limits: Limits): Promise<ItemsResult>
-}
-
-export enum ItemFetcherErrorCode {
-  CANNOT_FETCH_ITEMS
-}
-
-export class ItemFetcherError extends Error {
-  constructor(public code: ItemFetcherErrorCode, message: string) {
-    super(message)
-    Error.captureStackTrace(this, this.constructor)
-  }
-}
 
 export type Item = {
   urn: string
@@ -152,89 +112,12 @@ export type Item = {
   rarity: string
 }
 
-export type ItemsResult = {
-  items: Item[]
-  totalAmount: number
-}
-
 export type ThirdPartyWearable = {
   urn: string
   amount: number // TODO: maybe this could be individualData.length
   individualData: {
     id: string
   }[]
-}
-
-// TODO: review this type: (ref https://github.com/decentraland/catalyst/blob/main/lambdas/src/apis/collections/types.ts#L9)
-// http://localhost:7272/users/0x5447C87068b3d99F50a439f98a2B420585B34A93/wearables?includeDefinitions=true
-// https://peer-ec2.decentraland.org/lambdas/collections/wearables-by-owner/0x5447C87068b3d99F50a439f98a2B420585B34A93?includeDefinitions=true
-export type Definition = {
-  id: string
-  description: string
-  image: string
-  thumbnail: string
-  collectionAddress: string
-  rarity: string
-  createdAt: number
-  updatedAt: number
-  data: {
-    replaces: string[]
-    hides: string[]
-    tags: string[]
-    category: string
-    representations: Representation[]
-  }
-  i18n: I18N[]
-}
-
-type Representation = {
-  bodyShapes: string[]
-  mainFile: string
-  overrideReplaces: string[]
-  overrideHides: string[]
-  contents: Content[]
-}
-
-type Content = {
-  key: string
-  url: string
-}
-
-export interface EmotesQueryResponse {
-  nfts: EmoteFromQuery[]
-}
-
-export type EmoteFromQuery = {
-  urn: string
-  id: string
-  contractAddress: string
-  tokenId: string
-  image: string
-  transferredAt: number
-  item: {
-    metadata: {
-      emote: {
-        name: string
-        description: string
-      }
-    }
-    rarity: string
-    price: number
-  }
-}
-
-export type EmoteForResponse = {
-  urn: string
-  id?: string
-  contractAddress?: string
-  tokenId?: string
-  image?: string
-  transferredAt?: number
-  name?: string
-  description?: string
-  rarity?: string
-  price?: number
-  amount: number
 }
 
 export type Name = {
@@ -244,43 +127,16 @@ export type Name = {
   price?: string
 }
 
-export interface LandsQueryResponse {
-  nfts: LandFromQuery[]
-}
-
-export type LandFromQuery = {
-  name: string
+export type LAND = {
   contractAddress: string
   tokenId: string
   category: string
-  parcel: {
-    x: string
-    y: string
-    data: {
-      description: string
-    }
-  }
-  estate: {
-    data: {
-      description: string
-    }
-  }
-  activeOrder: {
-    price: string
-  }
-  image: string
-}
-
-export type LandForResponse = {
-  name: string
-  contractAddress: string
-  tokenId: string
-  category: string
+  name?: string
   x?: string
   y?: string
-  description: string | undefined
-  price: string | null
-  image: string
+  description?: string
+  price?: string
+  image?: string
 }
 
 export type PaginatedResponse<T> = {
@@ -308,4 +164,44 @@ export type Limits = {
 export type Pagination = Limits & {
   pageSize: number
   pageNum: number
+}
+
+export type ThirdParty = {
+  id: string
+  resolver: string
+}
+
+export type ThirdPartyAsset = {
+  id: string
+  amount: number
+  urn: {
+    decentraland: string
+  }
+}
+
+export type ThirdPartyAssets = {
+  address: string
+  total: number
+  page: number
+  assets: ThirdPartyAsset[]
+  next?: string
+}
+
+export type WearableDefinition = Omit<Wearable, 'data'> & {
+  data: Omit<Wearable['data'], 'representations'> & {
+    representations: WearableDefinitionRepresentation[]
+  }
+}
+export type WearableDefinitionRepresentation = Omit<WearableRepresentation, 'contents'> & {
+  contents: { key: string; url: string }[]
+}
+
+export type EmoteDefinition = Omit<Emote, 'emoteDataADR74'> & {
+  emoteDataADR74: Omit<Emote['emoteDataADR74'], 'representations'> & {
+    representations: EmoteDefinitionRepresentation[]
+  }
+}
+
+export type EmoteDefinitionRepresentation = Omit<EmoteRepresentationADR74, 'contents'> & {
+  contents: { key: string; url: string }[]
 }
