@@ -1,24 +1,21 @@
 import { test } from "../components"
 
 test("integration sanity tests using a real server backend", function ({ components, stubComponents }) {
-  it("responds with commitHash", async () => {
+  it("responds with all default properties", async () => {
     const { localFetch } = components
     const r = await localFetch.fetch("/status")
 
     expect(r.status).toEqual(200)
-    expect(await r.json()).toEqual({ commitHash: 'commit_hash' })
+    expect(await r.json()).toEqual({ commitHash: 'commit_hash', contentServerUrl: 'https://peer.decentraland.org/content', currentTime: expect.any(Number), version: '' })
   })
 
-  it("calling /status increments a metric", async () => {
+  it("responds with all default properties + version", async () => {
+    process.env['CURRENT_VERSION'] = 'version'
     const { localFetch } = components
-    const { metrics } = stubComponents
-
     const r = await localFetch.fetch("/status")
 
     expect(r.status).toEqual(200)
-    expect(await r.json()).toEqual({ commitHash: 'commit_hash' })
-
-    expect(metrics.increment.calledOnceWith("test_status_counter", { pathname: "/status" })).toEqual(true)
+    expect(await r.json()).toEqual({ commitHash: 'commit_hash', contentServerUrl: 'https://peer.decentraland.org/content', currentTime: expect.any(Number), version: 'version' })
   })
 
   it("random url responds 404", async () => {
@@ -27,16 +24,5 @@ test("integration sanity tests using a real server backend", function ({ compone
     const r = await localFetch.fetch("/status" + Math.random())
 
     expect(r.status).toEqual(404)
-  })
-
-  it("next call to /status should fail in 'metrics' component", async () => {
-    const { localFetch } = components
-    const { metrics } = stubComponents
-
-    metrics.increment.throwsException("some exception")
-
-    const r = await localFetch.fetch("/status")
-
-    expect(r.status).toEqual(500)
   })
 })
