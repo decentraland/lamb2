@@ -6,7 +6,7 @@ import { createRunner, createLocalFetchCompoment, defaultServerConfig } from '@w
 import { main } from '../src/service'
 import { TestComponents } from '../src/types'
 import { initComponents as originalInitComponents } from '../src/components'
-import { createDotEnvConfigComponent } from '@well-known-components/env-config-provider'
+import { createConfigComponent, createDotEnvConfigComponent } from '@well-known-components/env-config-provider'
 import { createTestMetricsComponent } from '@well-known-components/metrics'
 import { metricDeclarations } from '../src/metrics'
 import { createLogComponent } from '@well-known-components/logger'
@@ -17,7 +17,10 @@ import { fetchAllEmotes, fetchAllWearables } from '../src/logic/fetch-elements/f
 import { IFetchComponent } from '@well-known-components/http-server'
 import { TheGraphComponent } from '../src/ports/the-graph'
 import { extractEmoteDefinitionFromEntity, extractWearableDefinitionFromEntity } from '../src/adapters/definitions'
-import { createEmoteDefinitionsFetcherComponent, createWearableDefinitionsFetcherComponent } from '../src/adapters/definitions-fetcher'
+import {
+  createEmoteDefinitionsFetcherComponent,
+  createWearableDefinitionsFetcherComponent
+} from '../src/adapters/definitions-fetcher'
 
 /**
  * Behaves like Jest "describe" function, used to describe a test for a
@@ -31,33 +34,45 @@ export const test = createRunner<TestComponents>({
   initComponents
 })
 
-export function testWithComponents(preConfigureComponents: () => { fetchComponent?: IFetchComponent, theGraphComponent?: TheGraphComponent }) {
+export function testWithComponents(
+  preConfigureComponents: () => { fetchComponent?: IFetchComponent; theGraphComponent?: TheGraphComponent }
+) {
   const preConfiguredComponents = preConfigureComponents()
   return createRunner<TestComponents>({
     main,
-    initComponents: () => initComponents(preConfiguredComponents.fetchComponent, preConfiguredComponents.theGraphComponent)
+    initComponents: () =>
+      initComponents(preConfiguredComponents.fetchComponent, preConfiguredComponents.theGraphComponent)
   })
 }
 
-async function initComponents(fetchComponent?: IFetchComponent, theGraphComponent?: TheGraphComponent): Promise<TestComponents> {
+async function initComponents(
+  fetchComponent?: IFetchComponent,
+  theGraphComponent?: TheGraphComponent
+): Promise<TestComponents> {
   const defaultFetchConfig = defaultServerConfig()
-  const config = await createDotEnvConfigComponent({}, { COMMIT_HASH: 'commit_hash', ...defaultFetchConfig })
+  const config = createConfigComponent({
+    ...defaultFetchConfig,
+    CONTENT_SERVER_ADDRESS: 'https://peer.decentraland.org/content',
+    COMMIT_HASH: 'commit_hash',
+    CURRENT_VERSION: 'version',
+    HTTP_SERVER_PORT: '7272'
+  })
   const fetch = fetchComponent ? fetchComponent : await createLocalFetchCompoment(config)
   const theGraphMock = theGraphComponent ? theGraphComponent : createTheGraphComponentMock()
   if (!theGraphComponent) {
     jest.spyOn(theGraphMock.thirdPartyRegistrySubgraph, 'query').mockResolvedValue({
       thirdParties: [
         {
-          id: "urn:decentraland:matic:collections-thirdparty:baby-doge-coin",
-          resolver: "https://decentraland-api.babydoge.com/v1"
+          id: 'urn:decentraland:matic:collections-thirdparty:baby-doge-coin',
+          resolver: 'https://decentraland-api.babydoge.com/v1'
         },
         {
-          id: "urn:decentraland:matic:collections-thirdparty:cryptoavatars",
-          resolver: "https://api.cryptoavatars.io/"
+          id: 'urn:decentraland:matic:collections-thirdparty:cryptoavatars',
+          resolver: 'https://api.cryptoavatars.io/'
         },
         {
-          id: "urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip",
-          resolver: "https://wearables-api.unxd.com"
+          id: 'urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip',
+          resolver: 'https://wearables-api.unxd.com'
         }
       ]
     })
@@ -75,12 +90,12 @@ async function initComponents(fetchComponent?: IFetchComponent, theGraphComponen
     fetchAllEmotes({ theGraph: theGraphMock }, address)
   )
 
-  const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent(
-    { config, logs, content: contentMock }
-  )
-  const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent(
-    { config, logs, content: contentMock }
-  )
+  const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent({
+    config,
+    logs,
+    content: contentMock
+  })
+  const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent({ config, logs, content: contentMock })
 
   return {
     ...components,

@@ -1,27 +1,23 @@
-import { test } from "../components"
+import { test } from '../components'
 
-test("integration sanity tests using a real server backend", function ({ components, stubComponents }) {
-  it("responds with all default properties", async () => {
+test('integration sanity tests using a real server backend', function ({ components, stubComponents }) {
+  it('responds with all default properties', async () => {
     const { localFetch } = components
-    const r = await localFetch.fetch("/status")
+    const r = await localFetch.fetch('/status')
 
     expect(r.status).toEqual(200)
-    expect(await r.json()).toEqual({ commitHash: 'commit_hash', contentServerUrl: 'https://peer.decentraland.org/content', currentTime: expect.any(Number), version: '' })
+    expect(await r.json()).toEqual({
+      commitHash: 'commit_hash',
+      contentServerUrl: 'https://peer.decentraland.org/content',
+      currentTime: expect.any(Number),
+      version: 'version'
+    })
   })
 
-  it("responds with all default properties + version", async () => {
-    process.env['CURRENT_VERSION'] = 'version'
-    const { localFetch } = components
-    const r = await localFetch.fetch("/status")
-
-    expect(r.status).toEqual(200)
-    expect(await r.json()).toEqual({ commitHash: 'commit_hash', contentServerUrl: 'https://peer.decentraland.org/content', currentTime: expect.any(Number), version: 'version' })
-  })
-
-  it("random url responds 404", async () => {
+  it('random url responds 404', async () => {
     const { localFetch } = components
 
-    const r = await localFetch.fetch("/status" + Math.random())
+    const r = await localFetch.fetch('/status' + Math.random())
 
     expect(r.status).toEqual(404)
   })
