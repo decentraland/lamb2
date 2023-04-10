@@ -1631,7 +1631,7 @@ create-hmac@^1.1.4, create-hmac@^1.1.7:
     safe-buffer "^5.0.1"
     sha.js "^2.4.8"
 
-cross-fetch@^3.1.4:
+cross-fetch@^3.1.4, cross-fetch@^3.1.5:
   version "3.1.5"
   resolved "https://registry.npmjs.org/cross-fetch/-/cross-fetch-3.1.5.tgz"
   dependencies:
@@ -1667,16 +1667,17 @@ data-urls@^2.0.0:
     whatwg-mimetype "^2.3.0"
     whatwg-url "^8.0.0"
 
-dcl-catalyst-client@^14.0.9:
-  version "14.0.9"
-  resolved "https://registry.yarnpkg.com/dcl-catalyst-client/-/dcl-catalyst-client-14.0.9.tgz#82afb34f8fc42d31fb9f369e49520e26db057510"
-  integrity sha512-ljFYUve3c3LKbQUwTlM3N3BvWq18II5bRGQyXGnP7bF1y5U+YIl77q6V3HyJKMreeb5Zgh7lKppJ9jRnve70qw==
+dcl-catalyst-client@^15.0.0:
+  version "15.0.0"
+  resolved "https://registry.yarnpkg.com/dcl-catalyst-client/-/dcl-catalyst-client-15.0.0.tgz#230edaa27444dde9f7f53cebf27667d5d5f59ec6"
+  integrity sha512-WG4jvgamR0g2g35SsjiHm4JD+ih2faeWotuXNjAsi82SMV48TeWThIDAVRnBWqBdWEZtXIGgUX6dMDOzFS6FPw==
   dependencies:
     "@dcl/catalyst-contracts" "^3.0.0"
     "@dcl/hashing" "^1.1.0"
     "@dcl/schemas" "^6.4.2"
     "@types/form-data" "^2.5.0"
     cookie "^0.5.0"
+    cross-fetch "^3.1.5"
     dcl-catalyst-commons "^9.0.6"
     form-data "^4.0.0"
 
