@@ -1,8 +1,7 @@
-name: default actions
+name: PR actions
 
 on:
   pull_request:
-
 
 jobs:
   pr:
