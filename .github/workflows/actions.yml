@@ -1,0 +1,6 @@
+
+
+jobs:
+  pr:
+    uses: decentraland/platform-actions/.github/workflows/pr.yml@main
+    secrets: inherit
