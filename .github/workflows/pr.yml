@@ -2,11 +2,10 @@ name: CI/CD on PR
 
 on:
   pull_request:
-    branches-ignore:
-      - 'dependabot/**'
 
 jobs:
   cd-dev:
+    if: ${{ github.actor != 'dependabot[bot]' }}
     uses: decentraland/actions/.github/workflows/build-quay-main.yml@main
     with:
       service-name: lamb2
