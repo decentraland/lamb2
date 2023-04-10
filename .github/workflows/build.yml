@@ -3,6 +3,7 @@ name: build
 on:
   push:
 
+
 jobs:
   build:
     uses: decentraland/platform-actions/.github/workflows/apps-build.yml@main
