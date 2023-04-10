@@ -1,5 +1,8 @@
 name: default actions
 
+on:
+  pull_request:
+
 jobs:
   pr:
     uses: decentraland/platform-actions/.github/workflows/pr.yml@main
