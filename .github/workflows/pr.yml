@@ -2,6 +2,8 @@ name: CI/CD on PR
 
 on:
   pull_request:
+    branches-ignore:
+      - 'dependabot/**'
 
 jobs:
   cd-dev:
