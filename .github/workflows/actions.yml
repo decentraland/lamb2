@@ -6,4 +6,6 @@ on:
 jobs:
   pr:
     uses: decentraland/platform-actions/.github/workflows/pr.yml@main
+    with:
+      service-name: lamb2
     secrets: inherit
