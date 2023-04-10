@@ -5,7 +5,7 @@ on:
 
 jobs:
   pr:
-    uses: decentraland/platform-actions/.github/workflows/apps/pr.yml@main
+    uses: decentraland/platform-actions/.github/workflows/apps-pr.yml@main
     with:
       service-name: lamb2
     secrets: inherit

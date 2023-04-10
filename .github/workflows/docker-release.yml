@@ -7,7 +7,7 @@ on:
 
 jobs:
   cd:
-    uses: decentraland/platform-actions/.github/workflows/apps/docker-release.yml@main
+    uses: decentraland/platform-actions/.github/workflows/apps-docker-release.yml@main
     with:
       service-name: lamb2
     secrets: inherit
