@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - '!dependabot/**'
+
 jobs:
   cd-dev:
     uses: decentraland/actions/.github/workflows/build-quay-main.yml@main
