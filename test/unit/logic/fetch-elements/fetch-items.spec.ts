@@ -6,8 +6,32 @@ describe('fetchEmotes', () => {
   it('the maticCollectionsSubgraph is queried', async () => {
     const theGraph = createTheGraphComponentMock()
     jest.spyOn(theGraph.maticCollectionsSubgraph, 'query').mockResolvedValue({ nfts: [] })
-    await fetchAllEmotes({ theGraph }, 'anOwner')
+    const owner = 'anOwner'
+    await fetchAllEmotes({ theGraph }, owner)
     expect(theGraph.maticCollectionsSubgraph.query).toBeCalled()
+    const expectedQuery =
+      `query fetchItemsByOwner($owner: String, $idFrom: String) {
+    nfts(
+      where: { id_gt: $idFrom, owner: $owner, category: "emote"},
+      orderBy: id,
+      orderDirection: asc,
+      first: 1000
+    ) {
+      urn,
+      id,
+      tokenId,
+      category
+      transferredAt,
+      item {
+        rarity,
+        price
+      }
+    }
+  }`
+    expect(theGraph.maticCollectionsSubgraph.query).toBeCalledWith(
+      expectedQuery,
+      expect.objectContaining({ owner: owner.toLowerCase() })
+    )
   })
 
   it('emotes are mapped correctly', async () => {
@@ -99,9 +123,37 @@ describe('fetchWearables', () => {
     const theGraph = createTheGraphComponentMock()
     jest.spyOn(theGraph.maticCollectionsSubgraph, 'query').mockResolvedValue({ nfts: [] })
     jest.spyOn(theGraph.ethereumCollectionsSubgraph, 'query').mockResolvedValue({ nfts: [] })
-    await fetchAllWearables({ theGraph }, 'anOwner')
+    const owner = 'anOwner'
+    await fetchAllWearables({ theGraph }, owner)
     expect(theGraph.ethereumCollectionsSubgraph.query).toBeCalled()
     expect(theGraph.maticCollectionsSubgraph.query).toBeCalled()
+    const expectedQuery =
+      `query fetchItemsByOwner($owner: String, $idFrom: String) {
+    nfts(
+      where: { id_gt: $idFrom, owner: $owner, category: "wearable"},
+      orderBy: id,
+      orderDirection: asc,
+      first: 1000
+    ) {
+      urn,
+      id,
+      tokenId,
+      category
+      transferredAt,
+      item {
+        rarity,
+        price
+      }
+    }
+  }`
+    expect(theGraph.ethereumCollectionsSubgraph.query).toBeCalledWith(
+      expectedQuery,
+      expect.objectContaining({ owner: owner.toLowerCase() })
+    )
+    expect(theGraph.maticCollectionsSubgraph.query).toBeCalledWith(
+      expectedQuery,
+      expect.objectContaining({ owner: owner.toLowerCase() })
+    )
   })
 
   it('wearables are mapped correctly', async () => {
