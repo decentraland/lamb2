@@ -80,7 +80,7 @@ export async function fetchAllEmotes(components: Pick<AppComponents, 'theGraph'>
 export async function fetchAllWearables(components: Pick<AppComponents, 'theGraph'>, owner: string): Promise<Item[]> {
   const ethereumWearables = await fetchAllNFTs<ItemFromQuery>(
     components.theGraph.ethereumCollectionsSubgraph,
-    QUERIES['emote'],
+    QUERIES['wearable'],
     owner
   )
   const maticWearables = await fetchAllNFTs<ItemFromQuery>(
