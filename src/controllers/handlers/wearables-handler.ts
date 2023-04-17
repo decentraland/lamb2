@@ -8,6 +8,25 @@ type ItemResponse = Item & {
   definition?: WearableDefinition
 }
 
+function createFilters(url: URL): (item: ItemResponse) => boolean {
+  const categories = url.searchParams.has('category') ? url.searchParams.getAll('category') : []
+  const name = url.searchParams.has('name') ? url.searchParams.get('name') : undefined
+  const rarity = url.searchParams.has('rarity') ? url.searchParams.get('rarity') : undefined
+
+  return (item: Item) => {
+    if (categories && categories.length > 0 && !categories.includes(item.category)) {
+      return false
+    }
+    if (name && !item.name.toLowerCase().includes(name.toLowerCase())) {
+      return false
+    }
+    if (rarity && item.rarity !== rarity) {
+      return false
+    }
+    return true
+  }
+}
+
 export async function wearablesHandler(
   context: HandlerContextWithPath<
     'logs' | 'wearablesFetcher' | 'wearableDefinitionsFetcher',
@@ -19,9 +38,10 @@ export async function wearablesHandler(
   const logger = logs.getLogger('wearables-handler')
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
   const pagination = paginationObject(context.url)
+  const filter = createFilters(context.url)
 
   try {
-    const page = await fetchAndPaginate<Item>(address, wearablesFetcher.fetchOwnedElements, pagination)
+    const page = await fetchAndPaginate<Item>(address, wearablesFetcher.fetchOwnedElements, pagination, filter)
 
     if (includeDefinitions) {
       const wearables = page.elements

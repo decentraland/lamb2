@@ -1,27 +1,30 @@
 import { AppComponents, Item } from '../../types'
 import { fetchAllNFTs, THE_GRAPH_PAGE_SIZE } from './fetch-elements'
 import { compareByRarity } from '../utils'
+import { EmoteCategory, WearableCategory } from '@dcl/schemas'
 
 function groupItemsByURN(items: ItemFromQuery[]): Item[] {
   const itemsByURN = new Map<string, Item>()
 
-  items.forEach((item) => {
+  items.forEach((itemFromQuery) => {
     const individualData = {
-      id: item.id,
-      tokenId: item.tokenId,
-      transferredAt: item.transferredAt,
-      price: item.item.price
+      id: itemFromQuery.id,
+      tokenId: itemFromQuery.tokenId,
+      transferredAt: itemFromQuery.transferredAt,
+      price: itemFromQuery.item.price
     }
-    if (itemsByURN.has(item.urn)) {
-      const itemFromMap = itemsByURN.get(item.urn)!
+    if (itemsByURN.has(itemFromQuery.urn)) {
+      const itemFromMap = itemsByURN.get(itemFromQuery.urn)!
       itemFromMap.individualData.push(individualData)
       itemFromMap.amount = itemFromMap.amount + 1
     } else {
-      itemsByURN.set(item.urn, {
-        urn: item.urn,
+      itemsByURN.set(itemFromQuery.urn, {
+        urn: itemFromQuery.urn,
         individualData: [individualData],
-        rarity: item.item.rarity,
-        amount: 1
+        rarity: itemFromQuery.item.rarity,
+        amount: 1,
+        name: itemFromQuery.metadata['wearable']?.name || itemFromQuery.metadata['emote']?.name || '',
+        category: itemFromQuery.category
       })
     }
   })
@@ -44,6 +47,11 @@ function createQueryForCategory(category: ItemCategory) {
       tokenId,
       category
       transferredAt,
+      metadata {
+        ${category} {
+          name
+        }
+      }
       item {
         rarity,
         price
@@ -66,6 +74,15 @@ export type ItemFromQuery = {
     rarity: string
     price: number
   }
+  metadata: {
+    wearable?: {
+      name: string
+    }
+    emote?: {
+      name: string
+    }
+  }
+  category: WearableCategory | EmoteCategory
 }
 
 export async function fetchAllEmotes(components: Pick<AppComponents, 'theGraph'>, owner: string): Promise<Item[]> {

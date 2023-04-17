@@ -15,7 +15,10 @@ import {
   Wearable,
   WearableRepresentation,
   Emote,
-  EmoteRepresentationADR74
+  EmoteRepresentationADR74,
+  WearableCategory,
+  Rarity,
+  EmoteCategory
 } from '@dcl/schemas'
 import { ContentComponent } from './ports/content'
 import { OwnershipCachesComponent } from './ports/ownership-caches'
@@ -109,6 +112,8 @@ export type Item = {
     transferredAt: number
     price: number
   }[]
+  name: string
+  category: WearableCategory | EmoteCategory
   rarity: string
 }
 
@@ -205,3 +210,38 @@ export type EmoteDefinition = Omit<Emote, 'emoteDataADR74'> & {
 export type EmoteDefinitionRepresentation = Omit<EmoteRepresentationADR74, 'contents'> & {
   contents: { key: string; url: string }[]
 }
+
+export type WearableType = 'base-wearable' | 'on-chain' | 'third-party'
+
+export type BaseWearableFilters = {
+  categories: WearableCategory[]
+  name: string
+}
+
+export type OnChainWearableFilters = BaseWearableFilters & {
+  rarity: Rarity
+}
+
+export type ThirdPartyWearableFilters = BaseWearableFilters & {
+  collectionUrns: string[]
+}
+
+export type WearableFilters = BaseWearableFilters & OnChainWearableFilters & ThirdPartyWearableFilters
+
+export type BaseWearableSorting = {
+  orderBy: 'date' | 'name' // date = entity.timestamp WARNING if equals
+  direction: 'ASC' | 'DESC'
+}
+
+export type OnChainWearableSorting = {
+  orderBy: 'date' | 'rarity' | 'name' // date = transferredAt
+  direction: 'ASC' | 'DESC'
+}
+
+export type ThirdPartyWearableSorting = BaseWearableSorting
+
+export type WearableSorting = BaseWearableSorting & OnChainWearableSorting & ThirdPartyWearableSorting
+
+type BaseWearableArguments = BaseWearableFilters & BaseWearableSorting
+type OnChainWearableArguments = OnChainWearableFilters & OnChainWearableSorting
+type ThirdPartyWearableArguments = ThirdPartyWearableFilters & ThirdPartyWearableSorting

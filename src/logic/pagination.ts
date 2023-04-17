@@ -9,12 +9,15 @@ export function paginationObject(url: URL): Pagination {
   return { pageSize, pageNum, offset, limit }
 }
 
+const noFilteringFilter = () => true
+
 export async function fetchAndPaginate<T>(
   address: string,
   fetchElements: (address: string) => Promise<T[]>,
-  pagination: Pagination
+  pagination: Pagination,
+  filter: (element: T) => boolean = noFilteringFilter
 ) {
-  const elements = await fetchElements(address)
+  const elements = (await fetchElements(address)).filter(filter)
   return {
     elements: elements.slice(pagination.offset, pagination.offset + pagination.limit),
     totalAmount: elements.length,

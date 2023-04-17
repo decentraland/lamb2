@@ -1,7 +1,16 @@
-import { Rarity, WearableCategory, WearableDefinition } from '@dcl/schemas'
+import { Collection, Rarity, WearableCategory, WearableDefinition } from '@dcl/schemas'
 import { FetcherError } from '../../adapters/elements-fetcher'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
-import { ErrorResponse, HandlerContextWithPath, Item, PaginatedResponse, ThirdPartyWearable } from '../../types'
+import {
+  BaseWearableFilters, BaseWearableSorting,
+  ErrorResponse,
+  HandlerContextWithPath,
+  Item, OnChainWearableFilters, OnChainWearableSorting,
+  PaginatedResponse,
+  ThirdPartyWearable, ThirdPartyWearableFilters, ThirdPartyWearableSorting,
+  WearableFilters, WearableType
+} from '../../types'
+import { IHttpServerComponent } from "@well-known-components/interfaces";
 
 type BaseAvatar = {
   urn: string
@@ -11,46 +20,31 @@ type BaseAvatar = {
   }[]
 }
 
-type WearableType = 'base-wearable' | 'on-chain' | 'third-party'
-
 type ItemResponse = (BaseAvatar | Item | ThirdPartyWearable) & {
   type: WearableType
   definition: WearableDefinition
 }
 
-// OnChain
-type WearableArguments = WearableFilters & WearableSorting
+function createFilters(params: IHttpServerComponent.ParseUrlParams<"/explorer-service/backpack/:address/wearables">) {
+  const baseFilter = (wearables: Item[], filters: BaseWearableFilters) => {
+    return wearables
+  }
 
-type WearableFilters = {
-  categories: WearableCategory[]
-  rarity: Rarity
-  name: string
+  const onChainFilter = (wearables: Item[], filters: WearableFilters) => {
+    return wearables
+  }
+
+  const thirdPartyFilter = (wearables: ThirdPartyWearable[], filters: BaseWearableFilters) => {
+    return wearables
+  }
+
+  return { baseFilter, onChainFilter, thirdPartyFilter }
 }
-
-type WearableSorting = {
-  orderBy: 'date' | 'rarity' | 'name' // date = transferredAt
-  direction: 'ASC' | 'DESC'
-}
-
-// Base
-type BaseWearableArguments = BaseWearableFilters & BaseWearableSorting
-
-type BaseWearableFilters = {
-  categories: WearableCategory[]
-  name: string
-}
-
-type BaseWearableSorting = {
-  orderBy: 'date' | 'name' // date = entity.timestamp WARNING if equals
-  direction: 'ASC' | 'DESC'
-}
-
-type ThirdPartyWearableArguments = BaseWearableArguments
 
 export async function explorerHandler(
   context: HandlerContextWithPath<
     'logs' | 'wearablesFetcher' | 'wearableDefinitionsFetcher',
-    '/users/:address/wearables'
+    '/explorer-service/backpack/:address/wearables'
   >
 ): Promise<PaginatedResponse<any> | ErrorResponse> {
   // ): Promise<PaginatedResponse<ItemResponse> | ErrorResponse> {
@@ -58,10 +52,10 @@ export async function explorerHandler(
   // const { address } = context.params
   const logger = logs.getLogger('wearables-handler')
   // const includeDefinitions = context.url.searchParams.has('includeDefinitions')
-  // const pagination = paginationObject(context.url)
+  const pagination = paginationObject(context.url)
 
   try {
-    // { baseFilter,  onChainFilter, thirdPartyFilter } = createFilters(context.params)
+    // const { baseFilter,  onChainFilter, thirdPartyFilter } = createFilters(context.params)
     // sortSpecific = createSort(context.params)
     // const onChainWearables = onChainFilter(wearablesFetcher.fetchOwnedElements(address), onChainFilter)
     // const baseWearables = baseFilter(baseWearablesFetcher.fetchOwnedElements(address), baseFilters)
