@@ -1,12 +1,7 @@
-import { WearableDefinition } from '@dcl/schemas'
 import { FetcherError } from '../../adapters/elements-fetcher'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
-import { ErrorResponse, HandlerContextWithPath, Item, PaginatedResponse } from '../../types'
-
-// TODO: change this name
-type ItemResponse = Item & {
-  definition?: WearableDefinition
-}
+import { ErrorResponse, HandlerContextWithPath, Item, ItemResponse, PaginatedResponse } from '../../types'
+import { compareByRarity } from '../../logic/utils'
 
 function createFilters(url: URL): (item: ItemResponse) => boolean {
   const categories = url.searchParams.has('category') ? url.searchParams.getAll('category') : []
@@ -27,6 +22,33 @@ function createFilters(url: URL): (item: ItemResponse) => boolean {
   }
 }
 
+function createSorting(url: URL): (item1: ItemResponse, item2: ItemResponse) => number {
+  const sorting = url.searchParams.has('sort') ? url.searchParams.get('sort') : undefined
+  if (sorting === 'name_a_z') {
+    return (item1, item2) => item1.name.localeCompare(item2.name)
+  }
+  if (sorting === 'name_z_a') {
+    return (item1, item2) => item2.name.localeCompare(item1.name)
+  }
+  if (sorting === 'rarest') {
+    return compareByRarity
+  }
+  if (sorting === 'less_rare') {
+    return (item1, item2) => compareByRarity(item2, item1)
+  }
+  if (sorting === 'newest') {
+    // TODO think what to do here... which is the newest wearable?
+    return (item1, item2) => item2.name.localeCompare(item1.name)
+  }
+  if (sorting === 'oldest') {
+    // TODO think what to do here... which is the oldest wearable?
+    return (item1, item2) => compareByRarity(item2, item1)
+  }
+
+  // Existing behavior (when no particular sorting required) is to sort by rarity
+  return compareByRarity
+}
+
 export async function wearablesHandler(
   context: HandlerContextWithPath<
     'logs' | 'wearablesFetcher' | 'wearableDefinitionsFetcher',
@@ -39,9 +61,10 @@ export async function wearablesHandler(
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
   const pagination = paginationObject(context.url)
   const filter = createFilters(context.url)
+  const sorting = createSorting(context.url)
 
   try {
-    const page = await fetchAndPaginate<Item>(address, wearablesFetcher.fetchOwnedElements, pagination, filter)
+    const page = await fetchAndPaginate<Item>(address, wearablesFetcher.fetchOwnedElements, pagination, filter, sorting)
 
     if (includeDefinitions) {
       const wearables = page.elements

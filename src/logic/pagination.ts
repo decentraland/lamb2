@@ -1,4 +1,4 @@
-import { Pagination } from '../types'
+import { ItemResponse, Pagination } from '../types'
 
 export function paginationObject(url: URL): Pagination {
   const pageSize = url.searchParams.has('pageSize') ? parseInt(url.searchParams.get('pageSize')!, 10) : 100
@@ -15,9 +15,13 @@ export async function fetchAndPaginate<T>(
   address: string,
   fetchElements: (address: string) => Promise<T[]>,
   pagination: Pagination,
-  filter: (element: T) => boolean = noFilteringFilter
+  filter: (element: T) => boolean = noFilteringFilter,
+  sorting?: (item1: T, item2: T) => number
 ) {
   const elements = (await fetchElements(address)).filter(filter)
+  if (sorting) {
+    elements.sort(sorting) // sorting changes the original array
+  }
   return {
     elements: elements.slice(pagination.offset, pagination.offset + pagination.limit),
     totalAmount: elements.length,

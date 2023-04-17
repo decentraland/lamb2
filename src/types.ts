@@ -211,6 +211,10 @@ export type EmoteDefinitionRepresentation = Omit<EmoteRepresentationADR74, 'cont
   contents: { key: string; url: string }[]
 }
 
+export type ItemResponse = Item & {
+  definition?: WearableDefinition
+}
+
 export type WearableType = 'base-wearable' | 'on-chain' | 'third-party'
 
 export type BaseWearableFilters = {

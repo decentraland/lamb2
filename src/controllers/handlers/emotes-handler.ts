@@ -2,6 +2,7 @@ import { EmoteDefinition } from '@dcl/schemas'
 import { FetcherError } from '../../adapters/elements-fetcher'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { ErrorResponse, HandlerContextWithPath, Item, PaginatedResponse } from '../../types'
+import { compareByRarity } from '../../logic/utils'
 
 // TODO: change this name
 type ItemResponse = Item & {
@@ -18,7 +19,13 @@ export async function emotesHandler(
   const pagination = paginationObject(context.url)
 
   try {
-    const page = await fetchAndPaginate<ItemResponse>(address, emotesFetcher.fetchOwnedElements, pagination)
+    const page = await fetchAndPaginate<ItemResponse>(
+      address,
+      emotesFetcher.fetchOwnedElements,
+      pagination,
+      undefined,
+      compareByRarity
+    )
 
     if (includeDefinitions) {
       const emotes = page.elements
