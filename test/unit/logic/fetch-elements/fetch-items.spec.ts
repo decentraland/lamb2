@@ -1,6 +1,6 @@
-import { createTheGraphComponentMock } from "../../../mocks/the-graph-mock"
+import { createTheGraphComponentMock } from '../../../mocks/the-graph-mock'
 import { Item } from '../../../../src/types'
-import { fetchAllEmotes, fetchAllWearables, ItemFromQuery } from "../../../../src/logic/fetch-elements/fetch-items"
+import { fetchAllEmotes, fetchAllWearables, ItemFromQuery } from '../../../../src/logic/fetch-elements/fetch-items'
 
 describe('fetchEmotes', () => {
   it('the maticCollectionsSubgraph is queried', async () => {
@@ -9,8 +9,7 @@ describe('fetchEmotes', () => {
     const owner = 'anOwner'
     await fetchAllEmotes({ theGraph }, owner)
     expect(theGraph.maticCollectionsSubgraph.query).toBeCalled()
-    const expectedQuery =
-      `query fetchItemsByOwner($owner: String, $idFrom: String) {
+    const expectedQuery = `query fetchItemsByOwner($owner: String, $idFrom: String) {
     nfts(
       where: { id_gt: $idFrom, owner: $owner, category: "emote"},
       orderBy: id,
@@ -22,6 +21,11 @@ describe('fetchEmotes', () => {
       tokenId,
       category
       transferredAt,
+      metadata {
+        emote {
+          name
+        }
+      },
       item {
         rarity,
         price
@@ -46,9 +50,7 @@ describe('fetchEmotes', () => {
       {
         urn: 'urn1',
         amount: 1,
-        individualData: [
-          { id: 'id1', tokenId: 'tokenId1', transferredAt: 1, price: 10 }
-        ],
+        individualData: [{ id: 'id1', tokenId: 'tokenId1', transferredAt: 1, price: 10 }],
         rarity: 'common'
       }
     ] as Item[])
@@ -77,9 +79,7 @@ describe('fetchEmotes', () => {
       {
         urn: 'urn5',
         amount: 1,
-        individualData: [
-          { id: 'id5', tokenId: 'tokenId5', transferredAt: 5, price: 5 }
-        ],
+        individualData: [{ id: 'id5', tokenId: 'tokenId5', transferredAt: 5, price: 5 }],
         rarity: 'rarity5'
       }
     ] as Item[])
@@ -127,8 +127,7 @@ describe('fetchWearables', () => {
     await fetchAllWearables({ theGraph }, owner)
     expect(theGraph.ethereumCollectionsSubgraph.query).toBeCalled()
     expect(theGraph.maticCollectionsSubgraph.query).toBeCalled()
-    const expectedQuery =
-      `query fetchItemsByOwner($owner: String, $idFrom: String) {
+    const expectedQuery = `query fetchItemsByOwner($owner: String, $idFrom: String) {
     nfts(
       where: { id_gt: $idFrom, owner: $owner, category: "wearable"},
       orderBy: id,
@@ -140,6 +139,11 @@ describe('fetchWearables', () => {
       tokenId,
       category
       transferredAt,
+      metadata {
+        wearable {
+          name
+        }
+      },
       item {
         rarity,
         price
@@ -173,17 +177,13 @@ describe('fetchWearables', () => {
       {
         urn: 'urn1',
         amount: 1,
-        individualData: [
-          { id: 'id1', tokenId: 'tokenId1', transferredAt: 1, price: 1 }
-        ],
+        individualData: [{ id: 'id1', tokenId: 'tokenId1', transferredAt: 1, price: 1 }],
         rarity: 'common'
       },
       {
         urn: 'urn2',
         amount: 1,
-        individualData: [
-          { id: 'id2', tokenId: 'tokenId2', transferredAt: 2, price: 2 }
-        ],
+        individualData: [{ id: 'id2', tokenId: 'tokenId2', transferredAt: 2, price: 2 }],
         rarity: 'common'
       }
     ] as Item[])
@@ -199,29 +199,37 @@ describe('fetchWearables', () => {
     })
     jest.spyOn(theGraph.maticCollectionsSubgraph, 'query').mockResolvedValue({
       nfts: [
-        { urn: 'urn1', id: 'id2', tokenId: 'tokenId2', transferredAt: 2, item: { rarity: 'common', price: 15 } },
+        {
+          urn: 'urn1',
+          id: 'id2',
+          tokenId: 'tokenId2',
+          category: 'eyebrows',
+          transferredAt: 2,
+          metadata: { wearable: { name: 'name2' } },
+          item: { rarity: 'common', price: 15 }
+        }
       ] as ItemFromQuery[]
     })
     const wearables = await fetchAllWearables({ theGraph }, 'anOwner')
-    expect(wearables).toEqual(expect.arrayContaining([
-      {
-        urn: 'urn1',
-        amount: 2,
-        individualData: [
-          { id: 'id1', tokenId: 'tokenId1', transferredAt: 1, price: 10 },
-          { id: 'id2', tokenId: 'tokenId2', transferredAt: 2, price: 15 }
-        ],
-        rarity: 'common'
-      },
-      {
-        urn: 'urn5',
-        amount: 1,
-        individualData: [
-          { id: 'id5', tokenId: 'tokenId5', transferredAt: 5, price: 5 }
-        ],
-        rarity: 'unique'
-      }
-    ] as Item[]))
+    expect(wearables).toEqual(
+      expect.arrayContaining([
+        {
+          urn: 'urn1',
+          amount: 2,
+          individualData: [
+            { id: 'id1', tokenId: 'tokenId1', transferredAt: 1, price: 10 },
+            { id: 'id2', tokenId: 'tokenId2', transferredAt: 2, price: 15 }
+          ],
+          rarity: 'common'
+        },
+        {
+          urn: 'urn5',
+          amount: 1,
+          individualData: [{ id: 'id5', tokenId: 'tokenId5', transferredAt: 5, price: 5 }],
+          rarity: 'unique'
+        }
+      ] as Item[])
+    )
   })
 
   it('wearables are sorted by rarity', async () => {
@@ -234,7 +242,7 @@ describe('fetchWearables', () => {
     })
     jest.spyOn(theGraph.maticCollectionsSubgraph, 'query').mockResolvedValue({
       nfts: [
-        { urn: 'urn2', id: 'id2', tokenId: 'tokenId2', transferredAt: 2, item: { rarity: 'rare', price: 2 } },
+        { urn: 'urn2', id: 'id2', tokenId: 'tokenId2', transferredAt: 2, item: { rarity: 'rare', price: 2 } }
       ] as ItemFromQuery[]
     })
     const wearables = await fetchAllWearables({ theGraph }, 'anOwner')

@@ -1,6 +1,6 @@
-import { Emote, Entity, EntityType } from "@dcl/schemas"
+import { Emote, Entity, EntityType } from '@dcl/schemas'
 
-const TWO_DAYS = (2 * 24 * 60 * 60 * 1000)
+const TWO_DAYS = 2 * 24 * 60 * 60 * 1000
 
 export function generateEmotes(quantity: number) {
   const generatedEmotes = []
@@ -11,6 +11,11 @@ export function generateEmotes(quantity: number) {
       tokenId: 'tokenId-' + i,
       category: 'emote',
       transferredAt: Date.now() - TWO_DAYS,
+      metadata: {
+        emote: {
+          name: 'name-' + i
+        }
+      },
       item: {
         rarity: 'unique',
         price: 100 + i
@@ -28,16 +33,16 @@ export function generateEmoteContentDefinitions(urns: string[]): Entity[] {
     type: EntityType.EMOTE,
     pointers: ['urn:emote'],
     timestamp: Date.now() - TWO_DAYS,
-    content: [{
-      file: 'file',
-      hash: 'id'
-    }],
+    content: [
+      {
+        file: 'file',
+        hash: 'id'
+      }
+    ],
     metadata: {
       id: urn,
       emoteDataADR74: {
-        representations: [
-          { contents: ['fileName'] }
-        ]
+        representations: [{ contents: ['fileName'] }]
       }
     } as Emote
   }))

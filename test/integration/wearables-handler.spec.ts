@@ -178,7 +178,9 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     const { localFetch, theGraph } = components
     const wearables = generateWearables(4)
 
-    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[0], wearables[1], wearables[2]] })
+    theGraph.ethereumCollectionsSubgraph.query = jest
+      .fn()
+      .mockResolvedValueOnce({ nfts: [wearables[0], wearables[1], wearables[2]] })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[3]] })
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?pageSize=2&pageNum=1`)
@@ -196,7 +198,9 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     const { localFetch, theGraph } = components
     const wearables = generateWearables(4)
 
-    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[0], wearables[1], wearables[2]] })
+    theGraph.ethereumCollectionsSubgraph.query = jest
+      .fn()
+      .mockResolvedValueOnce({ nfts: [wearables[0], wearables[1], wearables[2]] })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[3]] })
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?pageSize=2&pageNum=2`)
@@ -214,8 +218,12 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     const { localFetch, theGraph } = components
     const wearables = generateWearables(7)
 
-    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[0], wearables[1], wearables[2], wearables[3]] })
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[4], wearables[5], wearables[6]] })
+    theGraph.ethereumCollectionsSubgraph.query = jest
+      .fn()
+      .mockResolvedValueOnce({ nfts: [wearables[0], wearables[1], wearables[2], wearables[3]] })
+    theGraph.maticCollectionsSubgraph.query = jest
+      .fn()
+      .mockResolvedValueOnce({ nfts: [wearables[4], wearables[5], wearables[6]] })
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?pageSize=3&pageNum=1`)
 
@@ -232,8 +240,12 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     const { localFetch, theGraph } = components
     const wearables = generateWearables(7)
 
-    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[0], wearables[1], wearables[2], wearables[3]] })
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[4], wearables[5], wearables[6]] })
+    theGraph.ethereumCollectionsSubgraph.query = jest
+      .fn()
+      .mockResolvedValueOnce({ nfts: [wearables[0], wearables[1], wearables[2], wearables[3]] })
+    theGraph.maticCollectionsSubgraph.query = jest
+      .fn()
+      .mockResolvedValueOnce({ nfts: [wearables[4], wearables[5], wearables[6]] })
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?pageSize=3&pageNum=2`)
 
@@ -250,8 +262,12 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     const { localFetch, theGraph } = components
     const wearables = generateWearables(7)
 
-    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[0], wearables[1], wearables[2], wearables[3]] })
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[4], wearables[5], wearables[6]] })
+    theGraph.ethereumCollectionsSubgraph.query = jest
+      .fn()
+      .mockResolvedValueOnce({ nfts: [wearables[0], wearables[1], wearables[2], wearables[3]] })
+    theGraph.maticCollectionsSubgraph.query = jest
+      .fn()
+      .mockResolvedValueOnce({ nfts: [wearables[4], wearables[5], wearables[6]] })
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?pageSize=3&pageNum=3`)
 
@@ -269,8 +285,12 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     const wearables = generateWearables(7)
     const wallet = Wallet.generate().getAddressString()
 
-    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[0], wearables[1], wearables[2], wearables[3]] })
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[4], wearables[5], wearables[6]] })
+    theGraph.ethereumCollectionsSubgraph.query = jest
+      .fn()
+      .mockResolvedValueOnce({ nfts: [wearables[0], wearables[1], wearables[2], wearables[3]] })
+    theGraph.maticCollectionsSubgraph.query = jest
+      .fn()
+      .mockResolvedValueOnce({ nfts: [wearables[4], wearables[5], wearables[6]] })
 
     const r = await localFetch.fetch(`/users/${wallet.toUpperCase()}/wearables?pageSize=7&pageNum=1`)
     const rBody = await r.json()
@@ -337,7 +357,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 })
 
 function convertToDataModel(wearables: ItemFromQuery[], definitions = undefined): Item[] {
-  return wearables.map(wearable => {
+  return wearables.map((wearable) => {
     const individualData = {
       id: wearable.id,
       tokenId: wearable.tokenId,
@@ -345,7 +365,7 @@ function convertToDataModel(wearables: ItemFromQuery[], definitions = undefined)
       price: wearable.item.price
     }
     const rarity = wearable.item.rarity
-    const definition = definitions?.find(def => def.id === wearable.urn)
+    const definition = definitions?.find((def) => def.id === wearable.urn)
     const definitionData = definition?.metadata?.data
 
     return {
@@ -353,16 +373,21 @@ function convertToDataModel(wearables: ItemFromQuery[], definitions = undefined)
       amount: 1,
       individualData: [individualData],
       rarity,
-      ...(definitions ? {
-        definition: definitionData && {
-          id: wearable.urn,
-          data: {
-            ...definitionData,
-            representations: [{ contents: [{ key: definitionData.representations[0]?.contents[0] }] }]
+      category: wearable.category,
+      name: wearable.urn,
+      maxTransferredAt: individualData.transferredAt,
+      minTransferredAt: individualData.transferredAt,
+      ...(definitions
+        ? {
+            definition: definitionData && {
+              id: wearable.urn,
+              data: {
+                ...definitionData,
+                representations: [{ contents: [{ key: definitionData.representations[0]?.contents[0] }] }]
+              }
+            }
           }
-        }
-      } : {})
+        : {})
     }
   })
 }
-
