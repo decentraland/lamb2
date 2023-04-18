@@ -1,9 +1,16 @@
 import { FetcherError } from '../../adapters/elements-fetcher'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
-import { ErrorResponse, HandlerContextWithPath, Item, ItemResponse, PaginatedResponse } from '../../types'
+import {
+  ErrorResponse,
+  HandlerContextWithPath,
+  Item,
+  ItemResponse,
+  PaginatedResponse,
+  WearableDefinition
+} from '../../types'
 import { compareByRarity } from '../../logic/utils'
 
-function createFilters(url: URL): (item: ItemResponse) => boolean {
+function createFilters(url: URL): (item: Item) => boolean {
   const categories = url.searchParams.has('category') ? url.searchParams.getAll('category') : []
   const name = url.searchParams.has('name') ? url.searchParams.get('name') : undefined
   const rarity = url.searchParams.has('rarity') ? url.searchParams.get('rarity') : undefined
@@ -22,32 +29,40 @@ function createFilters(url: URL): (item: ItemResponse) => boolean {
   }
 }
 
-function createSorting(url: URL): (item1: ItemResponse, item2: ItemResponse) => number {
-  const sorting = url.searchParams.has('sort') ? url.searchParams.get('sort') : undefined
-  if (sorting === 'name_a_z') {
+function createSorting(url: URL): (item1: Item, item2: Item) => number {
+  const sort = url.searchParams.has('sort') ? url.searchParams.get('sort') : undefined
+  if (sort === 'name_a_z') {
     return (item1, item2) => item1.name.localeCompare(item2.name)
   }
-  if (sorting === 'name_z_a') {
+  if (sort === 'name_z_a') {
     return (item1, item2) => item2.name.localeCompare(item1.name)
   }
-  if (sorting === 'rarest') {
+  if (sort === 'rarest') {
     return compareByRarity
   }
-  if (sorting === 'less_rare') {
+  if (sort === 'less_rare') {
     return (item1, item2) => compareByRarity(item2, item1)
   }
-  if (sorting === 'newest') {
-    // TODO think what to do here... which is the newest wearable?
-    return (item1, item2) => item2.name.localeCompare(item1.name)
+  if (sort === 'newest') {
+    return (item1, item2) => item1.maxTransferredAt - item2.maxTransferredAt
   }
-  if (sorting === 'oldest') {
-    // TODO think what to do here... which is the oldest wearable?
-    return (item1, item2) => compareByRarity(item2, item1)
+  if (sort === 'oldest') {
+    return (item1, item2) => item1.minTransferredAt - item2.minTransferredAt
   }
 
-  // Existing behavior (when no particular sorting required) is to sort by rarity
+  // Existing behavior (when no particular sort requested) is to sort by rarity
   return compareByRarity
 }
+
+const mapItemToItemResponse = (item: Item, definitions: WearableDefinition | undefined): ItemResponse => ({
+  urn: item.urn,
+  amount: item.individualData.length,
+  individualData: item.individualData,
+  name: item.name,
+  category: item.category,
+  rarity: item.rarity,
+  definition: definitions
+})
 
 export async function wearablesHandler(
   context: HandlerContextWithPath<
@@ -66,25 +81,21 @@ export async function wearablesHandler(
   try {
     const page = await fetchAndPaginate<Item>(address, wearablesFetcher.fetchOwnedElements, pagination, filter, sorting)
 
-    if (includeDefinitions) {
-      const wearables = page.elements
-      const definitions = await wearableDefinitionsFetcher.fetchItemsDefinitions(
-        wearables.map((wearable) => wearable.urn)
-      )
-      const results: ItemResponse[] = []
-      for (let i = 0; i < wearables.length; ++i) {
-        results.push({
-          ...wearables[i],
-          definition: includeDefinitions ? definitions[i] : undefined
-        })
-      }
-      page.elements = results
+    const results: ItemResponse[] = []
+    const wearables = page.elements
+    const definitions: (WearableDefinition | undefined)[] = includeDefinitions
+      ? await wearableDefinitionsFetcher.fetchItemsDefinitions(wearables.map((wearable) => wearable.urn))
+      : []
+
+    for (let i = 0; i < wearables.length; ++i) {
+      results.push(mapItemToItemResponse(wearables[i], definitions ? definitions[i] : undefined))
     }
 
     return {
       status: 200,
       body: {
-        ...page
+        ...page,
+        elements: results
       }
     }
   } catch (err: any) {

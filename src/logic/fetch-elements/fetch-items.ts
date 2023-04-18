@@ -17,6 +17,8 @@ function groupItemsByURN(items: ItemFromQuery[]): Item[] {
       const itemFromMap = itemsByURN.get(itemFromQuery.urn)!
       itemFromMap.individualData.push(individualData)
       itemFromMap.amount = itemFromMap.amount + 1
+      itemFromMap.minTransferredAt = Math.min(itemFromQuery.transferredAt, itemFromMap.minTransferredAt)
+      itemFromMap.maxTransferredAt = Math.max(itemFromQuery.transferredAt, itemFromMap.maxTransferredAt)
     } else {
       itemsByURN.set(itemFromQuery.urn, {
         urn: itemFromQuery.urn,
@@ -24,7 +26,9 @@ function groupItemsByURN(items: ItemFromQuery[]): Item[] {
         rarity: itemFromQuery.item.rarity,
         amount: 1,
         name: itemFromQuery.metadata['wearable']?.name || itemFromQuery.metadata['emote']?.name || '',
-        category: itemFromQuery.category
+        category: itemFromQuery.category,
+        minTransferredAt: itemFromQuery.transferredAt,
+        maxTransferredAt: itemFromQuery.transferredAt
       })
     }
   })

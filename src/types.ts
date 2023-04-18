@@ -115,6 +115,8 @@ export type Item = {
   name: string
   category: WearableCategory | EmoteCategory
   rarity: string
+  minTransferredAt: number
+  maxTransferredAt: number
 }
 
 export type ThirdPartyWearable = {
@@ -211,7 +213,7 @@ export type EmoteDefinitionRepresentation = Omit<EmoteRepresentationADR74, 'cont
   contents: { key: string; url: string }[]
 }
 
-export type ItemResponse = Item & {
+export type ItemResponse = Omit<Item, 'minTransferredAt' | 'maxTransferredAt'> & {
   definition?: WearableDefinition
 }
 
