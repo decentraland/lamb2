@@ -88,7 +88,7 @@ export async function wearablesHandler(
       : []
 
     for (let i = 0; i < wearables.length; ++i) {
-      results.push(mapItemToItemResponse(wearables[i], definitions ? definitions[i] : undefined))
+      results.push(mapItemToItemResponse(wearables[i], includeDefinitions ? definitions[i] : undefined))
     }
 
     return {
