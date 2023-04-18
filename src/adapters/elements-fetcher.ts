@@ -25,7 +25,7 @@ export function createElementsFetcherComponent<T>(
   const logger = logs.getLogger('elements-fetcher')
 
   const cache = createLowerCaseKeysCache<T[]>({
-    max: 1000,
+    max: 10000,
     ttl: 600000, // 10 minutes
     fetchMethod: async function (address: string, staleValue: T[] | undefined) {
       try {
