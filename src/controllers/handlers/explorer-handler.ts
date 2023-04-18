@@ -1,16 +1,17 @@
-import { Collection, Rarity, WearableCategory, WearableDefinition } from '@dcl/schemas'
+import { WearableDefinition } from '@dcl/schemas'
 import { FetcherError } from '../../adapters/elements-fetcher'
-import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
+import { paginationObject } from '../../logic/pagination'
 import {
-  BaseWearableFilters, BaseWearableSorting,
+  BaseWearableFilters,
   ErrorResponse,
   HandlerContextWithPath,
-  Item, OnChainWearableFilters, OnChainWearableSorting,
+  Item,
   PaginatedResponse,
-  ThirdPartyWearable, ThirdPartyWearableFilters, ThirdPartyWearableSorting,
-  WearableFilters, WearableType
+  ThirdPartyWearable,
+  WearableFilters,
+  WearableType
 } from '../../types'
-import { IHttpServerComponent } from "@well-known-components/interfaces";
+import { IHttpServerComponent } from '@well-known-components/interfaces'
 
 type BaseAvatar = {
   urn: string
@@ -25,7 +26,7 @@ type ItemResponse = (BaseAvatar | Item | ThirdPartyWearable) & {
   definition: WearableDefinition
 }
 
-function createFilters(params: IHttpServerComponent.ParseUrlParams<"/explorer-service/backpack/:address/wearables">) {
+function createFilters(params: IHttpServerComponent.ParseUrlParams<'/explorer-service/backpack/:address/wearables'>) {
   const baseFilter = (wearables: Item[], filters: BaseWearableFilters) => {
     return wearables
   }
