@@ -317,7 +317,10 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
   it('return an error when wearables cannot be fetched from ethereum collection', async () => {
     const { localFetch, theGraph } = components
 
-    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce(undefined)
+    theGraph.ethereumCollectionsSubgraph.query = jest
+      .fn()
+      .mockRejectedValueOnce(new Error(`GraphQL Error: Invalid response. Errors:\n- some error. Provider: ethereum`))
+    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables`)
 
@@ -330,7 +333,10 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
   it('return an error when wearables cannot be fetched from matic collection', async () => {
     const { localFetch, theGraph } = components
 
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce(undefined)
+    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
+    theGraph.maticCollectionsSubgraph.query = jest
+      .fn()
+      .mockRejectedValueOnce(new Error(`GraphQL Error: Invalid response. Errors:\n- some error. Provider: matic`))
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables`)
 
@@ -361,14 +367,11 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 })
 
 type ContentInfo = {
-  definitions: Entity[],
+  definitions: Entity[]
   content: ContentComponent
 }
 
-function convertToDataModel(
-  wearables: ItemFromQuery[],
-  contentInfo?: ContentInfo
-): ItemResponse[] {
+function convertToDataModel(wearables: ItemFromQuery[], contentInfo?: ContentInfo): ItemResponse[] {
   return wearables.map((wearable): ItemResponse => {
     const individualData = {
       id: wearable.id,
