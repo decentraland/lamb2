@@ -377,8 +377,7 @@ function convertToDataModel(wearables: ItemFromQuery[], definitions = undefined)
       name: wearable.metadata.wearable.name,
       ...(definitions
         ? {
-            definition: {
-              ...definitionData,
+            definition: definitionData && {
               id: wearable.urn,
               data: {
                 ...definitionData,

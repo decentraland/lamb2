@@ -235,21 +235,9 @@ function convertToDataModel(emotes: ItemFromQuery[], definitions = undefined): I
       category: emote.category,
       name: emote.metadata.emote.name,
       rarity,
-      // ...(definitions
-      //   ? {
-      //       definition: definitionData && {
-      //         id: emote.urn,
-      //         emoteDataADR74: {
-      //           ...definitionData,
-      //           representations: [{ contents: [{ key: definitionData.representations[0]?.contents[0] }] }]
-      //         }
-      //       }
-      //     }
-      //   : {})
       ...(definitions
         ? {
-            definition: {
-              ...definitionData,
+            definition: definitionData ?? {
               id: emote.urn,
               emoteDataADR74: {
                 ...definitionData,
