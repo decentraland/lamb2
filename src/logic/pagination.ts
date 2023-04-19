@@ -1,4 +1,4 @@
-import { ItemResponse, Pagination } from '../types'
+import { Pagination } from '../types'
 
 export function paginationObject(url: URL): Pagination {
   const pageSize = url.searchParams.has('pageSize') ? parseInt(url.searchParams.get('pageSize')!, 10) : 100

@@ -55,7 +55,7 @@ function createQueryForCategory(category: ItemCategory) {
         ${category} {
           name
         }
-      }
+      },
       item {
         rarity,
         price

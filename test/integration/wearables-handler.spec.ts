@@ -374,7 +374,7 @@ function convertToDataModel(wearables: ItemFromQuery[], definitions = undefined)
       individualData: [individualData],
       rarity,
       category: wearable.category,
-      name: wearable.urn,
+      name: wearable.metadata.wearable.name || wearable.metadata.emote.name,
       maxTransferredAt: individualData.transferredAt,
       minTransferredAt: individualData.transferredAt,
       ...(definitions
