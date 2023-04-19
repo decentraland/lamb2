@@ -18,7 +18,7 @@ export async function fetchAndPaginate<T>(
   filter: (element: T) => boolean = noFilteringFilter,
   sorting?: (item1: T, item2: T) => number
 ) {
-  const elements = (await fetchElements(address)).filter(filter)
+  const elements = [...(await fetchElements(address)).filter(filter)]
   if (sorting) {
     elements.sort(sorting) // sorting changes the original array
   }

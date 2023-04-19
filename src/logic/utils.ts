@@ -1,7 +1,7 @@
 import { Item } from '../types'
 import { parseUrn as resolverParseUrn } from '@dcl/urn-resolver'
 
-const RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic', 'unique']
+export const RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic', 'unique']
 
 // TODO: when deprecated old wearables handle, move this function to fetch-items.ts
 export function compareByRarity(item1: Item, item2: Item) {

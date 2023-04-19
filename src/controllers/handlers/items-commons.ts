@@ -20,27 +20,39 @@ export function createFilters(url: URL): (item: Item) => boolean {
   }
 }
 
-export function createSorting(url: URL): (item1: Item, item2: Item) => number {
-  const sort = url.searchParams.has('sort') ? url.searchParams.get('sort') : undefined
-  if (sort === 'name_a_z') {
-    return (item1, item2) => item1.name.localeCompare(item2.name)
-  }
-  if (sort === 'name_z_a') {
-    return (item1, item2) => item2.name.localeCompare(item1.name)
-  }
-  if (sort === 'rarest') {
-    return compareByRarity
-  }
-  if (sort === 'less_rare') {
-    return (item1, item2) => compareByRarity(item2, item1)
-  }
-  if (sort === 'newest') {
-    return (item1, item2) => item1.maxTransferredAt - item2.maxTransferredAt
-  }
-  if (sort === 'oldest') {
-    return (item1, item2) => item1.minTransferredAt - item2.minTransferredAt
-  }
+export const sortUrn: SortingFunction = (item1: Item, item2: Item): number => item1.urn.localeCompare(item2.urn)
+export const nameAZ: SortingFunction = (item1: Item, item2: Item): number => {
+  return item1.name.localeCompare(item2.name) || sortUrn(item1, item2)
+}
+export const nameZA: SortingFunction = (item1: Item, item2: Item): number => {
+  return item2.name.localeCompare(item1.name) || sortUrn(item1, item2)
+}
+export const rarest: SortingFunction = (item1: Item, item2: Item): number => {
+  return compareByRarity(item1, item2) || sortUrn(item1, item2)
+}
+export const leastRare: SortingFunction = (item1: Item, item2: Item): number => {
+  return compareByRarity(item2, item1) || sortUrn(item1, item2)
+}
+export const newest: SortingFunction = (item1: Item, item2: Item): number => {
+  return item1.maxTransferredAt - item2.maxTransferredAt || sortUrn(item1, item2)
+}
+export const oldest: SortingFunction = (item1: Item, item2: Item): number => {
+  return item2.minTransferredAt - item1.minTransferredAt || sortUrn(item1, item2)
+}
 
-  // Existing behavior (when no particular sort requested) is to sort by rarity
-  return compareByRarity
+type SortingFunction = (item1: Item, item2: Item) => number
+
+const sortings: Record<string, SortingFunction> = {
+  name_a_z: nameAZ,
+  name_z_a: nameZA,
+  rarest: rarest,
+  less_rare: leastRare,
+  newest: newest,
+  oldest: oldest
+}
+
+export function createSorting(url: URL): SortingFunction {
+  const sort = url.searchParams.has('sort') ? url.searchParams.get('sort')! : 'rarest'
+  // When no particular sort requested, always to sort by rarity
+  return sortings[sort] || compareByRarity
 }

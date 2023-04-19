@@ -32,7 +32,6 @@ const imageFileNameFor = (urn: string) => `imageFor${urn}`
 const thumbnailNameFor = (urn: string) => `thumbnailFor${urn}`
 
 export function generateWearableContentDefinitions(urns: string[]): Entity[] {
-
   return urns.map((urn) => ({
     version: '1',
     id: urn,
@@ -43,7 +42,8 @@ export function generateWearableContentDefinitions(urns: string[]): Entity[] {
       {
         file: 'file',
         hash: 'id'
-      }, {
+      },
+      {
         file: imageFileNameFor(urn),
         hash: 'imageHash'
       },
@@ -62,13 +62,15 @@ export function generateWearableContentDefinitions(urns: string[]): Entity[] {
       data: {
         tags: ['aTag'],
         category: WearableCategory.EARRING,
-        representations: [{
-          bodyShapes: [],
-          mainFile: `mainFileFor${urn}`,
-          contents: ['fileName'],
-          overrideHides: [],
-          overrideReplaces: []
-        }] as WearableRepresentation[]
+        representations: [
+          {
+            bodyShapes: [],
+            mainFile: `mainFileFor${urn}`,
+            contents: ['fileName'],
+            overrideHides: [],
+            overrideReplaces: []
+          }
+        ] as WearableRepresentation[]
       }
     } as Wearable
   }))
