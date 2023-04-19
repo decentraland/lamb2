@@ -1,10 +1,11 @@
+import { Entity } from '@dcl/schemas'
+import Wallet from 'ethereumjs-wallet'
+import { extractWearableDefinitionFromEntity } from '../../src/adapters/definitions'
+import { ItemFromQuery } from '../../src/logic/fetch-elements/fetch-items'
+import { ContentComponent } from '../../src/ports/content'
+import { ItemResponse } from '../../src/types'
 import { test } from '../components'
 import { generateWearableContentDefinitions, generateWearables } from '../data/wearables'
-import Wallet from 'ethereumjs-wallet'
-import { ItemResponse } from '../../src/types'
-import { ItemFromQuery } from '../../src/logic/fetch-elements/fetch-items'
-import { Entity } from '@dcl/schemas'
-import { extractWearableDefinitionFromEntity } from '../../src/adapters/definitions'
 
 // NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
 test('wearables-handler: GET /users/:address/wearables should', function ({ components }) {
@@ -105,12 +106,13 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[0]] })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[1]] })
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
+    content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?includeDefinitions`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel(wearables, definitions),
+      elements: convertToDataModel(wearables, { definitions, content }),
       pageNum: 1,
       pageSize: 100,
       totalAmount: 2
@@ -133,7 +135,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel(wearables, definitions),
+      elements: convertToDataModel(wearables, { definitions, content }),
       pageNum: 1,
       pageSize: 100,
       totalAmount: 2
@@ -358,7 +360,15 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
   })
 })
 
-function convertToDataModel(wearables: ItemFromQuery[], definitions: Entity[] = undefined): ItemResponse[] {
+type ContentInfo = {
+  definitions: Entity[],
+  content: ContentComponent
+}
+
+function convertToDataModel(
+  wearables: ItemFromQuery[],
+  contentInfo?: ContentInfo
+): ItemResponse[] {
   return wearables.map((wearable): ItemResponse => {
     const individualData = {
       id: wearable.id,
@@ -367,12 +377,8 @@ function convertToDataModel(wearables: ItemFromQuery[], definitions: Entity[] = 
       price: wearable.item.price
     }
     const rarity = wearable.item.rarity
-    const definition = definitions?.find((def) => def.id === wearable.urn)
-    const content = {
-      getExternalContentServerUrl: () => 'contentUrl',
-      fetchEntitiesByPointers: async () => []
-    }
-
+    const definition = contentInfo?.definitions.find((def) => def.id === wearable.urn)
+    const content = contentInfo?.content
     return {
       urn: wearable.urn,
       amount: 1,

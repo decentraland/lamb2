@@ -1,6 +1,5 @@
-import { Entity, EntityType, Wearable } from '@dcl/schemas'
-import { ThirdPartyAsset, WearableDefinition } from '../../src/types'
-import { ThirdPartyWearable } from '../../src/types'
+import { Entity, EntityType, Wearable, WearableCategory, WearableRepresentation } from '@dcl/schemas'
+import { ThirdPartyAsset } from '../../src/types'
 
 const TWO_DAYS = 2 * 24 * 60 * 60 * 1000
 
@@ -28,7 +27,11 @@ export function generateWearables(quantity: number) {
   return generatedWearables
 }
 
+const imageFileNameFor = (urn: string) => `imageFor${urn}`
+const thumbnailNameFor = (urn: string) => `thumbnailFor${urn}`
+
 export function generateWearableContentDefinitions(urns: string[]): Entity[] {
+
   return urns.map((urn) => ({
     version: '1',
     id: urn,
@@ -39,12 +42,32 @@ export function generateWearableContentDefinitions(urns: string[]): Entity[] {
       {
         file: 'file',
         hash: 'id'
+      }, {
+        file: imageFileNameFor(urn),
+        hash: 'imageHash'
+      },
+      {
+        file: thumbnailNameFor(urn),
+        hash: 'thumbnailHash'
       }
     ],
     metadata: {
       id: urn,
+      name: `nameFor${urn}`,
+      description: `descFor${urn}`,
+      i18n: [],
+      thumbnail: thumbnailNameFor(urn),
+      image: imageFileNameFor(urn),
       data: {
-        representations: [{ contents: ['fileName'] }]
+        tags: ['aTag'],
+        category: WearableCategory.EARRING,
+        representations: [{
+          bodyShapes: [],
+          mainFile: `mainFileFor${urn}`,
+          contents: ['fileName'],
+          overrideHides: [],
+          overrideReplaces: []
+        }] as WearableRepresentation[]
       }
     } as Wearable
   }))
