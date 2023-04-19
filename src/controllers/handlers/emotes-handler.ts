@@ -1,13 +1,24 @@
 import { EmoteDefinition } from '@dcl/schemas'
 import { FetcherError } from '../../adapters/elements-fetcher'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
-import { ErrorResponse, HandlerContextWithPath, Item, PaginatedResponse } from '../../types'
+import { ErrorResponse, HandlerContextWithPath, Item, PaginatedResponse, WearableDefinition } from '../../types'
 import { compareByRarity } from '../../logic/utils'
 
 // TODO: change this name
 type ItemResponse = Item & {
   definition?: EmoteDefinition
 }
+
+const mapItemToItemResponse = (item: Item, definitions: EmoteDefinition | undefined): ItemResponse =>
+  ({
+    urn: item.urn,
+    amount: item.individualData.length,
+    individualData: item.individualData,
+    name: item.name,
+    category: item.category,
+    rarity: item.rarity,
+    definition: definitions
+  } as ItemResponse) // TODO Remove forced cast
 
 export async function emotesHandler(
   context: HandlerContextWithPath<'logs' | 'emotesFetcher' | 'emoteDefinitionsFetcher', '/users/:address/emotes'>
@@ -19,7 +30,7 @@ export async function emotesHandler(
   const pagination = paginationObject(context.url)
 
   try {
-    const page = await fetchAndPaginate<ItemResponse>(
+    const page = await fetchAndPaginate<Item>(
       address,
       emotesFetcher.fetchOwnedElements,
       pagination,
@@ -27,15 +38,15 @@ export async function emotesHandler(
       compareByRarity
     )
 
+    const results: ItemResponse[] = []
+    const emotes = page.elements
     if (includeDefinitions) {
-      const emotes = page.elements
-      const definitions = await emoteDefinitionsFetcher.fetchItemsDefinitions(emotes.map((emote) => emote.urn))
-      const results: ItemResponse[] = []
+      const definitions = includeDefinitions
+        ? await emoteDefinitionsFetcher.fetchItemsDefinitions(emotes.map((emote) => emote.urn))
+        : []
+
       for (let i = 0; i < emotes.length; ++i) {
-        results.push({
-          ...emotes[i],
-          definition: includeDefinitions ? definitions[i] : undefined
-        })
+        results.push(mapItemToItemResponse(emotes[i], includeDefinitions ? definitions[i] : undefined))
       }
       page.elements = results
     }
@@ -43,7 +54,8 @@ export async function emotesHandler(
     return {
       status: 200,
       body: {
-        ...page
+        ...page,
+        elements: results
       }
     }
   } catch (err: any) {

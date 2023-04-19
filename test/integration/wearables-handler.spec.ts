@@ -1,7 +1,7 @@
 import { test } from '../components'
 import { generateWearableContentDefinitions, generateWearables } from '../data/wearables'
 import Wallet from 'ethereumjs-wallet'
-import { Item } from '../../src/types'
+import { ItemResponse } from '../../src/types'
 import { ItemFromQuery } from '../../src/logic/fetch-elements/fetch-items'
 
 // NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
@@ -356,8 +356,8 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
   })
 })
 
-function convertToDataModel(wearables: ItemFromQuery[], definitions = undefined): Item[] {
-  return wearables.map((wearable) => {
+function convertToDataModel(wearables: ItemFromQuery[], definitions = undefined): ItemResponse[] {
+  return wearables.map((wearable): ItemResponse => {
     const individualData = {
       id: wearable.id,
       tokenId: wearable.tokenId,
@@ -374,12 +374,11 @@ function convertToDataModel(wearables: ItemFromQuery[], definitions = undefined)
       individualData: [individualData],
       rarity,
       category: wearable.category,
-      name: wearable.metadata.wearable.name || wearable.metadata.emote.name,
-      maxTransferredAt: individualData.transferredAt,
-      minTransferredAt: individualData.transferredAt,
+      name: wearable.metadata.wearable.name,
       ...(definitions
         ? {
-            definition: definitionData && {
+            definition: {
+              ...definitionData,
               id: wearable.urn,
               data: {
                 ...definitionData,

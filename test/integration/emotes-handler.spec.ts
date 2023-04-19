@@ -1,7 +1,7 @@
 import { test } from '../components'
 import { generateEmoteContentDefinitions, generateEmotes } from '../data/emotes'
 import Wallet from 'ethereumjs-wallet'
-import { Item } from '../../src/types'
+import { ItemResponse } from '../../src/types'
 import { ItemFromQuery } from '../../src/logic/fetch-elements/fetch-items'
 
 // NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
@@ -216,8 +216,8 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
   })
 })
 
-function convertToDataModel(emotes: ItemFromQuery[], definitions = undefined): Item[] {
-  return emotes.map(emote => {
+function convertToDataModel(emotes: ItemFromQuery[], definitions = undefined): ItemResponse[] {
+  return emotes.map((emote): ItemResponse => {
     const individualData = {
       id: emote.id,
       tokenId: emote.tokenId,
@@ -225,24 +225,39 @@ function convertToDataModel(emotes: ItemFromQuery[], definitions = undefined): I
       price: emote.item.price
     }
     const rarity = emote.item.rarity
-    const definition = definitions?.find(def => def.id === emote.urn)
+    const definition = definitions?.find((def) => def.id === emote.urn)
     const definitionData = definition?.metadata?.emoteDataADR74
 
     return {
       urn: emote.urn,
       amount: 1,
       individualData: [individualData],
+      category: emote.category,
+      name: emote.metadata.emote.name,
       rarity,
-      ...(definitions ? {
-        definition: definitionData && {
-          id: emote.urn,
-          emoteDataADR74: {
-            ...definitionData,
-            representations: [{ contents: [{ key: definitionData.representations[0]?.contents[0] }] }]
+      // ...(definitions
+      //   ? {
+      //       definition: definitionData && {
+      //         id: emote.urn,
+      //         emoteDataADR74: {
+      //           ...definitionData,
+      //           representations: [{ contents: [{ key: definitionData.representations[0]?.contents[0] }] }]
+      //         }
+      //       }
+      //     }
+      //   : {})
+      ...(definitions
+        ? {
+            definition: {
+              ...definitionData,
+              id: emote.urn,
+              emoteDataADR74: {
+                ...definitionData,
+                representations: [{ contents: [{ key: definitionData.representations[0]?.contents[0] }] }]
+              }
+            }
           }
-        }
-      } : {})
+        : {})
     }
   })
 }
-
