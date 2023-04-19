@@ -506,7 +506,7 @@ function convertToDataModel(wearables: ItemFromQuery[], contentInfo?: ContentInf
       rarity,
       category: wearable.category,
       name: wearable.metadata.wearable.name,
-      definition: definition ? extractWearableDefinitionFromEntity({ content }, definition) : undefined
+      definition: definition && content ? extractWearableDefinitionFromEntity({ content }, definition) : undefined
     }
   })
 }
