@@ -3,6 +3,8 @@ import { generateWearableContentDefinitions, generateWearables } from '../data/w
 import Wallet from 'ethereumjs-wallet'
 import { ItemResponse } from '../../src/types'
 import { ItemFromQuery } from '../../src/logic/fetch-elements/fetch-items'
+import { Entity } from '@dcl/schemas'
+import { extractWearableDefinitionFromEntity } from '../../src/adapters/definitions'
 
 // NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
 test('wearables-handler: GET /users/:address/wearables should', function ({ components }) {
@@ -356,7 +358,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
   })
 })
 
-function convertToDataModel(wearables: ItemFromQuery[], definitions = undefined): ItemResponse[] {
+function convertToDataModel(wearables: ItemFromQuery[], definitions: Entity[] = undefined): ItemResponse[] {
   return wearables.map((wearable): ItemResponse => {
     const individualData = {
       id: wearable.id,
@@ -366,7 +368,10 @@ function convertToDataModel(wearables: ItemFromQuery[], definitions = undefined)
     }
     const rarity = wearable.item.rarity
     const definition = definitions?.find((def) => def.id === wearable.urn)
-    const definitionData = definition?.metadata?.data
+    const content = {
+      getExternalContentServerUrl: () => 'contentUrl',
+      fetchEntitiesByPointers: async () => []
+    }
 
     return {
       urn: wearable.urn,
@@ -375,17 +380,7 @@ function convertToDataModel(wearables: ItemFromQuery[], definitions = undefined)
       rarity,
       category: wearable.category,
       name: wearable.metadata.wearable.name,
-      ...(definitions
-        ? {
-            definition: definitionData && {
-              id: wearable.urn,
-              data: {
-                ...definitionData,
-                representations: [{ contents: [{ key: definitionData.representations[0]?.contents[0] }] }]
-              }
-            }
-          }
-        : {})
+      definition: definition ? extractWearableDefinitionFromEntity({ content }, definition) : undefined
     }
   })
 }
