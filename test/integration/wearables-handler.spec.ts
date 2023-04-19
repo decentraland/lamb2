@@ -381,6 +381,6 @@ function convertToDataModel(wearables: ItemFromQuery[], definitions: Entity[] = 
       category: wearable.category,
       name: wearable.metadata.wearable.name,
       definition: definition ? extractWearableDefinitionFromEntity({ content }, definition) : undefined
-    }
+    } as ItemResponse
   })
 }
