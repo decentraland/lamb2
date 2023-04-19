@@ -7,13 +7,13 @@ export function createFilters(url: URL): (item: Item) => boolean {
   const rarity = url.searchParams.has('rarity') ? url.searchParams.get('rarity') : undefined
 
   return (item: Item) => {
-    if (categories && categories.length > 0 && !categories.includes(item.category)) {
+    if (rarity && item.rarity !== rarity) {
       return false
     }
     if (name && !item.name.toLowerCase().includes(name.toLowerCase())) {
       return false
     }
-    if (rarity && item.rarity !== rarity) {
+    if (categories && categories.length > 0 && !categories.includes(item.category)) {
       return false
     }
     return true

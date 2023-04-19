@@ -314,6 +314,123 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     expect(theGraph.maticCollectionsSubgraph.query).toHaveBeenCalledTimes(1)
   })
 
+  it('return wearables filtering by name', async () => {
+    const { localFetch, theGraph } = components
+    const wearables = generateWearables(17)
+    const wallet = Wallet.generate().getAddressString()
+
+    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: wearables })
+    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
+
+    const r = await localFetch.fetch(`/users/${wallet.toUpperCase()}/wearables?pageSize=20&pageNum=1&name=3`)
+    const rBody = await r.json()
+
+    expect(r.status).toBe(200)
+    expect(rBody).toEqual({
+      elements: [convertToDataModel(wearables)[3], convertToDataModel(wearables)[13]],
+      pageNum: 1,
+      pageSize: 20,
+      totalAmount: 2
+    })
+  })
+
+  it('return wearables filtering by category', async () => {
+    const { localFetch, theGraph } = components
+    const wearables = generateWearables(17).map((w, i) => ({
+      ...w,
+      category: i % 2 === 0 ? 'upper_body' : 'lower_body'
+    }))
+
+    const wallet = Wallet.generate().getAddressString()
+
+    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: wearables })
+    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
+
+    const r = await localFetch.fetch(
+      `/users/${wallet.toUpperCase()}/wearables?pageSize=20&pageNum=1&category=upper_body`
+    )
+    expect(r.status).toBe(200)
+    expect(await r.json()).toEqual({
+      elements: convertToDataModel(wearables).filter((w, i) => i % 2 === 0),
+      pageNum: 1,
+      pageSize: 20,
+      totalAmount: 9
+    })
+
+    const r2 = await localFetch.fetch(
+      `/users/${wallet.toUpperCase()}/wearables?pageSize=20&pageNum=1&category=lower_body`
+    )
+    expect(r2.status).toBe(200)
+    expect(await r2.json()).toEqual({
+      elements: convertToDataModel(wearables).filter((w, i) => i % 2 === 1),
+      pageNum: 1,
+      pageSize: 20,
+      totalAmount: 8
+    })
+
+    const r3 = await localFetch.fetch(`/users/${wallet.toUpperCase()}/wearables?pageSize=20&pageNum=1&category=head`)
+    expect(r3.status).toBe(200)
+    expect(await r3.json()).toEqual({
+      elements: [],
+      pageNum: 1,
+      pageSize: 20,
+      totalAmount: 0
+    })
+
+    const r4 = await localFetch.fetch(
+      `/users/${wallet.toUpperCase()}/wearables?pageSize=20&pageNum=1&category=lower_body&category=upper_body`
+    )
+    expect(r4.status).toBe(200)
+    expect(await r4.json()).toEqual({
+      elements: convertToDataModel(wearables),
+      pageNum: 1,
+      pageSize: 20,
+      totalAmount: 17
+    })
+  })
+
+  it('return wearables filtering by rarity', async () => {
+    const { localFetch, theGraph } = components
+    const wearables = generateWearables(17).map((w, i) => ({
+      ...w,
+      item: {
+        ...w.item,
+        rarity: i % 2 === 0 ? 'rare' : 'mythic'
+      }
+    }))
+    const wallet = Wallet.generate().getAddressString()
+
+    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: wearables })
+    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
+
+    const r = await localFetch.fetch(`/users/${wallet.toUpperCase()}/wearables?pageSize=20&pageNum=1&rarity=rare`)
+    expect(r.status).toBe(200)
+    expect(await r.json()).toEqual({
+      elements: convertToDataModel(wearables).filter((w, i) => i % 2 === 0),
+      pageNum: 1,
+      pageSize: 20,
+      totalAmount: 9
+    })
+
+    const r2 = await localFetch.fetch(`/users/${wallet.toUpperCase()}/wearables?pageSize=20&pageNum=1&rarity=mythic`)
+    expect(r2.status).toBe(200)
+    expect(await r2.json()).toEqual({
+      elements: convertToDataModel(wearables).filter((w, i) => i % 2 === 1),
+      pageNum: 1,
+      pageSize: 20,
+      totalAmount: 8
+    })
+
+    const r3 = await localFetch.fetch(`/users/${wallet.toUpperCase()}/wearables?pageSize=20&pageNum=1&rarity=unique`)
+    expect(r3.status).toBe(200)
+    expect(await r3.json()).toEqual({
+      elements: [],
+      pageNum: 1,
+      pageSize: 20,
+      totalAmount: 0
+    })
+  })
+
   it('return an error when wearables cannot be fetched from ethereum collection', async () => {
     const { localFetch, theGraph } = components
 
