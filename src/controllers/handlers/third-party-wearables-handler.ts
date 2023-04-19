@@ -14,6 +14,48 @@ import {
   WearableDefinition
 } from '../../types'
 
+function createFilter(url: URL): (item: ThirdPartyWearable) => boolean {
+  const categories = url.searchParams.has('category') ? url.searchParams.getAll('category') : []
+  const name = url.searchParams.has('name') ? url.searchParams.get('name') : undefined
+
+  return (item: ThirdPartyWearable) => {
+    if (categories && categories.length > 0 && !categories.includes(item.category)) {
+      return false
+    }
+    if (name && !item.name.toLowerCase().includes(name.toLowerCase())) {
+      return false
+    }
+    return true
+  }
+}
+
+// function createSorting(url: URL): (item1: ItemResponse, item2: ItemResponse) => number {
+//   const sorting = url.searchParams.has('sort') ? url.searchParams.get('sort') : undefined
+//   if (sorting === 'name_a_z') {
+//     return (item1, item2) => item1.name.localeCompare(item2.name)
+//   }
+//   if (sorting === 'name_z_a') {
+//     return (item1, item2) => item2.name.localeCompare(item1.name)
+//   }
+//   if (sorting === 'rarest') {
+//     return compareByRarity
+//   }
+//   if (sorting === 'less_rare') {
+//     return (item1, item2) => compareByRarity(item2, item1)
+//   }
+//   if (sorting === 'newest') {
+//     // TODO think what to do here... which is the newest wearable?
+//     return (item1, item2) => item2.name.localeCompare(item1.name)
+//   }
+//   if (sorting === 'oldest') {
+//     // TODO think what to do here... which is the oldest wearable?
+//     return (item1, item2) => compareByRarity(item2, item1)
+//   }
+
+//   // Existing behavior (when no particular sorting required) is to sort by rarity
+//   return compareByRarity
+// }
+
 // TODO: change this name
 export type ThirdPartyWearableResponse = ThirdPartyWearable & {
   definition?: WearableDefinition
@@ -25,38 +67,40 @@ export async function thirdPartyWearablesHandler(
     '/users/:address/third-party-wearables'
   >
 ): Promise<PaginatedResponse<ThirdPartyWearableResponse> | ErrorResponse> {
-  const { wearableDefinitionsFetcher, logs, thirdPartyWearablesFetcher } = context.components
+  const { logs, thirdPartyWearablesFetcher } = context.components
   const { address } = context.params
   const logger = logs.getLogger('third-party-wearables-handler')
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
   const pagination = paginationObject(context.url)
+  const filter = createFilter(context.url)
 
   try {
-    const page = await fetchAndPaginate<ThirdPartyWearable>(
+    const page = await fetchAndPaginate<ThirdPartyWearable & { definition: WearableDefinition }>(
       address,
       thirdPartyWearablesFetcher.fetchOwnedElements,
-      pagination
+      pagination,
+      filter
     )
-
     if (includeDefinitions) {
-      const wearables = page.elements
-      const definitions = await wearableDefinitionsFetcher.fetchItemsDefinitions(
-        wearables.map((wearable) => wearable.urn)
-      )
-      const results: ThirdPartyWearableResponse[] = []
-      for (let i = 0; i < wearables.length; ++i) {
-        results.push({
-          ...wearables[i],
-          definition: includeDefinitions ? definitions[i] : undefined
-        })
+      return {
+        status: 200,
+        body: {
+          ...page
+        }
       }
-      page.elements = results
-    }
-
-    return {
-      status: 200,
-      body: {
-        ...page
+    } else {
+      const elementsWithoutDefinitions: (ThirdPartyWearable & { definition?: WearableDefinition })[] =
+        page.elements.map((e) => {
+          const { definition, ...restOfElement } = e
+          return { ...restOfElement }
+        })
+      const { elements, ...restOfPage } = page
+      return {
+        status: 200,
+        body: {
+          elements: elementsWithoutDefinitions,
+          ...restOfPage
+        }
       }
     }
   } catch (err: any) {

@@ -1,4 +1,5 @@
 import { Entity, EntityType, Wearable, WearableCategory, WearableRepresentation } from '@dcl/schemas'
+import { ThirdPartyResolversQueryResults } from '../../src/adapters/third-party-providers-fetcher'
 import { ThirdPartyAsset } from '../../src/types'
 
 const TWO_DAYS = 2 * 24 * 60 * 60 * 1000
@@ -87,7 +88,7 @@ export function generateThirdPartyWearables(quantity: number): ThirdPartyAsset[]
   return generatedThirdPartyWearables
 }
 
-export function getThirdPartyProviders() {
+export function getThirdPartyProviders(): ThirdPartyResolversQueryResults {
   return {
     thirdParties: [
       {

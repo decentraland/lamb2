@@ -1,5 +1,7 @@
+import { WearableDefinition } from '@dcl/schemas'
 import { BlockchainCollectionThirdPartyName, parseUrn } from '@dcl/urn-resolver'
 import { AppComponents, ThirdParty, ThirdPartyAsset, ThirdPartyAssets, ThirdPartyWearable } from '../../types'
+import { addDefinitions } from '../add-defintions'
 
 const URN_THIRD_PARTY_NAME_TYPE = 'blockchain-collection-third-party-name'
 const URN_THIRD_PARTY_ASSET_TYPE = 'blockchain-collection-third-party'
@@ -48,24 +50,31 @@ async function fetchAssets(
   return allAssets
 }
 
-function groupThirdPartyWearablesByURN(assets: ThirdPartyAsset[]): ThirdPartyWearable[] {
-  const wearablesByURN = new Map<string, ThirdPartyWearable>()
+function groupThirdPartyWearablesByURN(
+  assets: (ThirdPartyAsset & { definition?: WearableDefinition })[]
+): (ThirdPartyWearable & { definition: WearableDefinition })[] {
+  const wearablesByURN = new Map<string, ThirdPartyWearable & { definition: WearableDefinition }>()
 
   for (const asset of assets) {
-    if (wearablesByURN.has(asset.urn.decentraland)) {
-      const wearableFromMap = wearablesByURN.get(asset.urn.decentraland)!
-      wearableFromMap.individualData.push({ id: asset.id })
-      wearableFromMap.amount = wearableFromMap.amount + 1
-    } else {
-      wearablesByURN.set(asset.urn.decentraland, {
-        urn: asset.urn.decentraland,
-        individualData: [
-          {
-            id: asset.id
-          }
-        ],
-        amount: 1
-      })
+    if (asset.definition) {
+      if (wearablesByURN.has(asset.urn.decentraland)) {
+        const wearableFromMap = wearablesByURN.get(asset.urn.decentraland)!
+        wearableFromMap.individualData.push({ id: asset.id })
+        wearableFromMap.amount = wearableFromMap.amount + 1
+      } else {
+        wearablesByURN.set(asset.urn.decentraland, {
+          urn: asset.urn.decentraland,
+          individualData: [
+            {
+              id: asset.id
+            }
+          ],
+          amount: 1,
+          name: asset.definition.name,
+          category: asset.definition.data.category,
+          definition: asset.definition
+        })
+      }
     }
   }
 
@@ -73,17 +82,26 @@ function groupThirdPartyWearablesByURN(assets: ThirdPartyAsset[]): ThirdPartyWea
 }
 
 export async function fetchAllThirdPartyWearables(
-  components: Pick<AppComponents, 'theGraph' | 'thirdPartyProvidersFetcher' | 'fetch' | 'logs'>,
+  components: Pick<
+    AppComponents,
+    'theGraph' | 'thirdPartyProvidersFetcher' | 'fetch' | 'logs' | 'wearableDefinitionsFetcher'
+  >,
   owner: string
-): Promise<ThirdPartyWearable[]> {
+): Promise<(ThirdPartyWearable & { definition: WearableDefinition })[]> {
   const thirdParties = await components.thirdPartyProvidersFetcher.getAll()
 
   // TODO: test if stateValue is keept in case of an exception
-  const thirdPartyAssets = await Promise.all(
-    thirdParties.map((thirdParty: ThirdParty) => fetchAssets(components, owner, thirdParty))
+  const thirdPartyAssets = (
+    await Promise.all(thirdParties.map((thirdParty: ThirdParty) => fetchAssets(components, owner, thirdParty)))
+  ).flat()
+
+  const thidPartyAssetsWithDefintions = await addDefinitions<ThirdPartyAsset, WearableDefinition>(
+    thirdPartyAssets,
+    (asset) => asset.urn.decentraland,
+    components.wearableDefinitionsFetcher
   )
 
-  return groupThirdPartyWearablesByURN(thirdPartyAssets.flat())
+  return groupThirdPartyWearablesByURN(thidPartyAssetsWithDefintions)
 }
 
 export class ThirdPartyNotFoundError extends Error {

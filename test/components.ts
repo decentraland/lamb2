@@ -1,26 +1,26 @@
 // This file is the "test-environment" analogous for src/components.ts
 // Here we define the test components to be used in the testing environment
 
-import { createRunner, createLocalFetchCompoment, defaultServerConfig } from '@well-known-components/test-helpers'
+import { createLocalFetchCompoment, createRunner, defaultServerConfig } from '@well-known-components/test-helpers'
 
-import { main } from '../src/service'
-import { TestComponents } from '../src/types'
-import { initComponents as originalInitComponents } from '../src/components'
-import { createConfigComponent, createDotEnvConfigComponent } from '@well-known-components/env-config-provider'
-import { createTestMetricsComponent } from '@well-known-components/metrics'
-import { metricDeclarations } from '../src/metrics'
-import { createLogComponent } from '@well-known-components/logger'
-import { createTheGraphComponentMock } from './mocks/the-graph-mock'
-import { createContentComponentMock } from './mocks/content-mock'
-import { createElementsFetcherComponent } from '../src/adapters/elements-fetcher'
-import { fetchAllEmotes, fetchAllWearables } from '../src/logic/fetch-elements/fetch-items'
+import { createConfigComponent } from '@well-known-components/env-config-provider'
 import { IFetchComponent } from '@well-known-components/http-server'
-import { TheGraphComponent } from '../src/ports/the-graph'
-import { extractEmoteDefinitionFromEntity, extractWearableDefinitionFromEntity } from '../src/adapters/definitions'
+import { createLogComponent } from '@well-known-components/logger'
+import { createTestMetricsComponent } from '@well-known-components/metrics'
 import {
   createEmoteDefinitionsFetcherComponent,
   createWearableDefinitionsFetcherComponent
 } from '../src/adapters/definitions-fetcher'
+import { createElementsFetcherComponent } from '../src/adapters/elements-fetcher'
+import { initComponents as originalInitComponents } from '../src/components'
+import { fetchAllEmotes, fetchAllWearables } from '../src/logic/fetch-elements/fetch-items'
+import { fetchAllThirdPartyWearables } from '../src/logic/fetch-elements/fetch-third-party-wearables'
+import { metricDeclarations } from '../src/metrics'
+import { TheGraphComponent } from '../src/ports/the-graph'
+import { main } from '../src/service'
+import { TestComponents } from '../src/types'
+import { createContentComponentMock } from './mocks/content-mock'
+import { createTheGraphComponentMock } from './mocks/the-graph-mock'
 
 /**
  * Behaves like Jest "describe" function, used to describe a test for a
@@ -97,6 +97,13 @@ async function initComponents(
   })
   const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent({ config, logs, content: contentMock })
 
+  const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
+    fetchAllThirdPartyWearables(
+      { theGraph: theGraphMock, thirdPartyProvidersFetcher: components.thirdPartyProvidersFetcher, fetch, logs, wearableDefinitionsFetcher },
+      address
+    )
+  )
+
   return {
     ...components,
     config: config,
@@ -107,6 +114,7 @@ async function initComponents(
     wearablesFetcher,
     emotesFetcher,
     wearableDefinitionsFetcher,
-    emoteDefinitionsFetcher
+    emoteDefinitionsFetcher,
+    thirdPartyWearablesFetcher
   }
 }

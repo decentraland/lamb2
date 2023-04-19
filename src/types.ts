@@ -1,32 +1,32 @@
-import type { IFetchComponent } from '@well-known-components/http-server'
-import type {
-  IConfigComponent,
-  ILoggerComponent,
-  IHttpServerComponent,
-  IBaseComponent,
-  IMetricsComponent
-} from '@well-known-components/interfaces'
-import { metricDeclarations } from './metrics'
-import { TheGraphComponent } from './ports/the-graph'
 import {
-  Profile,
+  Emote,
+  EmoteCategory,
+  EmoteRepresentationADR74,
   IPFSv1,
   IPFSv2,
-  Wearable,
-  WearableRepresentation,
-  Emote,
-  EmoteRepresentationADR74,
-  WearableCategory,
+  Profile,
   Rarity,
-  EmoteCategory
+  Wearable,
+  WearableCategory,
+  WearableRepresentation
 } from '@dcl/schemas'
-import { ContentComponent } from './ports/content'
-import { OwnershipCachesComponent } from './ports/ownership-caches'
+import type { IFetchComponent } from '@well-known-components/http-server'
+import type {
+  IBaseComponent,
+  IConfigComponent,
+  IHttpServerComponent,
+  ILoggerComponent,
+  IMetricsComponent
+} from '@well-known-components/interfaces'
 import { Variables } from '@well-known-components/thegraph-component'
 import { DefinitionsFetcher } from './adapters/definitions-fetcher'
-import { WearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
 import { ElementsFetcher } from './adapters/elements-fetcher'
 import { ThirdPartyProvidersFetcher } from './adapters/third-party-providers-fetcher'
+import { WearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
+import { metricDeclarations } from './metrics'
+import { ContentComponent } from './ports/content'
+import { OwnershipCachesComponent } from './ports/ownership-caches'
+import { TheGraphComponent } from './ports/the-graph'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -44,7 +44,7 @@ export type BaseComponents = {
   ownershipCaches: OwnershipCachesComponent
   wearablesFetcher: ElementsFetcher<Item>
   thirdPartyProvidersFetcher: ThirdPartyProvidersFetcher
-  thirdPartyWearablesFetcher: ElementsFetcher<ThirdPartyWearable>
+  thirdPartyWearablesFetcher: ElementsFetcher<ThirdPartyWearable & { definition: WearableDefinition }>
   emotesFetcher: ElementsFetcher<Item>
   emoteDefinitionsFetcher: DefinitionsFetcher<EmoteDefinition>
   wearableDefinitionsFetcher: DefinitionsFetcher<WearableDefinition>
@@ -125,6 +125,8 @@ export type ThirdPartyWearable = {
   individualData: {
     id: string
   }[]
+  name: string
+  category: WearableCategory
 }
 
 export type Name = {

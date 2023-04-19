@@ -1,24 +1,24 @@
 import { createDotEnvConfigComponent } from '@well-known-components/env-config-provider'
 import { createServerComponent, createStatusCheckComponent, IFetchComponent } from '@well-known-components/http-server'
 import { createLogComponent } from '@well-known-components/logger'
-import { createFetchComponent } from './ports/fetch'
 import { createMetricsComponent, instrumentHttpServerWithMetrics } from '@well-known-components/metrics'
-import { AppComponents, GlobalContext } from './types'
-import { metricDeclarations } from './metrics'
-import { createTheGraphComponent, TheGraphComponent } from './ports/the-graph'
-import { createContentComponent } from './ports/content'
-import { createOwnershipCachesComponent } from './ports/ownership-caches'
 import {
   createEmoteDefinitionsFetcherComponent,
   createWearableDefinitionsFetcherComponent
 } from './adapters/definitions-fetcher'
-import { createWearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
 import { createElementsFetcherComponent } from './adapters/elements-fetcher'
 import { createThirdPartyProvidersFetcherComponent } from './adapters/third-party-providers-fetcher'
-import { fetchAllThirdPartyWearables } from './logic/fetch-elements/fetch-third-party-wearables'
+import { createWearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
 import { fetchAllEmotes, fetchAllWearables } from './logic/fetch-elements/fetch-items'
-import { fetchAllNames } from './logic/fetch-elements/fetch-names'
 import { fetchAllLANDs } from './logic/fetch-elements/fetch-lands'
+import { fetchAllNames } from './logic/fetch-elements/fetch-names'
+import { fetchAllThirdPartyWearables } from './logic/fetch-elements/fetch-third-party-wearables'
+import { metricDeclarations } from './metrics'
+import { createContentComponent } from './ports/content'
+import { createFetchComponent } from './ports/fetch'
+import { createOwnershipCachesComponent } from './ports/ownership-caches'
+import { createTheGraphComponent, TheGraphComponent } from './ports/the-graph'
+import { AppComponents, GlobalContext } from './types'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -49,7 +49,10 @@ export async function initComponents(
   const ownershipCaches = await createOwnershipCachesComponent({ config })
   const thirdPartyProvidersFetcher = createThirdPartyProvidersFetcherComponent({ logs, theGraph })
   const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllThirdPartyWearables({ theGraph, thirdPartyProvidersFetcher, fetch, logs }, address)
+    fetchAllThirdPartyWearables(
+      { theGraph, thirdPartyProvidersFetcher, fetch, logs, wearableDefinitionsFetcher },
+      address
+    )
   )
   const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent({ config, logs, content })
   const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent({ config, logs, content })

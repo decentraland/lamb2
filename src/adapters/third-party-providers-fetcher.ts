@@ -22,7 +22,7 @@ export class ThirdPartyProviderFetcherError extends Error {
   }
 }
 
-type ThirdPartyResolversQueryResults = {
+export type ThirdPartyResolversQueryResults = {
   thirdParties: ThirdParty[]
 }
 
