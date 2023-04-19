@@ -1,4 +1,4 @@
-import { Emote, Entity, EntityType } from '@dcl/schemas'
+import { Emote, EmoteRepresentationADR74, Entity, EntityType } from '@dcl/schemas'
 
 const TWO_DAYS = 2 * 24 * 60 * 60 * 1000
 
@@ -26,6 +26,9 @@ export function generateEmotes(quantity: number) {
   return generatedEmotes
 }
 
+const imageFileNameFor = (urn: string) => `imageFor${urn}`
+const thumbnailNameFor = (urn: string) => `thumbnailFor${urn}`
+
 export function generateEmoteContentDefinitions(urns: string[]): Entity[] {
   return urns.map((urn) => ({
     version: '1',
@@ -37,12 +40,28 @@ export function generateEmoteContentDefinitions(urns: string[]): Entity[] {
       {
         file: 'file',
         hash: 'id'
+      }, {
+        file: imageFileNameFor(urn),
+        hash: 'imageHash'
+      },
+      {
+        file: thumbnailNameFor(urn),
+        hash: 'thumbnailHash'
       }
     ],
     metadata: {
       id: urn,
+      name: `nameFor${urn}`,
+      description: `descFor${urn}`,
+      i18n: [],
+      thumbnail: thumbnailNameFor(urn),
+      image: imageFileNameFor(urn),
       emoteDataADR74: {
-        representations: [{ contents: ['fileName'] }]
+        representations: [{
+          bodyShapes: [],
+          mainFile: 'mainFile',
+          contents: ['fileName'],
+        }] as EmoteRepresentationADR74[]
       }
     } as Emote
   }))

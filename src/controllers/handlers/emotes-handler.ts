@@ -1,8 +1,7 @@
 import { EmoteDefinition } from '@dcl/schemas'
 import { FetcherError } from '../../adapters/elements-fetcher'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
-import { ErrorResponse, HandlerContextWithPath, Item, PaginatedResponse, WearableDefinition } from '../../types'
-import { compareByRarity } from '../../logic/utils'
+import { ErrorResponse, HandlerContextWithPath, Item, PaginatedResponse } from '../../types'
 import { createFilters, createSorting } from './items-commons'
 
 // TODO: change this name

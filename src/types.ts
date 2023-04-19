@@ -214,7 +214,7 @@ export type EmoteDefinitionRepresentation = Omit<EmoteRepresentationADR74, 'cont
 }
 
 export type ItemResponse = Omit<Item, 'minTransferredAt' | 'maxTransferredAt'> & {
-  definition?: WearableDefinition
+  definition?: WearableDefinition | EmoteDefinition
 }
 
 export type WearableType = 'base-wearable' | 'on-chain' | 'third-party'

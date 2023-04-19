@@ -15,7 +15,7 @@ import {
 } from '../../types'
 
 // TODO: change this name
-type ThirdPartyWearableResponse = ThirdPartyWearable & {
+export type ThirdPartyWearableResponse = ThirdPartyWearable & {
   definition?: WearableDefinition
 }
 

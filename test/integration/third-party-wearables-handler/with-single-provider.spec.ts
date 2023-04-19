@@ -2,6 +2,11 @@ import { testWithComponents } from '../../components'
 import { generateWearableContentDefinitions, generateThirdPartyWearables, getThirdPartyProviders } from '../../data/wearables'
 import Wallet from 'ethereumjs-wallet'
 import { createTheGraphComponentMock } from '../../mocks/the-graph-mock'
+import { Entity } from '@dcl/schemas'
+import { ContentComponent } from '../../../src/ports/content'
+import { ThirdPartyAsset } from '../../../src/types'
+import { extractWearableDefinitionFromEntity } from '../../../src/adapters/definitions'
+import { ThirdPartyWearableResponse } from '../../../src/controllers/handlers/third-party-wearables-handler'
 
 // NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
 testWithComponents(() => {
@@ -82,6 +87,7 @@ testWithComponents(() => {
     const definitions = generateWearableContentDefinitions(wearables.map(wearable => wearable.urn.decentraland))
 
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
+    content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
     fetch.fetch = jest.fn()
       .mockResolvedValueOnce({
         ok: true, json: () => ({
@@ -93,7 +99,7 @@ testWithComponents(() => {
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel(wearables, definitions),
+      elements: convertToDataModel(wearables, { definitions, content }),
       totalAmount: 2,
       pageNum: 1,
       pageSize: 100
@@ -107,6 +113,7 @@ testWithComponents(() => {
     const definitions = generateWearableContentDefinitions([wearables[1].urn.decentraland])
 
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
+    content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
     fetch.fetch = jest.fn()
       .mockResolvedValueOnce({
         ok: true, json: () => ({
@@ -118,7 +125,7 @@ testWithComponents(() => {
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel(wearables, definitions),
+      elements: convertToDataModel(wearables, { definitions, content }),
       totalAmount: 2,
       pageNum: 1,
       pageSize: 100
@@ -132,6 +139,7 @@ testWithComponents(() => {
     const definitions = generateWearableContentDefinitions([wearables[0].urn.decentraland])
 
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
+    content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
     fetch.fetch = jest.fn()
       .mockResolvedValue({
         ok: true, json: () => ({
@@ -145,7 +153,7 @@ testWithComponents(() => {
 
     expect(firstResponse.status).toBe(200)
     expect(firstResponseAsJson).toEqual({
-      elements: convertToDataModel(wearables, definitions),
+      elements: convertToDataModel(wearables, { definitions, content }),
       totalAmount: 1,
       pageNum: 1,
       pageSize: 100
@@ -239,28 +247,25 @@ testWithComponents(() => {
   })
 })
 
-function convertToDataModel(wearables, definitions = undefined) {
-  return wearables.map(wearable => {
-    const definition = definitions?.find(def => def.id === wearable.urn.decentraland)
-    const definitionData = definition?.metadata?.data
+type ContentInfo = {
+  definitions: Entity[],
+  content: ContentComponent
+}
 
+function convertToDataModel(
+  wearables: ThirdPartyAsset[],
+  contentInfo?: ContentInfo
+): ThirdPartyWearableResponse[] {
+  return wearables.map((wearable): ThirdPartyWearableResponse => {
+    const definition = contentInfo?.definitions.find((def) => def.id === wearable.urn.decentraland)
+    const content = contentInfo?.content
     return {
       amount: wearable.amount,
-      individualData: [
-        {
-          id: wearable.id
-        }
-      ],
+      individualData: [{
+        id: wearable.id
+      }],
       urn: wearable.urn.decentraland,
-      ...(definitions ? {
-        definition: definitionData && {
-          id: wearable.urn.decentraland,
-          data: {
-            ...definitionData,
-            representations: [{ contents: [{ key: definitionData.representations[0]?.contents[0] }] }]
-          }
-        }
-      } : {})
+      definition: definition ? extractWearableDefinitionFromEntity({ content }, definition) : undefined
     }
   })
 }

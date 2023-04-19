@@ -3,6 +3,9 @@ import { generateEmoteContentDefinitions, generateEmotes } from '../data/emotes'
 import Wallet from 'ethereumjs-wallet'
 import { ItemResponse } from '../../src/types'
 import { ItemFromQuery } from '../../src/logic/fetch-elements/fetch-items'
+import { ContentComponent } from '../../src/ports/content'
+import { Entity } from '@dcl/schemas'
+import { extractEmoteDefinitionFromEntity } from '../../src/adapters/definitions'
 
 // NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
 test('emotes-handler: GET /users/:address/emotes should', function ({ components }) {
@@ -63,12 +66,13 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
 
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
+    content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/emotes?includeDefinitions`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel(emotes, definitions),
+      elements: convertToDataModel(emotes, { definitions, content }),
       pageNum: 1,
       pageSize: 100,
       totalAmount: 1
@@ -84,12 +88,13 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     emotes[1] = { ...emotes[1], urn: 'anotherUrn' }
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
+    content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/emotes?includeDefinitions`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel(emotes, definitions),
+      elements: convertToDataModel(emotes, { definitions, content }),
       pageNum: 1,
       pageSize: 100,
       totalAmount: 2
@@ -216,7 +221,15 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
   })
 })
 
-function convertToDataModel(emotes: ItemFromQuery[], definitions = undefined): ItemResponse[] {
+type ContentInfo = {
+  definitions: Entity[],
+  content: ContentComponent
+}
+
+function convertToDataModel(
+  emotes: ItemFromQuery[],
+  contentInfo?: ContentInfo
+): ItemResponse[] {
   return emotes.map((emote): ItemResponse => {
     const individualData = {
       id: emote.id,
@@ -225,9 +238,8 @@ function convertToDataModel(emotes: ItemFromQuery[], definitions = undefined): I
       price: emote.item.price
     }
     const rarity = emote.item.rarity
-    const definition = definitions?.find((def) => def.id === emote.urn)
-    const definitionData = definition?.metadata?.emoteDataADR74
-
+    const definition = contentInfo?.definitions.find((def) => def.id === emote.urn)
+    const content = contentInfo?.content
     return {
       urn: emote.urn,
       amount: 1,
@@ -235,17 +247,7 @@ function convertToDataModel(emotes: ItemFromQuery[], definitions = undefined): I
       category: emote.category,
       name: emote.metadata.emote.name,
       rarity,
-      ...(definitions
-        ? {
-            definition: definitionData ?? {
-              id: emote.urn,
-              emoteDataADR74: {
-                ...definitionData,
-                representations: [{ contents: [{ key: definitionData.representations[0]?.contents[0] }] }]
-              }
-            }
-          }
-        : {})
+      definition: definition ? extractEmoteDefinitionFromEntity({ content }, definition) : undefined
     }
   })
 }
