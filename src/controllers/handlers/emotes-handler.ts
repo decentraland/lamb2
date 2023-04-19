@@ -3,6 +3,7 @@ import { FetcherError } from '../../adapters/elements-fetcher'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { ErrorResponse, HandlerContextWithPath, Item, PaginatedResponse, WearableDefinition } from '../../types'
 import { compareByRarity } from '../../logic/utils'
+import { createFilters, createSorting } from './items-commons'
 
 // TODO: change this name
 type ItemResponse = Item & {
@@ -28,27 +29,20 @@ export async function emotesHandler(
   const logger = logs.getLogger('emotes-handler')
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
   const pagination = paginationObject(context.url)
+  const filter = createFilters(context.url)
+  const sorting = createSorting(context.url)
 
   try {
-    const page = await fetchAndPaginate<Item>(
-      address,
-      emotesFetcher.fetchOwnedElements,
-      pagination,
-      undefined,
-      compareByRarity
-    )
+    const page = await fetchAndPaginate<Item>(address, emotesFetcher.fetchOwnedElements, pagination, filter, sorting)
 
     const results: ItemResponse[] = []
     const emotes = page.elements
-    if (includeDefinitions) {
-      const definitions = includeDefinitions
-        ? await emoteDefinitionsFetcher.fetchItemsDefinitions(emotes.map((emote) => emote.urn))
-        : []
+    const definitions = includeDefinitions
+      ? await emoteDefinitionsFetcher.fetchItemsDefinitions(emotes.map((emote) => emote.urn))
+      : []
 
-      for (let i = 0; i < emotes.length; ++i) {
-        results.push(mapItemToItemResponse(emotes[i], includeDefinitions ? definitions[i] : undefined))
-      }
-      page.elements = results
+    for (let i = 0; i < emotes.length; ++i) {
+      results.push(mapItemToItemResponse(emotes[i], includeDefinitions ? definitions[i] : undefined))
     }
 
     return {
