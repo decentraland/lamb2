@@ -3,6 +3,7 @@ import { AppComponents } from '../types'
 import { EmoteDefinition, Entity, WearableDefinition } from '@dcl/schemas'
 import { extractEmoteDefinitionFromEntity, extractWearableDefinitionFromEntity } from './definitions'
 import { createLowerCaseKeysCache } from './lowercase-keys-cache'
+import { createLowerCaseKeysMap } from './lowercase-keys-map'
 
 export type DefinitionsFetcher<T extends WearableDefinition | EmoteDefinition> = IBaseComponent & {
   fetchItemsDefinitions(urns: string[]): Promise<(T | undefined)[]>
@@ -12,17 +13,20 @@ async function createDefinitionsFetcherComponent<T extends WearableDefinition | 
   { config, content }: Pick<AppComponents, 'logs' | 'config' | 'content'>,
   entityMapper: (components: Pick<AppComponents, 'content'>, entity: Entity) => T
 ): Promise<DefinitionsFetcher<T>> {
-  const itemsSize = (await config.getNumber('ITEMS_CACHE_MAX_SIZE')) ?? 1000
+  const itemsSize = (await config.getNumber('ITEMS_CACHE_MAX_SIZE')) ?? 10000
   const itemsAge = (await config.getNumber('ITEMS_CACHE_MAX_AGE')) ?? 600000 // 10 minutes by default
 
   const itemDefinitionsCache = createLowerCaseKeysCache<T>({ max: itemsSize, ttl: itemsAge })
 
   return {
     async fetchItemsDefinitions(urns: string[]): Promise<(T | undefined)[]> {
+      const definitionsByUrn: Map<string, T | undefined> = createLowerCaseKeysMap()
       const nonCachedURNs: string[] = []
       for (const urn of urns) {
         const definition = itemDefinitionsCache.get(urn)
-        if (!definition) {
+        if (definition) {
+          definitionsByUrn.set(urn, definition)
+        } else {
           nonCachedURNs.push(urn)
         }
       }
@@ -32,10 +36,11 @@ async function createDefinitionsFetcherComponent<T extends WearableDefinition | 
         for (const entity of entities) {
           const definition = entityMapper({ content }, entity)
           itemDefinitionsCache.set(definition.id, definition)
+          definitionsByUrn.set(definition.id, definition)
         }
       }
 
-      return urns.map((urn) => itemDefinitionsCache.get(urn))
+      return urns.map((urn) => definitionsByUrn.get(urn))
     }
   }
 }
