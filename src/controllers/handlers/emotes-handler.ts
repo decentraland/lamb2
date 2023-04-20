@@ -32,7 +32,7 @@ export async function emotesHandler(
   const sorting = createSorting(context.url)
 
   try {
-    const page = await fetchAndPaginate<Item>(address, emotesFetcher.fetchOwnedElements, pagination, filter, undefined)
+    const page = await fetchAndPaginate<Item>(address, emotesFetcher.fetchOwnedElements, pagination, filter, sorting)
 
     const results: ItemResponse[] = []
     const emotes = page.elements

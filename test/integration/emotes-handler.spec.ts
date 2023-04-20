@@ -94,7 +94,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel(emotes, { definitions, content }),
+      elements: convertToDataModel([emotes[1], emotes[0]], { definitions, content }),
       pageNum: 1,
       pageSize: 100,
       totalAmount: 2
@@ -222,14 +222,11 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
 })
 
 type ContentInfo = {
-  definitions: Entity[],
+  definitions: Entity[]
   content: ContentComponent
 }
 
-function convertToDataModel(
-  emotes: ItemFromQuery[],
-  contentInfo?: ContentInfo
-): ItemResponse[] {
+function convertToDataModel(emotes: ItemFromQuery[], contentInfo?: ContentInfo): ItemResponse[] {
   return emotes.map((emote): ItemResponse => {
     const individualData = {
       id: emote.id,
