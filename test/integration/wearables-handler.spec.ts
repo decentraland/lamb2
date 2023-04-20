@@ -8,7 +8,7 @@ import { test } from '../components'
 import { generateWearableContentDefinitions, generateWearables } from '../data/wearables'
 import { RARITIES } from '../../src/logic/utils'
 
-import { leastRare, newest, oldest, rarest } from '../../src/logic/sorting'
+import { leastRare, nameAZ, nameZA, newest, oldest, rarest } from '../../src/logic/sorting'
 
 // NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
 test('wearables-handler: GET /users/:address/wearables should', function ({ components }) {
@@ -493,6 +493,34 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     expect(r2.status).toBe(200)
     expect(await r2.json()).toEqual({
       elements: [...convertToDataModel(wearables)].sort(leastRare),
+      pageNum: 1,
+      pageSize: 20,
+      totalAmount: 17
+    })
+  })
+
+  it('return wearables sorted by name_a_z / name_z_a', async () => {
+    const { localFetch, theGraph } = components
+    const wearables = generateWearables(17)
+
+    const wallet = Wallet.generate().getAddressString()
+
+    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: wearables })
+    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
+
+    const r = await localFetch.fetch(`/users/${wallet.toUpperCase()}/wearables?pageSize=20&pageNum=1&sort=name_a_z`)
+    expect(r.status).toBe(200)
+    expect(await r.json()).toEqual({
+      elements: [...convertToDataModel(wearables)].sort(nameAZ),
+      pageNum: 1,
+      pageSize: 20,
+      totalAmount: 17
+    })
+
+    const r2 = await localFetch.fetch(`/users/${wallet.toUpperCase()}/wearables?pageSize=20&pageNum=1&sort=name_z_a`)
+    expect(r2.status).toBe(200)
+    expect(await r2.json()).toEqual({
+      elements: [...convertToDataModel(wearables)].sort(nameZA),
       pageNum: 1,
       pageSize: 20,
       totalAmount: 17
