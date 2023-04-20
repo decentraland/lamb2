@@ -6,8 +6,9 @@ import { ContentComponent } from '../../src/ports/content'
 import { ItemResponse } from '../../src/types'
 import { test } from '../components'
 import { generateWearableContentDefinitions, generateWearables } from '../data/wearables'
-import { compareByRarity, RARITIES } from '../../src/logic/utils'
-import { leastRare, rarest } from '../../src/controllers/handlers/items-commons'
+import { RARITIES } from '../../src/logic/utils'
+
+import { leastRare, newest, oldest, rarest } from '../../src/logic/sorting'
 
 // NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
 test('wearables-handler: GET /users/:address/wearables should', function ({ components }) {
@@ -57,7 +58,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel(wearables),
+      elements: [...convertToDataModel(wearables)].sort(rarest),
       pageNum: 1,
       pageSize: 100,
       totalAmount: 1
@@ -75,7 +76,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel(wearables),
+      elements: [...convertToDataModel(wearables)].sort(rarest),
       pageNum: 1,
       pageSize: 100,
       totalAmount: 1
@@ -93,7 +94,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel(wearables),
+      elements: [...convertToDataModel(wearables)].sort(rarest),
       pageNum: 1,
       pageSize: 100,
       totalAmount: 2
@@ -114,7 +115,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel(wearables, { definitions, content }),
+      elements: [...convertToDataModel(wearables, { definitions, content })].sort(rarest),
       pageNum: 1,
       pageSize: 100,
       totalAmount: 2
@@ -137,7 +138,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel(wearables, { definitions, content }),
+      elements: [...convertToDataModel(wearables, { definitions, content })].sort(rarest),
       pageNum: 1,
       pageSize: 100,
       totalAmount: 2
@@ -155,7 +156,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel([wearables[0], wearables[1]]),
+      elements: [...convertToDataModel([wearables[0], wearables[1]])].sort(rarest),
       pageNum: 1,
       pageSize: 2,
       totalAmount: 4
@@ -173,7 +174,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel([wearables[2], wearables[3]]),
+      elements: [...convertToDataModel([wearables[2], wearables[3]])].sort(rarest),
       pageNum: 2,
       pageSize: 2,
       totalAmount: 4
@@ -193,7 +194,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel([wearables[0], wearables[1]]),
+      elements: [...convertToDataModel([wearables[0], wearables[1]])].sort(rarest),
       pageNum: 1,
       pageSize: 2,
       totalAmount: 4
@@ -213,7 +214,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel([wearables[2], wearables[3]]),
+      elements: [...convertToDataModel([wearables[2], wearables[3]])].sort(rarest),
       pageNum: 2,
       pageSize: 2,
       totalAmount: 4
@@ -235,7 +236,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel([wearables[0], wearables[1], wearables[2]]),
+      elements: [...convertToDataModel([wearables[0], wearables[1], wearables[2]])].sort(rarest),
       pageNum: 1,
       pageSize: 3,
       totalAmount: 7
@@ -257,7 +258,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel([wearables[3], wearables[4], wearables[5]]),
+      elements: [...convertToDataModel([wearables[3], wearables[4], wearables[5]])].sort(rarest),
       pageNum: 2,
       pageSize: 3,
       totalAmount: 7
@@ -279,7 +280,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel([wearables[6]]),
+      elements: [...convertToDataModel([wearables[6]])].sort(rarest),
       pageNum: 3,
       pageSize: 3,
       totalAmount: 7
@@ -303,7 +304,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(200)
     expect(rBody).toEqual({
-      elements: convertToDataModel(wearables),
+      elements: [...convertToDataModel(wearables)].sort(rarest),
       pageNum: 1,
       pageSize: 7,
       totalAmount: 7
@@ -329,7 +330,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(200)
     expect(rBody).toEqual({
-      elements: [convertToDataModel(wearables)[3], convertToDataModel(wearables)[13]],
+      elements: [convertToDataModel(wearables)[13], convertToDataModel(wearables)[3]],
       pageNum: 1,
       pageSize: 20,
       totalAmount: 2
@@ -353,7 +354,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     )
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel(wearables).filter((w, i) => i % 2 === 0),
+      elements: [...convertToDataModel(wearables).filter((w, i) => i % 2 === 0)].sort(rarest),
       pageNum: 1,
       pageSize: 20,
       totalAmount: 9
@@ -364,7 +365,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     )
     expect(r2.status).toBe(200)
     expect(await r2.json()).toEqual({
-      elements: convertToDataModel(wearables).filter((w, i) => i % 2 === 1),
+      elements: [...convertToDataModel(wearables).filter((w, i) => i % 2 === 1)].sort(rarest),
       pageNum: 1,
       pageSize: 20,
       totalAmount: 8
@@ -384,7 +385,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     )
     expect(r4.status).toBe(200)
     expect(await r4.json()).toEqual({
-      elements: convertToDataModel(wearables),
+      elements: [...convertToDataModel(wearables)].sort(rarest),
       pageNum: 1,
       pageSize: 20,
       totalAmount: 17
@@ -408,7 +409,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     const r = await localFetch.fetch(`/users/${wallet.toUpperCase()}/wearables?pageSize=20&pageNum=1&rarity=rare`)
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel(wearables).filter((w, i) => i % 2 === 0),
+      elements: [...convertToDataModel(wearables).filter((w, i) => i % 2 === 0)].sort(rarest),
       pageNum: 1,
       pageSize: 20,
       totalAmount: 9
@@ -417,7 +418,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     const r2 = await localFetch.fetch(`/users/${wallet.toUpperCase()}/wearables?pageSize=20&pageNum=1&rarity=mythic`)
     expect(r2.status).toBe(200)
     expect(await r2.json()).toEqual({
-      elements: convertToDataModel(wearables).filter((w, i) => i % 2 === 1),
+      elements: [...convertToDataModel(wearables).filter((w, i) => i % 2 === 1)].sort(rarest),
       pageNum: 1,
       pageSize: 20,
       totalAmount: 8
