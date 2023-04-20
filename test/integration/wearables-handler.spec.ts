@@ -449,7 +449,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     const r = await localFetch.fetch(`/users/${wallet.toUpperCase()}/wearables?pageSize=20&pageNum=1&sort=newest`)
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel(wearables),
+      elements: [...convertToDataModel(wearables)].reverse(),
       pageNum: 1,
       pageSize: 20,
       totalAmount: 17
@@ -458,7 +458,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     const r2 = await localFetch.fetch(`/users/${wallet.toUpperCase()}/wearables?pageSize=20&pageNum=1&sort=oldest`)
     expect(r2.status).toBe(200)
     expect(await r2.json()).toEqual({
-      elements: convertToDataModel(wearables).reverse(),
+      elements: [...convertToDataModel(wearables)],
       pageNum: 1,
       pageSize: 20,
       totalAmount: 17

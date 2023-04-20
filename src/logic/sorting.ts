@@ -20,11 +20,11 @@ export const leastRare: SortingFunction = (item1: Item, item2: Item): number => 
 }
 
 export const newest: SortingFunction = (item1: Item, item2: Item): number => {
-  return item1.maxTransferredAt - item2.maxTransferredAt || byUrn(item1, item2)
+  return item2.maxTransferredAt - item1.maxTransferredAt || byUrn(item1, item2)
 }
 
 export const oldest: SortingFunction = (item1: Item, item2: Item): number => {
-  return item2.minTransferredAt - item1.minTransferredAt || byUrn(item1, item2)
+  return item1.minTransferredAt - item2.minTransferredAt || byUrn(item1, item2)
 }
 
 export type SortingFunction = (item1: Item, item2: Item) => number
