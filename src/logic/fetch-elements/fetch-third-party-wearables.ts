@@ -1,7 +1,7 @@
 import { WearableDefinition } from '@dcl/schemas'
 import { BlockchainCollectionThirdPartyName, parseUrn } from '@dcl/urn-resolver'
 import { AppComponents, ThirdParty, ThirdPartyAsset, ThirdPartyAssets, ThirdPartyWearable } from '../../types'
-import { addDefinitions } from '../add-defintions'
+import { addDefinitions } from '../add-definitions'
 
 const URN_THIRD_PARTY_NAME_TYPE = 'blockchain-collection-third-party-name'
 const URN_THIRD_PARTY_ASSET_TYPE = 'blockchain-collection-third-party'
@@ -95,13 +95,13 @@ export async function fetchAllThirdPartyWearables(
     await Promise.all(thirdParties.map((thirdParty: ThirdParty) => fetchAssets(components, owner, thirdParty)))
   ).flat()
 
-  const thidPartyAssetsWithDefintions = await addDefinitions<ThirdPartyAsset, WearableDefinition>(
+  const thirdPartyAssetsWithDefinitions = await addDefinitions<ThirdPartyAsset, WearableDefinition>(
     thirdPartyAssets,
     (asset) => asset.urn.decentraland,
     components.wearableDefinitionsFetcher
   )
 
-  return groupThirdPartyWearablesByURN(thidPartyAssetsWithDefintions)
+  return groupThirdPartyWearablesByURN(thirdPartyAssetsWithDefinitions)
 }
 
 export class ThirdPartyNotFoundError extends Error {
