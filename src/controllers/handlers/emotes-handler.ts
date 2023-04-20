@@ -29,7 +29,7 @@ export async function emotesHandler(
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
   const pagination = paginationObject(context.url)
   const filter = createFilters(context.url)
-  // const sorting = createSorting(context.url)
+  const sorting = createSorting(context.url)
 
   try {
     const page = await fetchAndPaginate<Item>(address, emotesFetcher.fetchOwnedElements, pagination, filter, undefined)

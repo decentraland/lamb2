@@ -22,6 +22,6 @@ export function createFilters(url: URL): (item: Item) => boolean {
 
 export function createSorting(url: URL): SortingFunction {
   const sort = url.searchParams.has('sort') ? url.searchParams.get('sort')! : 'rarest'
-  // When no particular sort requested, always to sort by rarity
+  // When no particular sort requested, always sort by rarity
   return SORTING[sort] || rarest
 }

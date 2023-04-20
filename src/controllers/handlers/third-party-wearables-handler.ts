@@ -29,33 +29,6 @@ function createFilter(url: URL): (item: ThirdPartyWearable) => boolean {
   }
 }
 
-// function createSorting(url: URL): (item1: ItemResponse, item2: ItemResponse) => number {
-//   const sorting = url.searchParams.has('sort') ? url.searchParams.get('sort') : undefined
-//   if (sorting === 'name_a_z') {
-//     return (item1, item2) => item1.name.localeCompare(item2.name)
-//   }
-//   if (sorting === 'name_z_a') {
-//     return (item1, item2) => item2.name.localeCompare(item1.name)
-//   }
-//   if (sorting === 'rarest') {
-//     return compareByRarity
-//   }
-//   if (sorting === 'less_rare') {
-//     return (item1, item2) => compareByRarity(item2, item1)
-//   }
-//   if (sorting === 'newest') {
-//     // TODO think what to do here... which is the newest wearable?
-//     return (item1, item2) => item2.name.localeCompare(item1.name)
-//   }
-//   if (sorting === 'oldest') {
-//     // TODO think what to do here... which is the oldest wearable?
-//     return (item1, item2) => compareByRarity(item2, item1)
-//   }
-
-//   // Existing behavior (when no particular sorting required) is to sort by rarity
-//   return compareByRarity
-// }
-
 // TODO: change this name
 export type ThirdPartyWearableResponse = ThirdPartyWearable & {
   definition?: WearableDefinition
@@ -108,7 +81,7 @@ export async function thirdPartyWearablesHandler(
       return {
         status: 502,
         body: {
-          error: 'Cannot fetch third partiy wearables right now'
+          error: 'Cannot fetch third party wearables right now'
         }
       }
     } else if (err instanceof ThirdPartyProviderFetcherError) {
