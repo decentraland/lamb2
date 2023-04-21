@@ -27,6 +27,7 @@ import { metricDeclarations } from './metrics'
 import { ContentComponent } from './ports/content'
 import { OwnershipCachesComponent } from './ports/ownership-caches'
 import { TheGraphComponent } from './ports/the-graph'
+import { BaseItem } from './logic/fetch-elements/fetch-base-items'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -42,9 +43,11 @@ export type BaseComponents = {
   content: ContentComponent
   theGraph: TheGraphComponent
   ownershipCaches: OwnershipCachesComponent
+  baseWearablesFetcher: ElementsFetcher<BaseItem>
   wearablesFetcher: ElementsFetcher<Item>
   thirdPartyProvidersFetcher: ThirdPartyProvidersFetcher
   thirdPartyWearablesFetcher: ElementsFetcher<ThirdPartyWearable & { definition: WearableDefinition }>
+  baseEmotesFetcher: ElementsFetcher<BaseItem>
   emotesFetcher: ElementsFetcher<Item>
   emoteDefinitionsFetcher: DefinitionsFetcher<EmoteDefinition>
   wearableDefinitionsFetcher: DefinitionsFetcher<WearableDefinition>
@@ -82,6 +85,7 @@ export type Context<Path extends string = any> = IHttpServerComponent.PathAwareC
 export type Filename = string
 export type Filehash = IPFSv1 | IPFSv2
 export type WearableId = string // These ids are used as pointers on the content server
+export type EmoteId = string // These ids are used as pointers on the content server
 
 export type ProfileMetadata = Profile & {
   timestamp: number

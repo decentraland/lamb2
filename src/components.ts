@@ -19,6 +19,7 @@ import { createFetchComponent } from './ports/fetch'
 import { createOwnershipCachesComponent } from './ports/ownership-caches'
 import { createTheGraphComponent, TheGraphComponent } from './ports/the-graph'
 import { AppComponents, GlobalContext } from './types'
+import { BaseItem, fetchAllBaseWearables, fetchAllBaseEmotes } from './logic/fetch-elements/fetch-base-items'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -56,9 +57,13 @@ export async function initComponents(
   )
   const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent({ config, logs, content })
   const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent({ config, logs, content })
+  const baseWearablesFetcher = createElementsFetcherComponent<BaseItem>({ logs }, async (_address) =>
+    fetchAllBaseWearables()
+  )
   const wearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllWearables({ theGraph }, address)
   )
+  const baseEmotesFetcher = createElementsFetcherComponent<BaseItem>({ logs }, async (_address) => fetchAllBaseEmotes())
   const emotesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllEmotes({ theGraph }, address)
   )
@@ -78,10 +83,12 @@ export async function initComponents(
     content,
     theGraph,
     ownershipCaches,
+    baseWearablesFetcher,
     wearablesFetcher,
     wearableDefinitionsFetcher,
     emoteDefinitionsFetcher,
     thirdPartyWearablesFetcher,
+    baseEmotesFetcher,
     emotesFetcher,
     namesFetcher,
     landsFetcher,
