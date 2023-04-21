@@ -1,6 +1,6 @@
-import { WearableDefinition } from '@dcl/schemas'
-import { FetcherError } from '../../adapters/elements-fetcher'
-import { paginationObject } from '../../logic/pagination'
+import { WearableCategory, WearableDefinition } from '@dcl/schemas'
+import { ElementsFetcher, FetcherError } from '../../adapters/elements-fetcher'
+import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import {
   BaseWearableFilters,
   ErrorResponse,
@@ -12,6 +12,7 @@ import {
   WearableType
 } from '../../types'
 import { IHttpServerComponent } from '@well-known-components/interfaces'
+import { BaseItem } from '../../logic/fetch-elements/fetch-base-items'
 
 type BaseAvatar = {
   urn: string
@@ -21,10 +22,24 @@ type BaseAvatar = {
   }[]
 }
 
-type ItemResponse = (BaseAvatar | Item | ThirdPartyWearable) & {
+type ItemResponse = (BaseAvatar | Omit<Item, 'minTransferredAt' | 'maxTransferredAt'> | ThirdPartyWearable) & {
   type: WearableType
-  definition: WearableDefinition
+  definition: WearableDefinition | undefined
 }
+
+const mapItemToItemResponse = (
+  item: BaseAvatar | Omit<Item, 'minTransferredAt' | 'maxTransferredAt'> | ThirdPartyWearable,
+  definitions: WearableDefinition | undefined
+): ItemResponse => ({
+  type: 'on-chain', // TODO
+  urn: item.urn,
+  amount: item.individualData.length,
+  individualData: item.individualData,
+  name: '', //item.name,
+  category: WearableCategory.EYEWEAR, //item.category,
+  rarity: '', //item.rarity,
+  definition: definitions
+})
 
 function createFilters(params: IHttpServerComponent.ParseUrlParams<'/explorer-service/backpack/:address/wearables'>) {
   const baseFilter = (wearables: Item[], filters: BaseWearableFilters) => {
@@ -42,17 +57,43 @@ function createFilters(params: IHttpServerComponent.ParseUrlParams<'/explorer-se
   return { baseFilter, onChainFilter, thirdPartyFilter }
 }
 
+function createCombinedFetcher(
+  baseWearablesFetcher: ElementsFetcher<BaseItem>,
+  wearablesFetcher: ElementsFetcher<Item>,
+  thirdPartyWearablesFetcher: ElementsFetcher<ThirdPartyWearable>
+): (address: string) => Promise<Item[]> {
+  return async function (address: string): Promise<Item[]> {
+    const [baseItems, nftItems, thirdPartyItems] = await Promise.all([
+      baseWearablesFetcher.fetchOwnedElements(address),
+      wearablesFetcher.fetchOwnedElements(address),
+      thirdPartyWearablesFetcher.fetchOwnedElements(address)
+    ])
+
+    return [/*...baseItems, */ ...nftItems /*, ...thirdPartyItems*/]
+  }
+}
+
 export async function explorerHandler(
   context: HandlerContextWithPath<
-    'logs' | 'wearablesFetcher' | 'wearableDefinitionsFetcher',
+    | 'logs'
+    | 'baseWearablesFetcher'
+    | 'wearablesFetcher'
+    | 'thirdPartyProvidersFetcher'
+    | 'thirdPartyWearablesFetcher'
+    | 'wearableDefinitionsFetcher',
     '/explorer-service/backpack/:address/wearables'
   >
-): Promise<PaginatedResponse<any> | ErrorResponse> {
-  // ): Promise<PaginatedResponse<ItemResponse> | ErrorResponse> {
-  const { logs, wearableDefinitionsFetcher, wearablesFetcher } = context.components
-  // const { address } = context.params
+): Promise<PaginatedResponse<ItemResponse> | ErrorResponse> {
+  const {
+    logs,
+    baseWearablesFetcher,
+    wearablesFetcher,
+    thirdPartyProvidersFetcher,
+    thirdPartyWearablesFetcher,
+    wearableDefinitionsFetcher
+  } = context.components
+  const { address } = context.params
   const logger = logs.getLogger('wearables-handler')
-  // const includeDefinitions = context.url.searchParams.has('includeDefinitions')
   const pagination = paginationObject(context.url)
 
   try {
@@ -62,28 +103,31 @@ export async function explorerHandler(
     // const baseWearables = baseFilter(baseWearablesFetcher.fetchOwnedElements(address), baseFilters)
     // const thirdPartyWearables = thirdPartyFilter(thirdPartyFetcher.fetchOwnedElements(address), thirdPartyFiltrs)
 
-    // onChainFilter(wearablesFetcher, definitionFetcher) {
-    //   defi
-    // }
+    const fetchCombinedElements = createCombinedFetcher(
+      baseWearablesFetcher,
+      wearablesFetcher,
+      thirdPartyWearablesFetcher
+    )
+    const page = await fetchAndPaginate<Item>(address, fetchCombinedElements, pagination, undefined, undefined)
 
-    // const page = await fetchAndPaginate<Item>(address, sortSpecific(onChainWearables, baseWearables, thirdPartyWearables), pagination)
+    const definitions: (WearableDefinition | undefined)[] = await wearableDefinitionsFetcher.fetchItemsDefinitions(
+      page.elements.map((wearable) => wearable.urn)
+    )
 
-    // if (includeDefinitions) {
-    //   const wearables = page.elements
-    //   const definitions = await wearableDefinitionsFetcher.fetchItemsDefinitions(
-    //     wearables.map((wearable) => wearable.urn)
-    //   )
-    //   const results: ItemResponse[] = []
-    //   for (let i = 0; i < wearables.length; ++i) {
-    //     results.push({
-    //       ...wearables[i],
-    //       definition: includeDefinitions ? definitions[i] : undefined
-    //     })
-    //   }
-    //   page.elements = results
-    // }
+    const results: ItemResponse[] = []
+    const wearables = page.elements
 
-    return mock
+    for (let i = 0; i < wearables.length; ++i) {
+      results.push(mapItemToItemResponse(wearables[i], definitions[i] || undefined))
+    }
+
+    return {
+      status: 200,
+      body: {
+        ...page,
+        elements: results
+      }
+    }
   } catch (err: any) {
     if (err instanceof FetcherError) {
       return {
