@@ -302,7 +302,3 @@ export type BaseItem = {
 export async function fetchAllBaseWearables<E extends BaseItem>(): Promise<E[]> {
   return BASE_WEARABLES.map((id) => ({ id } as E))
 }
-
-export async function fetchAllBaseEmotes<E extends BaseItem>(): Promise<E[]> {
-  return BASE_EMOTES.map((id) => ({ id } as E))
-}

@@ -19,7 +19,7 @@ import { createFetchComponent } from './ports/fetch'
 import { createOwnershipCachesComponent } from './ports/ownership-caches'
 import { createTheGraphComponent, TheGraphComponent } from './ports/the-graph'
 import { AppComponents, GlobalContext } from './types'
-import { BaseItem, fetchAllBaseWearables, fetchAllBaseEmotes } from './logic/fetch-elements/fetch-base-items'
+import { BaseItem, fetchAllBaseWearables } from './logic/fetch-elements/fetch-base-items'
 
 // Initialize all the components of the app
 export async function initComponents(
