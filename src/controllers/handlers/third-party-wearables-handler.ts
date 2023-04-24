@@ -1,3 +1,4 @@
+import { WearableDefinition } from '@dcl/schemas'
 import { FetcherError } from '../../adapters/elements-fetcher'
 import { ThirdPartyProviderFetcherError } from '../../adapters/third-party-providers-fetcher'
 import {
@@ -6,13 +7,7 @@ import {
 } from '../../logic/fetch-elements/fetch-third-party-wearables'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { parseUrn } from '../../logic/utils'
-import {
-  ErrorResponse,
-  HandlerContextWithPath,
-  PaginatedResponse,
-  ThirdPartyWearable,
-  WearableDefinition
-} from '../../types'
+import { ErrorResponse, HandlerContextWithPath, PaginatedResponse, ThirdPartyWearable } from '../../types'
 
 function createFilter(url: URL): (item: ThirdPartyWearable) => boolean {
   const categories = url.searchParams.has('category') ? url.searchParams.getAll('category') : []
@@ -27,6 +22,29 @@ function createFilter(url: URL): (item: ThirdPartyWearable) => boolean {
     }
     return true
   }
+}
+
+const byUrn: SortingFunction = (item1: ThirdPartyWearable, item2: ThirdPartyWearable): number =>
+  item1.urn.localeCompare(item2.urn)
+
+export const nameAZ: SortingFunction = (item1: ThirdPartyWearable, item2: ThirdPartyWearable): number => {
+  return item1.name.localeCompare(item2.name) || byUrn(item1, item2)
+}
+
+export const nameZA: SortingFunction = (item1: ThirdPartyWearable, item2: ThirdPartyWearable): number => {
+  return item2.name.localeCompare(item1.name) || byUrn(item1, item2)
+}
+
+type SortingFunction = (item1: ThirdPartyWearable, item2: ThirdPartyWearable) => number
+
+const SORTING: Record<string, SortingFunction> = {
+  name_a_z: nameAZ,
+  name_z_a: nameZA
+}
+
+export function createSorting(url: URL): (tw1: ThirdPartyWearable, tpw2: ThirdPartyWearable) => number {
+  const sort = url.searchParams.has('sort') ? url.searchParams.get('sort')! : 'name_a_z'
+  return SORTING[sort] || nameAZ
 }
 
 // TODO: change this name
@@ -46,13 +64,15 @@ export async function thirdPartyWearablesHandler(
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
   const pagination = paginationObject(context.url)
   const filter = createFilter(context.url)
+  const sorting = createSorting(context.url)
 
   try {
     const page = await fetchAndPaginate<ThirdPartyWearable & { definition: WearableDefinition }>(
       address,
       thirdPartyWearablesFetcher.fetchOwnedElements,
       pagination,
-      filter
+      filter,
+      sorting
     )
     if (includeDefinitions) {
       return {

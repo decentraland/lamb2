@@ -1,14 +1,14 @@
-import { Entity } from '@dcl/schemas'
+import { Entity, WearableCategory } from '@dcl/schemas'
 import Wallet from 'ethereumjs-wallet'
 import { extractWearableDefinitionFromEntity } from '../../src/adapters/definitions'
 import { ItemFromQuery } from '../../src/logic/fetch-elements/fetch-items'
+import { RARITIES } from '../../src/logic/utils'
 import { ContentComponent } from '../../src/ports/content'
 import { ItemResponse } from '../../src/types'
 import { test } from '../components'
 import { generateWearableContentDefinitions, generateWearables } from '../data/wearables'
-import { RARITIES } from '../../src/logic/utils'
 
-import { leastRare, nameAZ, nameZA, newest, oldest, rarest } from '../../src/logic/sorting'
+import { leastRare, nameAZ, nameZA, rarest } from '../../src/logic/sorting'
 
 // NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
 test('wearables-handler: GET /users/:address/wearables should', function ({ components }) {
@@ -339,9 +339,9 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
   it('return wearables filtering by category', async () => {
     const { localFetch, theGraph } = components
-    const wearables = generateWearables(17).map((w, i) => ({
+    const wearables: ItemFromQuery[] = generateWearables(17).map((w, i) => ({
       ...w,
-      category: i % 2 === 0 ? 'upper_body' : 'lower_body'
+      category: i % 2 === 0 ? WearableCategory.UPPER_BODY : WearableCategory.LOWER_BODY
     }))
 
     const wallet = Wallet.generate().getAddressString()

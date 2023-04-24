@@ -7,11 +7,11 @@ import { oldWearablesHandler } from './handlers/old-wearables-handler'
 import { profilesHandler } from './handlers/profiles-handler'
 import { statusHandler } from './handlers/status-handler'
 import {
-  thirdPartyWearablesHandler,
-  thirdPartyCollectionWearablesHandler
+  thirdPartyCollectionWearablesHandler,
+  thirdPartyWearablesHandler
 } from './handlers/third-party-wearables-handler'
 import { wearablesHandler } from './handlers/wearables-handler'
-import { explorerHandler } from './handlers/explorer-handler'
+// import { explorerHandler } from './handlers/explorer-handler'
 
 // We return the entire router because it will be easier to test than a whole server
 export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContext>> {
@@ -26,7 +26,7 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
   router.get('/users/:address/lands', landsHandler)
   router.post('/profiles', profilesHandler)
 
-  router.get('/explorer-service/backpack/:address/wearables', explorerHandler)
+  // router.get('/explorer-service/backpack/:address/wearables', explorerHandler)
 
   // old routes to be deprecated
   router.get('/nfts/wearables/:id', oldWearablesHandler)

@@ -1,7 +1,7 @@
-import { AppComponents, Item } from '../../types'
-import { fetchAllNFTs, THE_GRAPH_PAGE_SIZE } from './fetch-elements'
-import { compareByRarity } from '../utils'
 import { EmoteCategory, WearableCategory } from '@dcl/schemas'
+import { AppComponents, Item } from '../../types'
+import { compareByRarity } from '../utils'
+import { THE_GRAPH_PAGE_SIZE, fetchAllNFTs } from './fetch-elements'
 
 function groupItemsByURN(items: ItemFromQuery[]): Item[] {
   const itemsByURN = new Map<string, Item>()

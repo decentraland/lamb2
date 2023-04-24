@@ -1,13 +1,7 @@
+import { WearableDefinition } from '@dcl/schemas'
 import { FetcherError } from '../../adapters/elements-fetcher'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
-import {
-  ErrorResponse,
-  HandlerContextWithPath,
-  Item,
-  ItemResponse,
-  PaginatedResponse,
-  WearableDefinition
-} from '../../types'
+import { ErrorResponse, HandlerContextWithPath, Item, ItemResponse, PaginatedResponse } from '../../types'
 import { createFilters, createSorting } from './items-commons'
 
 const mapItemToItemResponse = (item: Item, definitions: WearableDefinition | undefined): ItemResponse => ({

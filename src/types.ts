@@ -1,14 +1,12 @@
 import {
-  Emote,
   EmoteCategory,
-  EmoteRepresentationADR74,
+  EmoteDefinition,
   IPFSv1,
   IPFSv2,
   Profile,
   Rarity,
-  Wearable,
   WearableCategory,
-  WearableRepresentation
+  WearableDefinition
 } from '@dcl/schemas'
 import type { IFetchComponent } from '@well-known-components/http-server'
 import type {
@@ -23,11 +21,11 @@ import { DefinitionsFetcher } from './adapters/definitions-fetcher'
 import { ElementsFetcher } from './adapters/elements-fetcher'
 import { ThirdPartyProvidersFetcher } from './adapters/third-party-providers-fetcher'
 import { WearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
+import { BaseItem } from './logic/fetch-elements/fetch-base-items'
 import { metricDeclarations } from './metrics'
 import { ContentComponent } from './ports/content'
 import { OwnershipCachesComponent } from './ports/ownership-caches'
 import { TheGraphComponent } from './ports/the-graph'
-import { BaseItem } from './logic/fetch-elements/fetch-base-items'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -197,25 +195,6 @@ export type ThirdPartyAssets = {
   page: number
   assets: ThirdPartyAsset[]
   next?: string
-}
-
-export type WearableDefinition = Omit<Wearable, 'data'> & {
-  data: Omit<Wearable['data'], 'representations'> & {
-    representations: WearableDefinitionRepresentation[]
-  }
-}
-export type WearableDefinitionRepresentation = Omit<WearableRepresentation, 'contents'> & {
-  contents: { key: string; url: string }[]
-}
-
-export type EmoteDefinition = Omit<Emote, 'emoteDataADR74'> & {
-  emoteDataADR74: Omit<Emote['emoteDataADR74'], 'representations'> & {
-    representations: EmoteDefinitionRepresentation[]
-  }
-}
-
-export type EmoteDefinitionRepresentation = Omit<EmoteRepresentationADR74, 'contents'> & {
-  contents: { key: string; url: string }[]
 }
 
 export type ItemResponse = Omit<Item, 'minTransferredAt' | 'maxTransferredAt'> & {
