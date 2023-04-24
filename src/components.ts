@@ -63,7 +63,6 @@ export async function initComponents(
   const wearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllWearables({ theGraph }, address)
   )
-  const baseEmotesFetcher = createElementsFetcherComponent<BaseItem>({ logs }, async (_address) => fetchAllBaseEmotes())
   const emotesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllEmotes({ theGraph }, address)
   )
@@ -88,7 +87,6 @@ export async function initComponents(
     wearableDefinitionsFetcher,
     emoteDefinitionsFetcher,
     thirdPartyWearablesFetcher,
-    baseEmotesFetcher,
     emotesFetcher,
     namesFetcher,
     landsFetcher,

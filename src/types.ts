@@ -47,7 +47,6 @@ export type BaseComponents = {
   wearablesFetcher: ElementsFetcher<Item>
   thirdPartyProvidersFetcher: ThirdPartyProvidersFetcher
   thirdPartyWearablesFetcher: ElementsFetcher<ThirdPartyWearable & { definition: WearableDefinition }>
-  baseEmotesFetcher: ElementsFetcher<BaseItem>
   emotesFetcher: ElementsFetcher<Item>
   emoteDefinitionsFetcher: DefinitionsFetcher<EmoteDefinition>
   wearableDefinitionsFetcher: DefinitionsFetcher<WearableDefinition>
