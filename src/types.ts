@@ -41,7 +41,7 @@ export type BaseComponents = {
   content: ContentComponent
   theGraph: TheGraphComponent
   ownershipCaches: OwnershipCachesComponent
-  baseWearablesFetcher: ElementsFetcher<BaseItem>
+  baseWearablesFetcher: ElementsFetcher<BaseWearable>
   wearablesFetcher: ElementsFetcher<Item>
   thirdPartyProvidersFetcher: ThirdPartyProvidersFetcher
   thirdPartyWearablesFetcher: ElementsFetcher<ThirdPartyWearable & { definition: WearableDefinition }>
@@ -128,6 +128,10 @@ export type ThirdPartyWearable = {
   }[]
   name: string
   category: WearableCategory
+}
+
+export type BaseWearable = ThirdPartyWearable & {
+  definition: WearableDefinition
 }
 
 export type Name = {

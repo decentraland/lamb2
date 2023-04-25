@@ -43,8 +43,8 @@ async function fetchAssets(
 
       url = assetsByOwner.next
     } while (url)
-  } catch (err) {
-    logger.error(`Error fetching assets with owner: ${owner}, url: ${url}`)
+  } catch (err: any) {
+    logger.warn(`Error fetching assets with owner: ${owner}, url: ${url}, error: ${err.message}`)
   }
 
   return allAssets

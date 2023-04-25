@@ -1,4 +1,4 @@
-import { EmoteId, WearableId } from '../../types'
+import { AppComponents, BaseWearable, WearableId } from '../../types'
 
 const BASE_WEARABLES: WearableId[] = [
   'urn:decentraland:off-chain:base-avatars:BaseFemale',
@@ -282,23 +282,21 @@ const BASE_WEARABLES: WearableId[] = [
   'urn:decentraland:off-chain:base-avatars:polocoloredtshirt'
 ]
 
-const BASE_EMOTES: EmoteId[] = [
-  'handsair',
-  'wave',
-  'fistpump',
-  'dance',
-  'raiseHand',
-  'clap',
-  'money',
-  'kiss',
-  'headexplode',
-  'shrug'
-]
-
-export type BaseItem = {
-  id: string
-}
-
-export async function fetchAllBaseWearables<E extends BaseItem>(): Promise<E[]> {
-  return BASE_WEARABLES.map((id) => ({ id } as E))
+export async function fetchAllBaseWearables<E extends BaseWearable>({
+  wearableDefinitionsFetcher
+}: Pick<AppComponents, 'wearableDefinitionsFetcher'>): Promise<E[]> {
+  const definitions = await wearableDefinitionsFetcher.fetchItemsDefinitions(BASE_WEARABLES)
+  return definitions
+    .filter((definition) => !!definition)
+    .map(
+      (definition) =>
+        ({
+          urn: definition!.id,
+          name: definition!.name,
+          category: definition!.data.category,
+          definition,
+          individualData: [{ id: definition!.id }],
+          amount: 1
+        } as E)
+    )
 }
