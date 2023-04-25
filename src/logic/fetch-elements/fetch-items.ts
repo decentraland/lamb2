@@ -25,8 +25,14 @@ function groupItemsByURN(items: ItemFromQuery[]): Item[] {
         individualData: [individualData],
         rarity: itemFromQuery.item.rarity,
         amount: 1,
-        name: itemFromQuery.metadata['wearable']?.name || itemFromQuery.metadata['emote']?.name || '',
-        category: itemFromQuery.category,
+        name:
+          'wearable' in itemFromQuery.metadata
+            ? itemFromQuery.metadata['wearable']!.name
+            : itemFromQuery.metadata['emote']!.name,
+        category:
+          'wearable' in itemFromQuery.metadata
+            ? itemFromQuery.metadata['wearable']!.category
+            : itemFromQuery.metadata['emote']!.category,
         minTransferredAt: itemFromQuery.transferredAt,
         maxTransferredAt: itemFromQuery.transferredAt
       })
@@ -54,6 +60,7 @@ function createQueryForCategory(category: ItemCategory) {
       metadata {
         ${category} {
           name
+          category
         }
       },
       item {
@@ -81,9 +88,11 @@ export type ItemFromQuery = {
   metadata: {
     wearable?: {
       name: string
+      category: WearableCategory
     }
     emote?: {
       name: string
+      category: EmoteCategory
     }
   }
   category: WearableCategory | EmoteCategory
