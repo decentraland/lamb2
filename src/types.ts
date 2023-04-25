@@ -124,7 +124,7 @@ export type Item = FilterableItem & {
 }
 
 export type ThirdPartyWearable = FilterableItem & {
-  category: WearableCategory
+  category: WearableCategory | EmoteCategory
   urn: string
   amount: number
   individualData: {

@@ -11,8 +11,7 @@ import {
   thirdPartyWearablesHandler
 } from './handlers/third-party-wearables-handler'
 import { wearablesHandler } from './handlers/wearables-handler'
-import { explorerHandler } from "./handlers/explorer-handler";
-// import { explorerHandler } from './handlers/explorer-handler'
+import { explorerHandler } from './handlers/explorer-handler'
 
 // We return the entire router because it will be easier to test than a whole server
 export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContext>> {

@@ -25,7 +25,7 @@ const mapItemToItemResponse = (item: MixedWearables, definitions: WearableDefini
   amount: item.individualData.length,
   individualData: item.individualData,
   name: item.name,
-  category: WearableCategory.EYEWEAR, //item.category,
+  category: item.category,
   rarity: 'rarity' in item ? item.rarity : undefined,
   definition: definitions
 })
@@ -48,12 +48,13 @@ function createCombinedFetcher(
         .then((elements: Item[]) =>
           elements.map((wearable: Item): Item & { type: WearableType } => ({ type: 'on-chain', ...wearable }))
         ),
-      thirdPartyWearablesFetcher.fetchOwnedElements(address).then((elements: ThirdPartyWearable[]) =>
-        elements.map((wearable: ThirdPartyWearable): ThirdPartyWearable & { type: WearableType } => ({
+      thirdPartyWearablesFetcher.fetchOwnedElements(address).then((elements: ThirdPartyWearable[]) => {
+        console.log('thirdPartyWearablesFetcher elements', elements)
+        return elements.map((wearable: ThirdPartyWearable): ThirdPartyWearable & { type: WearableType } => ({
           type: 'third-party',
           ...wearable
         }))
-      )
+      })
     ])
 
     return [...baseItems, ...nftItems, ...thirdPartyItems]
