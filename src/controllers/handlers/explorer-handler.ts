@@ -3,16 +3,14 @@ import { ElementsFetcher, FetcherError } from '../../adapters/elements-fetcher'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import {
   BaseWearable,
-  BaseWearableFilters,
   ErrorResponse,
   HandlerContextWithPath,
   Item,
   PaginatedResponse,
   ThirdPartyWearable,
-  WearableFilters,
   WearableType
 } from '../../types'
-import { IHttpServerComponent } from '@well-known-components/interfaces'
+import { createFilters } from './items-commons'
 
 export type MixedWearables = (BaseWearable | Item | ThirdPartyWearable) & { type: WearableType }
 
@@ -31,22 +29,6 @@ const mapItemToItemResponse = (item: MixedWearables, definitions: WearableDefini
   rarity: 'rarity' in item ? item.rarity : undefined,
   definition: definitions
 })
-
-function createFilters(params: IHttpServerComponent.ParseUrlParams<'/explorer-service/backpack/:address/wearables'>) {
-  const baseFilter = (wearables: Item[], filters: BaseWearableFilters) => {
-    return wearables
-  }
-
-  const onChainFilter = (wearables: Item[], filters: WearableFilters) => {
-    return wearables
-  }
-
-  const thirdPartyFilter = (wearables: ThirdPartyWearable[], filters: BaseWearableFilters) => {
-    return wearables
-  }
-
-  return { baseFilter, onChainFilter, thirdPartyFilter }
-}
 
 function createCombinedFetcher(
   baseWearablesFetcher: ElementsFetcher<BaseWearable>,
@@ -100,6 +82,7 @@ export async function explorerHandler(
   const { address } = context.params
   const logger = logs.getLogger('wearables-handler')
   const pagination = paginationObject(context.url)
+  const filter = createFilters(context.url)
 
   try {
     // const { baseFilter,  onChainFilter, thirdPartyFilter } = createFilters(context.params)
@@ -113,13 +96,7 @@ export async function explorerHandler(
       wearablesFetcher,
       thirdPartyWearablesFetcher
     )
-    const page = await fetchAndPaginate<MixedWearables>(
-      address,
-      fetchCombinedElements,
-      pagination,
-      undefined,
-      undefined
-    )
+    const page = await fetchAndPaginate<MixedWearables>(address, fetchCombinedElements, pagination, filter, undefined)
 
     const definitions: (WearableDefinition | undefined)[] = await wearableDefinitionsFetcher.fetchItemsDefinitions(
       page.elements.map((wearable) => wearable.urn)

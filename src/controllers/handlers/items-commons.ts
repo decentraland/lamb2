@@ -1,12 +1,12 @@
-import { Item } from '../../types'
 import { rarest, SortingFunction, SORTING } from '../../logic/sorting'
+import { FilterableItem } from '../../types'
 
-export function createFilters(url: URL): (item: Item) => boolean {
+export function createFilters(url: URL): (item: FilterableItem) => boolean {
   const categories = url.searchParams.has('category') ? url.searchParams.getAll('category') : []
   const name = url.searchParams.has('name') ? url.searchParams.get('name') : undefined
   const rarity = url.searchParams.has('rarity') ? url.searchParams.get('rarity') : undefined
 
-  return (item: Item) => {
+  return (item: FilterableItem) => {
     if (rarity && item.rarity !== rarity) {
       return false
     }

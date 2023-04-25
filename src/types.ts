@@ -21,7 +21,6 @@ import { DefinitionsFetcher } from './adapters/definitions-fetcher'
 import { ElementsFetcher } from './adapters/elements-fetcher'
 import { ThirdPartyProvidersFetcher } from './adapters/third-party-providers-fetcher'
 import { WearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
-import { BaseItem } from './logic/fetch-elements/fetch-base-items'
 import { metricDeclarations } from './metrics'
 import { ContentComponent } from './ports/content'
 import { OwnershipCachesComponent } from './ports/ownership-caches'
@@ -104,7 +103,13 @@ export interface TPWResolver {
  */
 export type QueryGraph = <T = any>(query: string, variables?: Variables, remainingAttempts?: number) => Promise<T>
 
-export type Item = {
+export type FilterableItem = {
+  name: string
+  category: WearableCategory | EmoteCategory
+  rarity?: string
+}
+
+export type Item = FilterableItem & {
   urn: string
   amount: number // TODO: maybe this could be individualData.length
   individualData: {
@@ -113,21 +118,18 @@ export type Item = {
     transferredAt: number
     price: number
   }[]
-  name: string
-  category: WearableCategory | EmoteCategory
   rarity: string
   minTransferredAt: number
   maxTransferredAt: number
 }
 
-export type ThirdPartyWearable = {
+export type ThirdPartyWearable = FilterableItem & {
+  category: WearableCategory
   urn: string
-  amount: number // TODO: maybe this could be individualData.length
+  amount: number
   individualData: {
     id: string
   }[]
-  name: string
-  category: WearableCategory
 }
 
 export type BaseWearable = ThirdPartyWearable & {
