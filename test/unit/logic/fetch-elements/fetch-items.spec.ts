@@ -20,11 +20,12 @@ describe('fetchEmotes', () => {
       urn,
       id,
       tokenId,
-      category
+      category,
       transferredAt,
       metadata {
         emote {
-          name
+          name,
+          category
         }
       },
       item {
@@ -49,10 +50,11 @@ describe('fetchEmotes', () => {
           tokenId: 'tokenId1',
           transferredAt: 1,
           item: { rarity: 'common', price: 10 },
-          category: EmoteCategory.FUN,
+          category: 'emote',
           metadata: {
             emote: {
-              name: 'common emote'
+              name: 'common emote',
+              category: EmoteCategory.FUN
             }
           }
         }
@@ -83,10 +85,11 @@ describe('fetchEmotes', () => {
           tokenId: 'tokenId1',
           transferredAt: 1,
           item: { rarity: 'common', price: 10 },
-          category: EmoteCategory.FUN,
+          category: 'emote',
           metadata: {
             emote: {
-              name: 'common fun'
+              name: 'common fun',
+              category: EmoteCategory.FUN
             }
           }
         },
@@ -96,10 +99,11 @@ describe('fetchEmotes', () => {
           tokenId: 'tokenId2',
           transferredAt: 2,
           item: { rarity: 'common', price: 15 },
-          category: EmoteCategory.FUN,
+          category: 'emote',
           metadata: {
             emote: {
-              name: 'common fun'
+              name: 'common fun',
+              category: EmoteCategory.DANCE
             }
           }
         },
@@ -109,10 +113,11 @@ describe('fetchEmotes', () => {
           tokenId: 'tokenId5',
           transferredAt: 5,
           item: { rarity: 'rarity5', price: 5 },
-          category: EmoteCategory.DANCE,
+          category: 'emote',
           metadata: {
             emote: {
-              name: 'common dance'
+              name: 'common dance',
+              category: EmoteCategory.DANCE
             }
           }
         }
@@ -156,10 +161,11 @@ describe('fetchEmotes', () => {
           tokenId: 'tokenId1',
           transferredAt: 1,
           item: { rarity: 'common', price: 1 },
-          category: EmoteCategory.FUN,
+          category: 'emote',
           metadata: {
             emote: {
-              name: 'fun emote'
+              name: 'fun emote',
+              category: EmoteCategory.FUN
             }
           }
         },
@@ -169,10 +175,11 @@ describe('fetchEmotes', () => {
           tokenId: 'tokenId2',
           transferredAt: 2,
           item: { rarity: 'rare', price: 2 },
-          category: EmoteCategory.DANCE,
+          category: 'emote',
           metadata: {
             emote: {
-              name: 'dance emote'
+              name: 'dance emote',
+              category: EmoteCategory.DANCE
             }
           }
         },
@@ -182,10 +189,11 @@ describe('fetchEmotes', () => {
           tokenId: 'tokenId3',
           transferredAt: 3,
           item: { rarity: 'unique', price: 3 },
-          category: EmoteCategory.HORROR,
+          category: 'emote',
           metadata: {
             emote: {
-              name: 'horror emote'
+              name: 'horror emote',
+              category: EmoteCategory.HORROR
             }
           }
         }
@@ -246,11 +254,12 @@ describe('fetchWearables', () => {
       urn,
       id,
       tokenId,
-      category
+      category,
       transferredAt,
       metadata {
         wearable {
-          name
+          name,
+          category
         }
       },
       item {
@@ -279,10 +288,11 @@ describe('fetchWearables', () => {
           tokenId: 'tokenId1',
           transferredAt: 1,
           item: { rarity: 'common', price: 1 },
-          category: EmoteCategory.FUN,
+          category: 'emote',
           metadata: {
             emote: {
-              name: 'fun emote'
+              name: 'fun emote',
+              category: EmoteCategory.FUN
             }
           }
         }
@@ -296,10 +306,11 @@ describe('fetchWearables', () => {
           tokenId: 'tokenId2',
           transferredAt: 2,
           item: { rarity: 'common', price: 2 },
-          category: EmoteCategory.DANCE,
+          category: 'emote',
           metadata: {
             emote: {
-              name: 'dance emote'
+              name: 'dance emote',
+              category: EmoteCategory.DANCE
             }
           }
         }
@@ -340,10 +351,11 @@ describe('fetchWearables', () => {
           tokenId: 'tokenId1',
           transferredAt: 1,
           item: { rarity: 'common', price: 10 },
-          category: WearableCategory.EYEBROWS,
+          category: 'wearable',
           metadata: {
             wearable: {
-              name: 'common eyebrows'
+              name: 'common eyebrows',
+              category: WearableCategory.EYEBROWS
             }
           }
         },
@@ -353,10 +365,11 @@ describe('fetchWearables', () => {
           tokenId: 'tokenId2',
           transferredAt: 2,
           item: { rarity: 'common', price: 15 },
-          category: WearableCategory.EYEBROWS,
+          category: 'wearable',
           metadata: {
             wearable: {
-              name: 'common eyebrows'
+              name: 'common eyebrows',
+              category: WearableCategory.EYEBROWS
             }
           }
         }
@@ -370,10 +383,11 @@ describe('fetchWearables', () => {
           tokenId: 'tokenId5',
           transferredAt: 5,
           item: { rarity: 'unique', price: 5 },
-          category: WearableCategory.EARRING,
+          category: 'wearable',
           metadata: {
             wearable: {
-              name: 'unique earring'
+              name: 'unique earring',
+              category: WearableCategory.EARRING
             }
           }
         }
@@ -417,10 +431,11 @@ describe('fetchWearables', () => {
           tokenId: 'tokenId1',
           transferredAt: 1,
           item: { rarity: 'common', price: 1 },
-          category: WearableCategory.EYEBROWS,
+          category: 'wearable',
           metadata: {
             wearable: {
-              name: 'common eyebrows'
+              name: 'common eyebrows',
+              category: WearableCategory.EYEBROWS
             }
           }
         },
@@ -430,10 +445,11 @@ describe('fetchWearables', () => {
           tokenId: 'tokenId3',
           transferredAt: 3,
           item: { rarity: 'unique', price: 3 },
-          category: WearableCategory.EYES,
+          category: 'wearable',
           metadata: {
             wearable: {
-              name: 'unique eyes'
+              name: 'unique eyes',
+              category: WearableCategory.EYES
             }
           }
         }
@@ -447,10 +463,11 @@ describe('fetchWearables', () => {
           tokenId: 'tokenId2',
           transferredAt: 2,
           item: { rarity: 'rare', price: 2 },
-          category: WearableCategory.EYES,
+          category: 'wearable',
           metadata: {
             wearable: {
-              name: 'rare eyes'
+              name: 'rare eyes',
+              category: WearableCategory.EYES
             }
           }
         }

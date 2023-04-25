@@ -341,7 +341,12 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     const { localFetch, theGraph } = components
     const wearables: ItemFromQuery[] = generateWearables(17).map((w, i) => ({
       ...w,
-      category: i % 2 === 0 ? WearableCategory.UPPER_BODY : WearableCategory.LOWER_BODY
+      metadata: {
+        wearable: {
+          name: 'name-' + i,
+          category: i % 2 === 0 ? WearableCategory.UPPER_BODY : WearableCategory.LOWER_BODY
+        }
+      }
     }))
 
     const wallet = Wallet.generate().getAddressString()
@@ -600,7 +605,7 @@ function convertToDataModel(wearables: ItemFromQuery[], contentInfo?: ContentInf
       amount: 1,
       individualData: [individualData],
       rarity,
-      category: wearable.category,
+      category: wearable.metadata.wearable.category,
       name: wearable.metadata.wearable.name,
       definition: definition && content ? extractWearableDefinitionFromEntity({ content }, definition) : undefined
     }

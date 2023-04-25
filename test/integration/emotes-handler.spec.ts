@@ -4,7 +4,7 @@ import Wallet from 'ethereumjs-wallet'
 import { ItemResponse } from '../../src/types'
 import { ItemFromQuery } from '../../src/logic/fetch-elements/fetch-items'
 import { ContentComponent } from '../../src/ports/content'
-import { EmoteCategory, Entity } from '@dcl/schemas'
+import { EmoteCategory, Entity, WearableCategory } from '@dcl/schemas'
 import { extractEmoteDefinitionFromEntity } from '../../src/adapters/definitions'
 import { leastRare, nameAZ, nameZA, rarest } from '../../src/logic/sorting'
 import { RARITIES } from '../../src/logic/utils'
@@ -201,7 +201,12 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     const { localFetch, theGraph } = components
     const emotes = generateEmotes(17).map((w, i) => ({
       ...w,
-      category: i % 2 === 0 ? EmoteCategory.FUN : EmoteCategory.DANCE
+      metadata: {
+        emote: {
+          name: 'name-' + i,
+          category: i % 2 === 0 ? EmoteCategory.FUN : EmoteCategory.DANCE
+        }
+      }
     }))
 
     const wallet = Wallet.generate().getAddressString()
@@ -433,7 +438,7 @@ function convertToDataModel(emotes: ItemFromQuery[], contentInfo?: ContentInfo):
       urn: emote.urn,
       amount: 1,
       individualData: [individualData],
-      category: emote.category,
+      category: emote.metadata.emote.category,
       name: emote.metadata.emote.name,
       rarity,
       definition: definition ? extractEmoteDefinitionFromEntity({ content }, definition) : undefined

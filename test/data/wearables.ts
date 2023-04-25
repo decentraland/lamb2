@@ -1,4 +1,4 @@
-import { Entity, EntityType, Wearable, WearableCategory, WearableRepresentation } from '@dcl/schemas'
+import { EmoteCategory, Entity, EntityType, Wearable, WearableCategory, WearableRepresentation } from '@dcl/schemas'
 import { ThirdPartyResolversQueryResults } from '../../src/adapters/third-party-providers-fetcher'
 import { ItemFromQuery } from '../../src/logic/fetch-elements/fetch-items'
 import { ThirdPartyAsset } from '../../src/types'
@@ -12,11 +12,12 @@ export function generateWearables(quantity: number): ItemFromQuery[] {
       urn: 'urn-' + i,
       id: 'id-' + i,
       tokenId: 'tokenId-' + i,
-      category: WearableCategory.LOWER_BODY,
+      category: 'wearable',
       transferredAt: Date.now() - TWO_DAYS,
       metadata: {
         wearable: {
-          name: 'name-' + i
+          name: 'name-' + i,
+          category: WearableCategory.EYEWEAR
         }
       },
       item: {

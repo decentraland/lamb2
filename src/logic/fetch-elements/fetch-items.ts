@@ -49,11 +49,11 @@ function createQueryForCategory(category: ItemCategory) {
       urn,
       id,
       tokenId,
-      category
+      category,
       transferredAt,
       metadata {
         ${category} {
-          name
+          name,
           category
         }
       },

@@ -1,4 +1,4 @@
-import { Emote, EmoteRepresentationADR74, Entity, EntityType } from '@dcl/schemas'
+import { Emote, EmoteCategory, EmoteRepresentationADR74, Entity, EntityType } from '@dcl/schemas'
 import { ItemFromQuery } from '../../src/logic/fetch-elements/fetch-items'
 
 const TWO_DAYS = 2 * 24 * 60 * 60 * 1000
@@ -14,7 +14,8 @@ export function generateEmotes(quantity: number): ItemFromQuery[] {
       transferredAt: Date.now() - TWO_DAYS,
       metadata: {
         emote: {
-          name: 'name-' + i
+          name: 'name-' + i,
+          category: EmoteCategory.FUN
         }
       },
       item: {
@@ -41,7 +42,8 @@ export function generateEmoteContentDefinitions(urns: string[]): Entity[] {
       {
         file: 'file',
         hash: 'id'
-      }, {
+      },
+      {
         file: imageFileNameFor(urn),
         hash: 'imageHash'
       },
@@ -58,11 +60,13 @@ export function generateEmoteContentDefinitions(urns: string[]): Entity[] {
       thumbnail: thumbnailNameFor(urn),
       image: imageFileNameFor(urn),
       emoteDataADR74: {
-        representations: [{
-          bodyShapes: [],
-          mainFile: 'mainFile',
-          contents: ['fileName'],
-        }] as EmoteRepresentationADR74[]
+        representations: [
+          {
+            bodyShapes: [],
+            mainFile: 'mainFile',
+            contents: ['fileName']
+          }
+        ] as EmoteRepresentationADR74[]
       }
     } as Emote
   }))
