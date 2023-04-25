@@ -25,14 +25,8 @@ function groupItemsByURN(items: ItemFromQuery[]): Item[] {
         individualData: [individualData],
         rarity: itemFromQuery.item.rarity,
         amount: 1,
-        name:
-          'wearable' in itemFromQuery.metadata
-            ? itemFromQuery.metadata['wearable']!.name
-            : itemFromQuery.metadata['emote']!.name,
-        category:
-          'wearable' in itemFromQuery.metadata
-            ? itemFromQuery.metadata['wearable']!.category
-            : itemFromQuery.metadata['emote']!.category,
+        name: itemFromQuery.metadata[itemFromQuery.category]!.name,
+        category: itemFromQuery.metadata[itemFromQuery.category]!.category,
         minTransferredAt: itemFromQuery.transferredAt,
         maxTransferredAt: itemFromQuery.transferredAt
       })
@@ -95,7 +89,7 @@ export type ItemFromQuery = {
       category: EmoteCategory
     }
   }
-  category: WearableCategory | EmoteCategory
+  category: ItemCategory
 }
 
 export async function fetchAllEmotes(components: Pick<AppComponents, 'theGraph'>, owner: string): Promise<Item[]> {
