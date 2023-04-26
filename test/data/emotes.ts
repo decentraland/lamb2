@@ -1,9 +1,9 @@
 import { Emote, EmoteCategory, EmoteRepresentationADR74, Entity, EntityType } from '@dcl/schemas'
-import { ItemFromQuery } from '../../src/logic/fetch-elements/fetch-items'
+import { EmoteFromQuery } from '../../src/logic/fetch-elements/fetch-items'
 
 const TWO_DAYS = 2 * 24 * 60 * 60 * 1000
 
-export function generateEmotes(quantity: number): ItemFromQuery[] {
+export function generateEmotes(quantity: number): EmoteFromQuery[] {
   const generatedEmotes = []
   for (let i = 0; i < quantity; i++) {
     generatedEmotes.push({

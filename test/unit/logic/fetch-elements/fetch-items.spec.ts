@@ -1,7 +1,7 @@
-import { createTheGraphComponentMock } from '../../../mocks/the-graph-mock'
-import { Item } from '../../../../src/types'
-import { fetchAllEmotes, fetchAllWearables, ItemFromQuery } from '../../../../src/logic/fetch-elements/fetch-items'
 import { EmoteCategory, WearableCategory } from '@dcl/schemas'
+import { EmoteFromQuery, WearableFromQuery, fetchAllEmotes, fetchAllWearables } from '../../../../src/logic/fetch-elements/fetch-items'
+import { Item } from '../../../../src/types'
+import { createTheGraphComponentMock } from '../../../mocks/the-graph-mock'
 
 describe('fetchEmotes', () => {
   it('the maticCollectionsSubgraph is queried', async () => {
@@ -58,7 +58,7 @@ describe('fetchEmotes', () => {
             }
           }
         }
-      ] as ItemFromQuery[]
+      ] as EmoteFromQuery[]
     })
     const emotes = await fetchAllEmotes({ theGraph }, 'anOwner')
     expect(emotes).toEqual([
@@ -121,7 +121,7 @@ describe('fetchEmotes', () => {
             }
           }
         }
-      ] as ItemFromQuery[]
+      ] as EmoteFromQuery[]
     })
     const emotes = await fetchAllEmotes({ theGraph }, 'anOwner')
     expect(emotes).toEqual([
@@ -197,7 +197,7 @@ describe('fetchEmotes', () => {
             }
           }
         }
-      ] as ItemFromQuery[]
+      ] as EmoteFromQuery[]
     })
     const emotes = await fetchAllEmotes({ theGraph }, 'anOwner')
     expect(emotes).toEqual([
@@ -296,7 +296,7 @@ describe('fetchWearables', () => {
             }
           }
         }
-      ] as ItemFromQuery[]
+      ] as EmoteFromQuery[]
     })
     jest.spyOn(theGraph.maticCollectionsSubgraph, 'query').mockResolvedValue({
       nfts: [
@@ -314,7 +314,7 @@ describe('fetchWearables', () => {
             }
           }
         }
-      ] as ItemFromQuery[]
+      ] as EmoteFromQuery[]
     })
     const wearables = await fetchAllWearables({ theGraph }, 'anOwner')
     expect(wearables).toEqual([
@@ -373,7 +373,7 @@ describe('fetchWearables', () => {
             }
           }
         }
-      ] as ItemFromQuery[]
+      ] as WearableFromQuery[]
     })
     jest.spyOn(theGraph.maticCollectionsSubgraph, 'query').mockResolvedValue({
       nfts: [
@@ -391,7 +391,7 @@ describe('fetchWearables', () => {
             }
           }
         }
-      ] as ItemFromQuery[]
+      ] as WearableFromQuery[]
     })
     const wearables = await fetchAllWearables({ theGraph }, 'anOwner')
     expect(wearables).toEqual([
@@ -453,7 +453,7 @@ describe('fetchWearables', () => {
             }
           }
         }
-      ] as ItemFromQuery[]
+      ] as WearableFromQuery[]
     })
     jest.spyOn(theGraph.maticCollectionsSubgraph, 'query').mockResolvedValue({
       nfts: [
@@ -471,7 +471,7 @@ describe('fetchWearables', () => {
             }
           }
         }
-      ] as ItemFromQuery[]
+      ] as WearableFromQuery[]
     })
     const wearables = await fetchAllWearables({ theGraph }, 'anOwner')
     expect(wearables).toEqual([

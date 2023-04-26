@@ -3,7 +3,11 @@ import { AppComponents, Item } from '../../types'
 import { compareByRarity } from '../utils'
 import { THE_GRAPH_PAGE_SIZE, fetchAllNFTs } from './fetch-elements'
 
-function groupItemsByURN(items: ItemFromQuery[]): Item[] {
+function isWearable(item: WearableFromQuery | EmoteFromQuery): item is WearableFromQuery {
+  return 'wearable' in item.metadata
+}
+
+function groupItemsByURN(items: (WearableFromQuery | EmoteFromQuery)[]): Item[] {
   const itemsByURN = new Map<string, Item>()
 
   items.forEach((itemFromQuery) => {
@@ -13,6 +17,7 @@ function groupItemsByURN(items: ItemFromQuery[]): Item[] {
       transferredAt: itemFromQuery.transferredAt,
       price: itemFromQuery.item.price
     }
+
     if (itemsByURN.has(itemFromQuery.urn)) {
       const itemFromMap = itemsByURN.get(itemFromQuery.urn)!
       itemFromMap.individualData.push(individualData)
@@ -25,8 +30,10 @@ function groupItemsByURN(items: ItemFromQuery[]): Item[] {
         individualData: [individualData],
         rarity: itemFromQuery.item.rarity,
         amount: 1,
-        name: itemFromQuery.metadata[itemFromQuery.category]!.name,
-        category: itemFromQuery.metadata[itemFromQuery.category]!.category,
+        name: isWearable(itemFromQuery) ? itemFromQuery.metadata.wearable.name : itemFromQuery.metadata.emote.name,
+        category: isWearable(itemFromQuery)
+          ? itemFromQuery.metadata.wearable.category
+          : itemFromQuery.metadata.emote.category,
         minTransferredAt: itemFromQuery.transferredAt,
         maxTransferredAt: itemFromQuery.transferredAt
       })
@@ -70,7 +77,7 @@ const QUERIES: Record<ItemCategory, string> = {
   wearable: createQueryForCategory('wearable')
 }
 
-export type ItemFromQuery = {
+type ItemFromQuery = {
   urn: string
   id: string
   tokenId: string
@@ -79,21 +86,31 @@ export type ItemFromQuery = {
     rarity: string
     price: number
   }
+  category: ItemCategory
+}
+
+export type WearableFromQuery = ItemFromQuery & {
+  category: 'wearable'
   metadata: {
-    wearable?: {
+    wearable: {
       name: string
       category: WearableCategory
     }
-    emote?: {
+  }
+}
+
+export type EmoteFromQuery = ItemFromQuery & {
+  category: 'emote'
+  metadata: {
+    emote: {
       name: string
       category: EmoteCategory
     }
   }
-  category: ItemCategory
 }
 
 export async function fetchAllEmotes(components: Pick<AppComponents, 'theGraph'>, owner: string): Promise<Item[]> {
-  const emotes = await fetchAllNFTs<ItemFromQuery>(
+  const emotes = await fetchAllNFTs<EmoteFromQuery>(
     components.theGraph.maticCollectionsSubgraph,
     QUERIES['emote'],
     owner
@@ -102,12 +119,12 @@ export async function fetchAllEmotes(components: Pick<AppComponents, 'theGraph'>
 }
 
 export async function fetchAllWearables(components: Pick<AppComponents, 'theGraph'>, owner: string): Promise<Item[]> {
-  const ethereumWearables = await fetchAllNFTs<ItemFromQuery>(
+  const ethereumWearables = await fetchAllNFTs<WearableFromQuery>(
     components.theGraph.ethereumCollectionsSubgraph,
     QUERIES['wearable'],
     owner
   )
-  const maticWearables = await fetchAllNFTs<ItemFromQuery>(
+  const maticWearables = await fetchAllNFTs<WearableFromQuery>(
     components.theGraph.maticCollectionsSubgraph,
     QUERIES['wearable'],
     owner
