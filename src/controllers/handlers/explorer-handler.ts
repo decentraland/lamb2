@@ -1,7 +1,8 @@
-import { WearableCategory, WearableDefinition } from '@dcl/schemas'
-import { ElementsFetcher, FetcherError } from '../../adapters/elements-fetcher'
+import { WearableDefinition } from '@dcl/schemas'
+import { FetcherError } from '../../adapters/elements-fetcher'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import {
+  AppComponents,
   BaseWearable,
   ErrorResponse,
   HandlerContextWithPath,
@@ -11,6 +12,8 @@ import {
   WearableType
 } from '../../types'
 import { createFilters } from './items-commons'
+import { fetchThirdPartyWearablesFromThirdPartyName } from '../../logic/fetch-elements/fetch-third-party-wearables'
+import { parseUrn } from '../../logic/utils'
 
 export type MixedWearables = (BaseWearable | Item | ThirdPartyWearable) & { type: WearableType }
 
@@ -31,16 +34,24 @@ const mapItemToItemResponse = (item: MixedWearables, definitions: WearableDefini
 })
 
 function createCombinedFetcher(
+  components: Pick<
+    AppComponents,
+    | 'logs'
+    | 'fetch'
+    | 'theGraph'
+    | 'baseWearablesFetcher'
+    | 'wearablesFetcher'
+    | 'thirdPartyProvidersFetcher'
+    | 'thirdPartyWearablesFetcher'
+    | 'wearableDefinitionsFetcher'
+  >,
   collectionTypes: string[],
-  thirdPartyCollectionId: string[],
-  baseWearablesFetcher: ElementsFetcher<BaseWearable>,
-  wearablesFetcher: ElementsFetcher<Item>,
-  thirdPartyWearablesFetcher: ElementsFetcher<ThirdPartyWearable>
+  thirdPartyCollectionId: string[]
 ): (address: string) => Promise<MixedWearables[]> {
   return async function (address: string): Promise<MixedWearables[]> {
     const [baseItems, nftItems, thirdPartyItems] = await Promise.all([
       collectionTypes.includes('base-wearable')
-        ? baseWearablesFetcher.fetchOwnedElements(address).then((elements: BaseWearable[]) =>
+        ? components.baseWearablesFetcher.fetchOwnedElements(address).then((elements: BaseWearable[]) =>
             elements.map((wearable: BaseWearable): BaseWearable & { type: WearableType } => ({
               type: 'base-wearable',
               ...wearable
@@ -48,22 +59,41 @@ function createCombinedFetcher(
           )
         : [],
       collectionTypes.includes('on-chain')
-        ? wearablesFetcher
+        ? components.wearablesFetcher
             .fetchOwnedElements(address)
             .then((elements: Item[]) =>
               elements.map((wearable: Item): Item & { type: WearableType } => ({ type: 'on-chain', ...wearable }))
             )
         : [],
-      collectionTypes.includes('third-party') // TODO Add filtering by thirdPartyCollectionIds
-        ? thirdPartyWearablesFetcher.fetchOwnedElements(address).then((elements: ThirdPartyWearable[]) => {
-            console.log({ elements })
-            return elements.map((wearable: ThirdPartyWearable): ThirdPartyWearable & { type: WearableType } => {
-              return {
-                type: 'third-party',
-                ...wearable
-              }
-            })
-          })
+      collectionTypes.includes('third-party')
+        ? thirdPartyCollectionId.length === 0
+          ? components.thirdPartyWearablesFetcher.fetchOwnedElements(address).then((elements: ThirdPartyWearable[]) =>
+              elements.map((wearable: ThirdPartyWearable): ThirdPartyWearable & { type: WearableType } => {
+                return {
+                  type: 'third-party',
+                  ...wearable
+                }
+              })
+            )
+          : Promise.all(
+              thirdPartyCollectionId.map(async (thirdPartyCollectionId) => {
+                // Strip the last part (the 6th part) if a collection contract id is specified
+                const collectionIdCleaned = thirdPartyCollectionId.split(':').slice(0, 5).join(':')
+                const urn = await parseUrn(collectionIdCleaned)
+                if (!urn || urn.type !== 'blockchain-collection-third-party-name') {
+                  return []
+                }
+
+                return (await fetchThirdPartyWearablesFromThirdPartyName(components, address, urn)).map(
+                  (wearable: ThirdPartyWearable): ThirdPartyWearable & { type: WearableType } => {
+                    return {
+                      type: 'third-party',
+                      ...wearable
+                    }
+                  }
+                )
+              })
+            ).then((elements: (ThirdPartyWearable & { type: WearableType })[][]) => elements.flat(1))
         : []
     ])
 
@@ -74,6 +104,8 @@ function createCombinedFetcher(
 export async function explorerHandler(
   context: HandlerContextWithPath<
     | 'logs'
+    | 'fetch'
+    | 'theGraph'
     | 'baseWearablesFetcher'
     | 'wearablesFetcher'
     | 'thirdPartyProvidersFetcher'
@@ -82,14 +114,7 @@ export async function explorerHandler(
     '/explorer-service/backpack/:address/wearables'
   >
 ): Promise<PaginatedResponse<ItemResponse> | ErrorResponse> {
-  const {
-    logs,
-    baseWearablesFetcher,
-    wearablesFetcher,
-    thirdPartyProvidersFetcher,
-    thirdPartyWearablesFetcher,
-    wearableDefinitionsFetcher
-  } = context.components
+  const { logs, wearableDefinitionsFetcher } = context.components
   const { address } = context.params
   const logger = logs.getLogger('wearables-handler')
   const pagination = paginationObject(context.url)
@@ -102,13 +127,7 @@ export async function explorerHandler(
     : []
 
   try {
-    const fetchCombinedElements = createCombinedFetcher(
-      collectionTypes,
-      thirdPartyCollectionId,
-      baseWearablesFetcher,
-      wearablesFetcher,
-      thirdPartyWearablesFetcher
-    )
+    const fetchCombinedElements = createCombinedFetcher(context.components, collectionTypes, thirdPartyCollectionId)
     const page = await fetchAndPaginate<MixedWearables>(address, fetchCombinedElements, pagination, filter, undefined)
 
     const definitions: (WearableDefinition | undefined)[] = await wearableDefinitionsFetcher.fetchItemsDefinitions(
