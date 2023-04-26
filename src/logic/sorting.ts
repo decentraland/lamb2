@@ -1,4 +1,4 @@
-import { Item } from '../types'
+import { FilterableItem } from '../controllers/handlers/items-commons'
 import { compareByRarity } from './utils'
 
 function byUrn<T extends { urn: string }>(item1: T, item2: T): number {
@@ -29,7 +29,14 @@ export function oldest<T extends { minTransferredAt: number; urn: string }>(item
   return item1.minTransferredAt - item2.minTransferredAt || byUrn(item1, item2)
 }
 
-export type SortingFunction = (item1: Item, item2: Item) => number
+type OrderableItem = FilterableItem & {
+  urn: string
+  rarity: string
+  maxTransferredAt: number
+  minTransferredAt: number
+}
+
+export type SortingFunction = (item1: OrderableItem, item2: OrderableItem) => number
 
 export const SORTING: Record<string, SortingFunction> = {
   name_a_z: nameAZ,

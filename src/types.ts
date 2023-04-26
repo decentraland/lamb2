@@ -103,7 +103,7 @@ export interface TPWResolver {
  */
 export type QueryGraph = <T = any>(query: string, variables?: Variables, remainingAttempts?: number) => Promise<T>
 
-export type Item = {
+export type Item<C extends WearableCategory | EmoteCategory> = {
   urn: string
   amount: number // TODO: maybe this could be individualData.length
   individualData: {
@@ -116,15 +116,12 @@ export type Item = {
   rarity: string
   minTransferredAt: number
   maxTransferredAt: number
+  category: C
 }
 
-export type OnChainWearable = Item & {
-  category: WearableCategory
-}
+export type OnChainWearable = Item<WearableCategory>
 
-export type OnChainEmote = Item & {
-  category: EmoteCategory
-}
+export type OnChainEmote = Item<EmoteCategory>
 
 export type ThirdPartyWearable = {
   urn: string

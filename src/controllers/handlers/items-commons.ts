@@ -1,18 +1,18 @@
 import { EmoteCategory, WearableCategory } from '@dcl/schemas'
 import { SORTING, SortingFunction, rarest } from '../../logic/sorting'
 
-export type FilterableItem2 = {
+export type FilterableItem = {
   name: string
   category: WearableCategory | EmoteCategory
   rarity?: string
 }
 
-export function createFilters(url: URL): (item: FilterableItem2) => boolean {
+export function createFilters(url: URL): (item: FilterableItem) => boolean {
   const categories = url.searchParams.has('category') ? url.searchParams.getAll('category') : []
   const name = url.searchParams.has('name') ? url.searchParams.get('name') : undefined
   const rarity = url.searchParams.has('rarity') ? url.searchParams.get('rarity') : undefined
 
-  return (item: FilterableItem2) => {
+  return (item: FilterableItem) => {
     if (rarity && (!item.rarity || item.rarity !== rarity)) {
       return false
     }

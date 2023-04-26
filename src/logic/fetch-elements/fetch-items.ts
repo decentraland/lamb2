@@ -6,8 +6,8 @@ import { THE_GRAPH_PAGE_SIZE, fetchAllNFTs } from './fetch-elements'
 function groupItemsByURN<
   T extends WearableFromQuery | EmoteFromQuery,
   E extends WearableFromQuery['metadata']['wearable'] | EmoteFromQuery['metadata']['emote']
->(items: T[], getMetadata: (item: T) => E): (Item & { category: E['category'] })[] {
-  const itemsByURN = new Map<string, Item & { category: E['category'] }>()
+>(items: T[], getMetadata: (item: T) => E): Item<E['category']>[] {
+  const itemsByURN = new Map<string, Item<E['category']>>()
 
   items.forEach((itemFromQuery) => {
     const individualData = {
