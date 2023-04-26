@@ -49,11 +49,13 @@ function createCombinedFetcher(
           elements.map((wearable: Item): Item & { type: WearableType } => ({ type: 'on-chain', ...wearable }))
         ),
       thirdPartyWearablesFetcher.fetchOwnedElements(address).then((elements: ThirdPartyWearable[]) => {
-        console.log('thirdPartyWearablesFetcher elements', elements)
-        return elements.map((wearable: ThirdPartyWearable): ThirdPartyWearable & { type: WearableType } => ({
-          type: 'third-party',
-          ...wearable
-        }))
+        console.log({ elements })
+        return elements.map((wearable: ThirdPartyWearable): ThirdPartyWearable & { type: WearableType } => {
+          return {
+            type: 'third-party',
+            ...wearable
+          }
+        })
       })
     ])
 

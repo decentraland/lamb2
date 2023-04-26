@@ -1,6 +1,6 @@
 import { AppComponents, BaseWearable, WearableId } from '../../types'
 
-const BASE_WEARABLES: WearableId[] = [
+export const BASE_WEARABLES: WearableId[] = [
   'urn:decentraland:off-chain:base-avatars:BaseFemale',
   'urn:decentraland:off-chain:base-avatars:BaseMale',
   'urn:decentraland:off-chain:base-avatars:blue_star_earring',
