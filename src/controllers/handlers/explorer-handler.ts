@@ -10,39 +10,30 @@ import {
   HandlerContextWithPath,
   OnChainWearable,
   PaginatedResponse,
-  ThirdPartyWearable,
-  WearableType
+  ThirdPartyWearable
 } from '../../types'
 import { createFilters } from './items-commons'
 
-type MixedWearable = Omit<BaseWearable | OnChainWearable | ThirdPartyWearable, 'individualData'> & {
-  individualData: OnChainWearable['individualData'] | ThirdPartyWearable['individualData']
-  type: WearableType
+type MixedBaseWearable = Omit<BaseWearable, 'individualData'> & {
+  individualData: BaseWearable['individualData']
+  type: 'base-wearable'
 }
 
-export type MixedWearableResponse = MixedWearable & {
+type MixedOnChainWearable = Omit<OnChainWearable, 'individualData'> & {
+  individualData: OnChainWearable['individualData']
+  type: 'on-chain'
+}
+
+type MixedThirdPartyWearable = Omit<ThirdPartyWearable, 'individualData'> & {
+  individualData: ThirdPartyWearable['individualData']
+  type: 'third-party'
+}
+
+type MixedWearable = MixedBaseWearable | MixedOnChainWearable | MixedThirdPartyWearable
+
+export type MixedWearableResponse = Omit<MixedWearable, 'rarity'> & {
   definition?: WearableDefinition
 } & Partial<Pick<OnChainWearable, 'rarity'>>
-
-export type MixedWearables = (BaseWearable | OnChainWearable | ThirdPartyWearable) & { type: WearableType }
-
-function hasRarity(wearable: MixedWearables): wearable is MixedWearables & { rarity: string } {
-  return 'rarity' in wearable
-}
-
-const mapItemToItemResponse = (
-  item: MixedWearable,
-  definitions: WearableDefinition | undefined
-): MixedWearableResponse => ({
-  type: item.type,
-  urn: item.urn,
-  amount: item.individualData.length,
-  individualData: item.individualData,
-  name: item.name,
-  category: item.category,
-  rarity: hasRarity(item) ? item.rarity : undefined,
-  definition: definitions
-})
 
 function createCombinedFetcher(
   components: Pick<
@@ -58,29 +49,33 @@ function createCombinedFetcher(
   >,
   collectionTypes: string[],
   thirdPartyCollectionId: string[]
-): (address: string) => Promise<MixedWearables[]> {
-  return async function (address: string): Promise<MixedWearables[]> {
+): (address: string) => Promise<MixedWearable[]> {
+  return async function (address: string): Promise<MixedWearable[]> {
     const [baseItems, nftItems, thirdPartyItems] = await Promise.all([
       collectionTypes.includes('base-wearable')
         ? components.baseWearablesFetcher.fetchOwnedElements(address).then((elements: BaseWearable[]) =>
-            elements.map((wearable: BaseWearable): BaseWearable & { type: WearableType } => ({
-              type: 'base-wearable',
-              ...wearable
-            }))
+            elements.map(
+              (wearable: BaseWearable): MixedBaseWearable => ({
+                type: 'base-wearable',
+                ...wearable
+              })
+            )
           )
         : [],
       collectionTypes.includes('on-chain')
         ? components.wearablesFetcher.fetchOwnedElements(address).then((elements: OnChainWearable[]) =>
-            elements.map((wearable: OnChainWearable): OnChainWearable & { type: WearableType } => ({
-              type: 'on-chain',
-              ...wearable
-            }))
+            elements.map(
+              (wearable: OnChainWearable): MixedOnChainWearable => ({
+                type: 'on-chain',
+                ...wearable
+              })
+            )
           )
-        : [],
+        : ([] as MixedOnChainWearable[]),
       collectionTypes.includes('third-party')
         ? thirdPartyCollectionId.length === 0
           ? components.thirdPartyWearablesFetcher.fetchOwnedElements(address).then((elements: ThirdPartyWearable[]) =>
-              elements.map((wearable: ThirdPartyWearable): ThirdPartyWearable & { type: WearableType } => {
+              elements.map((wearable: ThirdPartyWearable): MixedThirdPartyWearable => {
                 return {
                   type: 'third-party',
                   ...wearable
@@ -97,7 +92,7 @@ function createCombinedFetcher(
                 }
 
                 return (await fetchThirdPartyWearablesFromThirdPartyName(components, address, urn)).map(
-                  (wearable: ThirdPartyWearable): ThirdPartyWearable & { type: WearableType } => {
+                  (wearable: ThirdPartyWearable): MixedThirdPartyWearable => {
                     return {
                       type: 'third-party',
                       ...wearable
@@ -105,7 +100,7 @@ function createCombinedFetcher(
                   }
                 )
               })
-            ).then((elements: (ThirdPartyWearable & { type: WearableType })[][]) => elements.flat(1))
+            ).then((elements: MixedThirdPartyWearable[][]) => elements.flat(1))
         : []
     ])
 
@@ -140,7 +135,7 @@ export async function explorerHandler(
 
   try {
     const fetchCombinedElements = createCombinedFetcher(context.components, collectionTypes, thirdPartyCollectionId)
-    const page = await fetchAndPaginate<MixedWearables>(address, fetchCombinedElements, pagination, filter, undefined)
+    const page = await fetchAndPaginate<MixedWearable>(address, fetchCombinedElements, pagination, filter, undefined)
 
     const definitions: (WearableDefinition | undefined)[] = await wearableDefinitionsFetcher.fetchItemsDefinitions(
       page.elements.map((wearable) => wearable.urn)
@@ -150,7 +145,11 @@ export async function explorerHandler(
     const wearables = page.elements
 
     for (let i = 0; i < wearables.length; ++i) {
-      results.push(mapItemToItemResponse(wearables[i], definitions[i] || undefined))
+      const wearableToPush: MixedWearableResponse = {
+        ...wearables[i],
+        definition: definitions[i] || undefined
+      }
+      results.push(wearableToPush)
     }
 
     return {
