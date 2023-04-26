@@ -212,8 +212,6 @@ export type OnChainEmoteResponse = Omit<OnChainEmote, 'minTransferredAt' | 'maxT
   definition?: EmoteDefinition
 }
 
-export type WearableType = 'base-wearable' | 'on-chain' | 'third-party'
-
 export type BaseWearableFilters = {
   categories: WearableCategory[]
   name: string

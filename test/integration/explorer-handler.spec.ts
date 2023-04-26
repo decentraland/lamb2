@@ -1,3 +1,4 @@
+it('asdf', () => { })
 // import { Entity } from '@dcl/schemas'
 // import Wallet from 'ethereumjs-wallet'
 // import { WearableFromQuery } from '../../src/logic/fetch-elements/fetch-items'
