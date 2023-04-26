@@ -24,6 +24,7 @@ import { DefinitionsFetcher } from './adapters/definitions-fetcher'
 import { WearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
 import { ElementsFetcher } from './adapters/elements-fetcher'
 import { ThirdPartyProvidersFetcher } from './adapters/third-party-providers-fetcher'
+import { HTTPProvider } from 'eth-connect'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -47,6 +48,8 @@ export type BaseComponents = {
   wearableDefinitionsFetcher: DefinitionsFetcher<WearableDefinition>
   namesFetcher: ElementsFetcher<Name>
   landsFetcher: ElementsFetcher<LAND>
+
+  ethereumProvider: HTTPProvider
 
   // old components
   wearablesCaches: WearablesCachesComponent

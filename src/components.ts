@@ -19,6 +19,7 @@ import { fetchAllThirdPartyWearables } from './logic/fetch-elements/fetch-third-
 import { fetchAllEmotes, fetchAllWearables } from './logic/fetch-elements/fetch-items'
 import { fetchAllNames } from './logic/fetch-elements/fetch-names'
 import { fetchAllLANDs } from './logic/fetch-elements/fetch-lands'
+import { HTTPProvider } from 'eth-connect'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -65,6 +66,12 @@ export async function initComponents(
   // old component for old wearable endpoint. Remove in future
   const wearablesCaches = await createWearablesCachesComponent({ config })
 
+  const ethNetwork: string = (await config.getString('ETH_NETWORK')) || 'mainnet'
+  const ethereumProvider = new HTTPProvider(
+    `https://rpc.decentraland.org/${encodeURIComponent(ethNetwork)}?project=catalyst-lamb2`,
+    { fetch: fetch.fetch }
+  )
+
   return {
     config,
     logs,
@@ -83,6 +90,7 @@ export async function initComponents(
     namesFetcher,
     landsFetcher,
     wearablesCaches,
-    thirdPartyProvidersFetcher
+    thirdPartyProvidersFetcher,
+    ethereumProvider
   }
 }

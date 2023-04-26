@@ -10,6 +10,7 @@ import {
   thirdPartyWearablesHandler,
   thirdPartyCollectionWearablesHandler
 } from './handlers/third-party-wearables-handler'
+import { validateSignatureHandler } from './handlers/validate-signature'
 import { wearablesHandler } from './handlers/wearables-handler'
 
 // We return the entire router because it will be easier to test than a whole server
@@ -72,6 +73,6 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
       }
     }
   })
-
+  router.post('/validate-signature', validateSignatureHandler)
   return router
 }

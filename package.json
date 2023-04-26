@@ -35,6 +35,7 @@
     "@well-known-components/thegraph-component": "^1.4.3",
     "dcl-catalyst-client": "^15.0.1",
     "dcl-catalyst-commons": "9.0.16",
+    "eth-connect": "^6.1.0",
     "lodash": "^4.17.21",
     "lru-cache": "^8.0.4"
   }
