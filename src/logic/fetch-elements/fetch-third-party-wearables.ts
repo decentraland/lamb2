@@ -90,7 +90,7 @@ export async function fetchAllThirdPartyWearables(
 ): Promise<(ThirdPartyWearable & { definition: WearableDefinition })[]> {
   const thirdParties = await components.thirdPartyProvidersFetcher.getAll()
 
-  // TODO: test if stateValue is keept in case of an exception
+  // TODO: test if stateValue is kept in case of an exception
   const thirdPartyAssets = (
     await Promise.all(thirdParties.map((thirdParty: ThirdParty) => fetchAssets(components, owner, thirdParty)))
   ).flat()

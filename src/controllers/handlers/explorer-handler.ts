@@ -31,32 +31,40 @@ const mapItemToItemResponse = (item: MixedWearables, definitions: WearableDefini
 })
 
 function createCombinedFetcher(
+  collectionTypes: string[],
+  thirdPartyCollectionId: string[],
   baseWearablesFetcher: ElementsFetcher<BaseWearable>,
   wearablesFetcher: ElementsFetcher<Item>,
   thirdPartyWearablesFetcher: ElementsFetcher<ThirdPartyWearable>
 ): (address: string) => Promise<MixedWearables[]> {
   return async function (address: string): Promise<MixedWearables[]> {
     const [baseItems, nftItems, thirdPartyItems] = await Promise.all([
-      baseWearablesFetcher.fetchOwnedElements(address).then((elements: BaseWearable[]) =>
-        elements.map((wearable: BaseWearable): BaseWearable & { type: WearableType } => ({
-          type: 'base-wearable',
-          ...wearable
-        }))
-      ),
-      wearablesFetcher
-        .fetchOwnedElements(address)
-        .then((elements: Item[]) =>
-          elements.map((wearable: Item): Item & { type: WearableType } => ({ type: 'on-chain', ...wearable }))
-        ),
-      thirdPartyWearablesFetcher.fetchOwnedElements(address).then((elements: ThirdPartyWearable[]) => {
-        console.log({ elements })
-        return elements.map((wearable: ThirdPartyWearable): ThirdPartyWearable & { type: WearableType } => {
-          return {
-            type: 'third-party',
-            ...wearable
-          }
-        })
-      })
+      collectionTypes.includes('base-wearable')
+        ? baseWearablesFetcher.fetchOwnedElements(address).then((elements: BaseWearable[]) =>
+            elements.map((wearable: BaseWearable): BaseWearable & { type: WearableType } => ({
+              type: 'base-wearable',
+              ...wearable
+            }))
+          )
+        : [],
+      collectionTypes.includes('on-chain')
+        ? wearablesFetcher
+            .fetchOwnedElements(address)
+            .then((elements: Item[]) =>
+              elements.map((wearable: Item): Item & { type: WearableType } => ({ type: 'on-chain', ...wearable }))
+            )
+        : [],
+      collectionTypes.includes('third-party') // TODO Add filtering by thirdPartyCollectionIds
+        ? thirdPartyWearablesFetcher.fetchOwnedElements(address).then((elements: ThirdPartyWearable[]) => {
+            console.log({ elements })
+            return elements.map((wearable: ThirdPartyWearable): ThirdPartyWearable & { type: WearableType } => {
+              return {
+                type: 'third-party',
+                ...wearable
+              }
+            })
+          })
+        : []
     ])
 
     return [...baseItems, ...nftItems, ...thirdPartyItems]
@@ -86,15 +94,17 @@ export async function explorerHandler(
   const logger = logs.getLogger('wearables-handler')
   const pagination = paginationObject(context.url)
   const filter = createFilters(context.url)
+  const collectionTypes = context.url.searchParams.has('collectionType')
+    ? context.url.searchParams.getAll('collectionType')
+    : ['base-wearable', 'on-chain', 'third-party']
+  const thirdPartyCollectionId = context.url.searchParams.has('thirdPartyCollectionId')
+    ? context.url.searchParams.getAll('thirdPartyCollectionId')
+    : []
 
   try {
-    // const { baseFilter,  onChainFilter, thirdPartyFilter } = createFilters(context.params)
-    // sortSpecific = createSort(context.params)
-    // const onChainWearables = onChainFilter(wearablesFetcher.fetchOwnedElements(address), onChainFilter)
-    // const baseWearables = baseFilter(baseWearablesFetcher.fetchOwnedElements(address), baseFilters)
-    // const thirdPartyWearables = thirdPartyFilter(thirdPartyFetcher.fetchOwnedElements(address), thirdPartyFiltrs)
-
     const fetchCombinedElements = createCombinedFetcher(
+      collectionTypes,
+      thirdPartyCollectionId,
       baseWearablesFetcher,
       wearablesFetcher,
       thirdPartyWearablesFetcher
