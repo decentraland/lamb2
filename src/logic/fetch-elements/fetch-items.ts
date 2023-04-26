@@ -1,14 +1,13 @@
 import { EmoteCategory, WearableCategory } from '@dcl/schemas'
-import { AppComponents, Item } from '../../types'
+import { AppComponents, Item, OnChainEmote, OnChainWearable } from '../../types'
 import { compareByRarity } from '../utils'
 import { THE_GRAPH_PAGE_SIZE, fetchAllNFTs } from './fetch-elements'
 
-function isWearable(item: WearableFromQuery | EmoteFromQuery): item is WearableFromQuery {
-  return 'wearable' in item.metadata
-}
-
-function groupItemsByURN(items: (WearableFromQuery | EmoteFromQuery)[]): Item[] {
-  const itemsByURN = new Map<string, Item>()
+function groupItemsByURN<
+  T extends WearableFromQuery | EmoteFromQuery,
+  E extends WearableFromQuery['metadata']['wearable'] | EmoteFromQuery['metadata']['emote']
+>(items: T[], getMetadata: (item: T) => E): (Item & { category: E['category'] })[] {
+  const itemsByURN = new Map<string, Item & { category: E['category'] }>()
 
   items.forEach((itemFromQuery) => {
     const individualData = {
@@ -30,10 +29,8 @@ function groupItemsByURN(items: (WearableFromQuery | EmoteFromQuery)[]): Item[] 
         individualData: [individualData],
         rarity: itemFromQuery.item.rarity,
         amount: 1,
-        name: isWearable(itemFromQuery) ? itemFromQuery.metadata.wearable.name : itemFromQuery.metadata.emote.name,
-        category: isWearable(itemFromQuery)
-          ? itemFromQuery.metadata.wearable.category
-          : itemFromQuery.metadata.emote.category,
+        name: getMetadata(itemFromQuery).name,
+        category: getMetadata(itemFromQuery).category,
         minTransferredAt: itemFromQuery.transferredAt,
         maxTransferredAt: itemFromQuery.transferredAt
       })
@@ -109,16 +106,25 @@ export type EmoteFromQuery = ItemFromQuery & {
   }
 }
 
-export async function fetchAllEmotes(components: Pick<AppComponents, 'theGraph'>, owner: string): Promise<Item[]> {
+export async function fetchAllEmotes(
+  components: Pick<AppComponents, 'theGraph'>,
+  owner: string
+): Promise<OnChainEmote[]> {
   const emotes = await fetchAllNFTs<EmoteFromQuery>(
     components.theGraph.maticCollectionsSubgraph,
     QUERIES['emote'],
     owner
   )
-  return groupItemsByURN(emotes).sort(compareByRarity)
+  return groupItemsByURN<EmoteFromQuery, EmoteFromQuery['metadata']['emote']>(
+    emotes,
+    (emote) => emote.metadata.emote
+  ).sort(compareByRarity)
 }
 
-export async function fetchAllWearables(components: Pick<AppComponents, 'theGraph'>, owner: string): Promise<Item[]> {
+export async function fetchAllWearables(
+  components: Pick<AppComponents, 'theGraph'>,
+  owner: string
+): Promise<OnChainWearable[]> {
   const ethereumWearables = await fetchAllNFTs<WearableFromQuery>(
     components.theGraph.ethereumCollectionsSubgraph,
     QUERIES['wearable'],
@@ -129,5 +135,8 @@ export async function fetchAllWearables(components: Pick<AppComponents, 'theGrap
     QUERIES['wearable'],
     owner
   )
-  return groupItemsByURN(ethereumWearables.concat(maticWearables)).sort(compareByRarity)
+  return groupItemsByURN<WearableFromQuery, WearableFromQuery['metadata']['wearable']>(
+    ethereumWearables.concat(maticWearables),
+    (wearable) => wearable.metadata.wearable
+  ).sort(compareByRarity)
 }

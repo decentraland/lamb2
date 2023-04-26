@@ -4,7 +4,7 @@ import { extractWearableDefinitionFromEntity } from '../../src/adapters/definiti
 import { WearableFromQuery } from '../../src/logic/fetch-elements/fetch-items'
 import { RARITIES } from '../../src/logic/utils'
 import { ContentComponent } from '../../src/ports/content'
-import { ItemResponse } from '../../src/types'
+import { OnChainWearableResponse } from '../../src/types'
 import { test } from '../components'
 import { generateWearableContentDefinitions, generateWearables } from '../data/wearables'
 
@@ -589,8 +589,8 @@ type ContentInfo = {
   content: ContentComponent
 }
 
-function convertToDataModel(wearables: WearableFromQuery[], contentInfo?: ContentInfo): ItemResponse[] {
-  return wearables.map((wearable): ItemResponse => {
+function convertToDataModel(wearables: WearableFromQuery[], contentInfo?: ContentInfo): OnChainWearableResponse[] {
+  return wearables.map((wearable): OnChainWearableResponse => {
     const individualData = {
       id: wearable.id,
       tokenId: wearable.tokenId,

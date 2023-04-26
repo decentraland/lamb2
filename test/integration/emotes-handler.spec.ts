@@ -5,7 +5,7 @@ import { EmoteFromQuery } from '../../src/logic/fetch-elements/fetch-items'
 import { leastRare, nameAZ, nameZA, rarest } from '../../src/logic/sorting'
 import { RARITIES } from '../../src/logic/utils'
 import { ContentComponent } from '../../src/ports/content'
-import { ItemResponse } from '../../src/types'
+import { OnChainEmoteResponse } from '../../src/types'
 import { test } from '../components'
 import { generateEmoteContentDefinitions, generateEmotes } from '../data/emotes'
 
@@ -423,8 +423,8 @@ type ContentInfo = {
   content: ContentComponent
 }
 
-function convertToDataModel(emotes: EmoteFromQuery[], contentInfo?: ContentInfo): ItemResponse[] {
-  return emotes.map((emote): ItemResponse => {
+function convertToDataModel(emotes: EmoteFromQuery[], contentInfo?: ContentInfo): OnChainEmoteResponse[] {
+  return emotes.map((emote): OnChainEmoteResponse => {
     const individualData = {
       id: emote.id,
       tokenId: emote.tokenId,

@@ -1,6 +1,7 @@
 import { EmoteCategory, WearableCategory } from '@dcl/schemas'
 import { EmoteFromQuery, WearableFromQuery, fetchAllEmotes, fetchAllWearables } from '../../../../src/logic/fetch-elements/fetch-items'
-import { Item } from '../../../../src/types'
+// import { Item } from '../../../../src/types'
+import { OnChainEmote, OnChainWearable } from '../../../../src/types'
 import { createTheGraphComponentMock } from '../../../mocks/the-graph-mock'
 
 describe('fetchEmotes', () => {
@@ -72,7 +73,7 @@ describe('fetchEmotes', () => {
         minTransferredAt: 1,
         name: 'common emote'
       }
-    ] as Item[])
+    ] as OnChainEmote[])
   })
 
   it('emotes are grouped by urn', async () => {
@@ -148,7 +149,7 @@ describe('fetchEmotes', () => {
         minTransferredAt: 5,
         name: 'common dance'
       }
-    ] as Item[])
+    ] as OnChainEmote[])
   })
 
   it('emotes are sorted by rarity', async () => {
@@ -231,7 +232,7 @@ describe('fetchEmotes', () => {
         minTransferredAt: 1,
         name: 'fun emote'
       }
-    ] as Item[])
+    ] as OnChainEmote[])
   })
 })
 
@@ -288,15 +289,15 @@ describe('fetchWearables', () => {
           tokenId: 'tokenId1',
           transferredAt: 1,
           item: { rarity: 'common', price: 1 },
-          category: 'emote',
+          category: 'wearable',
           metadata: {
-            emote: {
-              name: 'fun emote',
-              category: EmoteCategory.FUN
+            wearable: {
+              name: 'fun wearable',
+              category: WearableCategory.EARRING
             }
           }
         }
-      ] as EmoteFromQuery[]
+      ] as WearableFromQuery[]
     })
     jest.spyOn(theGraph.maticCollectionsSubgraph, 'query').mockResolvedValue({
       nfts: [
@@ -306,15 +307,15 @@ describe('fetchWearables', () => {
           tokenId: 'tokenId2',
           transferredAt: 2,
           item: { rarity: 'common', price: 2 },
-          category: 'emote',
+          category: 'wearable',
           metadata: {
-            emote: {
-              name: 'dance emote',
-              category: EmoteCategory.DANCE
+            wearable: {
+              name: 'dance wearable',
+              category: WearableCategory.BODY_SHAPE
             }
           }
         }
-      ] as EmoteFromQuery[]
+      ] as WearableFromQuery[]
     })
     const wearables = await fetchAllWearables({ theGraph }, 'anOwner')
     expect(wearables).toEqual([
@@ -323,22 +324,22 @@ describe('fetchWearables', () => {
         amount: 1,
         individualData: [{ id: 'id1', tokenId: 'tokenId1', transferredAt: 1, price: 1 }],
         rarity: 'common',
-        name: 'fun emote',
-        category: EmoteCategory.FUN,
+        name: 'fun wearable',
+        category: WearableCategory.EARRING,
         maxTransferredAt: 1,
         minTransferredAt: 1
-      } as Item,
+      } as OnChainWearable,
       {
         urn: 'urn2',
         amount: 1,
         individualData: [{ id: 'id2', tokenId: 'tokenId2', transferredAt: 2, price: 2 }],
         rarity: 'common',
-        name: 'dance emote',
-        category: EmoteCategory.DANCE,
+        name: 'dance wearable',
+        category: WearableCategory.BODY_SHAPE,
         maxTransferredAt: 2,
         minTransferredAt: 2
       }
-    ] as Item[])
+    ] as OnChainWearable[])
   })
 
   it('wearables are grouped by urn', async () => {
@@ -418,7 +419,7 @@ describe('fetchWearables', () => {
         minTransferredAt: 1,
         name: 'common eyebrows'
       }
-    ] as Item[])
+    ] as OnChainWearable[])
   })
 
   it('wearables are sorted by rarity', async () => {
@@ -505,6 +506,6 @@ describe('fetchWearables', () => {
         minTransferredAt: 1,
         name: 'common eyebrows'
       }
-    ] as Item[])
+    ] as OnChainWearable[])
   })
 })

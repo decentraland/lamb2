@@ -1,35 +1,46 @@
 import { WearableDefinition } from '@dcl/schemas'
 import { FetcherError } from '../../adapters/elements-fetcher'
+import { fetchThirdPartyWearablesFromThirdPartyName } from '../../logic/fetch-elements/fetch-third-party-wearables'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
+import { parseUrn } from '../../logic/utils'
 import {
   AppComponents,
   BaseWearable,
   ErrorResponse,
   HandlerContextWithPath,
-  Item,
+  OnChainWearable,
   PaginatedResponse,
   ThirdPartyWearable,
   WearableType
 } from '../../types'
 import { createFilters } from './items-commons'
-import { fetchThirdPartyWearablesFromThirdPartyName } from '../../logic/fetch-elements/fetch-third-party-wearables'
-import { parseUrn } from '../../logic/utils'
 
-export type MixedWearables = (BaseWearable | Item | ThirdPartyWearable) & { type: WearableType }
-
-type ItemResponse = (BaseWearable | Omit<Item, 'minTransferredAt' | 'maxTransferredAt'> | ThirdPartyWearable) & {
+type MixedWearable = Omit<BaseWearable | OnChainWearable | ThirdPartyWearable, 'individualData'> & {
+  individualData: OnChainWearable['individualData'] | ThirdPartyWearable['individualData']
   type: WearableType
-  definition: WearableDefinition | undefined
 }
 
-const mapItemToItemResponse = (item: MixedWearables, definitions: WearableDefinition | undefined): ItemResponse => ({
+export type MixedWearableResponse = MixedWearable & {
+  definition?: WearableDefinition
+} & Partial<Pick<OnChainWearable, 'rarity'>>
+
+export type MixedWearables = (BaseWearable | OnChainWearable | ThirdPartyWearable) & { type: WearableType }
+
+function hasRarity(wearable: MixedWearables): wearable is MixedWearables & { rarity: string } {
+  return 'rarity' in wearable
+}
+
+const mapItemToItemResponse = (
+  item: MixedWearable,
+  definitions: WearableDefinition | undefined
+): MixedWearableResponse => ({
   type: item.type,
   urn: item.urn,
   amount: item.individualData.length,
   individualData: item.individualData,
   name: item.name,
   category: item.category,
-  rarity: 'rarity' in item ? item.rarity : undefined,
+  rarity: hasRarity(item) ? item.rarity : undefined,
   definition: definitions
 })
 
@@ -59,11 +70,12 @@ function createCombinedFetcher(
           )
         : [],
       collectionTypes.includes('on-chain')
-        ? components.wearablesFetcher
-            .fetchOwnedElements(address)
-            .then((elements: Item[]) =>
-              elements.map((wearable: Item): Item & { type: WearableType } => ({ type: 'on-chain', ...wearable }))
-            )
+        ? components.wearablesFetcher.fetchOwnedElements(address).then((elements: OnChainWearable[]) =>
+            elements.map((wearable: OnChainWearable): OnChainWearable & { type: WearableType } => ({
+              type: 'on-chain',
+              ...wearable
+            }))
+          )
         : [],
       collectionTypes.includes('third-party')
         ? thirdPartyCollectionId.length === 0
@@ -113,7 +125,7 @@ export async function explorerHandler(
     | 'wearableDefinitionsFetcher',
     '/explorer-service/backpack/:address/wearables'
   >
-): Promise<PaginatedResponse<ItemResponse> | ErrorResponse> {
+): Promise<PaginatedResponse<MixedWearableResponse> | ErrorResponse> {
   const { logs, wearableDefinitionsFetcher } = context.components
   const { address } = context.params
   const logger = logs.getLogger('wearables-handler')
@@ -134,7 +146,7 @@ export async function explorerHandler(
       page.elements.map((wearable) => wearable.urn)
     )
 
-    const results: ItemResponse[] = []
+    const results: MixedWearableResponse[] = []
     const wearables = page.elements
 
     for (let i = 0; i < wearables.length; ++i) {
