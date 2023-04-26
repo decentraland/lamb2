@@ -1,10 +1,10 @@
-import { leastRare, nameAZ, nameZA, newest, oldest, rarest } from '../../../src/logic/sorting'
 import { WearableCategory } from '@dcl/schemas'
-import { Item } from '../../../src/types'
+import { leastRare, nameAZ, nameZA, newest, oldest, rarest } from '../../../src/logic/sorting'
+import { OnChainWearable } from '../../../src/types'
 
 describe('sorting', function () {
   const transferredAt = Date.now()
-  const item1: Item = {
+  const item1: OnChainWearable = {
     urn: 'urn-1',
     amount: 1,
     individualData: [
@@ -22,7 +22,7 @@ describe('sorting', function () {
     maxTransferredAt: transferredAt
   }
 
-  const item2: Item = {
+  const item2: OnChainWearable = {
     urn: 'urn-2',
     amount: 1,
     individualData: [
@@ -40,7 +40,7 @@ describe('sorting', function () {
     maxTransferredAt: transferredAt - 1
   }
 
-  const item3: Item = {
+  const item3: OnChainWearable = {
     urn: 'urn-3',
     amount: 1,
     individualData: [

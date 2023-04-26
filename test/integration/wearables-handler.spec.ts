@@ -1,10 +1,10 @@
 import { Entity, WearableCategory } from '@dcl/schemas'
 import Wallet from 'ethereumjs-wallet'
 import { extractWearableDefinitionFromEntity } from '../../src/adapters/definitions'
-import { ItemFromQuery } from '../../src/logic/fetch-elements/fetch-items'
+import { WearableFromQuery } from '../../src/logic/fetch-elements/fetch-items'
 import { RARITIES } from '../../src/logic/utils'
 import { ContentComponent } from '../../src/ports/content'
-import { ItemResponse } from '../../src/types'
+import { OnChainWearableResponse } from '../../src/types'
 import { test } from '../components'
 import { generateWearableContentDefinitions, generateWearables } from '../data/wearables'
 
@@ -339,7 +339,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
   it('return wearables filtering by category', async () => {
     const { localFetch, theGraph } = components
-    const wearables: ItemFromQuery[] = generateWearables(17).map((w, i) => ({
+    const wearables: WearableFromQuery[] = generateWearables(17).map((w, i) => ({
       ...w,
       metadata: {
         wearable: {
@@ -589,8 +589,8 @@ type ContentInfo = {
   content: ContentComponent
 }
 
-function convertToDataModel(wearables: ItemFromQuery[], contentInfo?: ContentInfo): ItemResponse[] {
-  return wearables.map((wearable): ItemResponse => {
+function convertToDataModel(wearables: WearableFromQuery[], contentInfo?: ContentInfo): OnChainWearableResponse[] {
+  return wearables.map((wearable): OnChainWearableResponse => {
     const individualData = {
       id: wearable.id,
       tokenId: wearable.tokenId,

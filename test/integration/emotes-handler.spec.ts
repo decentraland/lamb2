@@ -1,13 +1,13 @@
-import { test } from '../components'
-import { generateEmoteContentDefinitions, generateEmotes } from '../data/emotes'
+import { EmoteCategory, Entity } from '@dcl/schemas'
 import Wallet from 'ethereumjs-wallet'
-import { ItemResponse } from '../../src/types'
-import { ItemFromQuery } from '../../src/logic/fetch-elements/fetch-items'
-import { ContentComponent } from '../../src/ports/content'
-import { EmoteCategory, Entity, WearableCategory } from '@dcl/schemas'
 import { extractEmoteDefinitionFromEntity } from '../../src/adapters/definitions'
+import { EmoteFromQuery } from '../../src/logic/fetch-elements/fetch-items'
 import { leastRare, nameAZ, nameZA, rarest } from '../../src/logic/sorting'
 import { RARITIES } from '../../src/logic/utils'
+import { ContentComponent } from '../../src/ports/content'
+import { OnChainEmoteResponse } from '../../src/types'
+import { test } from '../components'
+import { generateEmoteContentDefinitions, generateEmotes } from '../data/emotes'
 
 // NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
 test('emotes-handler: GET /users/:address/emotes should', function ({ components }) {
@@ -423,8 +423,8 @@ type ContentInfo = {
   content: ContentComponent
 }
 
-function convertToDataModel(emotes: ItemFromQuery[], contentInfo?: ContentInfo): ItemResponse[] {
-  return emotes.map((emote): ItemResponse => {
+function convertToDataModel(emotes: EmoteFromQuery[], contentInfo?: ContentInfo): OnChainEmoteResponse[] {
+  return emotes.map((emote): OnChainEmoteResponse => {
     const individualData = {
       id: emote.id,
       tokenId: emote.tokenId,

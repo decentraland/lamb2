@@ -1,5 +1,11 @@
-import { rarest, SortingFunction, SORTING } from '../../logic/sorting'
-import { FilterableItem } from '../../types'
+import { EmoteCategory, WearableCategory } from '@dcl/schemas'
+import { SORTING, SortingFunction, rarest } from '../../logic/sorting'
+
+export type FilterableItem = {
+  name: string
+  category: WearableCategory | EmoteCategory
+  rarity?: string
+}
 
 export function createFilters(url: URL): (item: FilterableItem) => boolean {
   const categories = url.searchParams.has('category') ? url.searchParams.getAll('category') : []

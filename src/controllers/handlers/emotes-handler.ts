@@ -1,15 +1,15 @@
 import { EmoteDefinition } from '@dcl/schemas'
 import { FetcherError } from '../../adapters/elements-fetcher'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
-import { ErrorResponse, HandlerContextWithPath, Item, PaginatedResponse } from '../../types'
+import { ErrorResponse, HandlerContextWithPath, OnChainEmote, PaginatedResponse } from '../../types'
 import { createFilters, createSorting } from './items-commons'
 
 // TODO: change this name
-type ItemResponse = Item & {
+type ItemResponse = OnChainEmote & {
   definition?: EmoteDefinition
 }
 
-const mapItemToItemResponse = (item: Item, definitions: EmoteDefinition | undefined): ItemResponse =>
+const mapItemToItemResponse = (item: OnChainEmote, definitions: EmoteDefinition | undefined): ItemResponse =>
   ({
     urn: item.urn,
     amount: item.individualData.length,
@@ -32,7 +32,13 @@ export async function emotesHandler(
   const sorting = createSorting(context.url)
 
   try {
-    const page = await fetchAndPaginate<Item>(address, emotesFetcher.fetchOwnedElements, pagination, filter, sorting)
+    const page = await fetchAndPaginate<OnChainEmote>(
+      address,
+      emotesFetcher.fetchOwnedElements,
+      pagination,
+      filter,
+      sorting
+    )
 
     const results: ItemResponse[] = []
     const emotes = page.elements

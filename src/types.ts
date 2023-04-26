@@ -41,10 +41,10 @@ export type BaseComponents = {
   theGraph: TheGraphComponent
   ownershipCaches: OwnershipCachesComponent
   baseWearablesFetcher: ElementsFetcher<BaseWearable>
-  wearablesFetcher: ElementsFetcher<Item>
+  wearablesFetcher: ElementsFetcher<OnChainWearable>
   thirdPartyProvidersFetcher: ThirdPartyProvidersFetcher
   thirdPartyWearablesFetcher: ElementsFetcher<ThirdPartyWearable & { definition: WearableDefinition }>
-  emotesFetcher: ElementsFetcher<Item>
+  emotesFetcher: ElementsFetcher<OnChainEmote>
   emoteDefinitionsFetcher: DefinitionsFetcher<EmoteDefinition>
   wearableDefinitionsFetcher: DefinitionsFetcher<WearableDefinition>
   namesFetcher: ElementsFetcher<Name>
@@ -103,13 +103,7 @@ export interface TPWResolver {
  */
 export type QueryGraph = <T = any>(query: string, variables?: Variables, remainingAttempts?: number) => Promise<T>
 
-export type FilterableItem = {
-  name: string
-  category: WearableCategory | EmoteCategory
-  rarity?: string
-}
-
-export type Item = FilterableItem & {
+export type Item<C extends WearableCategory | EmoteCategory> = {
   urn: string
   amount: number // TODO: maybe this could be individualData.length
   individualData: {
@@ -118,18 +112,25 @@ export type Item = FilterableItem & {
     transferredAt: number
     price: number
   }[]
+  name: string
   rarity: string
   minTransferredAt: number
   maxTransferredAt: number
+  category: C
 }
 
-export type ThirdPartyWearable = FilterableItem & {
-  category: WearableCategory | EmoteCategory
+export type OnChainWearable = Item<WearableCategory>
+
+export type OnChainEmote = Item<EmoteCategory>
+
+export type ThirdPartyWearable = {
   urn: string
   amount: number
   individualData: {
     id: string
   }[]
+  name: string
+  category: WearableCategory
 }
 
 export type BaseWearable = ThirdPartyWearable & {
@@ -203,11 +204,13 @@ export type ThirdPartyAssets = {
   next?: string
 }
 
-export type ItemResponse = Omit<Item, 'minTransferredAt' | 'maxTransferredAt'> & {
-  definition?: WearableDefinition | EmoteDefinition
+export type OnChainWearableResponse = Omit<OnChainWearable, 'minTransferredAt' | 'maxTransferredAt'> & {
+  definition?: WearableDefinition
 }
 
-export type WearableType = 'base-wearable' | 'on-chain' | 'third-party'
+export type OnChainEmoteResponse = Omit<OnChainEmote, 'minTransferredAt' | 'maxTransferredAt'> & {
+  definition?: EmoteDefinition
+}
 
 export type BaseWearableFilters = {
   categories: WearableCategory[]

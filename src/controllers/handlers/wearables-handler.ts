@@ -1,10 +1,19 @@
 import { WearableDefinition } from '@dcl/schemas'
 import { FetcherError } from '../../adapters/elements-fetcher'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
-import { ErrorResponse, HandlerContextWithPath, Item, ItemResponse, PaginatedResponse } from '../../types'
+import {
+  ErrorResponse,
+  HandlerContextWithPath,
+  OnChainWearable,
+  OnChainWearableResponse,
+  PaginatedResponse
+} from '../../types'
 import { createFilters, createSorting } from './items-commons'
 
-const mapItemToItemResponse = (item: Item, definitions: WearableDefinition | undefined): ItemResponse => ({
+const mapItemToItemResponse = (
+  item: OnChainWearable,
+  definitions: WearableDefinition | undefined
+): OnChainWearableResponse => ({
   urn: item.urn,
   amount: item.individualData.length,
   individualData: item.individualData,
@@ -19,7 +28,7 @@ export async function wearablesHandler(
     'logs' | 'wearablesFetcher' | 'wearableDefinitionsFetcher',
     '/users/:address/wearables'
   >
-): Promise<PaginatedResponse<ItemResponse> | ErrorResponse> {
+): Promise<PaginatedResponse<OnChainWearableResponse> | ErrorResponse> {
   const { logs, wearableDefinitionsFetcher, wearablesFetcher } = context.components
   const { address } = context.params
   const logger = logs.getLogger('wearables-handler')
@@ -29,9 +38,15 @@ export async function wearablesHandler(
   const sorting = createSorting(context.url)
 
   try {
-    const page = await fetchAndPaginate<Item>(address, wearablesFetcher.fetchOwnedElements, pagination, filter, sorting)
+    const page = await fetchAndPaginate<OnChainWearable>(
+      address,
+      wearablesFetcher.fetchOwnedElements,
+      pagination,
+      filter,
+      sorting
+    )
 
-    const results: ItemResponse[] = []
+    const results: OnChainWearableResponse[] = []
     const wearables = page.elements
     const definitions: (WearableDefinition | undefined)[] = includeDefinitions
       ? await wearableDefinitionsFetcher.fetchItemsDefinitions(wearables.map((wearable) => wearable.urn))
