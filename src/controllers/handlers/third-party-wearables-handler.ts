@@ -8,6 +8,7 @@ import {
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { parseUrn } from '../../logic/utils'
 import { ErrorResponse, HandlerContextWithPath, PaginatedResponse, ThirdPartyWearable } from '../../types'
+import { createBaseSorting } from '../../logic/sorting'
 
 function createFilter(url: URL): (item: ThirdPartyWearable) => boolean {
   const categories = url.searchParams.has('category') ? url.searchParams.getAll('category') : []
@@ -22,30 +23,6 @@ function createFilter(url: URL): (item: ThirdPartyWearable) => boolean {
     }
     return true
   }
-}
-
-function byUrn(item1: ThirdPartyWearable, item2: ThirdPartyWearable): number {
-  return item1.urn.localeCompare(item2.urn)
-}
-
-export function nameAZ(item1: ThirdPartyWearable, item2: ThirdPartyWearable): number {
-  return item1.name.localeCompare(item2.name) || byUrn(item1, item2)
-}
-
-export function nameZA(item1: ThirdPartyWearable, item2: ThirdPartyWearable): number {
-  return item2.name.localeCompare(item1.name) || byUrn(item1, item2)
-}
-
-type SortingFunction = (item1: ThirdPartyWearable, item2: ThirdPartyWearable) => number
-
-const SORTING: Record<string, SortingFunction> = {
-  name_a_z: nameAZ,
-  name_z_a: nameZA
-}
-
-export function createSorting(url: URL): (tw1: ThirdPartyWearable, tpw2: ThirdPartyWearable) => number {
-  const sort = url.searchParams.has('sort') ? url.searchParams.get('sort')! : 'name_a_z'
-  return SORTING[sort] || nameAZ
 }
 
 // TODO: change this name
@@ -65,7 +42,7 @@ export async function thirdPartyWearablesHandler(
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
   const pagination = paginationObject(context.url)
   const filter = createFilter(context.url)
-  const sorting = createSorting(context.url)
+  const sorting = createBaseSorting(context.url)
 
   try {
     const page = await fetchAndPaginate<ThirdPartyWearable & { definition: WearableDefinition }>(
