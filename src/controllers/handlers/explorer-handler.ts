@@ -124,7 +124,8 @@ const mock = {
         definition: {
           id: 'urn:decentraland:off-chain:base-avatars:mouth_02',
           description: '',
-          thumbnail: 'thumbnail.png',
+          thumbnail:
+            'https://peer-ue-2.decentraland.zone/content/contents/bafkreidpnkkpvlzarm4puqkbms4oonedeu37goim2kq653f4fnna3tusyq',
           rarity: 'common',
           data: {
             tags: ['face', 'mouth', 'male', 'man', 'base-wearable'],
@@ -135,7 +136,12 @@ const mock = {
                 mainFile: 'M_Mouth_02.png',
                 overrideReplaces: [],
                 overrideHides: [],
-                contents: ['M_Mouth_02.png']
+                contents: [
+                  {
+                    key: 'M_Mouth_02.png',
+                    url: 'https://peer-ue-2.decentraland.zone/content/contents/bafkreicya6ymr2vb7uds2nkx4v6cezhcwepunzihn3ukezrddqbftc2yda'
+                  }
+                ]
               }
             ],
             replaces: [],
@@ -153,7 +159,8 @@ const mock = {
           ],
           createdAt: 1622143003105,
           updatedAt: 1622143003105,
-          image: 'thumbnail.png',
+          image:
+            'https://peer-ue-2.decentraland.zone/content/contents/bafkreidpnkkpvlzarm4puqkbms4oonedeu37goim2kq653f4fnna3tusyq',
           name: 'Mouth_02',
           collectionAddress: '0x0000000000000000000000000000000000000000'
         }
