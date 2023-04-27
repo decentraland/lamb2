@@ -122,48 +122,40 @@ const mock = {
           }
         ],
         definition: {
-          version: 'v3',
-          id: 'bafkreiealbrk6jfm73e4tptl6mkqohrvn45pgq4aowiusfaxdxted3unf4',
-          type: 'wearable',
-          pointers: [],
-          timestamp: 1660254489672,
-          content: [],
-          metadata: {
-            id: 'urn:decentraland:off-chain:base-avatars:mouth_02',
-            description: '',
-            thumbnail: 'thumbnail.png',
-            rarity: 'common',
-            data: {
-              tags: ['face', 'mouth', 'male', 'man', 'base-wearable'],
-              category: 'mouth',
-              representations: [
-                {
-                  bodyShapes: ['urn:decentraland:off-chain:base-avatars:BaseMale'],
-                  mainFile: 'M_Mouth_02.png',
-                  overrideReplaces: [],
-                  overrideHides: [],
-                  contents: ['M_Mouth_02.png']
-                }
-              ],
-              replaces: [],
-              hides: []
-            },
-            i18n: [
+          id: 'urn:decentraland:off-chain:base-avatars:mouth_02',
+          description: '',
+          thumbnail: 'thumbnail.png',
+          rarity: 'common',
+          data: {
+            tags: ['face', 'mouth', 'male', 'man', 'base-wearable'],
+            category: 'mouth',
+            representations: [
               {
-                code: 'en',
-                text: 'Mouth_02'
-              },
-              {
-                code: 'es',
-                text: 'Mouth_02'
+                bodyShapes: ['urn:decentraland:off-chain:base-avatars:BaseMale'],
+                mainFile: 'M_Mouth_02.png',
+                overrideReplaces: [],
+                overrideHides: [],
+                contents: ['M_Mouth_02.png']
               }
             ],
-            createdAt: 1622143003105,
-            updatedAt: 1622143003105,
-            image: 'thumbnail.png',
-            name: 'Mouth_02',
-            collectionAddress: '0x0000000000000000000000000000000000000000'
-          }
+            replaces: [],
+            hides: []
+          },
+          i18n: [
+            {
+              code: 'en',
+              text: 'Mouth_02'
+            },
+            {
+              code: 'es',
+              text: 'Mouth_02'
+            }
+          ],
+          createdAt: 1622143003105,
+          updatedAt: 1622143003105,
+          image: 'thumbnail.png',
+          name: 'Mouth_02',
+          collectionAddress: '0x0000000000000000000000000000000000000000'
         }
       },
       {
