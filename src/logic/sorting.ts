@@ -67,7 +67,7 @@ function hasDate(item: Partial<HasDate>): item is HasDate {
 
 export function newestOptional(item1: HasUrn & Partial<HasDate>, item2: HasUrn & Partial<HasDate>): number {
   if (hasDate(item1) && hasDate(item2)) {
-    return item2.maxTransferredAt - item1.maxTransferredAt || byUrn(item1, item2)
+    return newest(item1, item2)
   } else if (!hasDate(item1) && !hasDate(item2)) {
     return byUrn(item1, item2)
   } else if (hasDate(item1)) {
@@ -79,7 +79,7 @@ export function newestOptional(item1: HasUrn & Partial<HasDate>, item2: HasUrn &
 
 export function oldestOptional(item1: HasUrn & Partial<HasDate>, item2: HasUrn & Partial<HasDate>): number {
   if (hasDate(item1) && hasDate(item2)) {
-    return item1.minTransferredAt - item2.minTransferredAt || byUrn(item2, item1)
+    return oldest(item1, item2)
   } else if (!hasDate(item1) && !hasDate(item2)) {
     return byUrn(item1, item2)
   } else if (hasDate(item1)) {
