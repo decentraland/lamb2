@@ -51,14 +51,14 @@ export function rarestOptional(item1: HasUrn & Partial<HasRarity>, item2: HasUrn
   } else if (!hasRarity(item1) && !hasRarity(item2)) {
     return byUrn(item1, item2)
   } else if (hasRarity(item1)) {
-    return 1
-  } else {
     return -1
+  } else {
+    return 1
   }
 }
 
 export function leastRareOptional(item1: HasUrn & Partial<HasRarity>, item2: HasUrn & Partial<HasRarity>): number {
-  return -rarestOptional(item1, item2)
+  return 0 - rarestOptional(item1, item2)
 }
 
 function hasDate(item: Partial<HasDate>): item is HasDate {
@@ -71,9 +71,9 @@ export function newestOptional(item1: HasUrn & Partial<HasDate>, item2: HasUrn &
   } else if (!hasDate(item1) && !hasDate(item2)) {
     return byUrn(item1, item2)
   } else if (hasDate(item1)) {
-    return 1
-  } else {
     return -1
+  } else {
+    return 1
   }
 }
 
