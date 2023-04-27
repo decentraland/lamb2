@@ -20,7 +20,7 @@ export function nameAZ(item1: HasName, item2: HasName): number {
 }
 
 export function nameZA(item1: HasName, item2: HasName): number {
-  return item2.name.localeCompare(item1.name) || byUrn(item1, item2)
+  return 0 - nameAZ(item1, item2)
 }
 
 export function rarest(item1: HasRarity, item2: HasRarity): number {
@@ -28,7 +28,7 @@ export function rarest(item1: HasRarity, item2: HasRarity): number {
 }
 
 export function leastRare(item1: HasRarity, item2: HasRarity): number {
-  return compareByRarity(item2, item1) || byUrn(item1, item2)
+  return 0 - rarest(item1, item2)
 }
 
 export function newest(item1: HasDate, item2: HasDate): number {

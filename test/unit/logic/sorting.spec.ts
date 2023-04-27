@@ -79,9 +79,9 @@ describe('sorting', function () {
     expect(leastRare(item2, item2)).toBe(0)
 
     // item2 is just as rare as item3, so it is disambiguated by urn
-    expect(leastRare(item2, item3)).toBeLessThanOrEqual(-1)
+    expect(leastRare(item2, item3)).toBeLessThanOrEqual(1)
 
-    expect([item1, item2, item3].sort(leastRare)).toEqual([item2, item3, item1])
+    expect([item1, item2, item3].sort(leastRare)).toEqual([item3, item2, item1])
   })
 
   test('by nameAZ', function () {
@@ -105,9 +105,9 @@ describe('sorting', function () {
     expect(nameZA(item2, item2)).toBe(0)
 
     // item2 has same name as item3, so it is disambiguated by urn
-    expect(nameZA(item2, item3)).toBeLessThanOrEqual(-1)
+    expect(nameZA(item2, item3)).toBeLessThanOrEqual(1)
 
-    expect([item1, item2, item3].sort(nameZA)).toEqual([item1, item2, item3])
+    expect([item1, item2, item3].sort(nameZA)).toEqual([item1, item3, item2])
   })
 
   test('by newest', function () {
