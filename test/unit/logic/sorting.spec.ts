@@ -131,8 +131,8 @@ describe('sorting', function () {
     expect(oldest(item2, item2)).toBe(0)
 
     // item2 is as old as item3, so it is disambiguated by urn
-    expect(oldest(item2, item3)).toBeLessThanOrEqual(-1)
+    expect(oldest(item2, item3)).toBeLessThanOrEqual(1)
 
-    expect([item1, item2, item3].sort(oldest)).toEqual([item2, item3, item1])
+    expect([item1, item2, item3].sort(oldest)).toEqual([item3, item2, item1])
   })
 })

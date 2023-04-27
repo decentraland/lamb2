@@ -2,6 +2,7 @@ import { WearableDefinition } from '@dcl/schemas'
 import { FetcherError } from '../../adapters/elements-fetcher'
 import { fetchThirdPartyWearablesFromThirdPartyName } from '../../logic/fetch-elements/fetch-third-party-wearables'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
+import { createCombinedSorting } from '../../logic/sorting'
 import { parseUrn } from '../../logic/utils'
 import {
   AppComponents,
@@ -126,6 +127,7 @@ export async function explorerHandler(
   const logger = logs.getLogger('wearables-handler')
   const pagination = paginationObject(context.url)
   const filter = createFilters(context.url)
+  const sorting = createCombinedSorting<MixedWearable>(context.url)
   const collectionTypes = context.url.searchParams.has('collectionType')
     ? context.url.searchParams.getAll('collectionType')
     : ['base-wearable', 'on-chain', 'third-party']
@@ -135,7 +137,8 @@ export async function explorerHandler(
 
   try {
     const fetchCombinedElements = createCombinedFetcher(context.components, collectionTypes, thirdPartyCollectionId)
-    const page = await fetchAndPaginate<MixedWearable>(address, fetchCombinedElements, pagination, filter, undefined)
+
+    const page = await fetchAndPaginate<MixedWearable>(address, fetchCombinedElements, pagination, filter, sorting)
 
     const definitions: (WearableDefinition | undefined)[] = await wearableDefinitionsFetcher.fetchItemsDefinitions(
       page.elements.map((wearable) => wearable.urn)

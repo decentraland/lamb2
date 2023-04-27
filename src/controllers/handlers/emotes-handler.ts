@@ -1,8 +1,9 @@
 import { EmoteDefinition } from '@dcl/schemas'
 import { FetcherError } from '../../adapters/elements-fetcher'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
+import { createSorting } from '../../logic/sorting'
 import { ErrorResponse, HandlerContextWithPath, OnChainEmote, PaginatedResponse } from '../../types'
-import { createFilters, createSorting } from './items-commons'
+import { createFilters } from './items-commons'
 
 // TODO: change this name
 type ItemResponse = OnChainEmote & {

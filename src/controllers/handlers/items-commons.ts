@@ -1,5 +1,4 @@
 import { EmoteCategory, WearableCategory } from '@dcl/schemas'
-import { SORTING, SortingFunction, rarest } from '../../logic/sorting'
 
 export type FilterableItem = {
   name: string
@@ -24,10 +23,4 @@ export function createFilters(url: URL): (item: FilterableItem) => boolean {
     }
     return true
   }
-}
-
-export function createSorting(url: URL): SortingFunction {
-  const sort = url.searchParams.has('sort') ? url.searchParams.get('sort')! : 'rarest'
-  // When no particular sort requested, always sort by rarity
-  return SORTING[sort] || rarest
 }
