@@ -305,7 +305,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
 
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
 
-    const r = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=20&pageNum=1&sort=newest`)
+    const r = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=20&pageNum=1&orderBy=date&direction=DESC`)
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
       elements: [...convertToDataModel(emotes)].reverse(),
@@ -314,7 +314,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
       totalAmount: 17
     })
 
-    const r2 = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=20&pageNum=1&sort=oldest`)
+    const r2 = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=20&pageNum=1&orderBy=date&direction=ASC`)
     expect(r2.status).toBe(200)
     expect(await r2.json()).toEqual({
       elements: [...convertToDataModel(emotes)],
@@ -338,7 +338,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
 
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
 
-    const r = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=20&pageNum=1&sort=rarest`)
+    const r = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=20&pageNum=1&orderBy=rarity&direction=DESC`)
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
       elements: [...convertToDataModel(emotes)].sort(rarest),
@@ -347,7 +347,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
       totalAmount: 17
     })
 
-    const r2 = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=20&pageNum=1&sort=least_rare`)
+    const r2 = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=20&pageNum=1&orderBy=rarity&direction=ASC`)
     expect(r2.status).toBe(200)
     expect(await r2.json()).toEqual({
       elements: [...convertToDataModel(emotes)].sort(leastRare),
@@ -365,7 +365,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
 
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
 
-    const r = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=20&pageNum=1&sort=name_a_z`)
+    const r = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=20&pageNum=1&orderBy=name&direction=ASC`)
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
       elements: [...convertToDataModel(emotes)].sort(nameAZ),
@@ -374,7 +374,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
       totalAmount: 17
     })
 
-    const r2 = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=20&pageNum=1&sort=name_z_a`)
+    const r2 = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=20&pageNum=1&orderBy=name&direction=DESC`)
     expect(r2.status).toBe(200)
     expect(await r2.json()).toEqual({
       elements: [...convertToDataModel(emotes)].sort(nameZA),
