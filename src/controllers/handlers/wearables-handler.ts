@@ -2,6 +2,13 @@ import { WearableDefinition } from '@dcl/schemas'
 import { FetcherError } from '../../adapters/elements-fetcher'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { createSorting } from '../../logic/sorting'
+import {
+  ErrorResponse,
+  HandlerContextWithPath,
+  OnChainWearable,
+  OnChainWearableResponse,
+  PaginatedResponse
+} from '../../types'
 import { createFilters } from './items-commons'
 
 const mapItemToItemResponse = (
