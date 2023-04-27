@@ -11,18 +11,20 @@ import {
 } from '../../types'
 import { createFilters } from './items-commons'
 
-const mapItemToItemResponse = (
+function mapItemToItemResponse(
   item: OnChainWearable,
   definitions: WearableDefinition | undefined
-): OnChainWearableResponse => ({
-  urn: item.urn,
-  amount: item.individualData.length,
-  individualData: item.individualData,
-  name: item.name,
-  category: item.category,
-  rarity: item.rarity,
-  definition: definitions
-})
+): OnChainWearableResponse {
+  return {
+    urn: item.urn,
+    amount: item.individualData.length,
+    individualData: item.individualData,
+    name: item.name,
+    category: item.category,
+    rarity: item.rarity,
+    definition: definitions
+  }
+}
 
 export async function wearablesHandler(
   context: HandlerContextWithPath<

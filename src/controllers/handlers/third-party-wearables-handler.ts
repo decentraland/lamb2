@@ -24,14 +24,15 @@ function createFilter(url: URL): (item: ThirdPartyWearable) => boolean {
   }
 }
 
-const byUrn: SortingFunction = (item1: ThirdPartyWearable, item2: ThirdPartyWearable): number =>
-  item1.urn.localeCompare(item2.urn)
+function byUrn(item1: ThirdPartyWearable, item2: ThirdPartyWearable): number {
+  return item1.urn.localeCompare(item2.urn)
+}
 
-export const nameAZ: SortingFunction = (item1: ThirdPartyWearable, item2: ThirdPartyWearable): number => {
+export function nameAZ(item1: ThirdPartyWearable, item2: ThirdPartyWearable): number {
   return item1.name.localeCompare(item2.name) || byUrn(item1, item2)
 }
 
-export const nameZA: SortingFunction = (item1: ThirdPartyWearable, item2: ThirdPartyWearable): number => {
+export function nameZA(item1: ThirdPartyWearable, item2: ThirdPartyWearable): number {
   return item2.name.localeCompare(item1.name) || byUrn(item1, item2)
 }
 

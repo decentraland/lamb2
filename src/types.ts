@@ -240,7 +240,3 @@ export type OnChainWearableSorting = {
 export type ThirdPartyWearableSorting = BaseWearableSorting
 
 export type WearableSorting = BaseWearableSorting & OnChainWearableSorting & ThirdPartyWearableSorting
-
-type BaseWearableArguments = BaseWearableFilters & BaseWearableSorting
-type OnChainWearableArguments = OnChainWearableFilters & OnChainWearableSorting
-type ThirdPartyWearableArguments = ThirdPartyWearableFilters & ThirdPartyWearableSorting

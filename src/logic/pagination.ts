@@ -9,7 +9,9 @@ export function paginationObject(url: URL): Pagination {
   return { pageSize, pageNum, offset, limit }
 }
 
-const noFilteringFilter = () => true
+function noFilteringFilter() {
+  return true
+}
 
 export async function fetchAndPaginate<T>(
   address: string,

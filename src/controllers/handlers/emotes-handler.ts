@@ -10,8 +10,8 @@ type ItemResponse = OnChainEmote & {
   definition?: EmoteDefinition
 }
 
-const mapItemToItemResponse = (item: OnChainEmote, definitions: EmoteDefinition | undefined): ItemResponse =>
-  ({
+function mapItemToItemResponse(item: OnChainEmote, definitions: EmoteDefinition | undefined): ItemResponse {
+  return {
     urn: item.urn,
     amount: item.individualData.length,
     individualData: item.individualData,
@@ -19,7 +19,8 @@ const mapItemToItemResponse = (item: OnChainEmote, definitions: EmoteDefinition 
     category: item.category,
     rarity: item.rarity,
     definition: definitions
-  } as ItemResponse) // TODO Remove forced cast
+  } as ItemResponse
+} // TODO Remove forced cast
 
 export async function emotesHandler(
   context: HandlerContextWithPath<'logs' | 'emotesFetcher' | 'emoteDefinitionsFetcher', '/users/:address/emotes'>
