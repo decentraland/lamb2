@@ -1,5 +1,6 @@
 import { Router } from '@well-known-components/http-server'
 import { GlobalContext } from '../types'
+import { allCollectionsHandler } from './handlers/all-collections-handler'
 import { emotesHandler } from './handlers/emotes-handler'
 import { landsHandler } from './handlers/lands-handler'
 import { namesHandler } from './handlers/names-handler'
@@ -25,6 +26,7 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
   router.get('/users/:address/lands', landsHandler)
   router.post('/profiles', profilesHandler)
   router.get('/profiles/:id', profileHandler)
+  router.get('/nfts/collections', allCollectionsHandler)
 
   // old routes to be deprecated
   router.get('/nfts/wearables/:id', oldWearablesHandler)
