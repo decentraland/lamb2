@@ -1,10 +1,11 @@
 import { Router } from '@well-known-components/http-server'
 import { GlobalContext, InvalidRequestError } from '../types'
+import { allCollectionsHandler } from './handlers/all-collections-handler'
 import { emotesHandler } from './handlers/emotes-handler'
 import { landsHandler } from './handlers/lands-handler'
 import { namesHandler } from './handlers/names-handler'
 import { oldWearablesHandler } from './handlers/old-wearables-handler'
-import { profilesHandler } from './handlers/profiles-handler'
+import { profileHandler, profilesHandler } from './handlers/profiles-handler'
 import { statusHandler } from './handlers/status-handler'
 import {
   thirdPartyCollectionWearablesHandler,
@@ -66,6 +67,8 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
   router.get('/users/:address/names', namesHandler)
   router.get('/users/:address/lands', landsHandler)
   router.post('/profiles', profilesHandler)
+  router.get('/profiles/:id', profileHandler)
+  router.get('/nfts/collections', allCollectionsHandler)
 
   router.get('/explorer-service/backpack/:address/wearables', explorerHandler)
 
