@@ -1,9 +1,32 @@
 import { Entity, EntityType, Wearable, WearableCategory, WearableRepresentation } from '@dcl/schemas'
 import { ThirdPartyResolversQueryResults } from '../../src/adapters/third-party-providers-fetcher'
 import { WearableFromQuery } from '../../src/logic/fetch-elements/fetch-items'
-import { ThirdPartyAsset } from '../../src/types'
+import { BaseWearable, ThirdPartyAsset } from '../../src/types'
+import { BASE_WEARABLES } from '../../src/logic/fetch-elements/fetch-base-items'
 
 const TWO_DAYS = 2 * 24 * 60 * 60 * 1000
+
+export function generateBaseWearables(quantity: number): BaseWearable[] {
+  const generatedWearables = []
+  for (let i = 0; i < quantity; i++) {
+    const urn = BASE_WEARABLES[i]
+    generatedWearables.push({
+      urn,
+      id: urn,
+      amount: 1,
+      individualData: [
+        {
+          id: urn
+        }
+      ],
+      name: urn,
+      category: WearableCategory.BODY_SHAPE,
+      definition: generateWearableContentDefinitions([urn])[0]
+    })
+  }
+
+  return generatedWearables
+}
 
 export function generateWearables(quantity: number): WearableFromQuery[] {
   const generatedWearables = []
