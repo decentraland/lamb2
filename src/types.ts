@@ -166,6 +166,13 @@ export type PaginatedResponse<T> = {
   }
 }
 
+export class InvalidRequestError extends Error {
+  constructor(message: string) {
+    super(message)
+    Error.captureStackTrace(this, this.constructor)
+  }
+}
+
 export type ErrorResponse = {
   status: number
   body: {

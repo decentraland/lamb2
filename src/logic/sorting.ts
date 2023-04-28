@@ -1,4 +1,5 @@
 import { RARITIES } from './utils'
+import { InvalidRequestError } from '../types'
 
 function byUrn(item1: HasUrn, item2: HasUrn): number {
   return item1.urn.localeCompare(item2.urn)
@@ -89,9 +90,18 @@ export function oldestOptional(item1: HasUrn & Partial<HasDate>, item2: HasUrn &
   }
 }
 
+function sortDirectionParams(url: URL) {
+  const sort = url.searchParams.has('orderBy') ? url.searchParams.get('orderBy')!.toLowerCase() : 'rarity'
+  const direction = url.searchParams.has('direction')
+    ? url.searchParams.get('direction')!.toUpperCase()
+    : sort === 'name'
+    ? 'ASC'
+    : 'DESC'
+  return { sort, direction }
+}
+
 export function createSorting<T extends HasName & HasRarity & HasDate>(url: URL): SortingFunction<T> {
-  const sort = url.searchParams.has('orderBy') ? url.searchParams.get('orderBy')!.toLowerCase() : 'rarest'
-  const direction = url.searchParams.has('direction') ? url.searchParams.get('direction')!.toUpperCase() : 'ASC'
+  const { sort, direction } = sortDirectionParams(url)
 
   if (sort === 'rarity' && direction === 'ASC') {
     return leastRare
@@ -106,26 +116,29 @@ export function createSorting<T extends HasName & HasRarity & HasDate>(url: URL)
   } else if (sort === 'date' && direction === 'DESC') {
     return newest
   } else {
-    return rarest
+    throw new InvalidRequestError(`Invalid sorting requested: ${sort} ${direction}`)
   }
 }
 
 export function createBaseSorting<T extends HasName>(url: URL): SortingFunction<T> {
   const sort = url.searchParams.has('orderBy') ? url.searchParams.get('orderBy')!.toLowerCase() : 'name'
-  const direction = url.searchParams.has('direction') ? url.searchParams.get('direction')!.toUpperCase() : 'ASC'
+  const direction = url.searchParams.has('direction')
+    ? url.searchParams.get('direction')!.toUpperCase()
+    : sort === 'name'
+    ? 'ASC'
+    : 'DESC'
 
   if (sort === 'name' && direction === 'ASC') {
     return nameAZ
   } else if (sort === 'name' && direction === 'DESC') {
     return nameZA
   } else {
-    throw new Error(`Invalid sorting: ${sort} ${direction}`)
+    throw new InvalidRequestError(`Invalid sorting requested: ${sort} ${direction}`)
   }
 }
 
 export function createCombinedSorting<T extends HasName>(url: URL): SortingFunction<T> {
-  const sort = url.searchParams.has('orderBy') ? url.searchParams.get('orderBy')!.toLowerCase() : 'rarest'
-  const direction = url.searchParams.has('direction') ? url.searchParams.get('direction')!.toUpperCase() : 'ASC'
+  const { sort, direction } = sortDirectionParams(url)
 
   if (sort === 'rarity' && direction === 'ASC') {
     return leastRareOptional
@@ -140,6 +153,6 @@ export function createCombinedSorting<T extends HasName>(url: URL): SortingFunct
   } else if (sort === 'date' && direction === 'DESC') {
     return newestOptional
   } else {
-    return rarestOptional
+    throw new InvalidRequestError(`Invalid sorting requested: ${sort} ${direction}`)
   }
 }
