@@ -28,7 +28,10 @@ test('integration tests for /profiles', function ({ components, stubComponents }
     const r = await localFetch.fetch('/profiles', { method: 'post' })
 
     expect(r.status).toEqual(500)
-    expect(await r.text()).toEqual('')
+    expect(await r.json()).toEqual({
+      error: 'Internal Server Error',
+      message: 'invalid json response body at http://0.0.0.0:7272/profiles reason: Unexpected end of JSON input'
+    })
   })
 
   it('calling with an empty body should return 500', async () => {
@@ -37,7 +40,10 @@ test('integration tests for /profiles', function ({ components, stubComponents }
     const r = await localFetch.fetch('/profiles', { method: 'post', body: '' })
 
     expect(r.status).toEqual(500)
-    expect(await r.text()).toEqual('')
+    expect(await r.json()).toEqual({
+      error: 'Internal Server Error',
+      message: 'invalid json response body at http://0.0.0.0:7272/profiles reason: Unexpected end of JSON input'
+    })
   })
 
   it('calling with body with empty object should return 400', async () => {
@@ -46,7 +52,10 @@ test('integration tests for /profiles', function ({ components, stubComponents }
     const r = await localFetch.fetch('/profiles', { method: 'post', body: '{}' })
 
     expect(r.status).toEqual(400)
-    expect(await r.text()).toEqual('No profile ids were specified. Expected ids:string[] in body')
+    expect(await r.json()).toEqual({
+      error: 'Bad request',
+      message: 'No profile ids were specified. Expected ids:string[] in body'
+    })
   })
 
   it('calling with an empty list', async () => {
@@ -55,7 +64,7 @@ test('integration tests for /profiles', function ({ components, stubComponents }
     const r = await localFetch.fetch('/profiles', { method: 'post', body: '{"ids":[]}' })
 
     expect(r.status).toEqual(200)
-    expect(await r.text()).toEqual('[]')
+    expect(await r.json()).toEqual([])
   })
 
   it('calling with a single profile address, owning everything claimed', async () => {
@@ -118,8 +127,7 @@ test('integration tests for /profiles', function ({ components, stubComponents }
     sinon.assert.calledOnceWithMatch(content.fetchEntitiesByPointers, addresses)
 
     expect(response.status).toEqual(200)
-    const responseText = await response.text()
-    const responseObj = JSON.parse(responseText)
+    const responseObj = await response.json()
     expect(responseObj.length).toEqual(1)
     expect(responseObj[0].avatars.length).toEqual(1)
     expect(responseObj[0].avatars?.[0].hasClaimedName).toEqual(true)
