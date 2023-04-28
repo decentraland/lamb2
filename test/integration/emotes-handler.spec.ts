@@ -384,6 +384,27 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     })
   })
 
+  it('return an error when invalid sorting spec requested', async () => {
+    const { localFetch, theGraph } = components
+
+    const addressString = Wallet.generate().getAddressString()
+    const r = await localFetch.fetch(`/users/${addressString}/emotes?orderBy=saraza`)
+
+    expect(r.status).toBe(400)
+    expect(await r.json()).toEqual({
+      error: 'Bad request',
+      message: 'Invalid sorting requested: saraza DESC'
+    })
+
+    const r2 = await localFetch.fetch(`/users/${addressString}/emotes?orderBy=rarity&direction=ARRIBA`)
+
+    expect(r2.status).toBe(400)
+    expect(await r2.json()).toEqual({
+      error: 'Bad request',
+      message: 'Invalid sorting requested: rarity ARRIBA'
+    })
+  })
+
   it('return an error when emotes cannot be fetched from matic collection', async () => {
     const { localFetch, theGraph } = components
 
@@ -391,11 +412,13 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
       .fn()
       .mockRejectedValueOnce(new Error(`GraphQL Error: Invalid response. Errors:\n- some error. Provider: matic`))
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/emotes`)
+    const wallet = Wallet.generate().getAddressString()
+    const r = await localFetch.fetch(`/users/${wallet}/emotes`)
 
     expect(r.status).toBe(502)
     expect(await r.json()).toEqual({
-      error: 'Cannot fetch emotes right now'
+      error: 'Internal Server Error',
+      message: `Cannot fetch elements for ${wallet}`
     })
   })
 
@@ -413,7 +436,8 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
 
     expect(r.status).toBe(500)
     expect(await r.json()).toEqual({
-      error: 'Internal Server Error'
+      error: 'Internal Server Error',
+      message: 'Cannot fetch definitions'
     })
   })
 })
