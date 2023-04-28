@@ -1,5 +1,4 @@
 import { WearableDefinition } from '@dcl/schemas'
-import { FetcherError } from '../../adapters/elements-fetcher'
 import { fetchThirdPartyWearablesFromThirdPartyName } from '../../logic/fetch-elements/fetch-third-party-wearables'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { createCombinedSorting } from '../../logic/sorting'
@@ -39,7 +38,6 @@ export type MixedWearableResponse = Omit<MixedWearable, 'rarity'> & {
 function createCombinedFetcher(
   components: Pick<
     AppComponents,
-    | 'logs'
     | 'fetch'
     | 'theGraph'
     | 'baseWearablesFetcher'
@@ -111,7 +109,6 @@ function createCombinedFetcher(
 
 export async function explorerHandler(
   context: HandlerContextWithPath<
-    | 'logs'
     | 'fetch'
     | 'theGraph'
     | 'baseWearablesFetcher'
@@ -122,9 +119,8 @@ export async function explorerHandler(
     '/explorer-service/backpack/:address/wearables'
   >
 ): Promise<PaginatedResponse<MixedWearableResponse> | ErrorResponse> {
-  const { logs, wearableDefinitionsFetcher } = context.components
+  const { wearableDefinitionsFetcher } = context.components
   const { address } = context.params
-  const logger = logs.getLogger('wearables-handler')
   const pagination = paginationObject(context.url)
   const filter = createFilters(context.url)
   const sorting = createCombinedSorting<MixedWearable>(context.url)
@@ -135,48 +131,30 @@ export async function explorerHandler(
     ? context.url.searchParams.getAll('thirdPartyCollectionId')
     : []
 
-  try {
-    const fetchCombinedElements = createCombinedFetcher(context.components, collectionTypes, thirdPartyCollectionId)
+  const fetchCombinedElements = createCombinedFetcher(context.components, collectionTypes, thirdPartyCollectionId)
 
-    const page = await fetchAndPaginate<MixedWearable>(address, fetchCombinedElements, pagination, filter, sorting)
+  const page = await fetchAndPaginate<MixedWearable>(address, fetchCombinedElements, pagination, filter, sorting)
 
-    const definitions: (WearableDefinition | undefined)[] = await wearableDefinitionsFetcher.fetchItemsDefinitions(
-      page.elements.map((wearable) => wearable.urn)
-    )
+  const definitions: (WearableDefinition | undefined)[] = await wearableDefinitionsFetcher.fetchItemsDefinitions(
+    page.elements.map((wearable) => wearable.urn)
+  )
 
-    const results: MixedWearableResponse[] = []
-    const wearables = page.elements
+  const results: MixedWearableResponse[] = []
+  const wearables = page.elements
 
-    for (let i = 0; i < wearables.length; ++i) {
-      const wearableToPush: MixedWearableResponse = {
-        ...wearables[i],
-        definition: definitions[i] || undefined
-      }
-      results.push(wearableToPush)
+  for (let i = 0; i < wearables.length; ++i) {
+    const wearableToPush: MixedWearableResponse = {
+      ...wearables[i],
+      definition: definitions[i] || undefined
     }
+    results.push(wearableToPush)
+  }
 
-    return {
-      status: 200,
-      body: {
-        ...page,
-        elements: results
-      }
-    }
-  } catch (err: any) {
-    if (err instanceof FetcherError) {
-      return {
-        status: 502,
-        body: {
-          error: 'Cannot fetch wearables right now'
-        }
-      }
-    }
-    logger.error(err)
-    return {
-      status: 500,
-      body: {
-        error: 'Internal Server Error'
-      }
+  return {
+    status: 200,
+    body: {
+      ...page,
+      elements: results
     }
   }
 }

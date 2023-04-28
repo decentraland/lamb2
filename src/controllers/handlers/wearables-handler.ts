@@ -40,47 +40,29 @@ export async function wearablesHandler(
   const filter = createFilters(context.url)
   const sorting = createSorting(context.url)
 
-  try {
-    const page = await fetchAndPaginate<OnChainWearable>(
-      address,
-      wearablesFetcher.fetchOwnedElements,
-      pagination,
-      filter,
-      sorting
-    )
+  const page = await fetchAndPaginate<OnChainWearable>(
+    address,
+    wearablesFetcher.fetchOwnedElements,
+    pagination,
+    filter,
+    sorting
+  )
 
-    const results: OnChainWearableResponse[] = []
-    const wearables = page.elements
-    const definitions: (WearableDefinition | undefined)[] = includeDefinitions
-      ? await wearableDefinitionsFetcher.fetchItemsDefinitions(wearables.map((wearable) => wearable.urn))
-      : []
+  const results: OnChainWearableResponse[] = []
+  const wearables = page.elements
+  const definitions: (WearableDefinition | undefined)[] = includeDefinitions
+    ? await wearableDefinitionsFetcher.fetchItemsDefinitions(wearables.map((wearable) => wearable.urn))
+    : []
 
-    for (let i = 0; i < wearables.length; ++i) {
-      results.push(mapItemToItemResponse(wearables[i], includeDefinitions ? definitions[i] : undefined))
-    }
+  for (let i = 0; i < wearables.length; ++i) {
+    results.push(mapItemToItemResponse(wearables[i], includeDefinitions ? definitions[i] : undefined))
+  }
 
-    return {
-      status: 200,
-      body: {
-        ...page,
-        elements: results
-      }
-    }
-  } catch (err: any) {
-    if (err instanceof FetcherError) {
-      return {
-        status: 502,
-        body: {
-          error: 'Cannot fetch wearables right now'
-        }
-      }
-    }
-    logger.error(err)
-    return {
-      status: 500,
-      body: {
-        error: 'Internal Server Error'
-      }
+  return {
+    status: 200,
+    body: {
+      ...page,
+      elements: results
     }
   }
 }

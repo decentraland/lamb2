@@ -552,11 +552,13 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
       .mockRejectedValueOnce(new Error(`GraphQL Error: Invalid response. Errors:\n- some error. Provider: ethereum`))
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables`)
+    const wallet = Wallet.generate().getAddressString()
+    const r = await localFetch.fetch(`/users/${wallet}/wearables`)
 
     expect(r.status).toBe(502)
     expect(await r.json()).toEqual({
-      error: 'Cannot fetch wearables right now'
+      error: 'Internal Server Error',
+      message: `Cannot fetch elements for ${wallet}`
     })
   })
 
@@ -568,11 +570,13 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
       .fn()
       .mockRejectedValueOnce(new Error(`GraphQL Error: Invalid response. Errors:\n- some error. Provider: matic`))
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables`)
+    const wallet = Wallet.generate().getAddressString()
+    const r = await localFetch.fetch(`/users/${wallet}/wearables`)
 
     expect(r.status).toBe(502)
     expect(await r.json()).toEqual({
-      error: 'Cannot fetch wearables right now'
+      error: 'Internal Server Error',
+      message: `Cannot fetch elements for ${wallet}`
     })
   })
 
@@ -591,7 +595,8 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(500)
     expect(await r.json()).toEqual({
-      error: 'Internal Server Error'
+      error: 'Internal Server Error',
+      message: 'entities is not iterable'
     })
   })
 })

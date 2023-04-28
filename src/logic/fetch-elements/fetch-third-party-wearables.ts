@@ -112,10 +112,7 @@ export class ThirdPartyNotFoundError extends Error {
 }
 
 export async function fetchThirdPartyWearablesFromThirdPartyName(
-  components: Pick<
-    AppComponents,
-    'thirdPartyWearablesFetcher' | 'thirdPartyProvidersFetcher' | 'fetch' | 'logs' | 'theGraph'
-  >,
+  components: Pick<AppComponents, 'thirdPartyWearablesFetcher' | 'thirdPartyProvidersFetcher' | 'fetch' | 'theGraph'>,
   address: string,
   thirdPartyNameUrn: BlockchainCollectionThirdPartyName
 ): Promise<ThirdPartyWearable[]> {
