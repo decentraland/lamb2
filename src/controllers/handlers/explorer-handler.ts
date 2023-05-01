@@ -14,18 +14,15 @@ import {
 } from '../../types'
 import { createFilters } from './items-commons'
 
-type MixedBaseWearable = Omit<BaseWearable, 'individualData'> & {
-  individualData: BaseWearable['individualData']
+type MixedBaseWearable = BaseWearable & {
   type: 'base-wearable'
 }
 
-type MixedOnChainWearable = Omit<OnChainWearable, 'individualData'> & {
-  individualData: OnChainWearable['individualData']
+type MixedOnChainWearable = OnChainWearable & {
   type: 'on-chain'
 }
 
-type MixedThirdPartyWearable = Omit<ThirdPartyWearable, 'individualData'> & {
-  individualData: ThirdPartyWearable['individualData']
+type MixedThirdPartyWearable = ThirdPartyWearable & {
   type: 'third-party'
 }
 
