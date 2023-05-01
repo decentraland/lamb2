@@ -34,7 +34,7 @@
     "@well-known-components/metrics": "^2.0.1",
     "@well-known-components/thegraph-component": "^1.4.3",
     "dcl-catalyst-client": "^15.0.1",
-    "dcl-catalyst-commons": "9.0.16",
+    "dcl-catalyst-commons": "9.0.19",
     "lodash": "^4.17.21",
     "lru-cache": "^8.0.4"
   }
