@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@dcl/crypto": "^3.4.0",
-    "@dcl/schemas": "^6.16.0",
+    "@dcl/schemas": "^6.17.0",
     "@dcl/urn-resolver": "^2.0.3",
     "@well-known-components/env-config-provider": "^1.2.0",
     "@well-known-components/http-server": "^1.1.6",
@@ -35,7 +35,7 @@
     "@well-known-components/metrics": "^2.0.1",
     "@well-known-components/thegraph-component": "^1.4.3",
     "dcl-catalyst-client": "^15.0.1",
-    "dcl-catalyst-commons": "9.0.16",
+    "dcl-catalyst-commons": "9.0.19",
     "lodash": "^4.17.21",
     "lru-cache": "^8.0.4"
   }
