@@ -292,7 +292,7 @@ export async function fetchAllBaseWearables<E extends BaseWearable>({
       (definition) =>
         ({
           urn: definition!.id,
-          name: definition!.name,
+          name: definition!.name || definition!.id.split(':')[4],
           category: definition!.data.category,
           definition,
           individualData: [{ id: definition!.id }],
