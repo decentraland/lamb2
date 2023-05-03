@@ -35,7 +35,7 @@ export function generateWearables(quantity: number): WearableFromQuery[] {
       id: 'id-' + i,
       tokenId: 'tokenId-' + i,
       category: 'wearable',
-      transferredAt: Date.now() - TWO_DAYS,
+      transferredAt: Date.now() - TWO_DAYS + i,
       metadata: {
         wearable: {
           name: 'name-' + i,
@@ -107,7 +107,7 @@ export function generateThirdPartyWearables(quantity: number): ThirdPartyAsset[]
       id: 'id-' + i,
       amount: 1,
       urn: {
-        decentraland: 'urn-' + i
+        decentraland: 'urn-tp-' + i
       }
     })
   }

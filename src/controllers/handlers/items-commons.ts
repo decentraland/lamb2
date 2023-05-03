@@ -16,7 +16,7 @@ export function createFilters(url: URL): (item: FilterableItem) => boolean {
   const rarity = url.searchParams.has('rarity') ? url.searchParams.get('rarity')!.toLowerCase() : undefined
 
   if (rarity && !RARITIES.includes(rarity)) {
-    throw new InvalidRequestError(`Invalid rarity requested: ${rarity}`)
+    throw new InvalidRequestError(`Invalid rarity requested: '${rarity}'.`)
   }
 
   return (item: FilterableItem) => {

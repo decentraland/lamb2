@@ -153,6 +153,8 @@ export function createCombinedSorting<T extends HasName>(url: URL): SortingFunct
   } else if (sort === 'date' && direction === 'DESC') {
     return newestOptional
   } else {
-    throw new InvalidRequestError(`Invalid sorting requested: ${sort} ${direction}`)
+    throw new InvalidRequestError(
+      `Invalid sorting requested: '${sort} ${direction}'. Valid options are '[rarity, name, date] [ASC, DESC]'.`
+    )
   }
 }
