@@ -34,7 +34,10 @@ testWithComponents(() => {
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
     fetch.fetch = jest.fn().mockResolvedValue({ ok: true, json: () => ({ assets: [] }) })
     const definitions = generateWearableContentDefinitions(BASE_WEARABLES)
-    content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(definitions)
+    content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
+      pointers.map((pointer) => definitions.find((def) => def.id === pointer))
+    )
+    content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
     fetch.fetch = jest.fn().mockImplementation((url) => {
       return { ok: true, json: () => ({ assets: [] }) }
     })
