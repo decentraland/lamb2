@@ -149,10 +149,10 @@ export async function explorerHandler(
       const { minTransferredAt, maxTransferredAt, ...clean } = casted
       results.push({ ...clean, definition: definitions[i] || undefined })
     } else if (wearables[i].type === 'base-wearable') {
-      const casted = wearables[i] as MixedBaseWearable
-      results.push({ ...casted, definition: casted.definition })
+      results.push(wearables[i])
     } else {
       const casted = wearables[i] as MixedThirdPartyWearable
+      // results.push(wearables[i]) // TODO
       results.push({ ...casted, definition: definitions[i] || undefined })
     }
   }
