@@ -34,7 +34,10 @@ testWithComponents(() => {
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
     fetch.fetch = jest.fn().mockResolvedValue({ ok: true, json: () => ({ assets: [] }) })
     const definitions = generateWearableContentDefinitions(BASE_WEARABLES)
-    content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
+    content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(definitions)
+    fetch.fetch = jest.fn().mockImplementation((url) => {
+      return { ok: true, json: () => ({ assets: [] }) }
+    })
 
     const wallet = Wallet.generate().getAddressString()
     const r = await localFetch.fetch(`/explorer-service/backpack/${wallet}/wearables`)
