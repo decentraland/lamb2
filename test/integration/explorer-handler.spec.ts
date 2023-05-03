@@ -28,16 +28,18 @@ testWithComponents(() => {
   }
 })('wearables-handler: GET /explorer-service/backpack/:address/wearables', function ({ components }) {
   it('return only base wearables when no on-chain or third-party found', async () => {
-    const { content, fetch, localFetch, theGraph } = components
+    const { baseWearablesFetcher, content, fetch, localFetch, theGraph } = components
 
-    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
+    const baseWearables = generateBaseWearables(278)
+    baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(baseWearables)
+    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
     fetch.fetch = jest.fn().mockResolvedValue({ ok: true, json: () => ({ assets: [] }) })
-    const definitions = generateWearableContentDefinitions(BASE_WEARABLES)
+    const definitions = generateWearableContentDefinitions(baseWearables.map((wearable) => wearable.urn))
+    content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
     content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
       pointers.map((pointer) => definitions.find((def) => def.id === pointer))
     )
-    content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
     fetch.fetch = jest.fn().mockImplementation((url) => {
       return { ok: true, json: () => ({ assets: [] }) }
     })
