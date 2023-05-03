@@ -7,12 +7,11 @@ import { BASE_WEARABLES } from '../../src/logic/fetch-elements/fetch-base-items'
 const TWO_DAYS = 2 * 24 * 60 * 60 * 1000
 
 export function generateBaseWearables(quantity: number): BaseWearable[] {
-  const generatedWearables = []
+  const generatedWearables: BaseWearable[] = []
   for (let i = 0; i < quantity; i++) {
     const urn = BASE_WEARABLES[i]
     generatedWearables.push({
       urn,
-      id: urn,
       amount: 1,
       individualData: [
         {
@@ -21,7 +20,7 @@ export function generateBaseWearables(quantity: number): BaseWearable[] {
       ],
       name: urn,
       category: WearableCategory.BODY_SHAPE,
-      definition: generateWearableContentDefinitions([urn])[0]
+      definition: generateWearableContentDefinitions([urn])[0].metadata
     })
   }
 

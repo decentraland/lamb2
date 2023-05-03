@@ -28,7 +28,11 @@ type MixedThirdPartyWearable = ThirdPartyWearable & {
 
 type MixedWearable = MixedBaseWearable | MixedOnChainWearable | MixedThirdPartyWearable
 
-export type MixedWearableResponse = Omit<MixedWearable, 'rarity'> & {
+export type MixedWearableResponse = (
+  | MixedBaseWearable
+  | Omit<MixedOnChainWearable, 'minTransferredAt' | 'maxTransferredAt'>
+  | MixedThirdPartyWearable
+) & {
   definition?: WearableDefinition
 } & Partial<Pick<OnChainWearable, 'rarity'>>
 
@@ -140,11 +144,17 @@ export async function explorerHandler(
   const wearables = page.elements
 
   for (let i = 0; i < wearables.length; ++i) {
-    const wearableToPush: MixedWearableResponse = {
-      ...wearables[i],
-      definition: definitions[i] || undefined
+    if (wearables[i].type === 'on-chain') {
+      const casted = wearables[i] as MixedOnChainWearable
+      const { minTransferredAt, maxTransferredAt, ...clean } = casted
+      results.push({ ...clean, definition: definitions[i] || undefined })
+    } else if (wearables[i].type === 'base-wearable') {
+      const casted = wearables[i] as MixedBaseWearable
+      results.push({ ...casted, definition: casted.definition })
+    } else {
+      const casted = wearables[i] as MixedThirdPartyWearable
+      results.push({ ...casted, definition: definitions[i] || undefined })
     }
-    results.push(wearableToPush)
   }
 
   return {

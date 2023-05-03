@@ -13,9 +13,9 @@ import {
 
 import { MixedWearableResponse } from '../../src/controllers/handlers/explorer-handler'
 import { BASE_WEARABLES } from '../../src/logic/fetch-elements/fetch-base-items'
-import { createTheGraphComponentMock } from '../mocks/the-graph-mock'
 import { rarestOptional } from '../../src/logic/sorting'
-import { ThirdPartyWearable } from '../../src/types'
+import { BaseWearable, ThirdPartyWearable } from '../../src/types'
+import { createTheGraphComponentMock } from '../mocks/the-graph-mock'
 
 testWithComponents(() => {
   const theGraphMock = createTheGraphComponentMock()
@@ -46,27 +46,19 @@ testWithComponents(() => {
     })
   })
 
-  it.only('return base + on-chain + third-party wearables', async () => {
+  it('return base + on-chain + third-party wearables', async () => {
     const { content, fetch, localFetch, theGraph, baseWearablesFetcher } = components
-    const baseWearables = generateBaseWearables(2)
-    const onChainWearables = generateWearables(10)
-    const thirdPartyWearables = generateThirdPartyWearables(2)
+    const baseWearables = generateBaseWearables(0)
+    const onChainWearables = generateWearables(2)
+    const thirdPartyWearables = generateThirdPartyWearables(0)
 
-    // const definitions = generateWearableContentDefinitions(
-    //   baseWearables
-    //     .map((wearable) => wearable.urn)
-    //     .concat(onChainWearables.map((wearable) => wearable.urn))
-    //     .concat(thirdPartyWearables.map((wearable) => wearable.urn.decentraland))
-    // )
-
-    // content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
     baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(baseWearables)
     content.fetchEntitiesByPointers = jest.fn(async (pointers) => {
       return generateWearableContentDefinitions(pointers)
     })
     content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
-    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: onChainWearables.slice(0, 5) })
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: onChainWearables.slice(5, 10) })
+    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: onChainWearables.slice(0, 5) })
+    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: onChainWearables.slice(5, 10) })
     fetch.fetch = jest.fn().mockImplementation((url) => {
       if (url.includes('babydoge')) {
         return {
@@ -87,7 +79,7 @@ testWithComponents(() => {
     const body = await r.json()
     expect(body).toEqual({
       elements: [
-        // ...convertToMixedBaseWearable(baseWearables),
+        ...convertToMixedBaseWearable(baseWearables),
         ...convertToMixedOnChainWearable(onChainWearables)
         // ...convertToMixedThirdPartyWearable(thirdPartyWearables)
       ]
@@ -105,10 +97,25 @@ type ContentInfo = {
   content: ContentComponent
 }
 
-function convertToMixedOnChainWearable(
-  wearables: WearableFromQuery[],
-  contentInfo?: ContentInfo
-): MixedWearableResponse[] {
+function convertToMixedBaseWearable(wearables: BaseWearable[]): MixedWearableResponse[] {
+  return wearables.map((wearable): MixedWearableResponse => {
+    return {
+      type: 'base-wearable',
+      urn: wearable.urn,
+      amount: 1,
+      individualData: [
+        {
+          id: wearable.urn
+        }
+      ],
+      category: wearable.category,
+      name: wearable.name,
+      definition: wearable.definition
+    }
+  })
+}
+
+function convertToMixedOnChainWearable(wearables: WearableFromQuery[]): MixedWearableResponse[] {
   return wearables.map((wearable): MixedWearableResponse => {
     const individualData = {
       id: wearable.id,
@@ -117,9 +124,7 @@ function convertToMixedOnChainWearable(
       price: wearable.item.price
     }
     const rarity = wearable.item.rarity
-    // const definition = contentInfo?.definitions.find((def) => def.id === wearable.urn)
-    // const content = contentInfo?.content
-    const entity = generateWearableContentDefinitions([wearable.urn])
+    const entity = generateWearableContentDefinitions([wearable.urn])[0]
     return {
       type: 'on-chain',
       urn: wearable.urn,
@@ -128,11 +133,11 @@ function convertToMixedOnChainWearable(
       rarity,
       category: wearable.metadata.wearable.category,
       name: wearable.metadata.wearable.name,
-      // definition: definition && content ? extractWearableDefinitionFromEntity({ content }, definition) : undefined
-      definition: entity[0].metadata
+      definition: entity.metadata
     }
   })
 }
+
 function convertToMixedThirdPartyWearable(
   wearables: ThirdPartyWearable[],
   contentInfo?: ContentInfo
@@ -149,8 +154,8 @@ function convertToMixedThirdPartyWearable(
         }
       ],
       category: wearable.category,
-      name: wearable.name,
-      definition: entity[0].metadata
+      name: wearable.name
+      // definition: entity[0].metadata
     }
   })
 }

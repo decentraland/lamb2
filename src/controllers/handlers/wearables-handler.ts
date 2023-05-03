@@ -1,5 +1,4 @@
 import { WearableDefinition } from '@dcl/schemas'
-import { FetcherError } from '../../adapters/elements-fetcher'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { createSorting } from '../../logic/sorting'
 import {
@@ -27,14 +26,10 @@ function mapItemToItemResponse(
 }
 
 export async function wearablesHandler(
-  context: HandlerContextWithPath<
-    'logs' | 'wearablesFetcher' | 'wearableDefinitionsFetcher',
-    '/users/:address/wearables'
-  >
+  context: HandlerContextWithPath<'wearablesFetcher' | 'wearableDefinitionsFetcher', '/users/:address/wearables'>
 ): Promise<PaginatedResponse<OnChainWearableResponse> | ErrorResponse> {
-  const { logs, wearableDefinitionsFetcher, wearablesFetcher } = context.components
+  const { wearableDefinitionsFetcher, wearablesFetcher } = context.components
   const { address } = context.params
-  const logger = logs.getLogger('wearables-handler')
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
   const pagination = paginationObject(context.url)
   const filter = createFilters(context.url)
