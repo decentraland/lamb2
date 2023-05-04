@@ -1,16 +1,11 @@
 import { RARITIES } from './utils'
-import { InvalidRequestError } from '../types'
+import { HasDate, HasName, HasRarity, HasUrn, InvalidRequestError, SortingFunction } from '../types'
 
 function byUrn(item1: HasUrn, item2: HasUrn): number {
   return item1.urn.localeCompare(item2.urn)
 }
 
-export type HasUrn = { urn: string }
-export type HasName = { name: string } & HasUrn
-export type HasRarity = { rarity: string } & HasUrn
-export type HasDate = { minTransferredAt: number; maxTransferredAt: number } & HasUrn
-
-function compareByRarity(item1: HasRarity, item2: HasRarity) {
+export function compareByRarity<T extends HasRarity>(item1: T, item2: T) {
   const w1RarityValue = RARITIES.findIndex((rarity) => rarity === item1.rarity)
   const w2RarityValue = RARITIES.findIndex((rarity) => rarity === item2.rarity)
   return w2RarityValue - w1RarityValue
@@ -39,8 +34,6 @@ export function newest(item1: HasDate, item2: HasDate): number {
 export function oldest(item1: HasDate, item2: HasDate): number {
   return item1.minTransferredAt - item2.minTransferredAt || byUrn(item2, item1)
 }
-
-export type SortingFunction<T> = (item1: T, item2: T) => number
 
 function hasRarity(item: Partial<HasRarity>): item is HasRarity {
   return !!item.rarity

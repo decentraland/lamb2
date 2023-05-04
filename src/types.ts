@@ -119,6 +119,13 @@ export type Item<C extends WearableCategory | EmoteCategory> = {
   category: C
 }
 
+export type HasUrn = { urn: string }
+export type HasName = { name: string } & HasUrn
+export type HasRarity = { rarity: string } & HasUrn
+export type HasDate = { minTransferredAt: number; maxTransferredAt: number } & HasUrn
+
+export type SortingFunction<T> = (item1: T, item2: T) => number
+
 export type OnChainWearable = Item<WearableCategory>
 
 export type OnChainEmote = Item<EmoteCategory>

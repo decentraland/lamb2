@@ -1,6 +1,6 @@
 import { EmoteCategory, WearableCategory } from '@dcl/schemas'
 import { AppComponents, Item, OnChainEmote, OnChainWearable } from '../../types'
-import { compareByRarity } from '../utils'
+import { compareByRarity } from '../sorting'
 import { THE_GRAPH_PAGE_SIZE, fetchAllNFTs } from './fetch-elements'
 
 function groupItemsByURN<
