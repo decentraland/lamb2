@@ -127,7 +127,7 @@ export async function explorerHandler(
   const collectionTypes = context.url.searchParams.has('collectionType')
     ? context.url.searchParams.getAll('collectionType')
     : VALID_COLLECTION_TYPES
-  const thirdPartyCollectionId = context.url.searchParams.has('thirdPartyCollectionId')
+  const thirdPartyCollectionIds = context.url.searchParams.has('thirdPartyCollectionId')
     ? context.url.searchParams.getAll('thirdPartyCollectionId')
     : []
 
@@ -135,7 +135,7 @@ export async function explorerHandler(
     throw new InvalidRequestError(`Invalid collection type. Valid types are: ${VALID_COLLECTION_TYPES.join(', ')}.`)
   }
 
-  const fetchCombinedElements = createCombinedFetcher(context.components, collectionTypes, thirdPartyCollectionId)
+  const fetchCombinedElements = createCombinedFetcher(context.components, collectionTypes, thirdPartyCollectionIds)
 
   const page = await fetchAndPaginate<MixedWearable>(address, fetchCombinedElements, pagination, filter, sorting)
 

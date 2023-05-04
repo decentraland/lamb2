@@ -437,7 +437,6 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     expect(r.status).toBe(500)
     expect(await r.json()).toEqual({
       error: 'Internal Server Error',
-      message: 'Cannot fetch definitions'
     })
   })
 })

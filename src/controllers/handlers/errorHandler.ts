@@ -33,8 +33,7 @@ export async function errorHandler(
     return {
       status: 500,
       body: {
-        error: 'Internal Server Error',
-        message: error.message
+        error: 'Internal Server Error'
       }
     }
   }

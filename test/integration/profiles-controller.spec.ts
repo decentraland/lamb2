@@ -29,8 +29,7 @@ test('integration tests for /profiles', function ({ components, stubComponents }
 
     expect(r.status).toEqual(500)
     expect(await r.json()).toEqual({
-      error: 'Internal Server Error',
-      message: 'invalid json response body at http://0.0.0.0:7272/profiles reason: Unexpected end of JSON input'
+      error: 'Internal Server Error'
     })
   })
 
@@ -41,8 +40,7 @@ test('integration tests for /profiles', function ({ components, stubComponents }
 
     expect(r.status).toEqual(500)
     expect(await r.json()).toEqual({
-      error: 'Internal Server Error',
-      message: 'invalid json response body at http://0.0.0.0:7272/profiles reason: Unexpected end of JSON input'
+      error: 'Internal Server Error'
     })
   })
 

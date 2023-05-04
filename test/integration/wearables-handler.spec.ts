@@ -595,8 +595,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(500)
     expect(await r.json()).toEqual({
-      error: 'Internal Server Error',
-      message: 'entities is not iterable'
+      error: 'Internal Server Error'
     })
   })
 })
