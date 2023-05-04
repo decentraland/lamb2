@@ -10,7 +10,7 @@ import {
 } from '../../types'
 import { createFilters } from './items-commons'
 
-function mapItemToItemResponse(item: OnChainEmote, definitions: EmoteDefinition | undefined): OnChainEmoteResponse {
+function mapItemToItemResponse(item: OnChainEmote, definition: EmoteDefinition | undefined): OnChainEmoteResponse {
   return {
     urn: item.urn,
     amount: item.individualData.length,
@@ -18,7 +18,7 @@ function mapItemToItemResponse(item: OnChainEmote, definitions: EmoteDefinition 
     name: item.name,
     category: item.category,
     rarity: item.rarity,
-    definition: definitions
+    definition
   }
 }
 

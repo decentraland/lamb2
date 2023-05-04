@@ -15,7 +15,7 @@ import {
 } from '../../types'
 import { createFilters } from './items-commons'
 
-const VALIDA_COLLECTION_TYPES = ['base-wearable', 'on-chain', 'third-party']
+const VALID_COLLECTION_TYPES = ['base-wearable', 'on-chain', 'third-party']
 
 type MixedBaseWearable = BaseWearable & {
   type: 'base-wearable'
@@ -31,11 +31,7 @@ type MixedThirdPartyWearable = ThirdPartyWearable & {
 
 type MixedWearable = MixedBaseWearable | MixedOnChainWearable | MixedThirdPartyWearable
 
-export type MixedWearableResponse = (
-  | MixedBaseWearable
-  | Omit<MixedOnChainWearable, 'minTransferredAt' | 'maxTransferredAt'>
-  | MixedThirdPartyWearable
-) & {
+export type MixedWearableResponse = Omit<MixedWearable, 'minTransferredAt' | 'maxTransferredAt'> & {
   definition?: WearableDefinition
 } & Partial<Pick<OnChainWearable, 'rarity'>>
 
@@ -130,13 +126,13 @@ export async function explorerHandler(
   const sorting = createCombinedSorting<MixedWearable>(context.url)
   const collectionTypes = context.url.searchParams.has('collectionType')
     ? context.url.searchParams.getAll('collectionType')
-    : VALIDA_COLLECTION_TYPES
+    : VALID_COLLECTION_TYPES
   const thirdPartyCollectionId = context.url.searchParams.has('thirdPartyCollectionId')
     ? context.url.searchParams.getAll('thirdPartyCollectionId')
     : []
 
-  if (collectionTypes.some((type) => !VALIDA_COLLECTION_TYPES.includes(type))) {
-    throw new InvalidRequestError(`Invalid collection type. Valid types are: ${VALIDA_COLLECTION_TYPES.join(', ')}.`)
+  if (collectionTypes.some((type) => !VALID_COLLECTION_TYPES.includes(type))) {
+    throw new InvalidRequestError(`Invalid collection type. Valid types are: ${VALID_COLLECTION_TYPES.join(', ')}.`)
   }
 
   const fetchCombinedElements = createCombinedFetcher(context.components, collectionTypes, thirdPartyCollectionId)
