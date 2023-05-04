@@ -7,7 +7,7 @@ export async function landsHandler(
 ): Promise<PaginatedResponse<LAND> | ErrorResponse> {
   const { address } = context.params
   const { landsFetcher, logs } = context.components
-  const pagination = paginationObject(context.url)
+  const pagination = paginationObject(context.url, Number.MAX_VALUE)
   const logger = logs.getLogger('lands-handler')
 
   try {

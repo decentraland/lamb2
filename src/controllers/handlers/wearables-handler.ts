@@ -31,7 +31,7 @@ export async function wearablesHandler(
   const { wearableDefinitionsFetcher, wearablesFetcher } = context.components
   const { address } = context.params
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
-  const pagination = paginationObject(context.url)
+  const pagination = paginationObject(context.url, Number.MAX_VALUE)
   const filter = createFilters(context.url)
   const sorting = createSorting(context.url)
 

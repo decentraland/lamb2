@@ -7,7 +7,7 @@ export async function namesHandler(
 ): Promise<PaginatedResponse<Name> | ErrorResponse> {
   const { address } = context.params
   const { namesFetcher, logs } = context.components
-  const pagination = paginationObject(context.url)
+  const pagination = paginationObject(context.url, Number.MAX_VALUE)
   const logger = logs.getLogger('names-handler')
 
   try {

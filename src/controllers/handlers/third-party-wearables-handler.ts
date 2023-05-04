@@ -40,7 +40,7 @@ export async function thirdPartyWearablesHandler(
   const { address } = context.params
   const logger = logs.getLogger('third-party-wearables-handler')
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
-  const pagination = paginationObject(context.url)
+  const pagination = paginationObject(context.url, Number.MAX_VALUE)
   const filter = createFilter(context.url)
   const sorting = createBaseSorting(context.url)
 
@@ -139,7 +139,7 @@ export async function thirdPartyCollectionWearablesHandler(
   }
 
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
-  const pagination = paginationObject(context.url)
+  const pagination = paginationObject(context.url, Number.MAX_VALUE)
 
   try {
     const page = await fetchAndPaginate<ThirdPartyWearable>(
