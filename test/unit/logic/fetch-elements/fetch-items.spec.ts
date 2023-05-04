@@ -1,6 +1,10 @@
 import { EmoteCategory, WearableCategory } from '@dcl/schemas'
-import { EmoteFromQuery, WearableFromQuery, fetchAllEmotes, fetchAllWearables } from '../../../../src/logic/fetch-elements/fetch-items'
-// import { Item } from '../../../../src/types'
+import {
+  EmoteFromQuery,
+  WearableFromQuery,
+  fetchAllEmotes,
+  fetchAllWearables
+} from '../../../../src/logic/fetch-elements/fetch-items'
 import { OnChainEmote, OnChainWearable } from '../../../../src/types'
 import { createTheGraphComponentMock } from '../../../mocks/the-graph-mock'
 
