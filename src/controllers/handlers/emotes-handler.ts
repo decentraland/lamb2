@@ -1,16 +1,16 @@
 import { EmoteDefinition } from '@dcl/schemas'
-import { FetcherError } from '../../adapters/elements-fetcher'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { createSorting } from '../../logic/sorting'
-import { ErrorResponse, HandlerContextWithPath, OnChainEmote, PaginatedResponse } from '../../types'
+import {
+  ErrorResponse,
+  HandlerContextWithPath,
+  OnChainEmote,
+  OnChainEmoteResponse,
+  PaginatedResponse
+} from '../../types'
 import { createFilters } from './items-commons'
 
-// TODO: change this name
-type ItemResponse = OnChainEmote & {
-  definition?: EmoteDefinition
-}
-
-function mapItemToItemResponse(item: OnChainEmote, definitions: EmoteDefinition | undefined): ItemResponse {
+function mapItemToItemResponse(item: OnChainEmote, definitions: EmoteDefinition | undefined): OnChainEmoteResponse {
   return {
     urn: item.urn,
     amount: item.individualData.length,
@@ -19,12 +19,12 @@ function mapItemToItemResponse(item: OnChainEmote, definitions: EmoteDefinition 
     category: item.category,
     rarity: item.rarity,
     definition: definitions
-  } as ItemResponse
-} // TODO Remove forced cast
+  }
+}
 
 export async function emotesHandler(
   context: HandlerContextWithPath<'emotesFetcher' | 'emoteDefinitionsFetcher', '/users/:address/emotes'>
-): Promise<PaginatedResponse<ItemResponse> | ErrorResponse> {
+): Promise<PaginatedResponse<OnChainEmoteResponse> | ErrorResponse> {
   const { emoteDefinitionsFetcher, emotesFetcher } = context.components
   const { address } = context.params
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
@@ -40,7 +40,7 @@ export async function emotesHandler(
     sorting
   )
 
-  const results: ItemResponse[] = []
+  const results: OnChainEmoteResponse[] = []
   const emotes = page.elements
   const definitions = includeDefinitions
     ? await emoteDefinitionsFetcher.fetchItemsDefinitions(emotes.map((emote) => emote.urn))
