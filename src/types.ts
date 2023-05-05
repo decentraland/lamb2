@@ -1,29 +1,30 @@
-import type { IFetchComponent } from '@well-known-components/http-server'
-import type {
-  IConfigComponent,
-  ILoggerComponent,
-  IHttpServerComponent,
-  IBaseComponent,
-  IMetricsComponent
-} from '@well-known-components/interfaces'
-import { metricDeclarations } from './metrics'
-import { TheGraphComponent } from './ports/the-graph'
 import {
-  Profile,
+  EmoteCategory,
+  EmoteDefinition,
   IPFSv1,
   IPFSv2,
-  Wearable,
-  WearableRepresentation,
-  Emote,
-  EmoteRepresentationADR74
+  Profile,
+  Rarity,
+  WearableCategory,
+  WearableDefinition
 } from '@dcl/schemas'
-import { ContentComponent } from './ports/content'
-import { OwnershipCachesComponent } from './ports/ownership-caches'
+import type { IFetchComponent } from '@well-known-components/http-server'
+import type {
+  IBaseComponent,
+  IConfigComponent,
+  IHttpServerComponent,
+  ILoggerComponent,
+  IMetricsComponent
+} from '@well-known-components/interfaces'
 import { Variables } from '@well-known-components/thegraph-component'
 import { DefinitionsFetcher } from './adapters/definitions-fetcher'
-import { WearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
 import { ElementsFetcher } from './adapters/elements-fetcher'
 import { ThirdPartyProvidersFetcher } from './adapters/third-party-providers-fetcher'
+import { WearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
+import { metricDeclarations } from './metrics'
+import { ContentComponent } from './ports/content'
+import { OwnershipCachesComponent } from './ports/ownership-caches'
+import { TheGraphComponent } from './ports/the-graph'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -39,10 +40,11 @@ export type BaseComponents = {
   content: ContentComponent
   theGraph: TheGraphComponent
   ownershipCaches: OwnershipCachesComponent
-  wearablesFetcher: ElementsFetcher<Item>
+  baseWearablesFetcher: ElementsFetcher<BaseWearable>
+  wearablesFetcher: ElementsFetcher<OnChainWearable>
   thirdPartyProvidersFetcher: ThirdPartyProvidersFetcher
-  thirdPartyWearablesFetcher: ElementsFetcher<ThirdPartyWearable>
-  emotesFetcher: ElementsFetcher<Item>
+  thirdPartyWearablesFetcher: ElementsFetcher<ThirdPartyWearable & { definition: WearableDefinition }>
+  emotesFetcher: ElementsFetcher<OnChainEmote>
   emoteDefinitionsFetcher: DefinitionsFetcher<EmoteDefinition>
   wearableDefinitionsFetcher: DefinitionsFetcher<WearableDefinition>
   namesFetcher: ElementsFetcher<Name>
@@ -79,6 +81,7 @@ export type Context<Path extends string = any> = IHttpServerComponent.PathAwareC
 export type Filename = string
 export type Filehash = IPFSv1 | IPFSv2
 export type WearableId = string // These ids are used as pointers on the content server
+export type EmoteId = string // These ids are used as pointers on the content server
 
 export type ProfileMetadata = Profile & {
   timestamp: number
@@ -100,7 +103,7 @@ export interface TPWResolver {
  */
 export type QueryGraph = <T = any>(query: string, variables?: Variables, remainingAttempts?: number) => Promise<T>
 
-export type Item = {
+export type Item<C extends WearableCategory | EmoteCategory> = {
   urn: string
   amount: number // TODO: maybe this could be individualData.length
   individualData: {
@@ -109,15 +112,36 @@ export type Item = {
     transferredAt: number
     price: number
   }[]
+  name: string
   rarity: string
+  minTransferredAt: number
+  maxTransferredAt: number
+  category: C
 }
+
+export type HasUrn = { urn: string }
+export type HasName = { name: string } & HasUrn
+export type HasRarity = { rarity: string } & HasUrn
+export type HasDate = { minTransferredAt: number; maxTransferredAt: number } & HasUrn
+
+export type SortingFunction<T> = (item1: T, item2: T) => number
+
+export type OnChainWearable = Item<WearableCategory>
+
+export type OnChainEmote = Item<EmoteCategory>
 
 export type ThirdPartyWearable = {
   urn: string
-  amount: number // TODO: maybe this could be individualData.length
+  amount: number
   individualData: {
     id: string
   }[]
+  name: string
+  category: WearableCategory
+}
+
+export type BaseWearable = ThirdPartyWearable & {
+  definition: WearableDefinition
 }
 
 export type Name = {
@@ -146,6 +170,13 @@ export type PaginatedResponse<T> = {
     totalAmount: number
     pageNum: number
     pageSize: number
+  }
+}
+
+export class InvalidRequestError extends Error {
+  constructor(message: string) {
+    super(message)
+    Error.captureStackTrace(this, this.constructor)
   }
 }
 
@@ -187,21 +218,39 @@ export type ThirdPartyAssets = {
   next?: string
 }
 
-export type WearableDefinition = Omit<Wearable, 'data'> & {
-  data: Omit<Wearable['data'], 'representations'> & {
-    representations: WearableDefinitionRepresentation[]
-  }
-}
-export type WearableDefinitionRepresentation = Omit<WearableRepresentation, 'contents'> & {
-  contents: { key: string; url: string }[]
+export type OnChainWearableResponse = Omit<OnChainWearable, 'minTransferredAt' | 'maxTransferredAt'> & {
+  definition?: WearableDefinition
 }
 
-export type EmoteDefinition = Omit<Emote, 'emoteDataADR74'> & {
-  emoteDataADR74: Omit<Emote['emoteDataADR74'], 'representations'> & {
-    representations: EmoteDefinitionRepresentation[]
-  }
+export type OnChainEmoteResponse = Omit<OnChainEmote, 'minTransferredAt' | 'maxTransferredAt'> & {
+  definition?: EmoteDefinition
 }
 
-export type EmoteDefinitionRepresentation = Omit<EmoteRepresentationADR74, 'contents'> & {
-  contents: { key: string; url: string }[]
+export type BaseWearableFilters = {
+  categories: WearableCategory[]
+  name: string
 }
+
+export type OnChainWearableFilters = BaseWearableFilters & {
+  rarity: Rarity
+}
+
+export type ThirdPartyWearableFilters = BaseWearableFilters & {
+  collectionUrns: string[]
+}
+
+export type WearableFilters = BaseWearableFilters & OnChainWearableFilters & ThirdPartyWearableFilters
+
+export type BaseWearableSorting = {
+  orderBy: 'date' | 'name' // date = entity.timestamp WARNING if equals
+  direction: 'ASC' | 'DESC'
+}
+
+export type OnChainWearableSorting = {
+  orderBy: 'date' | 'rarity' | 'name' // date = transferredAt
+  direction: 'ASC' | 'DESC'
+}
+
+export type ThirdPartyWearableSorting = BaseWearableSorting
+
+export type WearableSorting = BaseWearableSorting & OnChainWearableSorting & ThirdPartyWearableSorting

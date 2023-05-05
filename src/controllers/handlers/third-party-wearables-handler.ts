@@ -1,3 +1,4 @@
+import { WearableDefinition } from '@dcl/schemas'
 import { FetcherError } from '../../adapters/elements-fetcher'
 import { ThirdPartyProviderFetcherError } from '../../adapters/third-party-providers-fetcher'
 import {
@@ -6,16 +7,26 @@ import {
 } from '../../logic/fetch-elements/fetch-third-party-wearables'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { parseUrn } from '../../logic/utils'
-import {
-  ErrorResponse,
-  HandlerContextWithPath,
-  PaginatedResponse,
-  ThirdPartyWearable,
-  WearableDefinition
-} from '../../types'
+import { ErrorResponse, HandlerContextWithPath, PaginatedResponse, ThirdPartyWearable } from '../../types'
+import { createBaseSorting } from '../../logic/sorting'
+
+function createFilter(url: URL): (item: ThirdPartyWearable) => boolean {
+  const categories = url.searchParams.has('category') ? url.searchParams.getAll('category') : []
+  const name = url.searchParams.has('name') ? url.searchParams.get('name') : undefined
+
+  return (item: ThirdPartyWearable) => {
+    if (categories && categories.length > 0 && !categories.includes(item.category)) {
+      return false
+    }
+    if (name && !item.name.toLowerCase().includes(name.toLowerCase())) {
+      return false
+    }
+    return true
+  }
+}
 
 // TODO: change this name
-type ThirdPartyWearableResponse = ThirdPartyWearable & {
+export type ThirdPartyWearableResponse = ThirdPartyWearable & {
   definition?: WearableDefinition
 }
 
@@ -25,38 +36,42 @@ export async function thirdPartyWearablesHandler(
     '/users/:address/third-party-wearables'
   >
 ): Promise<PaginatedResponse<ThirdPartyWearableResponse> | ErrorResponse> {
-  const { wearableDefinitionsFetcher, logs, thirdPartyWearablesFetcher } = context.components
+  const { logs, thirdPartyWearablesFetcher } = context.components
   const { address } = context.params
   const logger = logs.getLogger('third-party-wearables-handler')
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
-  const pagination = paginationObject(context.url)
+  const pagination = paginationObject(context.url, Number.MAX_VALUE)
+  const filter = createFilter(context.url)
+  const sorting = createBaseSorting(context.url)
 
   try {
-    const page = await fetchAndPaginate<ThirdPartyWearable>(
+    const page = await fetchAndPaginate<ThirdPartyWearable & { definition: WearableDefinition }>(
       address,
       thirdPartyWearablesFetcher.fetchOwnedElements,
-      pagination
+      pagination,
+      filter,
+      sorting
     )
-
     if (includeDefinitions) {
-      const wearables = page.elements
-      const definitions = await wearableDefinitionsFetcher.fetchItemsDefinitions(
-        wearables.map((wearable) => wearable.urn)
-      )
-      const results: ThirdPartyWearableResponse[] = []
-      for (let i = 0; i < wearables.length; ++i) {
-        results.push({
-          ...wearables[i],
-          definition: includeDefinitions ? definitions[i] : undefined
-        })
+      return {
+        status: 200,
+        body: {
+          ...page
+        }
       }
-      page.elements = results
-    }
-
-    return {
-      status: 200,
-      body: {
-        ...page
+    } else {
+      const elementsWithoutDefinitions: (ThirdPartyWearable & { definition?: WearableDefinition })[] =
+        page.elements.map((e) => {
+          const { definition, ...restOfElement } = e
+          return { ...restOfElement }
+        })
+      const { elements, ...restOfPage } = page
+      return {
+        status: 200,
+        body: {
+          elements: elementsWithoutDefinitions,
+          ...restOfPage
+        }
       }
     }
   } catch (err: any) {
@@ -64,7 +79,7 @@ export async function thirdPartyWearablesHandler(
       return {
         status: 502,
         body: {
-          error: 'Cannot fetch third partiy wearables right now'
+          error: 'Cannot fetch third party wearables right now'
         }
       }
     } else if (err instanceof ThirdPartyProviderFetcherError) {
@@ -124,7 +139,7 @@ export async function thirdPartyCollectionWearablesHandler(
   }
 
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
-  const pagination = paginationObject(context.url)
+  const pagination = paginationObject(context.url, Number.MAX_VALUE)
 
   try {
     const page = await fetchAndPaginate<ThirdPartyWearable>(

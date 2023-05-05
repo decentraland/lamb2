@@ -1,6 +1,6 @@
 import { Request } from 'node-fetch'
 import { getProfiles } from '../../logic/profiles'
-import { HandlerContextWithPath } from '../../types'
+import { HandlerContextWithPath, InvalidRequestError } from '../../types'
 
 export async function profilesHandler(
   context: HandlerContextWithPath<
@@ -14,13 +14,10 @@ export async function profilesHandler(
 
   // Return 400 if there are no ids in the payload
   if (!ids) {
-    return {
-      status: 400,
-      body: 'No profile ids were specified. Expected ids:string[] in body'
-    }
+    throw new InvalidRequestError('No profile ids were specified. Expected ids:string[] in body')
   }
 
-  // Get profiles depending on its adressess
+  // Get profiles depending on their addresses
   const profiles = await getProfiles(context.components, ids, getIfModifiedSinceTimestamp(context.request))
 
   // The only case in which we receive undefined profiles is when no profile was updated after de If-Modified-Since specified moment.

@@ -1,8 +1,7 @@
-import { test } from '../components'
-import { generateWearables } from '../data/wearables'
 import Wallet from 'ethereumjs-wallet'
 import { NameFromQuery } from '../../src/logic/fetch-elements/fetch-names'
 import { Name } from '../../src/types'
+import { test } from '../components'
 import { generateNames } from '../data/names'
 
 // NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
@@ -44,7 +43,7 @@ test('names-handler: GET /users/:address/names should', function ({ components }
 
   it('return 2 names and paginate them correctly (page 1, size 2, total 5)', async () => {
     const { localFetch, theGraph } = components
-    const names = generateWearables(5)
+    const names = generateNames(5)
 
     theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: names })
 
@@ -61,7 +60,7 @@ test('names-handler: GET /users/:address/names should', function ({ components }
 
   it('return 2 names and paginate them correctly (page 2, size 2, total 5)', async () => {
     const { localFetch, theGraph } = components
-    const names = generateWearables(5)
+    const names = generateNames(5)
 
     theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: names })
 
@@ -78,7 +77,7 @@ test('names-handler: GET /users/:address/names should', function ({ components }
 
   it('return 1 name and paginate them correctly (page 3, size 2, total 4)', async () => {
     const { localFetch, theGraph } = components
-    const names = generateWearables(5)
+    const names = generateNames(5)
 
     theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: names })
 
@@ -141,4 +140,3 @@ function convertToDataModel(names: NameFromQuery[]): Name[] {
     }
   })
 }
-

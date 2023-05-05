@@ -7,7 +7,7 @@ class HTTPResponseError extends Error {
   }
 }
 
-const checkStatus = (response: nodeFetch.Response) => {
+function checkStatus(response: nodeFetch.Response) {
   if (response.ok) {
     // response.status >= 200 && response.status < 300
     return response

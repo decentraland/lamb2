@@ -1,9 +1,8 @@
-import { test } from '../components'
-import { generateWearables } from '../data/wearables'
 import Wallet from 'ethereumjs-wallet'
-import { generateLANDs } from '../data/lands'
 import { LANDFromQuery } from '../../src/logic/fetch-elements/fetch-lands'
 import { LAND } from '../../src/types'
+import { test } from '../components'
+import { generateLANDs } from '../data/lands'
 
 // NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
 test('lands-handler: GET /users/:address/lands should', function ({ components }) {
@@ -44,7 +43,7 @@ test('lands-handler: GET /users/:address/lands should', function ({ components }
 
   it('return 2 lands and paginate them correctly (page 1, size 2, total 5)', async () => {
     const { localFetch, theGraph } = components
-    const lands = generateWearables(5)
+    const lands = generateLANDs(5)
 
     theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: lands })
 
@@ -61,7 +60,7 @@ test('lands-handler: GET /users/:address/lands should', function ({ components }
 
   it('return 2 lands and paginate them correctly (page 2, size 2, total 5)', async () => {
     const { localFetch, theGraph } = components
-    const lands = generateWearables(5)
+    const lands = generateLANDs(5)
 
     theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: lands })
 
@@ -78,7 +77,7 @@ test('lands-handler: GET /users/:address/lands should', function ({ components }
 
   it('return 1 LAND and paginate them correctly (page 3, size 2, total 4)', async () => {
     const { localFetch, theGraph } = components
-    const lands = generateWearables(5)
+    const lands = generateLANDs(5)
 
     theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: lands })
 

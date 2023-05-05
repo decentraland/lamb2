@@ -1,8 +1,9 @@
-import { testWithComponents } from '../../components'
-import { generateThirdPartyWearables, getThirdPartyProviders } from '../../data/wearables'
 import Wallet from 'ethereumjs-wallet'
+import { ThirdPartyAsset } from '../../../src/types'
+import { testWithComponents } from '../../components'
+import { generateThirdPartyWearables, generateWearableContentDefinitions, getThirdPartyProviders } from '../../data/wearables'
 import { createTheGraphComponentMock } from '../../mocks/the-graph-mock'
-import { ThirdPartyAsset, ThirdPartyWearable } from '../../../src/types'
+import { convertToThirdPartyWearableResponse } from './convert-to-model-third-party'
 
 testWithComponents(() => {
   const theGraphMock = createTheGraphComponentMock()
@@ -14,8 +15,11 @@ testWithComponents(() => {
   }
 })('third-party-wearables-handler: GET /users/:address/third-party-wearables with multiple providers should', function ({ components }) {
   it('return wearables when found on a single provider', async () => {
-    const { localFetch, fetch } = components
+    const { localFetch, fetch, content } = components
     const wearables = generateThirdPartyWearables(2)
+    const definitions = generateWearableContentDefinitions(wearables.map((wearable) => wearable.urn.decentraland))
+    content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
+    content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
 
     fetch.fetch = jest.fn().mockImplementation((url) => {
       if (url.includes('babydoge')) {
@@ -33,7 +37,7 @@ testWithComponents(() => {
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel(wearables),
+      elements: convertToThirdPartyWearableResponse(wearables, { definitions, content }),
       totalAmount: 2,
       pageNum: 1,
       pageSize: 100
@@ -41,8 +45,11 @@ testWithComponents(() => {
   })
 
   it('return wearables when found on multiple providers', async () => {
-    const { localFetch, fetch } = components
+    const { localFetch, fetch, content } = components
     const wearables = generateThirdPartyWearables(6)
+    const definitions = generateWearableContentDefinitions(wearables.map((wearable) => wearable.urn.decentraland))
+    content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
+    content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
 
     fetch.fetch = jest.fn().mockImplementation((url) => {
       if (url.includes('babydoge')) {
@@ -74,7 +81,7 @@ testWithComponents(() => {
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel(wearables),
+      elements: convertToThirdPartyWearableResponse(wearables, { definitions, content }),
       totalAmount: 6,
       pageNum: 1,
       pageSize: 100
@@ -82,7 +89,7 @@ testWithComponents(() => {
   })
 
   it('when setting third party name, it returns only the assets of that third party', async () => {
-    const { localFetch, fetch } = components
+    const { localFetch, fetch, content } = components
     const wearables: ThirdPartyAsset[] = [
       { id: 'id0', amount: 1, urn: { decentraland: 'urn:decentraland:matic:collections-thirdparty:baby-doge-coin:collectionId:item0' } },
       { id: 'id1', amount: 1, urn: { decentraland: 'urn:decentraland:matic:collections-thirdparty:baby-doge-coin:collectionId:item1' } },
@@ -90,8 +97,10 @@ testWithComponents(() => {
       { id: 'id3', amount: 1, urn: { decentraland: 'urn:decentraland:matic:collections-thirdparty:cryptoavatars:collectionId:item1' } },
       { id: 'id4', amount: 1, urn: { decentraland: 'urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:collectionId:item0' } },
       { id: 'id5', amount: 1, urn: { decentraland: 'urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:collectionId:item1' } }
-
     ]
+    const definitions = generateWearableContentDefinitions(wearables.map((wearable) => wearable.urn.decentraland))
+    content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
+    content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
 
     fetch.fetch = jest.fn().mockImplementation((url) => {
       if (url.includes('babydoge')) {
@@ -123,36 +132,10 @@ testWithComponents(() => {
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel(wearables.slice(2, 4)),
+      elements: convertToThirdPartyWearableResponse(wearables.slice(2, 4), { definitions, content }, true),
       totalAmount: 2,
       pageNum: 1,
       pageSize: 100
     })
   })
 })
-
-function convertToDataModel(wearables, definitions = undefined) {
-  return wearables.map(wearable => {
-    const definition = definitions?.find(def => def.id === wearable.urn.decentraland)
-    const definitionData = definition?.metadata?.data
-
-    return {
-      amount: wearable.amount,
-      individualData: [
-        {
-          id: wearable.id
-        }
-      ],
-      urn: wearable.urn.decentraland,
-      ...(definitions ? {
-        definition: definitionData && {
-          id: wearable.urn.decentraland,
-          data: {
-            ...definitionData,
-            representations: [{ contents: [{ key: definitionData.representations[0]?.contents[0] }] }]
-          }
-        }
-      } : {})
-    }
-  })
-}
