@@ -116,7 +116,7 @@ export async function explorerHandler(
     | 'thirdPartyProvidersFetcher'
     | 'thirdPartyWearablesFetcher'
     | 'wearableDefinitionsFetcher',
-    '/explorer-service/backpack/:address/wearables'
+    '/explorer/:address/wearables'
   >
 ): Promise<PaginatedResponse<MixedWearableResponse> | ErrorResponse> {
   const { wearableDefinitionsFetcher } = context.components

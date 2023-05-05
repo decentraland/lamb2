@@ -30,34 +30,34 @@ testWithComponents(() => {
   return {
     theGraphComponent: theGraphMock
   }
-})('wearables-handler: GET /explorer-service/backpack/:address/wearables', function ({ components }) {
+})('wearables-handler: GET /explorer/:address/wearables', function ({ components }) {
   it('return descriptive errors for bad requests', async () => {
     const { baseWearablesFetcher, content, fetch, localFetch, theGraph } = components
 
     const wallet = Wallet.generate().getAddressString()
 
-    const r = await localFetch.fetch(`/explorer-service/backpack/${wallet}/wearables?collectionType=fourth-party`)
+    const r = await localFetch.fetch(`/explorer/${wallet}/wearables?collectionType=fourth-party`)
     expect(r.status).toBe(400)
     expect(await r.json()).toEqual({
       error: 'Bad request',
       message: 'Invalid collection type. Valid types are: base-wearable, on-chain, third-party.'
     })
 
-    const r2 = await localFetch.fetch(`/explorer-service/backpack/${wallet}/wearables?orderBy=owner`)
+    const r2 = await localFetch.fetch(`/explorer/${wallet}/wearables?orderBy=owner`)
     expect(r2.status).toBe(400)
     expect(await r2.json()).toEqual({
       error: 'Bad request',
       message: "Invalid sorting requested: 'owner DESC'. Valid options are '[rarity, name, date] [ASC, DESC]'."
     })
 
-    const r3 = await localFetch.fetch(`/explorer-service/backpack/${wallet}/wearables?orderBy=rarity&direction=INC`)
+    const r3 = await localFetch.fetch(`/explorer/${wallet}/wearables?orderBy=rarity&direction=INC`)
     expect(r3.status).toBe(400)
     expect(await r3.json()).toEqual({
       error: 'Bad request',
       message: "Invalid sorting requested: 'rarity INC'. Valid options are '[rarity, name, date] [ASC, DESC]'."
     })
 
-    const r4 = await localFetch.fetch(`/explorer-service/backpack/${wallet}/wearables?rarity=espectacular`)
+    const r4 = await localFetch.fetch(`/explorer/${wallet}/wearables?rarity=espectacular`)
     expect(r4.status).toBe(400)
     expect(await r4.json()).toEqual({
       error: 'Bad request',
@@ -83,7 +83,7 @@ testWithComponents(() => {
     })
 
     const wallet = Wallet.generate().getAddressString()
-    const r = await localFetch.fetch(`/explorer-service/backpack/${wallet}/wearables`)
+    const r = await localFetch.fetch(`/explorer/${wallet}/wearables`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toMatchObject({
@@ -132,7 +132,7 @@ testWithComponents(() => {
     })
 
     const wallet = Wallet.generate().getAddressString()
-    const r = await localFetch.fetch(`/explorer-service/backpack/${wallet}/wearables`)
+    const r = await localFetch.fetch(`/explorer/${wallet}/wearables`)
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
       elements: [
@@ -145,7 +145,7 @@ testWithComponents(() => {
       totalAmount: baseWearables.length + onChainWearables.length + thirdPartyWearables.length
     })
 
-    const r3 = await localFetch.fetch(`/explorer-service/backpack/${wallet}/wearables?orderBy=rarity&direction=desc`)
+    const r3 = await localFetch.fetch(`/explorer/${wallet}/wearables?orderBy=rarity&direction=desc`)
     expect(r3.status).toBe(200)
     expect(await r3.json()).toEqual({
       elements: [
@@ -158,7 +158,7 @@ testWithComponents(() => {
       totalAmount: baseWearables.length + onChainWearables.length + thirdPartyWearables.length
     })
 
-    const r4 = await localFetch.fetch(`/explorer-service/backpack/${wallet}/wearables?orderBy=rarity&direction=asc`)
+    const r4 = await localFetch.fetch(`/explorer/${wallet}/wearables?orderBy=rarity&direction=asc`)
     expect(r4.status).toBe(200)
     expect(await r4.json()).toEqual({
       elements: [
@@ -171,7 +171,7 @@ testWithComponents(() => {
       totalAmount: baseWearables.length + onChainWearables.length + thirdPartyWearables.length
     })
 
-    const r5 = await localFetch.fetch(`/explorer-service/backpack/${wallet}/wearables?orderBy=name&direction=asc`)
+    const r5 = await localFetch.fetch(`/explorer/${wallet}/wearables?orderBy=name&direction=asc`)
     expect(r5.status).toBe(200)
     expect(await r5.json()).toEqual({
       elements: [
@@ -184,7 +184,7 @@ testWithComponents(() => {
       totalAmount: baseWearables.length + onChainWearables.length + thirdPartyWearables.length
     })
 
-    const r6 = await localFetch.fetch(`/explorer-service/backpack/${wallet}/wearables?orderBy=name&direction=desc`)
+    const r6 = await localFetch.fetch(`/explorer/${wallet}/wearables?orderBy=name&direction=desc`)
     expect(r6.status).toBe(200)
     expect(await r6.json()).toEqual({
       elements: [
@@ -197,7 +197,7 @@ testWithComponents(() => {
       totalAmount: baseWearables.length + onChainWearables.length + thirdPartyWearables.length
     })
 
-    const r7 = await localFetch.fetch(`/explorer-service/backpack/${wallet}/wearables?orderBy=date&direction=asc`)
+    const r7 = await localFetch.fetch(`/explorer/${wallet}/wearables?orderBy=date&direction=asc`)
     expect(r7.status).toBe(200)
     expect(await r7.json()).toEqual({
       elements: [
@@ -213,7 +213,7 @@ testWithComponents(() => {
       totalAmount: baseWearables.length + onChainWearables.length + thirdPartyWearables.length
     })
 
-    const r8 = await localFetch.fetch(`/explorer-service/backpack/${wallet}/wearables?orderBy=date&direction=desc`)
+    const r8 = await localFetch.fetch(`/explorer/${wallet}/wearables?orderBy=date&direction=desc`)
     expect(r8.status).toBe(200)
     expect(await r8.json()).toEqual({
       elements: [
@@ -229,7 +229,7 @@ testWithComponents(() => {
       totalAmount: baseWearables.length + onChainWearables.length + thirdPartyWearables.length
     })
 
-    const r9 = await localFetch.fetch(`/explorer-service/backpack/${wallet}/wearables?name=1`)
+    const r9 = await localFetch.fetch(`/explorer/${wallet}/wearables?name=1`)
     expect(r9.status).toBe(200)
     expect(await r9.json()).toEqual({
       elements: [convertedMixedOnChainWearables[1], convertedMixedThirdPartyWearables[1]],
@@ -238,7 +238,7 @@ testWithComponents(() => {
       totalAmount: 2
     })
 
-    const r10 = await localFetch.fetch(`/explorer-service/backpack/${wallet}/wearables?category=eyewear`)
+    const r10 = await localFetch.fetch(`/explorer/${wallet}/wearables?category=eyewear`)
     expect(r10.status).toBe(200)
     expect(await r10.json()).toEqual({
       elements: [convertedMixedOnChainWearables[0], convertedMixedOnChainWearables[1]],
@@ -247,9 +247,7 @@ testWithComponents(() => {
       totalAmount: 2
     })
 
-    const r11 = await localFetch.fetch(
-      `/explorer-service/backpack/${wallet}/wearables?category=earring&category=body_shape`
-    )
+    const r11 = await localFetch.fetch(`/explorer/${wallet}/wearables?category=earring&category=body_shape`)
     expect(r11.status).toBe(200)
     expect(await r11.json()).toEqual({
       elements: [
@@ -263,7 +261,7 @@ testWithComponents(() => {
       totalAmount: 4
     })
 
-    const r12 = await localFetch.fetch(`/explorer-service/backpack/${wallet}/wearables?rarity=unique`)
+    const r12 = await localFetch.fetch(`/explorer/${wallet}/wearables?rarity=unique`)
     expect(r12.status).toBe(200)
     expect(await r12.json()).toEqual({
       elements: [convertedMixedOnChainWearables[0], convertedMixedOnChainWearables[1]],

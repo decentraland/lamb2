@@ -31,7 +31,7 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
   router.get('/profiles/:id', profileHandler)
   router.get('/nfts/collections', allCollectionsHandler)
 
-  router.get('/explorer-service/backpack/:address/wearables', explorerHandler)
+  router.get('/explorer/:address/wearables', explorerHandler)
 
   // old routes to be deprecated
   router.get('/nfts/wearables/:id', oldWearablesHandler)
