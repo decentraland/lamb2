@@ -557,7 +557,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(502)
     expect(await r.json()).toEqual({
-      error: 'Internal Server Error',
+      error: 'The requested items cannot be fetched right now',
       message: `Cannot fetch elements for ${wallet}`
     })
   })
@@ -575,7 +575,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(502)
     expect(await r.json()).toEqual({
-      error: 'Internal Server Error',
+      error: 'The requested items cannot be fetched right now',
       message: `Cannot fetch elements for ${wallet}`
     })
   })

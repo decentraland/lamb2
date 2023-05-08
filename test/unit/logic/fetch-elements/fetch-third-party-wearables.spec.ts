@@ -1,31 +1,18 @@
 import { test } from '../../../components'
 import {
   fetchAllThirdPartyWearables,
-  fetchThirdPartyWearablesFromThirdPartyName,
-  ThirdPartyNotFoundError
+  fetchThirdPartyWearablesFromThirdPartyName
 } from '../../../../src/logic/fetch-elements/fetch-third-party-wearables'
 import { ThirdPartyAsset, ThirdPartyWearable } from '../../../../src/types'
-import { generateWearableContentDefinitions } from '../../../data/wearables'
+import { generateWearableContentDefinitions, getThirdPartyProviders } from '../../../data/wearables'
 import { WearableCategory } from '@dcl/schemas'
 import { parseUrn } from '@dcl/urn-resolver'
+import { FetcherError } from '../../../../src/adapters/elements-fetcher'
 
 describe('fetchAllThirdPartyWearables', () => {
   test('resolver apis is called correctly', function ({ components }) {
     it('run test', async () => {
-      jest.spyOn(components.thirdPartyProvidersFetcher, 'getAll').mockResolvedValue([
-        {
-          id: 'urn:decentraland:matic:collections-thirdparty:baby-doge-coin',
-          resolver: 'https://decentraland-api.babydoge.com/v1'
-        },
-        {
-          id: 'urn:decentraland:matic:collections-thirdparty:cryptoavatars',
-          resolver: 'https://api.cryptoavatars.io/'
-        },
-        {
-          id: 'urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip',
-          resolver: 'https://wearables-api.unxd.com'
-        }
-      ])
+      jest.spyOn(components.thirdPartyProvidersFetcher, 'getAll').mockResolvedValue(getThirdPartyProviders())
       const fetchSpy = jest.spyOn(components.fetch, 'fetch').mockImplementation(
         jest.fn(() =>
           Promise.resolve({
@@ -59,12 +46,7 @@ describe('fetchAllThirdPartyWearables', () => {
 
   test('third-party wearables are mapped correctly', function ({ components }) {
     it('run test', async () => {
-      jest.spyOn(components.thirdPartyProvidersFetcher, 'getAll').mockResolvedValue([
-        {
-          id: 'urn:decentraland:matic:collections-thirdparty:baby-doge-coin',
-          resolver: 'https://decentraland-api.babydoge.com/v1'
-        }
-      ])
+      jest.spyOn(components.thirdPartyProvidersFetcher, 'getAll').mockResolvedValue([getThirdPartyProviders()[0]])
       jest.spyOn(components.fetch, 'fetch').mockImplementation(
         jest.fn(() =>
           Promise.resolve({
@@ -103,12 +85,7 @@ describe('fetchAllThirdPartyWearables', () => {
     it('run test', async () => {
       const definitions = generateWearableContentDefinitions(['urn1', 'urn2'])
       jest.spyOn(components.content, 'fetchEntitiesByPointers').mockResolvedValue(definitions)
-      jest.spyOn(components.thirdPartyProvidersFetcher, 'getAll').mockResolvedValue([
-        {
-          id: 'urn:decentraland:matic:collections-thirdparty:baby-doge-coin',
-          resolver: 'https://decentraland-api.babydoge.com/v1'
-        }
-      ])
+      jest.spyOn(components.thirdPartyProvidersFetcher, 'getAll').mockResolvedValue([getThirdPartyProviders()[0]])
       jest.spyOn(components.fetch, 'fetch').mockImplementation(
         jest.fn(() =>
           Promise.resolve({
@@ -148,12 +125,7 @@ describe('fetchAllThirdPartyWearables', () => {
 
   test('multiple pages from same api are called', function ({ components }) {
     it('run test', async () => {
-      jest.spyOn(components.thirdPartyProvidersFetcher, 'getAll').mockResolvedValue([
-        {
-          id: 'urn:decentraland:matic:collections-thirdparty:baby-doge-coin',
-          resolver: 'https://decentraland-api.babydoge.com/v1'
-        }
-      ])
+      jest.spyOn(components.thirdPartyProvidersFetcher, 'getAll').mockResolvedValue([getThirdPartyProviders()[0]])
 
       const jsonMock = jest
         .fn()
@@ -209,7 +181,13 @@ describe('fetchThirdPartyWearablesFromThirdPartyName', () => {
       ]
       jest.spyOn(components.thirdPartyProvidersFetcher, 'get').mockResolvedValue({
         id: 'urn:decentraland:matic:collections-thirdparty:ntr1-meta',
-        resolver: 'ntr1-meta-resolver'
+        resolver: 'ntr1-meta-resolver',
+        metadata: {
+          thirdParty: {
+            name: 'ntr',
+            description: 'ntr'
+          }
+        }
       })
       components.thirdPartyWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(thirdPartyWearables)
 
@@ -240,7 +218,7 @@ describe('fetchThirdPartyWearablesFromThirdPartyName', () => {
       }
       await expect(
         fetchThirdPartyWearablesFromThirdPartyName(components, 'anAddress', nonExistentThirdPartyNameUrn)
-      ).rejects.toThrow(ThirdPartyNotFoundError)
+      ).rejects.toThrow(FetcherError)
     })
   })
 })

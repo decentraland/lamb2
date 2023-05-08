@@ -3,24 +3,24 @@ import { IBaseComponent } from '@well-known-components/interfaces'
 import LRU from 'lru-cache'
 import { findAsync, parseUrn } from '../logic/utils'
 import { AppComponents, ThirdParty } from '../types'
+import { FetcherError } from './elements-fetcher'
 
 const QUERY_ALL_THIRD_PARTY_RESOLVERS = `
 {
   thirdParties(where: {isApproved: true}) {
-    id,
+    id
     resolver
+    metadata {
+      thirdParty {
+        name
+        description
+      }
+    }
   }
 }
 `
 
 const URN_THIRD_PARTY_NAME_TYPE = 'blockchain-collection-third-party-name'
-
-export class ThirdPartyProviderFetcherError extends Error {
-  constructor(message: string) {
-    super(message)
-    Error.captureStackTrace(this, this.constructor)
-  }
-}
 
 export type ThirdPartyResolversQueryResults = {
   thirdParties: ThirdParty[]
@@ -77,7 +77,7 @@ export function createThirdPartyProvidersFetcherComponent({
     if (thirdParties) {
       return thirdParties
     }
-    throw new ThirdPartyProviderFetcherError(`Cannot fetch third party providers`)
+    throw new FetcherError(`Cannot fetch third party providers`)
   }
 
   return {

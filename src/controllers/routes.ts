@@ -9,6 +9,7 @@ import { profileHandler, profilesHandler } from './handlers/profiles-handler'
 import { statusHandler } from './handlers/status-handler'
 import {
   thirdPartyCollectionWearablesHandler,
+  thirdPartyIntegrationsHandler,
   thirdPartyWearablesHandler
 } from './handlers/third-party-wearables-handler'
 import { wearablesHandler } from './handlers/wearables-handler'
@@ -24,6 +25,7 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
   router.get('/users/:address/wearables', wearablesHandler)
   router.get('/users/:address/third-party-wearables', thirdPartyWearablesHandler)
   router.get('/users/:address/third-party-wearables/:collectionId', thirdPartyCollectionWearablesHandler)
+  router.get('/third-party-integrations', thirdPartyIntegrationsHandler)
   router.get('/users/:address/emotes', emotesHandler)
   router.get('/users/:address/names', namesHandler)
   router.get('/users/:address/lands', landsHandler)

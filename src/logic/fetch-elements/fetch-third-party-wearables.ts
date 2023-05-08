@@ -1,5 +1,6 @@
 import { WearableDefinition } from '@dcl/schemas'
 import { BlockchainCollectionThirdPartyName, parseUrn } from '@dcl/urn-resolver'
+import { FetcherError } from '../../adapters/elements-fetcher'
 import { AppComponents, ThirdParty, ThirdPartyAsset, ThirdPartyAssets, ThirdPartyWearable } from '../../types'
 import { addDefinitions } from '../add-definitions'
 
@@ -104,13 +105,6 @@ export async function fetchAllThirdPartyWearables(
   return groupThirdPartyWearablesByURN(thirdPartyAssetsWithDefinitions)
 }
 
-export class ThirdPartyNotFoundError extends Error {
-  constructor(message: string) {
-    super(message)
-    Error.captureStackTrace(this, this.constructor)
-  }
-}
-
 export async function fetchThirdPartyWearablesFromThirdPartyName(
   components: Pick<AppComponents, 'thirdPartyWearablesFetcher' | 'thirdPartyProvidersFetcher' | 'fetch' | 'theGraph'>,
   address: string,
@@ -137,7 +131,7 @@ export async function fetchThirdPartyWearablesFromThirdPartyName(
 
   if (!thirdParty) {
     // NOTE: currently lambdas return an empty array with status code 200 for this case
-    throw new ThirdPartyNotFoundError(`Third Party not found ${thirdPartyNameUrn.thirdPartyName}`)
+    throw new FetcherError(`Third Party not found ${thirdPartyNameUrn.thirdPartyName}`)
   }
 
   return results

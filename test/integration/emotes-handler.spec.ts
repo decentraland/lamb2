@@ -417,7 +417,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
 
     expect(r.status).toBe(502)
     expect(await r.json()).toEqual({
-      error: 'Internal Server Error',
+      error: 'The requested items cannot be fetched right now',
       message: `Cannot fetch elements for ${wallet}`
     })
   })
@@ -436,7 +436,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
 
     expect(r.status).toBe(500)
     expect(await r.json()).toEqual({
-      error: 'Internal Server Error',
+      error: 'Internal Server Error'
     })
   })
 })
