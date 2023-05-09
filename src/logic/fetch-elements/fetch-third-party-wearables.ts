@@ -131,7 +131,7 @@ export async function fetchThirdPartyWearablesFromThirdPartyName(
 
   if (!thirdParty) {
     // NOTE: currently lambdas return an empty array with status code 200 for this case
-    throw new FetcherError(`Third Party not found ${thirdPartyNameUrn.thirdPartyName}`)
+    throw new FetcherError(`Third Party not found: ${thirdPartyNameUrn.thirdPartyName}`)
   }
 
   return results
