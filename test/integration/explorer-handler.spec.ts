@@ -24,7 +24,7 @@ type ContentInfo = {
 
 testWithComponents(() => {
   const theGraphMock = createTheGraphComponentMock()
-  const resolverResponse = getThirdPartyProviders()
+  const resolverResponse = { thirdParties: getThirdPartyProviders() }
 
   theGraphMock.thirdPartyRegistrySubgraph.query = jest.fn().mockResolvedValue(resolverResponse)
   return {

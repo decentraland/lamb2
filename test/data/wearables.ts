@@ -1,7 +1,7 @@
 import { Entity, EntityType, Wearable, WearableCategory, WearableRepresentation } from '@dcl/schemas'
 import { ThirdPartyResolversQueryResults } from '../../src/adapters/third-party-providers-fetcher'
 import { WearableFromQuery } from '../../src/logic/fetch-elements/fetch-items'
-import { BaseWearable, ThirdPartyAsset } from '../../src/types'
+import { BaseWearable, ThirdParty, ThirdPartyAsset } from '../../src/types'
 import { BASE_WEARABLES } from '../../src/logic/fetch-elements/fetch-base-items'
 
 const TWO_DAYS = 2 * 24 * 60 * 60 * 1000
@@ -114,21 +114,37 @@ export function generateThirdPartyWearables(quantity: number): ThirdPartyAsset[]
   return generatedThirdPartyWearables
 }
 
-export function getThirdPartyProviders(): ThirdPartyResolversQueryResults {
-  return {
-    thirdParties: [
-      {
-        id: 'urn:decentraland:matic:collections-thirdparty:baby-doge-coin',
-        resolver: 'https://decentraland-api.babydoge.com/v1'
-      },
-      {
-        id: 'urn:decentraland:matic:collections-thirdparty:cryptoavatars',
-        resolver: 'https://api.cryptoavatars.io/'
-      },
-      {
-        id: 'urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip',
-        resolver: 'https://wearables-api.unxd.com'
+export function getThirdPartyProviders(): ThirdParty[] {
+  return [
+    {
+      id: 'urn:decentraland:matic:collections-thirdparty:baby-doge-coin',
+      resolver: 'https://decentraland-api.babydoge.com/v1',
+      metadata: {
+        thirdParty: {
+          name: 'baby doge coin',
+          description: 'baby doge coin'
+        }
       }
-    ]
-  }
+    },
+    {
+      id: 'urn:decentraland:matic:collections-thirdparty:cryptoavatars',
+      resolver: 'https://api.cryptoavatars.io/',
+      metadata: {
+        thirdParty: {
+          name: 'crypto avatars',
+          description: 'avatars'
+        }
+      }
+    },
+    {
+      id: 'urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip',
+      resolver: 'https://wearables-api.unxd.com',
+      metadata: {
+        thirdParty: {
+          name: 'disco',
+          description: 'disco'
+        }
+      }
+    }
+  ]
 }

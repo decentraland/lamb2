@@ -23,7 +23,7 @@ export async function errorHandler(
       return {
         status: 502,
         body: {
-          error: 'Internal Server Error',
+          error: 'The requested items cannot be fetched right now',
           message: error.message
         }
       }

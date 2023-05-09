@@ -200,6 +200,12 @@ export type Pagination = Limits & {
 export type ThirdParty = {
   id: string
   resolver: string
+  metadata: {
+    thirdParty: {
+      name: string
+      description: string
+    }
+  }
 }
 
 export type ThirdPartyAsset = {
