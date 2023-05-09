@@ -95,7 +95,7 @@ export async function thirdPartyCollectionWearablesHandler(
 
   const urn = await parseUrn(collectionIdCleaned)
   if (!urn) {
-    throw new InvalidRequestError('Invalid collection id: not a valid URN')
+    throw new InvalidRequestError(`Invalid collection id: ${collectionId} not a valid URN`)
   }
 
   if (urn.type !== 'blockchain-collection-third-party-name') {
