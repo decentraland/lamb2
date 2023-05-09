@@ -122,16 +122,14 @@ test('lands-handler: GET /users/:address/lands should', function ({ components }
     theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce(undefined)
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/lands`)
-
+    const data = await r.json()
     expect(r.status).toBe(502)
-    expect(await r.json()).toEqual({
-      error: 'Cannot fetch lands right now'
-    })
+    expect(data.error).toEqual('The requested items cannot be fetched right now')
   })
 })
 
 function convertToDataModel(lands: LANDFromQuery[]): LAND[] {
-  return lands.map(LAND => {
+  return lands.map((LAND) => {
     const { name, contractAddress, tokenId, category, parcel, estate, image, activeOrder } = LAND
 
     const isParcel = category === 'parcel'

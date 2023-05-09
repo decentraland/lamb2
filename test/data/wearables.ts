@@ -20,7 +20,7 @@ export function generateBaseWearables(quantity: number): BaseWearable[] {
       ],
       name: urn,
       category: WearableCategory.BODY_SHAPE,
-      definition: generateWearableContentDefinitions([urn])[0].metadata
+      entity: generateWearableContentDefinitions([urn])[0]
     })
   }
 

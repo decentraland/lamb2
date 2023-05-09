@@ -36,7 +36,7 @@ export async function thirdPartyWearablesHandler(
     'wearableDefinitionsFetcher' | 'logs' | 'thirdPartyWearablesFetcher',
     '/users/:address/third-party-wearables'
   >
-): Promise<PaginatedResponse<ThirdPartyWearableResponse> | ErrorResponse> {
+): Promise<PaginatedResponse<ThirdPartyWearableResponse>> {
   const { thirdPartyWearablesFetcher } = context.components
   const { address } = context.params
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
@@ -44,34 +44,21 @@ export async function thirdPartyWearablesHandler(
   const filter = createFilter(context.url)
   const sorting = createBaseSorting(context.url)
 
-  const page = await fetchAndPaginate<ThirdPartyWearable & { definition: WearableDefinition }>(
-    address,
-    thirdPartyWearablesFetcher.fetchOwnedElements,
+  const page = await fetchAndPaginate<ThirdPartyWearable>(
+    () => thirdPartyWearablesFetcher.fetchOwnedElements(address),
     pagination,
     filter,
     sorting
   )
+
   if (includeDefinitions) {
-    return {
-      status: 200,
-      body: {
-        ...page
-      }
-    }
-  } else {
-    const elementsWithoutDefinitions: (ThirdPartyWearable & { definition?: WearableDefinition })[] = page.elements.map(
-      (e) => {
-        const { definition, ...restOfElement } = e
-        return { ...restOfElement }
-      }
-    )
-    const { elements, ...restOfPage } = page
-    return {
-      status: 200,
-      body: {
-        elements: elementsWithoutDefinitions,
-        ...restOfPage
-      }
+    //TODO
+  }
+
+  return {
+    status: 200,
+    body: {
+      ...page
     }
   }
 }
@@ -108,8 +95,7 @@ export async function thirdPartyCollectionWearablesHandler(
   const pagination = paginationObject(context.url, Number.MAX_VALUE)
 
   const page = await fetchAndPaginate<ThirdPartyWearable>(
-    address,
-    (address: string) => fetchThirdPartyWearablesFromThirdPartyName(context.components, address, urn),
+    () => fetchThirdPartyWearablesFromThirdPartyName(context.components, address, urn),
     pagination
   )
 

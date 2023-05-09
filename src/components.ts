@@ -20,6 +20,7 @@ import { createOwnershipCachesComponent } from './ports/ownership-caches'
 import { createTheGraphComponent, TheGraphComponent } from './ports/the-graph'
 import { AppComponents, BaseWearable, GlobalContext } from './types'
 import { fetchAllBaseWearables } from './logic/fetch-elements/fetch-base-items'
+import { createEntitiesFetcherComponent } from './adapters/entities-fetcher'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -48,17 +49,18 @@ export async function initComponents(
     : await createTheGraphComponent({ config, logs, fetch, metrics })
 
   const ownershipCaches = await createOwnershipCachesComponent({ config })
+
+  const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent({ config, logs, content })
+
+  const entitiesFetcher = await createEntitiesFetcherComponent({ config, logs, content })
+
   const thirdPartyProvidersFetcher = createThirdPartyProvidersFetcherComponent({ logs, theGraph })
   const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllThirdPartyWearables(
-      { theGraph, thirdPartyProvidersFetcher, fetch, logs, wearableDefinitionsFetcher },
-      address
-    )
+    fetchAllThirdPartyWearables({ theGraph, thirdPartyProvidersFetcher, fetch, logs, entitiesFetcher }, address)
   )
-  const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent({ config, logs, content })
   const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent({ config, logs, content })
   const baseWearablesFetcher = createElementsFetcherComponent<BaseWearable>({ logs }, async (_address) =>
-    fetchAllBaseWearables({ wearableDefinitionsFetcher })
+    fetchAllBaseWearables({ entitiesFetcher })
   )
   const wearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllWearables({ theGraph }, address)
@@ -86,6 +88,7 @@ export async function initComponents(
     wearablesFetcher,
     wearableDefinitionsFetcher,
     emoteDefinitionsFetcher,
+    entitiesFetcher,
     thirdPartyWearablesFetcher,
     emotesFetcher,
     namesFetcher,

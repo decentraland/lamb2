@@ -137,7 +137,7 @@ export async function explorerHandler(
 
   const fetchCombinedElements = createCombinedFetcher(context.components, collectionTypes, thirdPartyCollectionIds)
 
-  const page = await fetchAndPaginate<MixedWearable>(address, fetchCombinedElements, pagination, filter, sorting)
+  const page = await fetchAndPaginate<MixedWearable>(() => fetchCombinedElements(address), pagination, filter, sorting)
 
   const definitions: (WearableDefinition | undefined)[] = await wearableDefinitionsFetcher.fetchItemsDefinitions(
     page.elements.map((wearable) => wearable.urn)

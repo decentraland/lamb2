@@ -21,6 +21,7 @@ import { main } from '../src/service'
 import { TestComponents } from '../src/types'
 import { createContentComponentMock } from './mocks/content-mock'
 import { createTheGraphComponentMock } from './mocks/the-graph-mock'
+import { createEntitiesFetcherComponent } from '../src/adapters/entities-fetcher'
 
 /**
  * Behaves like Jest "describe" function, used to describe a test for a
@@ -90,6 +91,8 @@ async function initComponents(
     fetchAllEmotes({ theGraph: theGraphMock }, address)
   )
 
+  const entitiesFetcher = await createEntitiesFetcherComponent({ config, logs, content: contentMock })
+
   const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent({
     config,
     logs,
@@ -99,7 +102,13 @@ async function initComponents(
 
   const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllThirdPartyWearables(
-      { theGraph: theGraphMock, thirdPartyProvidersFetcher: components.thirdPartyProvidersFetcher, fetch, logs, wearableDefinitionsFetcher },
+      {
+        theGraph: theGraphMock,
+        thirdPartyProvidersFetcher: components.thirdPartyProvidersFetcher,
+        fetch,
+        logs,
+        entitiesFetcher
+      },
       address
     )
   )

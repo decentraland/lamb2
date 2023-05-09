@@ -39,9 +39,6 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
   router.get('/nfts/wearables/:id', oldWearablesHandler)
   router.get('/nfts/names/:address', async (context) => {
     const res = await namesHandler(context)
-    if ('error' in res.body) {
-      return res
-    }
     return {
       status: res.status,
       body: {
@@ -54,9 +51,6 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
   })
   router.get('/nfts/lands/:address', async (context) => {
     const res = await landsHandler(context)
-    if ('error' in res.body) {
-      return res
-    }
     return {
       status: res.status,
       body: {
@@ -69,9 +63,6 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
   })
   router.get('/nfts/emotes/:address', async (context) => {
     const res = await emotesHandler(context)
-    if ('error' in res.body) {
-      return res
-    }
     return {
       status: res.status,
       body: {
