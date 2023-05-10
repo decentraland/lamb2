@@ -104,18 +104,39 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
   it('return wearables from both collections with includeDefinitions set', async () => {
     const { localFetch, theGraph, content } = components
     const wearables = generateWearables(2)
-    const definitions = generateWearableEntities(wearables.map((wearable) => wearable.urn))
+    const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn))
 
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[0]] })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[1]] })
-    content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
+    content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(entities)
     content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?includeDefinitions`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: [...convertToDataModel(wearables, { definitions, content })].sort(rarest),
+      elements: [...convertToDataModel(wearables, { entities, content, includeDefinition: true })].sort(rarest),
+      pageNum: 1,
+      pageSize: 100,
+      totalAmount: 2
+    })
+  })
+
+  it('return wearables from both collections with includeEntities set', async () => {
+    const { localFetch, theGraph, content } = components
+    const wearables = generateWearables(2)
+    const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn))
+
+    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[0]] })
+    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[1]] })
+    content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(entities)
+    content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
+
+    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?includeEntities`)
+
+    expect(r.status).toBe(200)
+    expect(await r.json()).toEqual({
+      elements: [...convertToDataModel(wearables, { entities, content, includeEntity: true })].sort(rarest),
       pageNum: 1,
       pageSize: 100,
       totalAmount: 2
@@ -125,20 +146,20 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
   it('return a wearable with definition and another one without definition', async () => {
     const { localFetch, theGraph, content } = components
     const wearables = generateWearables(2)
-    const definitions = generateWearableEntities([wearables[0].urn])
+    const entities = generateWearableEntities([wearables[0].urn])
 
     // modify wearable urn to avoid cache hit
     wearables[1] = { ...wearables[1], urn: 'anotherUrn' }
 
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[0]] })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[1]] })
-    content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
+    content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(entities)
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?includeDefinitions`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: [...convertToDataModel(wearables, { definitions, content })].sort(rarest),
+      elements: [...convertToDataModel(wearables, { entities, content, includeDefinition: true })].sort(rarest),
       pageNum: 1,
       pageSize: 100,
       totalAmount: 2
@@ -601,8 +622,10 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 })
 
 type ContentInfo = {
-  definitions: Entity[]
+  entities: Entity[]
   content: ContentComponent
+  includeEntity?: boolean
+  includeDefinition?: boolean
 }
 
 function convertToDataModel(wearables: WearableFromQuery[], contentInfo?: ContentInfo): OnChainWearableResponse[] {
@@ -614,7 +637,7 @@ function convertToDataModel(wearables: WearableFromQuery[], contentInfo?: Conten
       price: wearable.item.price
     }
     const rarity = wearable.item.rarity
-    const definition = contentInfo?.definitions.find((def) => def.id === wearable.urn)
+    const entity = contentInfo?.entities.find((def) => def.id === wearable.urn)
     const content = contentInfo?.content
     return {
       urn: wearable.urn,
@@ -623,7 +646,9 @@ function convertToDataModel(wearables: WearableFromQuery[], contentInfo?: Conten
       rarity,
       category: wearable.metadata.wearable.category,
       name: wearable.metadata.wearable.name,
-      definition: definition && content ? extractWearableDefinitionFromEntity({ content }, definition) : undefined
+      definition:
+        contentInfo?.includeDefinition && entity ? extractWearableDefinitionFromEntity({ content }, entity) : undefined,
+      entity: contentInfo?.includeEntity && entity ? entity : undefined
     }
   })
 }
