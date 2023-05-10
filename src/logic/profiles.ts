@@ -166,9 +166,11 @@ async function extendProfiles(
         ...profileData.avatar,
         bodyShape: (await translateWearablesIdFormat(profileData.avatar.bodyShape)) ?? '',
         snapshots: addBaseUrlToSnapshots(baseUrl, profileData.avatar.snapshots, content),
-        wearables: (await getBaseWearables(profileData.avatar.wearables))
-          .concat(ownedWearables)
-          .concat(thirdPartyWearables)
+        wearables: Array.from(
+          new Set(
+            (await getBaseWearables(profileData.avatar.wearables)).concat(ownedWearables).concat(thirdPartyWearables)
+          )
+        )
       }
     }))
 
