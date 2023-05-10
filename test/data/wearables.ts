@@ -1,10 +1,11 @@
 import { Entity, EntityType, Wearable, WearableCategory, WearableRepresentation } from '@dcl/schemas'
-import { ThirdPartyResolversQueryResults } from '../../src/adapters/third-party-providers-fetcher'
 import { WearableFromQuery } from '../../src/logic/fetch-elements/fetch-items'
 import { BaseWearable, ThirdParty, ThirdPartyAsset } from '../../src/types'
 import { BASE_WEARABLES } from '../../src/logic/fetch-elements/fetch-base-items'
 
 const TWO_DAYS = 2 * 24 * 60 * 60 * 1000
+
+const timestamp = Date.now() - TWO_DAYS
 
 export function generateBaseWearables(quantity: number): BaseWearable[] {
   const generatedWearables: BaseWearable[] = []
@@ -20,7 +21,7 @@ export function generateBaseWearables(quantity: number): BaseWearable[] {
       ],
       name: urn,
       category: WearableCategory.BODY_SHAPE,
-      entity: generateWearableContentDefinitions([urn])[0]
+      entity: generateWearableEntities([urn])[0]
     })
   }
 
@@ -55,13 +56,13 @@ export function generateWearables(quantity: number): WearableFromQuery[] {
 const imageFileNameFor = (urn: string) => `imageFor${urn}`
 const thumbnailNameFor = (urn: string) => `thumbnailFor${urn}`
 
-export function generateWearableContentDefinitions(urns: string[]): Entity[] {
-  return urns.map((urn) => ({
+export function generateWearableEntity(urn: string): Entity {
+  return {
     version: '1',
     id: urn,
     type: EntityType.WEARABLE,
     pointers: [urn],
-    timestamp: Date.now() - TWO_DAYS,
+    timestamp,
     content: [
       {
         file: 'file',
@@ -97,7 +98,11 @@ export function generateWearableContentDefinitions(urns: string[]): Entity[] {
         ] as WearableRepresentation[]
       }
     } as Wearable
-  }))
+  }
+}
+
+export function generateWearableEntities(urns: string[]): Entity[] {
+  return urns.map(generateWearableEntity)
 }
 
 export function generateThirdPartyWearables(quantity: number): ThirdPartyAsset[] {

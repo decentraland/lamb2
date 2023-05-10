@@ -4,14 +4,14 @@ import { Entity } from '@dcl/schemas'
 import { createLowerCaseKeysCache } from './lowercase-keys-cache'
 import { createLowerCaseKeysMap } from './lowercase-keys-map'
 
-export type EntititesFetcher = IBaseComponent & {
+export type EntitiesFetcher = IBaseComponent & {
   fetchEntities(urns: string[]): Promise<(Entity | undefined)[]>
 }
 
 export async function createEntitiesFetcherComponent({
   config,
   content
-}: Pick<AppComponents, 'logs' | 'config' | 'content'>): Promise<EntititesFetcher> {
+}: Pick<AppComponents, 'logs' | 'config' | 'content'>): Promise<EntitiesFetcher> {
   const itemsSize = (await config.getNumber('ITEMS_CACHE_MAX_SIZE')) ?? 10000
   const itemsAge = (await config.getNumber('ITEMS_CACHE_MAX_AGE')) ?? 600000 // 10 minutes by default
 

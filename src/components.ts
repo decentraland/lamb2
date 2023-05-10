@@ -56,7 +56,7 @@ export async function initComponents(
 
   const thirdPartyProvidersFetcher = createThirdPartyProvidersFetcherComponent({ logs, theGraph })
   const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllThirdPartyWearables({ theGraph, thirdPartyProvidersFetcher, fetch, logs, entitiesFetcher }, address)
+    fetchAllThirdPartyWearables({ thirdPartyProvidersFetcher, fetch, logs, entitiesFetcher }, address)
   )
   const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent({ config, logs, content })
   const baseWearablesFetcher = createElementsFetcherComponent<BaseWearable>({ logs }, async (_address) =>

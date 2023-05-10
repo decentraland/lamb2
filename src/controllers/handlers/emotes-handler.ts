@@ -2,7 +2,6 @@ import { EmoteDefinition, Entity } from '@dcl/schemas'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { createSorting } from '../../logic/sorting'
 import {
-  ErrorResponse,
   HandlerContextWithPath,
   InvalidRequestError,
   OnChainEmote,

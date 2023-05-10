@@ -20,7 +20,7 @@ import type {
 import { Variables } from '@well-known-components/thegraph-component'
 import { DefinitionsFetcher } from './adapters/definitions-fetcher'
 import { ElementsFetcher } from './adapters/elements-fetcher'
-import { EntititesFetcher } from './adapters/entities-fetcher'
+import { EntitiesFetcher } from './adapters/entities-fetcher'
 import { ThirdPartyProvidersFetcher } from './adapters/third-party-providers-fetcher'
 import { WearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
 import { metricDeclarations } from './metrics'
@@ -49,7 +49,7 @@ export type BaseComponents = {
   emotesFetcher: ElementsFetcher<OnChainEmote>
   emoteDefinitionsFetcher: DefinitionsFetcher<EmoteDefinition>
   wearableDefinitionsFetcher: DefinitionsFetcher<WearableDefinition>
-  entitiesFetcher: EntititesFetcher
+  entitiesFetcher: EntitiesFetcher
   namesFetcher: ElementsFetcher<Name>
   landsFetcher: ElementsFetcher<LAND>
 

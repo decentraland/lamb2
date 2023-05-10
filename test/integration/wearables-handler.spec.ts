@@ -6,7 +6,7 @@ import { RARITIES } from '../../src/logic/utils'
 import { ContentComponent } from '../../src/ports/content'
 import { OnChainWearableResponse } from '../../src/types'
 import { test } from '../components'
-import { generateWearableContentDefinitions, generateWearables } from '../data/wearables'
+import { generateWearableEntities, generateWearables } from '../data/wearables'
 
 import { leastRare, nameAZ, nameZA, rarest } from '../../src/logic/sorting'
 
@@ -104,7 +104,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
   it('return wearables from both collections with includeDefinitions set', async () => {
     const { localFetch, theGraph, content } = components
     const wearables = generateWearables(2)
-    const definitions = generateWearableContentDefinitions(wearables.map((wearable) => wearable.urn))
+    const definitions = generateWearableEntities(wearables.map((wearable) => wearable.urn))
 
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[0]] })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[1]] })
@@ -125,7 +125,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
   it('return a wearable with definition and another one without definition', async () => {
     const { localFetch, theGraph, content } = components
     const wearables = generateWearables(2)
-    const definitions = generateWearableContentDefinitions([wearables[0].urn])
+    const definitions = generateWearableEntities([wearables[0].urn])
 
     // modify wearable urn to avoid cache hit
     wearables[1] = { ...wearables[1], urn: 'anotherUrn' }

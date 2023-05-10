@@ -83,7 +83,7 @@ async function initComponents(
 
   const logs = await createLogComponent({})
 
-  const contentMock = createContentComponentMock()
+  const content = createContentComponentMock()
   const wearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllWearables({ theGraph: theGraphMock }, address)
   )
@@ -91,19 +91,18 @@ async function initComponents(
     fetchAllEmotes({ theGraph: theGraphMock }, address)
   )
 
-  const entitiesFetcher = await createEntitiesFetcherComponent({ config, logs, content: contentMock })
+  const entitiesFetcher = await createEntitiesFetcherComponent({ config, logs, content })
 
   const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent({
     config,
     logs,
-    content: contentMock
+    content
   })
-  const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent({ config, logs, content: contentMock })
+  const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent({ config, logs, content })
 
   const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllThirdPartyWearables(
       {
-        theGraph: theGraphMock,
         thirdPartyProvidersFetcher: components.thirdPartyProvidersFetcher,
         fetch,
         logs,
@@ -119,8 +118,9 @@ async function initComponents(
     metrics: createTestMetricsComponent(metricDeclarations),
     localFetch: await createLocalFetchCompoment(config),
     theGraph: theGraphMock,
-    content: contentMock,
+    content,
     wearablesFetcher,
+    entitiesFetcher,
     emotesFetcher,
     wearableDefinitionsFetcher,
     emoteDefinitionsFetcher,

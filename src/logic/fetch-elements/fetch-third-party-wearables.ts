@@ -1,4 +1,4 @@
-import { Entity, Wearable, WearableDefinition } from '@dcl/schemas'
+import { Entity, Wearable } from '@dcl/schemas'
 import { BlockchainCollectionThirdPartyName, parseUrn } from '@dcl/urn-resolver'
 import { FetcherError } from '../../adapters/elements-fetcher'
 import { AppComponents, ThirdParty, ThirdPartyAsset, ThirdPartyAssets, ThirdPartyWearable } from '../../types'
@@ -7,7 +7,7 @@ const URN_THIRD_PARTY_NAME_TYPE = 'blockchain-collection-third-party-name'
 const URN_THIRD_PARTY_ASSET_TYPE = 'blockchain-collection-third-party'
 
 async function fetchAssets(
-  components: Pick<AppComponents, 'theGraph' | 'thirdPartyProvidersFetcher' | 'fetch' | 'logs'>,
+  components: Pick<AppComponents, 'thirdPartyProvidersFetcher' | 'fetch' | 'logs'>,
   owner: string,
   thirdParty: ThirdParty
 ) {
@@ -79,7 +79,7 @@ function groupThirdPartyWearablesByURN(assets: (ThirdPartyAsset & { entity: Enti
 }
 
 export async function fetchAllThirdPartyWearables(
-  components: Pick<AppComponents, 'theGraph' | 'thirdPartyProvidersFetcher' | 'fetch' | 'logs' | 'entitiesFetcher'>,
+  components: Pick<AppComponents, 'thirdPartyProvidersFetcher' | 'fetch' | 'logs' | 'entitiesFetcher'>,
   owner: string
 ): Promise<ThirdPartyWearable[]> {
   const thirdParties = await components.thirdPartyProvidersFetcher.getAll()
@@ -105,7 +105,7 @@ export async function fetchAllThirdPartyWearables(
 }
 
 export async function fetchThirdPartyWearablesFromThirdPartyName(
-  components: Pick<AppComponents, 'thirdPartyWearablesFetcher' | 'thirdPartyProvidersFetcher' | 'fetch' | 'theGraph'>,
+  components: Pick<AppComponents, 'thirdPartyWearablesFetcher' | 'thirdPartyProvidersFetcher' | 'fetch'>,
   address: string,
   thirdPartyNameUrn: BlockchainCollectionThirdPartyName
 ): Promise<ThirdPartyWearable[]> {

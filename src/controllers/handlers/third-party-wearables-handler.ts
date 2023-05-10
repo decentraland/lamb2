@@ -37,7 +37,7 @@ export async function thirdPartyWearablesHandler(
     '/users/:address/third-party-wearables'
   >
 ): Promise<PaginatedResponse<ThirdPartyWearableResponse>> {
-  const { thirdPartyWearablesFetcher } = context.components
+  const { thirdPartyWearablesFetcher, wearableDefinitionsFetcher } = context.components
   const { address } = context.params
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
   const pagination = paginationObject(context.url, Number.MAX_VALUE)
@@ -51,14 +51,22 @@ export async function thirdPartyWearablesHandler(
     sorting
   )
 
-  if (includeDefinitions) {
-    //TODO
-  }
+  const definitions = includeDefinitions
+    ? await wearableDefinitionsFetcher.fetchItemsDefinitions(page.elements.map((e) => e.urn))
+    : []
+
+  const elements: ThirdPartyWearableResponse[] = includeDefinitions
+    ? page.elements.map((e, i) => {
+        const definition: WearableDefinition = definitions[i]!
+        return { ...e, definition }
+      })
+    : page.elements
 
   return {
     status: 200,
     body: {
-      ...page
+      ...page,
+      elements
     }
   }
 }
@@ -69,12 +77,12 @@ export async function thirdPartyCollectionWearablesHandler(
     | 'logs'
     | 'thirdPartyWearablesFetcher'
     | 'thirdPartyProvidersFetcher'
-    | 'theGraph'
-    | 'fetch',
+    | 'fetch'
+    | 'entitiesFetcher',
     '/users/:address/third-party-wearables/:collectionId'
   >
 ): Promise<PaginatedResponse<ThirdPartyWearableResponse> | ErrorResponse> {
-  const { wearableDefinitionsFetcher } = context.components
+  const { wearableDefinitionsFetcher, entitiesFetcher } = context.components
   const { address, collectionId } = context.params
 
   // Strip the last part (the 6th part) if a collection contract id is specified
@@ -108,7 +116,7 @@ export async function thirdPartyCollectionWearablesHandler(
     for (let i = 0; i < wearables.length; ++i) {
       results.push({
         ...wearables[i],
-        definition: includeDefinitions ? definitions[i] : undefined
+        definition: definitions[i]
       })
     }
     page.elements = results

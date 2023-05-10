@@ -29,7 +29,7 @@ export async function errorHandler(
       }
     }
 
-    console.log(`Error handling ${ctx.url.toString()}: ${error.message}`)
+    console.log(`Error handling ${ctx.url.toString()}: ${error.message}`, error)
     return {
       status: 500,
       body: {
