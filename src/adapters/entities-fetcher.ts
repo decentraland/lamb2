@@ -33,8 +33,8 @@ export async function createEntitiesFetcherComponent({
       if (nonCachedURNs.length !== 0) {
         const entities = await content.fetchEntitiesByPointers(nonCachedURNs)
         for (const entity of entities) {
-          entititesCache.set(entity.id, entity)
-          entitiesByUrn.set(entity.id, entity)
+          entititesCache.set(entity.metadata.id, entity)
+          entitiesByUrn.set(entity.metadata.id, entity)
         }
       }
 
