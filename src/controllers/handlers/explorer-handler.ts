@@ -21,7 +21,7 @@ type MixedBaseWearable = BaseWearable & {
   entity: Entity
 }
 
-type MixedOnChainWearable = Omit<OnChainWearable, 'minTransferredAt' | 'maxTransferredAt'> & {
+type MixedOnChainWearable = OnChainWearable & {
   type: 'on-chain'
   entity: Entity
 }
@@ -32,6 +32,8 @@ type MixedThirdPartyWearable = ThirdPartyWearable & {
 
 export type MixedWearable = (MixedBaseWearable | MixedOnChainWearable | MixedThirdPartyWearable) &
   Partial<Pick<OnChainWearable, 'rarity'>>
+
+export type MixedWearableResponse = Omit<MixedWearable, 'minTransferredAt' | 'maxTransferredAt'>
 
 async function fetchCombinedElements(
   components: Pick<
@@ -73,7 +75,7 @@ async function fetchCombinedElements(
     const entities = await components.entitiesFetcher.fetchEntities(elements.map((e) => e.urn))
     const result: MixedOnChainWearable[] = []
     for (let i = 0; i < elements.length; ++i) {
-      const { maxTransferredAt, minTransferredAt, ...wearable } = elements[i]
+      const wearable = elements[i]
       const entity = entities[i]
       if (!entity) {
         continue
@@ -139,7 +141,7 @@ export async function explorerHandler(
     | 'entitiesFetcher',
     '/explorer/:address/wearables'
   >
-): Promise<PaginatedResponse<MixedWearable>> {
+): Promise<PaginatedResponse<MixedWearableResponse>> {
   const { address } = context.params
   const pagination = paginationObject(context.url)
   const filter = createFilters(context.url)
@@ -156,23 +158,27 @@ export async function explorerHandler(
   }
 
   const page = await fetchAndPaginate<MixedWearable>(
-    () =>
-      fetchCombinedElements(
-        context.components,
-        collectionTypes,
-        thirdPartyCollectionIds,
-
-        address
-      ),
+    () => fetchCombinedElements(context.components, collectionTypes, thirdPartyCollectionIds, address),
     pagination,
     filter,
     sorting
   )
 
+  const results: MixedWearableResponse[] = []
+  for (const wearable of page.elements) {
+    if (wearable.type === 'on-chain') {
+      const { minTransferredAt, maxTransferredAt, ...clean } = wearable
+      results.push({ ...clean })
+    } else {
+      results.push(wearable)
+    }
+  }
+
   return {
     status: 200,
     body: {
-      ...page
+      ...page,
+      elements: results
     }
   }
 }

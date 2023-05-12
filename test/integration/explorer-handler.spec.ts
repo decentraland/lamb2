@@ -11,15 +11,8 @@ import {
   getThirdPartyProviders
 } from '../data/wearables'
 
-import { MixedWearable } from '../../src/controllers/handlers/explorer-handler'
-import {
-  leastRareOptional,
-  nameAZ,
-  nameZA,
-  newestOptional,
-  oldestOptional,
-  rarestOptional
-} from '../../src/logic/sorting'
+import { MixedWearable, MixedWearableResponse } from '../../src/controllers/handlers/explorer-handler'
+import { leastRareOptional, nameAZ, nameZA, rarestOptional } from '../../src/logic/sorting'
 import { BaseWearable, ThirdPartyAsset } from '../../src/types'
 import { createTheGraphComponentMock } from '../mocks/the-graph-mock'
 
@@ -130,9 +123,12 @@ testWithComponents(() => {
       }
     })
 
-    const convertedMixedBaseWearables = convertToMixedBaseWearable(baseWearables, { entities, content })
-    const convertedMixedOnChainWearables = convertToMixedOnChainWearable(onChainWearables, { entities, content })
-    const convertedMixedThirdPartyWearables = convertToMixedThirdPartyWearable(thirdPartyWearables, {
+    const convertedMixedBaseWearables = convertToMixedBaseWearableResponse(baseWearables, { entities, content })
+    const convertedMixedOnChainWearables = convertToMixedOnChainWearableResponse(onChainWearables, {
+      entities,
+      content
+    })
+    const convertedMixedThirdPartyWearables = convertToMixedThirdPartyWearableResponse(thirdPartyWearables, {
       entities,
       content
     })
@@ -213,7 +209,7 @@ testWithComponents(() => {
         convertedMixedBaseWearables[1],
         convertedMixedOnChainWearables[0],
         convertedMixedOnChainWearables[1]
-      ].sort(oldestOptional),
+      ], // sorting is hard-coded here as we can not sort on mixed items because they don't have minTransferredAt / maxTransferredAt
       pageNum: 1,
       pageSize: 100,
       totalAmount: baseWearables.length + onChainWearables.length + thirdPartyWearables.length
@@ -229,7 +225,7 @@ testWithComponents(() => {
         convertedMixedThirdPartyWearables[1],
         convertedMixedBaseWearables[0],
         convertedMixedBaseWearables[1]
-      ].sort(newestOptional),
+      ], // sorting is hard-coded here as we can not sort on mixed items because they don't have minTransferredAt / maxTransferredAt
       pageNum: 1,
       pageSize: 100,
       totalAmount: baseWearables.length + onChainWearables.length + thirdPartyWearables.length
@@ -278,8 +274,11 @@ testWithComponents(() => {
   })
 })
 
-function convertToMixedBaseWearable(wearables: BaseWearable[], contentInfo: ContentInfo): MixedWearable[] {
-  return wearables.map((wearable): MixedWearable => {
+function convertToMixedBaseWearableResponse(
+  wearables: BaseWearable[],
+  contentInfo: ContentInfo
+): MixedWearableResponse[] {
+  return wearables.map((wearable): MixedWearableResponse => {
     const entity = contentInfo.entities.find((def) => def.id === wearable.urn)
     return {
       type: 'base-wearable',
@@ -297,8 +296,11 @@ function convertToMixedBaseWearable(wearables: BaseWearable[], contentInfo: Cont
   })
 }
 
-function convertToMixedOnChainWearable(wearables: WearableFromQuery[], { entities }: ContentInfo): MixedWearable[] {
-  return wearables.map((wearable): MixedWearable => {
+function convertToMixedOnChainWearableResponse(
+  wearables: WearableFromQuery[],
+  { entities }: ContentInfo
+): MixedWearableResponse[] {
+  return wearables.map((wearable): MixedWearableResponse => {
     const individualData = {
       id: wearable.id,
       tokenId: wearable.tokenId,
@@ -321,8 +323,11 @@ function convertToMixedOnChainWearable(wearables: WearableFromQuery[], { entitie
   })
 }
 
-function convertToMixedThirdPartyWearable(wearables: ThirdPartyAsset[], { entities }: ContentInfo): MixedWearable[] {
-  return wearables.map((wearable): MixedWearable => {
+function convertToMixedThirdPartyWearableResponse(
+  wearables: ThirdPartyAsset[],
+  { entities }: ContentInfo
+): MixedWearableResponse[] {
+  return wearables.map((wearable): MixedWearableResponse => {
     const entity = entities.find((def) => def.id === wearable.urn.decentraland)
     return {
       type: 'third-party',
