@@ -1,4 +1,4 @@
-import { Entity, Wearable } from '@dcl/schemas'
+import { Entity } from '@dcl/schemas'
 import Wallet from 'ethereumjs-wallet'
 import { WearableFromQuery } from '../../src/logic/fetch-elements/fetch-items'
 import { ContentComponent } from '../../src/ports/content'
@@ -11,7 +11,7 @@ import {
   getThirdPartyProviders
 } from '../data/wearables'
 
-import { MixedWearable, MixedWearableResponse } from '../../src/controllers/handlers/explorer-handler'
+import { MixedWearableResponse } from '../../src/controllers/handlers/explorer-handler'
 import { leastRareOptional, nameAZ, nameZA, rarestOptional } from '../../src/logic/sorting'
 import { BaseWearable, ThirdPartyAsset } from '../../src/types'
 import { createTheGraphComponentMock } from '../mocks/the-graph-mock'
