@@ -122,16 +122,14 @@ test('names-handler: GET /users/:address/names should', function ({ components }
     theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce(undefined)
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/names`)
-
+    const data = await r.json()
     expect(r.status).toBe(502)
-    expect(await r.json()).toEqual({
-      error: 'Cannot fetch names right now'
-    })
+    expect(data.error).toEqual('The requested items cannot be fetched right now')
   })
 })
 
 function convertToDataModel(names: NameFromQuery[]): Name[] {
-  return names.map(name => {
+  return names.map((name) => {
     return {
       name: name.name,
       tokenId: name.tokenId,

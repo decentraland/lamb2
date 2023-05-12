@@ -74,7 +74,27 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel(emotes, { definitions, content }),
+      elements: convertToDataModel(emotes, { definitions, content, includeDefinition: true }),
+      pageNum: 1,
+      pageSize: 100,
+      totalAmount: 1
+    })
+  })
+
+  it('return emotes with includeEntities set', async () => {
+    const { localFetch, theGraph, content } = components
+    const emotes = generateEmotes(1)
+    const definitions = generateEmoteContentDefinitions(emotes.map((emote) => emote.urn))
+
+    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
+    content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
+    content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
+
+    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/emotes?includeEntities`)
+
+    expect(r.status).toBe(200)
+    expect(await r.json()).toEqual({
+      elements: convertToDataModel(emotes, { definitions, content, includeEntity: true }),
       pageNum: 1,
       pageSize: 100,
       totalAmount: 1
@@ -96,7 +116,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel([emotes[1], emotes[0]], { definitions, content }),
+      elements: convertToDataModel([emotes[1], emotes[0]], { definitions, content, includeDefinition: true }),
       pageNum: 1,
       pageSize: 100,
       totalAmount: 2
@@ -444,6 +464,8 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
 type ContentInfo = {
   definitions: Entity[]
   content: ContentComponent
+  includeEntity?: boolean
+  includeDefinition?: boolean
 }
 
 function convertToDataModel(emotes: EmoteFromQuery[], contentInfo?: ContentInfo): OnChainEmoteResponse[] {
@@ -455,7 +477,7 @@ function convertToDataModel(emotes: EmoteFromQuery[], contentInfo?: ContentInfo)
       price: emote.item.price
     }
     const rarity = emote.item.rarity
-    const definition = contentInfo?.definitions.find((def) => def.id === emote.urn)
+    const entity = contentInfo?.definitions.find((def) => def.id === emote.urn)
     const content = contentInfo?.content
     return {
       urn: emote.urn,
@@ -464,7 +486,9 @@ function convertToDataModel(emotes: EmoteFromQuery[], contentInfo?: ContentInfo)
       category: emote.metadata.emote.category,
       name: emote.metadata.emote.name,
       rarity,
-      definition: definition ? extractEmoteDefinitionFromEntity({ content }, definition) : undefined
+      definition:
+        contentInfo?.includeDefinition && entity ? extractEmoteDefinitionFromEntity({ content }, entity) : undefined,
+      entity: contentInfo?.includeEntity && entity ? entity : undefined
     }
   })
 }

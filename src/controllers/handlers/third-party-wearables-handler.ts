@@ -36,42 +36,37 @@ export async function thirdPartyWearablesHandler(
     'wearableDefinitionsFetcher' | 'logs' | 'thirdPartyWearablesFetcher',
     '/users/:address/third-party-wearables'
   >
-): Promise<PaginatedResponse<ThirdPartyWearableResponse> | ErrorResponse> {
-  const { thirdPartyWearablesFetcher } = context.components
+): Promise<PaginatedResponse<ThirdPartyWearableResponse>> {
+  const { thirdPartyWearablesFetcher, wearableDefinitionsFetcher } = context.components
   const { address } = context.params
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
   const pagination = paginationObject(context.url, Number.MAX_VALUE)
   const filter = createFilter(context.url)
   const sorting = createBaseSorting(context.url)
 
-  const page = await fetchAndPaginate<ThirdPartyWearable & { definition: WearableDefinition }>(
-    address,
-    thirdPartyWearablesFetcher.fetchOwnedElements,
+  const page = await fetchAndPaginate<ThirdPartyWearable>(
+    () => thirdPartyWearablesFetcher.fetchOwnedElements(address),
     pagination,
     filter,
     sorting
   )
-  if (includeDefinitions) {
-    return {
-      status: 200,
-      body: {
-        ...page
-      }
-    }
-  } else {
-    const elementsWithoutDefinitions: (ThirdPartyWearable & { definition?: WearableDefinition })[] = page.elements.map(
-      (e) => {
-        const { definition, ...restOfElement } = e
-        return { ...restOfElement }
-      }
-    )
-    const { elements, ...restOfPage } = page
-    return {
-      status: 200,
-      body: {
-        elements: elementsWithoutDefinitions,
-        ...restOfPage
-      }
+
+  const definitions = includeDefinitions
+    ? await wearableDefinitionsFetcher.fetchItemsDefinitions(page.elements.map((e) => e.urn))
+    : []
+
+  const elements: ThirdPartyWearableResponse[] = includeDefinitions
+    ? page.elements.map((e, i) => {
+        const definition: WearableDefinition = definitions[i]!
+        return { ...e, definition }
+      })
+    : page.elements
+
+  return {
+    status: 200,
+    body: {
+      ...page,
+      elements
     }
   }
 }
@@ -82,12 +77,12 @@ export async function thirdPartyCollectionWearablesHandler(
     | 'logs'
     | 'thirdPartyWearablesFetcher'
     | 'thirdPartyProvidersFetcher'
-    | 'theGraph'
-    | 'fetch',
+    | 'fetch'
+    | 'entitiesFetcher',
     '/users/:address/third-party-wearables/:collectionId'
   >
 ): Promise<PaginatedResponse<ThirdPartyWearableResponse> | ErrorResponse> {
-  const { wearableDefinitionsFetcher } = context.components
+  const { wearableDefinitionsFetcher, entitiesFetcher } = context.components
   const { address, collectionId } = context.params
 
   // Strip the last part (the 6th part) if a collection contract id is specified
@@ -108,8 +103,7 @@ export async function thirdPartyCollectionWearablesHandler(
   const pagination = paginationObject(context.url, Number.MAX_VALUE)
 
   const page = await fetchAndPaginate<ThirdPartyWearable>(
-    address,
-    (address: string) => fetchThirdPartyWearablesFromThirdPartyName(context.components, address, urn),
+    () => fetchThirdPartyWearablesFromThirdPartyName(context.components, address, urn),
     pagination
   )
 
@@ -122,7 +116,7 @@ export async function thirdPartyCollectionWearablesHandler(
     for (let i = 0; i < wearables.length; ++i) {
       results.push({
         ...wearables[i],
-        definition: includeDefinitions ? definitions[i] : undefined
+        definition: definitions[i]
       })
     }
     page.elements = results

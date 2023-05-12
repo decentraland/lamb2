@@ -69,7 +69,7 @@ describe('sorting', function () {
     maxTransferredAt: transferredAt - 1
   }
 
-  const baseItem1: Omit<BaseWearable, 'definition'> = {
+  const baseItem1: Omit<BaseWearable, 'entity'> = {
     urn: 'urn-4',
     amount: 1,
     individualData: [
@@ -81,7 +81,7 @@ describe('sorting', function () {
     category: WearableCategory.EARRING
   }
 
-  const baseItem2: Omit<BaseWearable, 'definition'> = {
+  const baseItem2: Omit<BaseWearable, 'entity'> = {
     urn: 'urn-5',
     amount: 1,
     individualData: [

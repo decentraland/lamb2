@@ -1,6 +1,7 @@
 import {
   EmoteCategory,
   EmoteDefinition,
+  Entity,
   IPFSv1,
   IPFSv2,
   Profile,
@@ -19,6 +20,7 @@ import type {
 import { Variables } from '@well-known-components/thegraph-component'
 import { DefinitionsFetcher } from './adapters/definitions-fetcher'
 import { ElementsFetcher } from './adapters/elements-fetcher'
+import { EntitiesFetcher } from './adapters/entities-fetcher'
 import { ThirdPartyProvidersFetcher } from './adapters/third-party-providers-fetcher'
 import { WearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
 import { metricDeclarations } from './metrics'
@@ -43,10 +45,11 @@ export type BaseComponents = {
   baseWearablesFetcher: ElementsFetcher<BaseWearable>
   wearablesFetcher: ElementsFetcher<OnChainWearable>
   thirdPartyProvidersFetcher: ThirdPartyProvidersFetcher
-  thirdPartyWearablesFetcher: ElementsFetcher<ThirdPartyWearable & { definition: WearableDefinition }>
+  thirdPartyWearablesFetcher: ElementsFetcher<ThirdPartyWearable>
   emotesFetcher: ElementsFetcher<OnChainEmote>
   emoteDefinitionsFetcher: DefinitionsFetcher<EmoteDefinition>
   wearableDefinitionsFetcher: DefinitionsFetcher<WearableDefinition>
+  entitiesFetcher: EntitiesFetcher
   namesFetcher: ElementsFetcher<Name>
   landsFetcher: ElementsFetcher<LAND>
 
@@ -138,11 +141,10 @@ export type ThirdPartyWearable = {
   }[]
   name: string
   category: WearableCategory
+  entity: Entity
 }
 
-export type BaseWearable = ThirdPartyWearable & {
-  definition: WearableDefinition
-}
+export type BaseWearable = ThirdPartyWearable
 
 export type Name = {
   name: string
@@ -226,10 +228,12 @@ export type ThirdPartyAssets = {
 
 export type OnChainWearableResponse = Omit<OnChainWearable, 'minTransferredAt' | 'maxTransferredAt'> & {
   definition?: WearableDefinition
+  entity?: Entity
 }
 
 export type OnChainEmoteResponse = Omit<OnChainEmote, 'minTransferredAt' | 'maxTransferredAt'> & {
   definition?: EmoteDefinition
+  entity?: Entity
 }
 
 export type BaseWearableFilters = {

@@ -4,7 +4,7 @@ import {
   fetchThirdPartyWearablesFromThirdPartyName
 } from '../../../../src/logic/fetch-elements/fetch-third-party-wearables'
 import { ThirdPartyAsset, ThirdPartyWearable } from '../../../../src/types'
-import { generateWearableContentDefinitions, getThirdPartyProviders } from '../../../data/wearables'
+import { generateWearableEntities, generateWearableEntity, getThirdPartyProviders } from '../../../data/wearables'
 import { WearableCategory } from '@dcl/schemas'
 import { parseUrn } from '@dcl/urn-resolver'
 import { FetcherError } from '../../../../src/adapters/elements-fetcher'
@@ -65,8 +65,8 @@ describe('fetchAllThirdPartyWearables', () => {
           })
         ) as jest.Mock
       )
-      const definitions = generateWearableContentDefinitions(['urn1', 'urn2'])
-      jest.spyOn(components.content, 'fetchEntitiesByPointers').mockResolvedValue(definitions)
+      const entities = generateWearableEntities(['urn1', 'urn2'])
+      jest.spyOn(components.content, 'fetchEntitiesByPointers').mockResolvedValue(entities)
       const wearables = await fetchAllThirdPartyWearables(components, 'anAddress')
       expect(wearables).toEqual([
         expect.objectContaining({
@@ -74,7 +74,7 @@ describe('fetchAllThirdPartyWearables', () => {
           amount: 1,
           individualData: [{ id: 'id1' }],
           name: 'nameForurn1',
-          definition: expect.anything()
+          entity: expect.anything()
         }),
         expect.objectContaining({ urn: 'urn2', amount: 1, individualData: [{ id: 'id2' }], name: 'nameForurn2' })
       ] as ThirdPartyWearable[])
@@ -83,8 +83,8 @@ describe('fetchAllThirdPartyWearables', () => {
 
   test('third-party wearables are grouped by urn', function ({ components }) {
     it('run test', async () => {
-      const definitions = generateWearableContentDefinitions(['urn1', 'urn2'])
-      jest.spyOn(components.content, 'fetchEntitiesByPointers').mockResolvedValue(definitions)
+      const entities = generateWearableEntities(['urn1', 'urn2'])
+      jest.spyOn(components.content, 'fetchEntitiesByPointers').mockResolvedValue(entities)
       jest.spyOn(components.thirdPartyProvidersFetcher, 'getAll').mockResolvedValue([getThirdPartyProviders()[0]])
       jest.spyOn(components.fetch, 'fetch').mockImplementation(
         jest.fn(() =>
@@ -111,13 +111,13 @@ describe('fetchAllThirdPartyWearables', () => {
           urn: 'urn1',
           amount: 2,
           individualData: [{ id: 'id1' }, { id: 'id3' }],
-          name: definitions[0].metadata.name
+          name: entities[0].metadata.name
         },
         {
           urn: 'urn2',
           amount: 1,
           individualData: [{ id: 'id2' }],
-          name: definitions[1].metadata.name
+          name: entities[1].metadata.name
         }
       ] as ThirdPartyWearable[])
     })
@@ -162,21 +162,30 @@ describe('fetchThirdPartyWearablesFromThirdPartyName', () => {
           amount: 1,
           individualData: [{ id: 'id1' }],
           name: 'some-ntr1-name',
-          category: WearableCategory.BODY_SHAPE
+          category: WearableCategory.BODY_SHAPE,
+          entity: generateWearableEntity(
+            'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-collectionId:itemId'
+          )
         },
         {
           urn: 'urn:decentraland:matic:collections-thirdparty:baby-dog:baby-dog-collection:itemId',
           amount: 1,
           individualData: [{ id: 'id2' }],
           name: 'some-baby-dog-name',
-          category: WearableCategory.BODY_SHAPE
+          category: WearableCategory.BODY_SHAPE,
+          entity: generateWearableEntity(
+            'urn:decentraland:matic:collections-thirdparty:baby-dog:baby-dog-collection:itemId'
+          )
         },
         {
           urn: 'urn:decentraland:matic:collections-thirdparty:cryptoavatars:cryptocollection:itemId',
           amount: 1,
           individualData: [{ id: 'id3' }],
           name: 'some-cryptoavatars-name',
-          category: WearableCategory.BODY_SHAPE
+          category: WearableCategory.BODY_SHAPE,
+          entity: generateWearableEntity(
+            'urn:decentraland:matic:collections-thirdparty:cryptoavatars:cryptocollection:itemId'
+          )
         }
       ]
       jest.spyOn(components.thirdPartyProvidersFetcher, 'get').mockResolvedValue({
@@ -202,7 +211,8 @@ describe('fetchThirdPartyWearablesFromThirdPartyName', () => {
           amount: 1,
           individualData: [{ id: 'id1' }],
           name: 'some-ntr1-name',
-          category: WearableCategory.BODY_SHAPE
+          category: WearableCategory.BODY_SHAPE,
+          entity: thirdPartyWearables[0].entity
         }
       ] as ThirdPartyWearable[])
     })

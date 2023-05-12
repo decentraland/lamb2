@@ -1,14 +1,13 @@
-import { WearableDefinition } from '@dcl/schemas'
+import { Entity, Wearable } from '@dcl/schemas'
 import { BlockchainCollectionThirdPartyName, parseUrn } from '@dcl/urn-resolver'
 import { FetcherError } from '../../adapters/elements-fetcher'
 import { AppComponents, ThirdParty, ThirdPartyAsset, ThirdPartyAssets, ThirdPartyWearable } from '../../types'
-import { addDefinitions } from '../add-definitions'
 
 const URN_THIRD_PARTY_NAME_TYPE = 'blockchain-collection-third-party-name'
 const URN_THIRD_PARTY_ASSET_TYPE = 'blockchain-collection-third-party'
 
 async function fetchAssets(
-  components: Pick<AppComponents, 'theGraph' | 'thirdPartyProvidersFetcher' | 'fetch' | 'logs'>,
+  components: Pick<AppComponents, 'thirdPartyProvidersFetcher' | 'fetch' | 'logs'>,
   owner: string,
   thirdParty: ThirdParty
 ) {
@@ -51,31 +50,28 @@ async function fetchAssets(
   return allAssets
 }
 
-function groupThirdPartyWearablesByURN(
-  assets: (ThirdPartyAsset & { definition?: WearableDefinition })[]
-): (ThirdPartyWearable & { definition: WearableDefinition })[] {
-  const wearablesByURN = new Map<string, ThirdPartyWearable & { definition: WearableDefinition }>()
+function groupThirdPartyWearablesByURN(assets: (ThirdPartyAsset & { entity: Entity })[]): ThirdPartyWearable[] {
+  const wearablesByURN = new Map<string, ThirdPartyWearable>()
 
   for (const asset of assets) {
-    if (asset.definition) {
-      if (wearablesByURN.has(asset.urn.decentraland)) {
-        const wearableFromMap = wearablesByURN.get(asset.urn.decentraland)!
-        wearableFromMap.individualData.push({ id: asset.id })
-        wearableFromMap.amount = wearableFromMap.amount + 1
-      } else {
-        wearablesByURN.set(asset.urn.decentraland, {
-          urn: asset.urn.decentraland,
-          individualData: [
-            {
-              id: asset.id
-            }
-          ],
-          amount: 1,
-          name: asset.definition.name,
-          category: asset.definition.data.category,
-          definition: asset.definition
-        })
-      }
+    const metadata: Wearable = asset.entity.metadata
+    if (wearablesByURN.has(asset.urn.decentraland)) {
+      const wearableFromMap = wearablesByURN.get(asset.urn.decentraland)!
+      wearableFromMap.individualData.push({ id: asset.id })
+      wearableFromMap.amount = wearableFromMap.amount + 1
+    } else {
+      wearablesByURN.set(asset.urn.decentraland, {
+        urn: asset.urn.decentraland,
+        individualData: [
+          {
+            id: asset.id
+          }
+        ],
+        amount: 1,
+        name: metadata.name,
+        category: metadata.data.category,
+        entity: asset.entity
+      })
     }
   }
 
@@ -83,12 +79,9 @@ function groupThirdPartyWearablesByURN(
 }
 
 export async function fetchAllThirdPartyWearables(
-  components: Pick<
-    AppComponents,
-    'theGraph' | 'thirdPartyProvidersFetcher' | 'fetch' | 'logs' | 'wearableDefinitionsFetcher'
-  >,
+  components: Pick<AppComponents, 'thirdPartyProvidersFetcher' | 'fetch' | 'logs' | 'entitiesFetcher'>,
   owner: string
-): Promise<(ThirdPartyWearable & { definition: WearableDefinition })[]> {
+): Promise<ThirdPartyWearable[]> {
   const thirdParties = await components.thirdPartyProvidersFetcher.getAll()
 
   // TODO: test if stateValue is kept in case of an exception
@@ -96,17 +89,23 @@ export async function fetchAllThirdPartyWearables(
     await Promise.all(thirdParties.map((thirdParty: ThirdParty) => fetchAssets(components, owner, thirdParty)))
   ).flat()
 
-  const thirdPartyAssetsWithDefinitions = await addDefinitions<ThirdPartyAsset, WearableDefinition>(
-    thirdPartyAssets,
-    (asset) => asset.urn.decentraland,
-    components.wearableDefinitionsFetcher
-  )
+  const entities = await components.entitiesFetcher.fetchEntities(thirdPartyAssets.map((tpa) => tpa.urn.decentraland))
+  const results: (ThirdPartyAsset & { entity: Entity })[] = []
+  for (let i = 0; i < thirdPartyAssets.length; ++i) {
+    const entity = entities[i]
+    if (entity) {
+      results.push({
+        ...thirdPartyAssets[i],
+        entity
+      })
+    }
+  }
 
-  return groupThirdPartyWearablesByURN(thirdPartyAssetsWithDefinitions)
+  return groupThirdPartyWearablesByURN(results)
 }
 
 export async function fetchThirdPartyWearablesFromThirdPartyName(
-  components: Pick<AppComponents, 'thirdPartyWearablesFetcher' | 'thirdPartyProvidersFetcher' | 'fetch' | 'theGraph'>,
+  components: Pick<AppComponents, 'thirdPartyWearablesFetcher' | 'thirdPartyProvidersFetcher' | 'fetch'>,
   address: string,
   thirdPartyNameUrn: BlockchainCollectionThirdPartyName
 ): Promise<ThirdPartyWearable[]> {

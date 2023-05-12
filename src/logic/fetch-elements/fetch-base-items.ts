@@ -1,3 +1,4 @@
+import { Wearable } from '@dcl/schemas'
 import { AppComponents, BaseWearable, WearableId } from '../../types'
 
 export const BASE_WEARABLES: WearableId[] = [
@@ -282,21 +283,25 @@ export const BASE_WEARABLES: WearableId[] = [
   'urn:decentraland:off-chain:base-avatars:polocoloredtshirt'
 ]
 
-export async function fetchAllBaseWearables<E extends BaseWearable>({
-  wearableDefinitionsFetcher
-}: Pick<AppComponents, 'wearableDefinitionsFetcher'>): Promise<E[]> {
-  const definitions = await wearableDefinitionsFetcher.fetchItemsDefinitions(BASE_WEARABLES)
-  return definitions
-    .filter((definition) => !!definition)
-    .map(
-      (definition) =>
-        ({
-          urn: definition!.id,
-          name: definition!.name || definition!.id.split(':')[4],
-          category: definition!.data.category,
-          definition,
-          individualData: [{ id: definition!.id }],
-          amount: 1
-        } as E)
-    )
+export async function fetchAllBaseWearables({
+  entitiesFetcher
+}: Pick<AppComponents, 'entitiesFetcher'>): Promise<BaseWearable[]> {
+  const entities = await entitiesFetcher.fetchEntities(BASE_WEARABLES)
+  const wearables: BaseWearable[] = []
+  for (const entity of entities) {
+    if (!entity) {
+      continue
+    }
+
+    const metadata: Wearable = entity.metadata
+    wearables.push({
+      urn: metadata.id,
+      name: metadata.name || metadata.id.split(':')[4],
+      category: metadata.data.category,
+      individualData: [{ id: metadata.id }],
+      amount: 1,
+      entity
+    })
+  }
+  return wearables
 }
