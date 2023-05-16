@@ -25,7 +25,7 @@
     "tabWidth": 2
   },
   "dependencies": {
-    "@dcl/crypto": "^3.4.0",
+    "@dcl/crypto": "^3.4.1",
     "@dcl/schemas": "^6.19.0",
     "@dcl/urn-resolver": "^2.0.3",
     "@well-known-components/env-config-provider": "^1.2.0",
