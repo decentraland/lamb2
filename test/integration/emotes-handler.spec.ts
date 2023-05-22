@@ -4,8 +4,7 @@ import { extractEmoteDefinitionFromEntity } from '../../src/adapters/definitions
 import { EmoteFromQuery } from '../../src/logic/fetch-elements/fetch-items'
 import { leastRare, nameAZ, nameZA, rarest } from '../../src/logic/sorting'
 import { RARITIES } from '../../src/logic/utils'
-import { ContentComponent } from '../../src/ports/content'
-import { OnChainEmoteResponse } from '../../src/types'
+import { ContentServerUrl, OnChainEmoteResponse } from '../../src/types'
 import { test } from '../components'
 import { generateEmoteContentDefinitions, generateEmotes } from '../data/emotes'
 
@@ -62,19 +61,19 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
   })
 
   it('return emotes with includeDefinitions set', async () => {
-    const { localFetch, theGraph, content } = components
+    const { localFetch, theGraph, content, contentServerUrl } = components
     const emotes = generateEmotes(1)
     const definitions = generateEmoteContentDefinitions(emotes.map((emote) => emote.urn))
 
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
-    content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
+    contentServerUrl.get = jest.fn().mockReturnValue('contentUrl')
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/emotes?includeDefinitions`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel(emotes, { definitions, content, includeDefinition: true }),
+      elements: convertToDataModel(emotes, { definitions, contentServerUrl, includeDefinition: true }),
       pageNum: 1,
       pageSize: 100,
       totalAmount: 1
@@ -82,19 +81,19 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
   })
 
   it('return emotes with includeEntities set', async () => {
-    const { localFetch, theGraph, content } = components
+    const { localFetch, theGraph, content, contentServerUrl } = components
     const emotes = generateEmotes(1)
     const definitions = generateEmoteContentDefinitions(emotes.map((emote) => emote.urn))
 
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
-    content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
+    contentServerUrl.get = jest.fn().mockReturnValue('contentUrl')
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/emotes?includeEntities`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel(emotes, { definitions, content, includeEntity: true }),
+      elements: convertToDataModel(emotes, { definitions, contentServerUrl, includeEntity: true }),
       pageNum: 1,
       pageSize: 100,
       totalAmount: 1
@@ -102,7 +101,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
   })
 
   it('return a emote with definition and another one without definition', async () => {
-    const { localFetch, theGraph, content } = components
+    const { localFetch, theGraph, content, contentServerUrl } = components
     const emotes = generateEmotes(2)
     const definitions = generateEmoteContentDefinitions([emotes[0].urn])
 
@@ -110,13 +109,13 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     emotes[1] = { ...emotes[1], urn: 'anotherUrn' }
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
-    content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
+    contentServerUrl.get = jest.fn().mockReturnValue('contentUrl')
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/emotes?includeDefinitions`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: convertToDataModel([emotes[1], emotes[0]], { definitions, content, includeDefinition: true }),
+      elements: convertToDataModel([emotes[1], emotes[0]], { definitions, contentServerUrl, includeDefinition: true }),
       pageNum: 1,
       pageSize: 100,
       totalAmount: 2
@@ -463,7 +462,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
 
 type ContentInfo = {
   definitions: Entity[]
-  content: ContentComponent
+  contentServerUrl: ContentServerUrl
   includeEntity?: boolean
   includeDefinition?: boolean
 }
@@ -478,7 +477,7 @@ function convertToDataModel(emotes: EmoteFromQuery[], contentInfo?: ContentInfo)
     }
     const rarity = emote.item.rarity
     const entity = contentInfo?.definitions.find((def) => def.id === emote.urn)
-    const content = contentInfo?.content
+    const contentServerUrl = contentInfo?.contentServerUrl
     return {
       urn: emote.urn,
       amount: 1,
@@ -487,7 +486,7 @@ function convertToDataModel(emotes: EmoteFromQuery[], contentInfo?: ContentInfo)
       name: emote.metadata.emote.name,
       rarity,
       definition:
-        contentInfo?.includeDefinition && entity ? extractEmoteDefinitionFromEntity({ content }, entity) : undefined,
+        contentInfo?.includeDefinition && entity ? extractEmoteDefinitionFromEntity({ contentServerUrl }, entity) : undefined,
       entity: contentInfo?.includeEntity && entity ? entity : undefined
     }
   })

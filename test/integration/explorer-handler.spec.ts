@@ -1,7 +1,6 @@
 import { Entity } from '@dcl/schemas'
 import Wallet from 'ethereumjs-wallet'
 import { WearableFromQuery } from '../../src/logic/fetch-elements/fetch-items'
-import { ContentComponent } from '../../src/ports/content'
 import { testWithComponents } from '../components'
 import {
   generateBaseWearables,
@@ -13,12 +12,12 @@ import {
 
 import { MixedWearableResponse } from '../../src/controllers/handlers/explorer-handler'
 import { leastRareOptional, nameAZ, nameZA, rarestOptional } from '../../src/logic/sorting'
-import { BaseWearable, ThirdPartyAsset } from '../../src/types'
+import { BaseWearable, ContentServerUrl, ThirdPartyAsset } from '../../src/types'
 import { createTheGraphComponentMock } from '../mocks/the-graph-mock'
 
 type ContentInfo = {
   entities: Entity[]
-  content: ContentComponent
+  contentServerUrl: ContentServerUrl
 }
 
 testWithComponents(() => {
@@ -65,7 +64,7 @@ testWithComponents(() => {
   })
 
   it('return only base wearables when no on-chain or third-party found', async () => {
-    const { baseWearablesFetcher, content, fetch, localFetch, theGraph } = components
+    const { baseWearablesFetcher, content, fetch, localFetch, theGraph, contentServerUrl } = components
 
     const baseWearables = generateBaseWearables(278)
     baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(baseWearables)
@@ -73,7 +72,7 @@ testWithComponents(() => {
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
     fetch.fetch = jest.fn().mockResolvedValue({ ok: true, json: () => ({ assets: [] }) })
     const entities = generateWearableEntities(baseWearables.map((wearable) => wearable.urn))
-    content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
+    contentServerUrl.get = jest.fn().mockReturnValue('contentUrl')
     content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
       pointers.map((pointer) => entities.find((def) => def.id === pointer))
     )
@@ -93,7 +92,7 @@ testWithComponents(() => {
   })
 
   it('return base + on-chain + third-party wearables', async () => {
-    const { content, fetch, localFetch, theGraph, baseWearablesFetcher } = components
+    const { content, fetch, localFetch, theGraph, baseWearablesFetcher, contentServerUrl } = components
     const baseWearables = generateBaseWearables(2)
     const onChainWearables = generateWearables(2)
     const thirdPartyWearables = generateThirdPartyWearables(2)
@@ -107,7 +106,7 @@ testWithComponents(() => {
     content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
       pointers.map((pointer) => entities.find((def) => def.id === pointer))
     )
-    content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
+    contentServerUrl.get = jest.fn().mockReturnValue('contentUrl')
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: onChainWearables.slice(0, 5) })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: onChainWearables.slice(5, 10) })
     fetch.fetch = jest.fn().mockImplementation((url) => {
@@ -123,14 +122,14 @@ testWithComponents(() => {
       }
     })
 
-    const convertedMixedBaseWearables = convertToMixedBaseWearableResponse(baseWearables, { entities, content })
+    const convertedMixedBaseWearables = convertToMixedBaseWearableResponse(baseWearables, { entities, contentServerUrl })
     const convertedMixedOnChainWearables = convertToMixedOnChainWearableResponse(onChainWearables, {
       entities,
-      content
+      contentServerUrl
     })
     const convertedMixedThirdPartyWearables = convertToMixedThirdPartyWearableResponse(thirdPartyWearables, {
       entities,
-      content
+      contentServerUrl
     })
 
     const wallet = Wallet.generate().getAddressString()

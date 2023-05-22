@@ -1,8 +1,8 @@
-import { AppComponents, ThirdPartyAsset, TPWResolver, HandlerContextWithPath } from '../../types'
-import { runQuery, TheGraphComponent } from '../../ports/the-graph'
+import { Entity, I18N } from '@dcl/schemas'
 import { cloneDeep } from 'lodash'
 import LRU from 'lru-cache'
-import { Entity, I18N } from '@dcl/schemas'
+import { TheGraphComponent, runQuery } from '../../ports/the-graph'
+import { AppComponents, HandlerContextWithPath, TPWResolver, ThirdPartyAsset } from '../../types'
 
 import { IBaseComponent } from '@well-known-components/interfaces'
 
@@ -155,7 +155,7 @@ async function createThirdPartyResolverForCollection(
 
 export async function oldWearablesHandler(
   context: HandlerContextWithPath<
-    'config' | 'theGraph' | 'wearablesCaches' | 'fetch' | 'content',
+    'config' | 'theGraph' | 'wearablesCaches' | 'fetch' | 'content' | 'contentServerUrl',
     '/nfts/wearables/:id'
   >
 ) {
@@ -314,7 +314,7 @@ const QUERY_ALL_THIRD_PARTY_RESOLVERS = `
  * Returns only third-party wearables for the specified collection id, owned by the provided address
  */
 async function getWearablesForCollection(
-  components: Pick<AppComponents, 'theGraph' | 'fetch' | 'wearablesCaches' | 'content'>,
+  components: Pick<AppComponents, 'theGraph' | 'fetch' | 'wearablesCaches' | 'content' | 'contentServerUrl'>,
   collectionId: string,
   address: string,
   includeDefinitions: boolean
@@ -389,7 +389,10 @@ function transformThirdPartyAssetToWearableForCache(asset: ThirdPartyAsset): Wea
   }
 }
 
-function extractWearableDefinitionFromEntity(components: Pick<AppComponents, 'content'>, entity: Entity) {
+function extractWearableDefinitionFromEntity(
+  components: Pick<AppComponents, 'content' | 'contentServerUrl'>,
+  entity: Entity
+) {
   const metadata = entity.metadata
   const representations = metadata.data.representations.map((representation: any) =>
     mapRepresentation(components, representation, entity)
@@ -410,7 +413,7 @@ function extractWearableDefinitionFromEntity(components: Pick<AppComponents, 'co
 }
 
 function mapRepresentation<T>(
-  components: Pick<AppComponents, 'content'>,
+  components: Pick<AppComponents, 'content' | 'contentServerUrl'>,
   metadataRepresentation: T & { contents: string[] },
   entity: Entity
 ): T & { contents: { key: string; url: string }[] } {
@@ -425,12 +428,12 @@ function mapRepresentation<T>(
 }
 
 function createExternalContentUrl(
-  components: Pick<AppComponents, 'content'>,
+  components: Pick<AppComponents, 'content' | 'contentServerUrl'>,
   entity: Entity,
   fileName: string | undefined
 ): string | undefined {
   const hash = findHashForFile(entity, fileName)
-  if (hash) return components.content.getExternalContentServerUrl() + `/contents/` + hash
+  if (hash) return components.contentServerUrl.get() + `/contents/` + hash
   return undefined
 }
 
@@ -444,9 +447,12 @@ function findHashForFile(entity: Entity, fileName: string | undefined) {
  */
 async function decorateNFTsWithDefinitionsFromCache(
   nfts: UrnAndAmount[],
-  components: Pick<AppComponents, 'content'>,
+  components: Pick<AppComponents, 'content' | 'contentServerUrl'>,
   definitionsCache: LRU<string, Definition>,
-  extractDefinitionFromEntity: (components: Pick<AppComponents, 'content'>, entity: Entity) => Definition
+  extractDefinitionFromEntity: (
+    components: Pick<AppComponents, 'content' | 'contentServerUrl'>,
+    entity: Entity
+  ) => Definition
 ) {
   // Get a map with the definitions from the cache and an array with the non-cached urns
   const { nonCachedURNs, definitionsByURN } = getDefinitionsFromCache(nfts, definitionsCache)
@@ -492,7 +498,7 @@ const QUERY_WEARABLES: string = `
 }`
 
 async function getWearablesForAddress(
-  components: Pick<AppComponents, 'theGraph' | 'wearablesCaches' | 'fetch' | 'content'>,
+  components: Pick<AppComponents, 'theGraph' | 'wearablesCaches' | 'fetch' | 'content' | 'contentServerUrl'>,
   id: string,
   includeTPW: boolean,
   includeDefinitions: boolean,

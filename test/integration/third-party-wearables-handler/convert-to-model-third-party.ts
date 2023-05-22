@@ -1,12 +1,11 @@
 import { Entity, Wearable } from '@dcl/schemas'
 import { extractWearableDefinitionFromEntity } from '../../../src/adapters/definitions'
 import { ThirdPartyWearableResponse } from '../../../src/controllers/handlers/third-party-wearables-handler'
-import { ContentComponent } from '../../../src/ports/content'
-import { ThirdPartyAsset } from '../../../src/types'
+import { ContentServerUrl, ThirdPartyAsset } from '../../../src/types'
 
 type ContentInfo = {
   entities: Entity[]
-  content: ContentComponent
+  contentServerUrl: ContentServerUrl
 }
 
 export function convertToThirdPartyWearableResponse(
@@ -16,7 +15,7 @@ export function convertToThirdPartyWearableResponse(
 ): ThirdPartyWearableResponse[] {
   return wearables.map((wearable): ThirdPartyWearableResponse => {
     const entity = contentInfo.entities.find((entity) => entity.id === wearable.urn.decentraland)
-    const content = contentInfo?.content
+    const contentServerUrl = contentInfo?.contentServerUrl
     const wearableMetadata: Wearable = entity?.metadata
     return {
       amount: wearable.amount,
@@ -29,7 +28,7 @@ export function convertToThirdPartyWearableResponse(
       name: wearableMetadata.name,
       category: wearableMetadata.data.category,
       entity,
-      definition: includeDefinitions ? extractWearableDefinitionFromEntity({ content }, entity) : undefined
+      definition: includeDefinitions ? extractWearableDefinitionFromEntity({ contentServerUrl }, entity) : undefined
     }
   })
 }

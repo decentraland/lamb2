@@ -2,7 +2,7 @@ import { EmoteCategory, EmoteDefinition, Entity, WearableDefinition } from '@dcl
 import { AppComponents } from '../types'
 
 export function extractWearableDefinitionFromEntity(
-  components: Pick<AppComponents, 'content'>,
+  components: Pick<AppComponents, 'contentServerUrl'>,
   entity: Entity
 ): WearableDefinition {
   const metadata = entity.metadata
@@ -25,7 +25,7 @@ export function extractWearableDefinitionFromEntity(
 }
 
 function mapRepresentation<T>(
-  components: Pick<AppComponents, 'content'>,
+  components: Pick<AppComponents, 'contentServerUrl'>,
   metadataRepresentation: T & { contents: string[] },
   entity: Entity
 ): T & { contents: { key: string; url: string }[] } {
@@ -40,12 +40,12 @@ function mapRepresentation<T>(
 }
 
 function createExternalContentUrl(
-  components: Pick<AppComponents, 'content'>,
+  components: Pick<AppComponents, 'contentServerUrl'>,
   entity: Entity,
   fileName: string | undefined
 ): string | undefined {
   const hash = findHashForFile(entity, fileName)
-  if (hash) return components.content.getExternalContentServerUrl() + `/contents/` + hash
+  if (hash) return components.contentServerUrl.get() + `/contents/` + hash
   return undefined
 }
 
@@ -55,7 +55,7 @@ function findHashForFile(entity: Entity, fileName: string | undefined) {
 }
 
 export function extractEmoteDefinitionFromEntity(
-  components: Pick<AppComponents, 'content'>,
+  components: Pick<AppComponents, 'contentServerUrl'>,
   entity: Entity
 ): EmoteDefinition {
   const metadata = entity.metadata
