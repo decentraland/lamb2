@@ -1,6 +1,6 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { AppComponents } from '../types'
-import { ContentAPI, ContentClient } from 'dcl-catalyst-client'
+import { createContentClient } from 'dcl-catalyst-client'
 import { Entity } from '@dcl/schemas'
 
 export type ContentComponent = IBaseComponent & {
@@ -8,9 +8,11 @@ export type ContentComponent = IBaseComponent & {
   fetchEntitiesByPointers(pointers: string[]): Promise<Entity[]>
 }
 
-export async function createContentComponent(components: Pick<AppComponents, 'config'>): Promise<ContentComponent> {
+export async function createContentComponent(
+  components: Pick<AppComponents, 'config' | 'fetch'>
+): Promise<ContentComponent> {
   const contentServerURL = await getContentServerAddress(components)
-  const contentClient: ContentAPI = new ContentClient({ contentUrl: contentServerURL })
+  const contentClient = createContentClient({ url: contentServerURL, fetcher: components.fetch })
 
   function getExternalContentServerUrl(): string {
     return contentServerURL

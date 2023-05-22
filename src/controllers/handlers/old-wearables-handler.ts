@@ -4,7 +4,6 @@ import { cloneDeep } from 'lodash'
 import LRU from 'lru-cache'
 import { Entity, I18N } from '@dcl/schemas'
 
-import { EntityType } from 'dcl-catalyst-commons'
 import { IBaseComponent } from '@well-known-components/interfaces'
 
 type UrnAndAmount = {
@@ -336,7 +335,6 @@ async function getWearablesForCollection(
       ownedTPWForCollection,
       components,
       definitionsCache,
-      EntityType.EMOTE,
       extractWearableDefinitionFromEntity
     )
 
@@ -448,7 +446,6 @@ async function decorateNFTsWithDefinitionsFromCache(
   nfts: UrnAndAmount[],
   components: Pick<AppComponents, 'content'>,
   definitionsCache: LRU<string, Definition>,
-  entityType: EntityType,
   extractDefinitionFromEntity: (components: Pick<AppComponents, 'content'>, entity: Entity) => Definition
 ) {
   // Get a map with the definitions from the cache and an array with the non-cached urns
@@ -548,7 +545,6 @@ async function getWearablesForAddress(
       wearablesForResponse,
       components,
       wearablesCaches.definitionsCache,
-      EntityType.WEARABLE,
       extractWearableDefinitionFromEntity
     )
 
