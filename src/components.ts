@@ -42,7 +42,7 @@ export async function initComponents(
   const metrics = await createMetricsComponent(metricDeclarations, { config })
   await instrumentHttpServerWithMetrics({ server, metrics, config })
 
-  const content = await createContentComponent({ config })
+  const content = await createContentComponent({ config, fetch })
 
   const theGraph = theGraphComponent
     ? theGraphComponent
