@@ -1,11 +1,9 @@
-import { ContentComponent } from "../../src/ports/content";
+import { ContentClient } from "dcl-catalyst-client"
 
-export function createContentComponentMock(): ContentComponent {
-    const getExternalContentServerUrl = jest.fn()
+export function createContentClientMock(): Pick<ContentClient, 'fetchEntitiesByPointers'> {
     const fetchEntitiesByPointers = jest.fn()
-    
+
     return {
-        getExternalContentServerUrl,
         fetchEntitiesByPointers
     }
 }

@@ -18,13 +18,13 @@ import type {
   IMetricsComponent
 } from '@well-known-components/interfaces'
 import { Variables } from '@well-known-components/thegraph-component'
+import { ContentClient } from 'dcl-catalyst-client'
 import { DefinitionsFetcher } from './adapters/definitions-fetcher'
 import { ElementsFetcher } from './adapters/elements-fetcher'
 import { EntitiesFetcher } from './adapters/entities-fetcher'
 import { ThirdPartyProvidersFetcher } from './adapters/third-party-providers-fetcher'
 import { WearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
 import { metricDeclarations } from './metrics'
-import { ContentComponent } from './ports/content'
 import { OwnershipCachesComponent } from './ports/ownership-caches'
 import { TheGraphComponent } from './ports/the-graph'
 
@@ -39,7 +39,8 @@ export type BaseComponents = {
   server: IHttpServerComponent<GlobalContext>
   fetch: IFetchComponent
   metrics: IMetricsComponent<keyof typeof metricDeclarations>
-  content: ContentComponent
+  content: Pick<ContentClient, 'fetchEntitiesByPointers'>
+  contentServerUrl: string
   theGraph: TheGraphComponent
   ownershipCaches: OwnershipCachesComponent
   baseWearablesFetcher: ElementsFetcher<BaseWearable>

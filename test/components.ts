@@ -12,6 +12,7 @@ import {
   createWearableDefinitionsFetcherComponent
 } from '../src/adapters/definitions-fetcher'
 import { createElementsFetcherComponent } from '../src/adapters/elements-fetcher'
+import { createEntitiesFetcherComponent } from '../src/adapters/entities-fetcher'
 import { initComponents as originalInitComponents } from '../src/components'
 import { fetchAllEmotes, fetchAllWearables } from '../src/logic/fetch-elements/fetch-items'
 import { fetchAllThirdPartyWearables } from '../src/logic/fetch-elements/fetch-third-party-wearables'
@@ -19,9 +20,8 @@ import { metricDeclarations } from '../src/metrics'
 import { TheGraphComponent } from '../src/ports/the-graph'
 import { main } from '../src/service'
 import { TestComponents } from '../src/types'
-import { createContentComponentMock } from './mocks/content-mock'
+import { createContentClientMock } from './mocks/content-mock'
 import { createTheGraphComponentMock } from './mocks/the-graph-mock'
-import { createEntitiesFetcherComponent } from '../src/adapters/entities-fetcher'
 
 /**
  * Behaves like Jest "describe" function, used to describe a test for a
@@ -83,7 +83,7 @@ async function initComponents(
 
   const logs = await createLogComponent({})
 
-  const content = createContentComponentMock()
+  const content = createContentClientMock()
   const wearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllWearables({ theGraph: theGraphMock }, address)
   )
@@ -93,12 +93,15 @@ async function initComponents(
 
   const entitiesFetcher = await createEntitiesFetcherComponent({ config, logs, content })
 
+  const contentServerUrl = 'baseUrl'
+
   const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent({
     config,
     logs,
-    content
+    content,
+    contentServerUrl
   })
-  const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent({ config, logs, content })
+  const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent({ config, logs, content, contentServerUrl })
 
   const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllThirdPartyWearables(
@@ -119,6 +122,7 @@ async function initComponents(
     localFetch: await createLocalFetchCompoment(config),
     theGraph: theGraphMock,
     content,
+    contentServerUrl,
     wearablesFetcher,
     entitiesFetcher,
     emotesFetcher,

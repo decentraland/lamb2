@@ -2,25 +2,26 @@ import { createDotEnvConfigComponent } from '@well-known-components/env-config-p
 import { createServerComponent, createStatusCheckComponent, IFetchComponent } from '@well-known-components/http-server'
 import { createLogComponent } from '@well-known-components/logger'
 import { createMetricsComponent, instrumentHttpServerWithMetrics } from '@well-known-components/metrics'
+import { createContentClient } from 'dcl-catalyst-client'
+import { createContentServerUrl } from './adapters/content-server-url'
 import {
   createEmoteDefinitionsFetcherComponent,
   createWearableDefinitionsFetcherComponent
 } from './adapters/definitions-fetcher'
 import { createElementsFetcherComponent } from './adapters/elements-fetcher'
+import { createEntitiesFetcherComponent } from './adapters/entities-fetcher'
 import { createThirdPartyProvidersFetcherComponent } from './adapters/third-party-providers-fetcher'
 import { createWearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
+import { fetchAllBaseWearables } from './logic/fetch-elements/fetch-base-items'
 import { fetchAllEmotes, fetchAllWearables } from './logic/fetch-elements/fetch-items'
 import { fetchAllLANDs } from './logic/fetch-elements/fetch-lands'
 import { fetchAllNames } from './logic/fetch-elements/fetch-names'
 import { fetchAllThirdPartyWearables } from './logic/fetch-elements/fetch-third-party-wearables'
 import { metricDeclarations } from './metrics'
-import { createContentComponent } from './ports/content'
 import { createFetchComponent } from './ports/fetch'
 import { createOwnershipCachesComponent } from './ports/ownership-caches'
 import { createTheGraphComponent, TheGraphComponent } from './ports/the-graph'
 import { AppComponents, BaseWearable, GlobalContext } from './types'
-import { fetchAllBaseWearables } from './logic/fetch-elements/fetch-base-items'
-import { createEntitiesFetcherComponent } from './adapters/entities-fetcher'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -42,7 +43,8 @@ export async function initComponents(
   const metrics = await createMetricsComponent(metricDeclarations, { config })
   await instrumentHttpServerWithMetrics({ server, metrics, config })
 
-  const content = await createContentComponent({ config, fetch })
+  const contentServerUrl = await createContentServerUrl({ config })
+  const content = createContentClient({ url: contentServerUrl, fetcher: fetch })
 
   const theGraph = theGraphComponent
     ? theGraphComponent
@@ -50,7 +52,12 @@ export async function initComponents(
 
   const ownershipCaches = await createOwnershipCachesComponent({ config })
 
-  const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent({ config, logs, content })
+  const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent({
+    config,
+    logs,
+    content,
+    contentServerUrl
+  })
 
   const entitiesFetcher = await createEntitiesFetcherComponent({ config, logs, content })
 
@@ -58,7 +65,12 @@ export async function initComponents(
   const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllThirdPartyWearables({ thirdPartyProvidersFetcher, fetch, logs, entitiesFetcher }, address)
   )
-  const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent({ config, logs, content })
+  const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent({
+    config,
+    logs,
+    content,
+    contentServerUrl
+  })
   const baseWearablesFetcher = createElementsFetcherComponent<BaseWearable>({ logs }, async (_address) =>
     fetchAllBaseWearables({ entitiesFetcher })
   )
@@ -94,6 +106,7 @@ export async function initComponents(
     namesFetcher,
     landsFetcher,
     wearablesCaches,
-    thirdPartyProvidersFetcher
+    thirdPartyProvidersFetcher,
+    contentServerUrl
   }
 }

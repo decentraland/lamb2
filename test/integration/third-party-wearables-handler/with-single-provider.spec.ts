@@ -1,9 +1,9 @@
 import Wallet from 'ethereumjs-wallet'
+import { nameZA } from '../../../src/logic/sorting'
 import { testWithComponents } from '../../components'
 import { generateThirdPartyWearables, generateWearableEntities } from '../../data/wearables'
 import { createTheGraphComponentMock } from '../../mocks/the-graph-mock'
 import { convertToThirdPartyWearableResponse } from './convert-to-model-third-party'
-import { nameZA } from '../../../src/logic/sorting'
 
 // NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
 testWithComponents(() => {
@@ -61,11 +61,10 @@ testWithComponents(() => {
     })
 
     it('return wearables when found', async () => {
-      const { localFetch, fetch, content } = components
+      const { localFetch, fetch, content, contentServerUrl } = components
       const wearables = generateThirdPartyWearables(2)
       const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn.decentraland))
       content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(entities)
-      content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
       fetch.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
         json: () => ({
@@ -77,7 +76,7 @@ testWithComponents(() => {
 
       expect(r.status).toBe(200)
       expect(await r.json()).toEqual({
-        elements: convertToThirdPartyWearableResponse(wearables, { entities, content }),
+        elements: convertToThirdPartyWearableResponse(wearables, { entities, contentServerUrl }),
         totalAmount: 2,
         pageNum: 1,
         pageSize: 100
@@ -85,12 +84,11 @@ testWithComponents(() => {
     })
 
     it('return wearables when found with entities when set', async () => {
-      const { localFetch, fetch, content } = components
+      const { localFetch, fetch, content, contentServerUrl } = components
       const assets = generateThirdPartyWearables(2)
       const entities = generateWearableEntities(assets.map((asset) => asset.urn.decentraland))
 
       content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(entities)
-      content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
 
       fetch.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
@@ -105,7 +103,7 @@ testWithComponents(() => {
 
       expect(r.status).toBe(200)
       expect(await r.json()).toEqual({
-        elements: convertToThirdPartyWearableResponse(assets, { entities, content }, true),
+        elements: convertToThirdPartyWearableResponse(assets, { entities, contentServerUrl }, true),
         totalAmount: 2,
         pageNum: 1,
         pageSize: 100
@@ -113,12 +111,11 @@ testWithComponents(() => {
     })
 
     it('return two wearables but only one including entities', async () => {
-      const { localFetch, fetch, content } = components
+      const { localFetch, fetch, content, contentServerUrl } = components
       const wearables = generateThirdPartyWearables(2)
       wearables[0].urn.decentraland = 'non-cached-urn'
       const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn.decentraland))
       content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(entities)
-      content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
       fetch.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
         json: () => ({
@@ -132,7 +129,7 @@ testWithComponents(() => {
 
       expect(r.status).toBe(200)
       expect(await r.json()).toEqual({
-        elements: convertToThirdPartyWearableResponse(wearables, { entities, content }, true),
+        elements: convertToThirdPartyWearableResponse(wearables, { entities, contentServerUrl }, true),
         totalAmount: 2,
         pageNum: 1,
         pageSize: 100
@@ -140,12 +137,11 @@ testWithComponents(() => {
     })
 
     it('return a single wearable with definition 2 times, returning from cache on second round', async () => {
-      const { localFetch, fetch, content } = components
+      const { localFetch, fetch, content, contentServerUrl } = components
       const wearables = generateThirdPartyWearables(1)
       wearables[0].urn.decentraland = 'to-be-cached-urn'
       const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn.decentraland))
       content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(entities)
-      content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
       fetch.fetch = jest.fn().mockResolvedValue({
         ok: true,
         json: () => ({
@@ -163,7 +159,7 @@ testWithComponents(() => {
 
       expect(firstResponse.status).toBe(200)
       expect(firstResponseAsJson).toEqual({
-        elements: convertToThirdPartyWearableResponse(wearables, { entities, content }, true),
+        elements: convertToThirdPartyWearableResponse(wearables, { entities, contentServerUrl }, true),
         totalAmount: 1,
         pageNum: 1,
         pageSize: 100
@@ -173,11 +169,10 @@ testWithComponents(() => {
     })
 
     it('return paginated wearables (total 7, page 1, size 3)', async () => {
-      const { localFetch, fetch, content } = components
+      const { localFetch, fetch, content, contentServerUrl } = components
       const wearables = generateThirdPartyWearables(7)
       const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn.decentraland))
       content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(entities)
-      content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
 
       fetch.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
@@ -192,7 +187,7 @@ testWithComponents(() => {
 
       expect(r.status).toBe(200)
       expect(await r.json()).toEqual({
-        elements: convertToThirdPartyWearableResponse(wearables.slice(0, 3), { entities, content }),
+        elements: convertToThirdPartyWearableResponse(wearables.slice(0, 3), { entities, contentServerUrl }),
         totalAmount: 7,
         pageNum: 1,
         pageSize: 3
@@ -200,11 +195,10 @@ testWithComponents(() => {
     })
 
     it('return paginated wearables (total 7, page 2, size 3)', async () => {
-      const { localFetch, fetch, content } = components
+      const { localFetch, fetch, content, contentServerUrl } = components
       const wearables = generateThirdPartyWearables(7)
       const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn.decentraland))
       content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(entities)
-      content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
 
       fetch.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
@@ -219,7 +213,7 @@ testWithComponents(() => {
 
       expect(r.status).toBe(200)
       expect(await r.json()).toEqual({
-        elements: convertToThirdPartyWearableResponse(wearables.slice(3, 6), { entities, content }),
+        elements: convertToThirdPartyWearableResponse(wearables.slice(3, 6), { entities, contentServerUrl }),
         totalAmount: 7,
         pageNum: 2,
         pageSize: 3
@@ -227,11 +221,10 @@ testWithComponents(() => {
     })
 
     it('return paginated wearables (total 7, page 3, size 3)', async () => {
-      const { localFetch, fetch, content } = components
+      const { localFetch, fetch, content, contentServerUrl } = components
       const wearables = generateThirdPartyWearables(7)
       const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn.decentraland))
       content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(entities)
-      content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
 
       fetch.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
@@ -246,7 +239,7 @@ testWithComponents(() => {
 
       expect(r.status).toBe(200)
       expect(await r.json()).toEqual({
-        elements: convertToThirdPartyWearableResponse([wearables[6]], { entities, content }),
+        elements: convertToThirdPartyWearableResponse([wearables[6]], { entities, contentServerUrl }),
         totalAmount: 7,
         pageNum: 3,
         pageSize: 3
@@ -270,11 +263,10 @@ testWithComponents(() => {
     })
 
     it('return wearables sorted by name', async () => {
-      const { localFetch, fetch, content } = components
+      const { localFetch, fetch, content, contentServerUrl } = components
       const wearables = generateThirdPartyWearables(2)
       const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn.decentraland))
       content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(entities)
-      content.getExternalContentServerUrl = jest.fn().mockReturnValue('contentUrl')
       fetch.fetch = jest.fn().mockResolvedValue({
         ok: true,
         json: () => ({
@@ -288,7 +280,7 @@ testWithComponents(() => {
 
       expect(r.status).toBe(200)
       expect(await r.json()).toEqual({
-        elements: convertToThirdPartyWearableResponse(wearables, { entities, content }),
+        elements: convertToThirdPartyWearableResponse(wearables, { entities, contentServerUrl }),
         totalAmount: 2,
         pageNum: 1,
         pageSize: 100
@@ -300,7 +292,7 @@ testWithComponents(() => {
 
       expect(r2.status).toBe(200)
       expect(await r2.json()).toEqual({
-        elements: convertToThirdPartyWearableResponse(wearables, { entities, content }).sort(nameZA),
+        elements: convertToThirdPartyWearableResponse(wearables, { entities, contentServerUrl }).sort(nameZA),
         totalAmount: 2,
         pageNum: 1,
         pageSize: 100
