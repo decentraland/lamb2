@@ -34,13 +34,7 @@ function handleError(error: any): { status: number; body: LambdasErrorResponse }
     }
   }
 
-  return {
-    status: 500,
-    body: {
-      error: 'Internal Server Error',
-      message: error.message
-    }
-  }
+  throw error
 }
 
 export async function errorHandler(
@@ -50,6 +44,16 @@ export async function errorHandler(
   try {
     return await next()
   } catch (error: any) {
-    return handleError(error)
+    try {
+      return handleError(error)
+    } catch (err: any) {
+      console.log(`Error handling ${ctx.url.toString()}: ${error.message}`)
+      return {
+        status: 500,
+        body: {
+          error: 'Internal Server Error'
+        }
+      }
+    }
   }
 }
