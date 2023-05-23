@@ -44,7 +44,7 @@ export async function initComponents(
   await instrumentHttpServerWithMetrics({ server, metrics, config })
 
   const contentServerUrl = await createContentServerUrl({ config })
-  const content = createContentClient({ url: contentServerUrl.get(), fetcher: fetch })
+  const content = createContentClient({ url: contentServerUrl, fetcher: fetch })
 
   const theGraph = theGraphComponent
     ? theGraphComponent

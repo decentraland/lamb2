@@ -1,11 +1,11 @@
 import { Entity, Wearable } from '@dcl/schemas'
 import { extractWearableDefinitionFromEntity } from '../../../src/adapters/definitions'
 import { ThirdPartyWearableResponse } from '../../../src/controllers/handlers/third-party-wearables-handler'
-import { ContentServerUrl, ThirdPartyAsset } from '../../../src/types'
+import { ThirdPartyAsset } from '../../../src/types'
 
 type ContentInfo = {
   entities: Entity[]
-  contentServerUrl: ContentServerUrl
+  contentServerUrl: string
 }
 
 export function convertToThirdPartyWearableResponse(

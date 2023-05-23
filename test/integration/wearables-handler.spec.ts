@@ -3,7 +3,7 @@ import Wallet from 'ethereumjs-wallet'
 import { extractWearableDefinitionFromEntity } from '../../src/adapters/definitions'
 import { WearableFromQuery } from '../../src/logic/fetch-elements/fetch-items'
 import { RARITIES } from '../../src/logic/utils'
-import { ContentServerUrl, OnChainWearableResponse } from '../../src/types'
+import { OnChainWearableResponse } from '../../src/types'
 import { test } from '../components'
 import { generateWearableEntities, generateWearables } from '../data/wearables'
 
@@ -108,7 +108,6 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[0]] })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[1]] })
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(entities)
-    contentServerUrl.get = jest.fn().mockReturnValue('contentUrl')
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?includeDefinitions`)
 
@@ -129,7 +128,6 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[0]] })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[1]] })
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(entities)
-    contentServerUrl.get = jest.fn().mockReturnValue('contentUrl')
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?includeEntities`)
 
@@ -622,7 +620,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
 type ContentInfo = {
   entities: Entity[]
-  contentServerUrl: ContentServerUrl
+  contentServerUrl: string
   includeEntity?: boolean
   includeDefinition?: boolean
 }

@@ -4,7 +4,7 @@ import { extractEmoteDefinitionFromEntity } from '../../src/adapters/definitions
 import { EmoteFromQuery } from '../../src/logic/fetch-elements/fetch-items'
 import { leastRare, nameAZ, nameZA, rarest } from '../../src/logic/sorting'
 import { RARITIES } from '../../src/logic/utils'
-import { ContentServerUrl, OnChainEmoteResponse } from '../../src/types'
+import { OnChainEmoteResponse } from '../../src/types'
 import { test } from '../components'
 import { generateEmoteContentDefinitions, generateEmotes } from '../data/emotes'
 
@@ -67,7 +67,6 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
 
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
-    contentServerUrl.get = jest.fn().mockReturnValue('contentUrl')
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/emotes?includeDefinitions`)
 
@@ -87,7 +86,6 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
 
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
-    contentServerUrl.get = jest.fn().mockReturnValue('contentUrl')
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/emotes?includeEntities`)
 
@@ -109,7 +107,6 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     emotes[1] = { ...emotes[1], urn: 'anotherUrn' }
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
-    contentServerUrl.get = jest.fn().mockReturnValue('contentUrl')
 
     const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/emotes?includeDefinitions`)
 
@@ -462,7 +459,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
 
 type ContentInfo = {
   definitions: Entity[]
-  contentServerUrl: ContentServerUrl
+  contentServerUrl: string
   includeEntity?: boolean
   includeDefinition?: boolean
 }

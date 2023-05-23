@@ -433,7 +433,7 @@ function createExternalContentUrl(
   fileName: string | undefined
 ): string | undefined {
   const hash = findHashForFile(entity, fileName)
-  if (hash) return components.contentServerUrl.get() + `/contents/` + hash
+  if (hash) return components.contentServerUrl + `/contents/` + hash
   return undefined
 }
 

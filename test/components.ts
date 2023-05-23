@@ -93,9 +93,7 @@ async function initComponents(
 
   const entitiesFetcher = await createEntitiesFetcherComponent({ config, logs, content })
 
-  const contentServerUrl = {
-    get: jest.fn()
-  }
+  const contentServerUrl = 'baseUrl'
 
   const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent({
     config,

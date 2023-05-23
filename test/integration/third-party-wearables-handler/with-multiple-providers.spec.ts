@@ -21,7 +21,6 @@ testWithComponents(() => {
       const wearables = generateThirdPartyWearables(2)
       const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn.decentraland))
       content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(entities)
-      contentServerUrl.get = jest.fn().mockReturnValue('contentUrl')
 
       fetch.fetch = jest.fn().mockImplementation((url) => {
         if (url.includes('babydoge')) {
@@ -52,7 +51,6 @@ testWithComponents(() => {
       const wearables = generateThirdPartyWearables(6)
       const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn.decentraland))
       content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(entities)
-      contentServerUrl.get = jest.fn().mockReturnValue('contentUrl')
 
       fetch.fetch = jest.fn().mockImplementation((url) => {
         if (url.includes('babydoge')) {
@@ -134,7 +132,6 @@ testWithComponents(() => {
       ]
       const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn.decentraland))
       content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(entities)
-      contentServerUrl.get = jest.fn().mockReturnValue('contentUrl')
 
       fetch.fetch = jest.fn().mockImplementation((url) => {
         if (url.includes('babydoge')) {

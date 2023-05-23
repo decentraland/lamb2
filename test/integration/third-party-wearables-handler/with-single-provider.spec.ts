@@ -65,7 +65,6 @@ testWithComponents(() => {
       const wearables = generateThirdPartyWearables(2)
       const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn.decentraland))
       content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(entities)
-      contentServerUrl.get = jest.fn().mockReturnValue('contentUrl')
       fetch.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
         json: () => ({
@@ -90,7 +89,6 @@ testWithComponents(() => {
       const entities = generateWearableEntities(assets.map((asset) => asset.urn.decentraland))
 
       content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(entities)
-      contentServerUrl.get = jest.fn().mockReturnValue('contentUrl')
 
       fetch.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
@@ -118,7 +116,6 @@ testWithComponents(() => {
       wearables[0].urn.decentraland = 'non-cached-urn'
       const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn.decentraland))
       content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(entities)
-      contentServerUrl.get = jest.fn().mockReturnValue('contentUrl')
       fetch.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
         json: () => ({
@@ -145,7 +142,6 @@ testWithComponents(() => {
       wearables[0].urn.decentraland = 'to-be-cached-urn'
       const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn.decentraland))
       content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(entities)
-      contentServerUrl.get = jest.fn().mockReturnValue('contentUrl')
       fetch.fetch = jest.fn().mockResolvedValue({
         ok: true,
         json: () => ({
@@ -177,7 +173,6 @@ testWithComponents(() => {
       const wearables = generateThirdPartyWearables(7)
       const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn.decentraland))
       content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(entities)
-      contentServerUrl.get = jest.fn().mockReturnValue('contentUrl')
 
       fetch.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
@@ -204,7 +199,6 @@ testWithComponents(() => {
       const wearables = generateThirdPartyWearables(7)
       const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn.decentraland))
       content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(entities)
-      contentServerUrl.get = jest.fn().mockReturnValue('contentUrl')
 
       fetch.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
@@ -231,7 +225,6 @@ testWithComponents(() => {
       const wearables = generateThirdPartyWearables(7)
       const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn.decentraland))
       content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(entities)
-      contentServerUrl.get = jest.fn().mockReturnValue('contentUrl')
 
       fetch.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
@@ -274,7 +267,6 @@ testWithComponents(() => {
       const wearables = generateThirdPartyWearables(2)
       const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn.decentraland))
       content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(entities)
-      contentServerUrl.get = jest.fn().mockReturnValue('contentUrl')
       fetch.fetch = jest.fn().mockResolvedValue({
         ok: true,
         json: () => ({

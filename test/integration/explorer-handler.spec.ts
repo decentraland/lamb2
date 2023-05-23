@@ -12,12 +12,12 @@ import {
 
 import { MixedWearableResponse } from '../../src/controllers/handlers/explorer-handler'
 import { leastRareOptional, nameAZ, nameZA, rarestOptional } from '../../src/logic/sorting'
-import { BaseWearable, ContentServerUrl, ThirdPartyAsset } from '../../src/types'
+import { BaseWearable, ThirdPartyAsset } from '../../src/types'
 import { createTheGraphComponentMock } from '../mocks/the-graph-mock'
 
 type ContentInfo = {
   entities: Entity[]
-  contentServerUrl: ContentServerUrl
+  contentServerUrl: string
 }
 
 testWithComponents(() => {
@@ -72,7 +72,6 @@ testWithComponents(() => {
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
     fetch.fetch = jest.fn().mockResolvedValue({ ok: true, json: () => ({ assets: [] }) })
     const entities = generateWearableEntities(baseWearables.map((wearable) => wearable.urn))
-    contentServerUrl.get = jest.fn().mockReturnValue('contentUrl')
     content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
       pointers.map((pointer) => entities.find((def) => def.id === pointer))
     )
@@ -106,7 +105,6 @@ testWithComponents(() => {
     content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
       pointers.map((pointer) => entities.find((def) => def.id === pointer))
     )
-    contentServerUrl.get = jest.fn().mockReturnValue('contentUrl')
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: onChainWearables.slice(0, 5) })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: onChainWearables.slice(5, 10) })
     fetch.fetch = jest.fn().mockImplementation((url) => {

@@ -40,7 +40,7 @@ export type BaseComponents = {
   fetch: IFetchComponent
   metrics: IMetricsComponent<keyof typeof metricDeclarations>
   content: Pick<ContentClient, 'fetchEntitiesByPointers'>
-  contentServerUrl: ContentServerUrl
+  contentServerUrl: string
   theGraph: TheGraphComponent
   ownershipCaches: OwnershipCachesComponent
   baseWearablesFetcher: ElementsFetcher<BaseWearable>
@@ -265,7 +265,3 @@ export type OnChainWearableSorting = {
 export type ThirdPartyWearableSorting = BaseWearableSorting
 
 export type WearableSorting = BaseWearableSorting & OnChainWearableSorting & ThirdPartyWearableSorting
-
-export type ContentServerUrl = {
-  get(): string
-}

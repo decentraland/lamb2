@@ -33,7 +33,7 @@ it('wearables are fetched and mapped to WearableDefinition', async () => {
     } as Wearable
   }
   contentMock.fetchEntitiesByPointers = jest.fn().mockResolvedValue([wearable])
-  const contentServerUrl = { get: () => 'baseUrl' }
+  const contentServerUrl = 'baseUrl'
   const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent(
     { config, logs, content: contentMock, contentServerUrl }
   )
@@ -86,7 +86,7 @@ it('emotes are fetched and mapped to EmoteDefinition', async () => {
     } as Emote
   }
   contentMock.fetchEntitiesByPointers = jest.fn().mockResolvedValue([emote])
-  const contentServerUrl = { get: () => 'baseUrl' }
+  const contentServerUrl = 'baseUrl'
   const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent(
     { config, logs, content: contentMock, contentServerUrl }
   )
@@ -140,7 +140,7 @@ it('items are cached in lowercase', async () => {
     } as Wearable
   }
   contentMock.fetchEntitiesByPointers = jest.fn().mockResolvedValue([wearable])
-  const contentServerUrl = { get: () => 'baseUrl' }
+  const contentServerUrl = 'baseUrl'
   const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent(
     { config, logs, content: contentMock, contentServerUrl }
   )
@@ -236,7 +236,7 @@ it('definitions are fetched despite being evicted from cache', async () => {
     } as Wearable
   }
   contentMock.fetchEntitiesByPointers = jest.fn().mockResolvedValue([wearable0, wearable1])
-  const contentServerUrl = { get: () => 'baseUrl' }
+  const contentServerUrl = 'baseUrl'
   const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent(
     { config, logs, content: contentMock, contentServerUrl }
   )
