@@ -11,7 +11,6 @@ import {
 import { createElementsFetcherComponent } from './adapters/elements-fetcher'
 import { createEntitiesFetcherComponent } from './adapters/entities-fetcher'
 import { createThirdPartyProvidersFetcherComponent } from './adapters/third-party-providers-fetcher'
-import { createWearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
 import { fetchAllBaseWearables } from './logic/fetch-elements/fetch-base-items'
 import { fetchAllEmotes, fetchAllWearables } from './logic/fetch-elements/fetch-items'
 import { fetchAllLANDs } from './logic/fetch-elements/fetch-lands'
@@ -83,9 +82,6 @@ export async function initComponents(
   const namesFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllNames({ theGraph }, address))
   const landsFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllLANDs({ theGraph }, address))
 
-  // old component for old wearable endpoint. Remove in future
-  const wearablesCaches = await createWearablesCachesComponent({ config })
-
   return {
     config,
     logs,
@@ -105,7 +101,6 @@ export async function initComponents(
     emotesFetcher,
     namesFetcher,
     landsFetcher,
-    wearablesCaches,
     thirdPartyProvidersFetcher,
     contentServerUrl
   }

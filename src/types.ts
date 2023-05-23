@@ -23,7 +23,6 @@ import { DefinitionsFetcher } from './adapters/definitions-fetcher'
 import { ElementsFetcher } from './adapters/elements-fetcher'
 import { EntitiesFetcher } from './adapters/entities-fetcher'
 import { ThirdPartyProvidersFetcher } from './adapters/third-party-providers-fetcher'
-import { WearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
 import { metricDeclarations } from './metrics'
 import { OwnershipCachesComponent } from './ports/ownership-caches'
 import { TheGraphComponent } from './ports/the-graph'
@@ -53,9 +52,6 @@ export type BaseComponents = {
   entitiesFetcher: EntitiesFetcher
   namesFetcher: ElementsFetcher<Name>
   landsFetcher: ElementsFetcher<LAND>
-
-  // old components
-  wearablesCaches: WearablesCachesComponent
 }
 
 // components used in runtime
