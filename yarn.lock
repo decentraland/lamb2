@@ -257,6 +257,13 @@
   version "0.2.3"
   resolved "https://registry.npmjs.org/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz"
 
+"@dcl/catalyst-api-specs@^3.1.6":
+  version "3.1.6"
+  resolved "https://registry.yarnpkg.com/@dcl/catalyst-api-specs/-/catalyst-api-specs-3.1.6.tgz#e6f838489d36a23ad03f8b6e830d048c0a0b6b3e"
+  integrity sha512-vgN9ZGRNXthGIfSQ0qNbsmYp81YjJG8dD/KoTAlutwBrVYXzqIM2WLNDEoctfKqSadcvEkS+qU++8R48t6NxoQ==
+  dependencies:
+    yaml "2.2.2"
+
 "@dcl/crypto@^3.4.0", "@dcl/crypto@^3.4.1":
   version "3.4.1"
   resolved "https://registry.yarnpkg.com/@dcl/crypto/-/crypto-3.4.1.tgz#2ab9b9b5b18efbe5d65eee3936c0f73c20480858"
@@ -5053,6 +5060,11 @@ y18n@^5.0.5:
 yallist@^4.0.0:
   version "4.0.0"
   resolved "https://registry.npmjs.org/yallist/-/yallist-4.0.0.tgz"
+
+yaml@2.2.2:
+  version "2.2.2"
+  resolved "https://registry.yarnpkg.com/yaml/-/yaml-2.2.2.tgz#ec551ef37326e6d42872dad1970300f8eb83a073"
+  integrity sha512-CBKFWExMn46Foo4cldiChEzn7S7SRV+wqiluAb6xmueD/fGyRHIhX8m14vVGgeFWjN540nKCNVj6P21eQjgTuA==
 
 yargs-parser@20.x, yargs-parser@^20.2.2:
   version "20.2.9"

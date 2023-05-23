@@ -1,14 +1,9 @@
 import { EmoteDefinition, Entity } from '@dcl/schemas'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { createSorting } from '../../logic/sorting'
-import {
-  HandlerContextWithPath,
-  InvalidRequestError,
-  OnChainEmote,
-  OnChainEmoteResponse,
-  PaginatedResponse
-} from '../../types'
+import { HandlerContextWithPath, InvalidRequestError, OnChainEmote, OnChainEmoteResponse } from '../../types'
 import { createFilters } from './items-commons'
+import { GetEmotes200 } from '@dcl/catalyst-api-specs/lib/client'
 
 function mapItemToItemResponse(
   item: OnChainEmote,
@@ -32,7 +27,7 @@ export async function emotesHandler(
     'emotesFetcher' | 'entitiesFetcher' | 'emoteDefinitionsFetcher',
     '/users/:address/emotes'
   >
-): Promise<PaginatedResponse<OnChainEmoteResponse>> {
+): Promise<{ status: 200; body: GetEmotes200 }> {
   const { emoteDefinitionsFetcher, emotesFetcher, entitiesFetcher } = context.components
   const { address } = context.params
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')

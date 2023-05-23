@@ -1,15 +1,9 @@
 import { Entity, WearableDefinition } from '@dcl/schemas'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { createSorting } from '../../logic/sorting'
-import {
-  ErrorResponse,
-  HandlerContextWithPath,
-  InvalidRequestError,
-  OnChainWearable,
-  OnChainWearableResponse,
-  PaginatedResponse
-} from '../../types'
+import { HandlerContextWithPath, InvalidRequestError, OnChainWearable, OnChainWearableResponse } from '../../types'
 import { createFilters } from './items-commons'
+import { GetWearables200 } from '@dcl/catalyst-api-specs/lib/client'
 
 function mapItemToItemResponse(
   item: OnChainWearable,
@@ -33,7 +27,7 @@ export async function wearablesHandler(
     'wearablesFetcher' | 'entitiesFetcher' | 'wearableDefinitionsFetcher',
     '/users/:address/wearables'
   >
-): Promise<PaginatedResponse<OnChainWearableResponse> | ErrorResponse> {
+): Promise<{ status: 200; body: GetWearables200 }> {
   const { wearableDefinitionsFetcher, entitiesFetcher, wearablesFetcher } = context.components
   const { address } = context.params
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')

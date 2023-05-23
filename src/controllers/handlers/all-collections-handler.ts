@@ -1,4 +1,5 @@
 import { HandlerContextWithPath } from '../../types'
+import { GetCollections200 } from '@dcl/catalyst-api-specs/lib/client'
 
 export const BASE_AVATARS_COLLECTION_ID = 'urn:decentraland:off-chain:base-avatars'
 
@@ -12,7 +13,7 @@ const QUERY_COLLECTIONS = `
 
 export async function allCollectionsHandler(
   context: HandlerContextWithPath<'theGraph' | 'config' | 'fetch' | 'ownershipCaches', '/nfts/collections'>
-) {
+): Promise<{ status: 200; body: GetCollections200 }> {
   const { theGraph } = context.components
 
   function getL1Collections() {

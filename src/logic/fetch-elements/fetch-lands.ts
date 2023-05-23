@@ -52,7 +52,7 @@ export type LANDFromQuery = {
     }
   }
   activeOrder?: {
-    price: string
+    price: number
   }
   image?: string
 }

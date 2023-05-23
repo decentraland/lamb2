@@ -1,9 +1,10 @@
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
-import { HandlerContextWithPath, Name, PaginatedResponse } from '../../types'
+import { HandlerContextWithPath, Name } from '../../types'
+import { GetNames200 } from '@dcl/catalyst-api-specs/lib/client'
 
 export async function namesHandler(
   context: HandlerContextWithPath<'namesFetcher' | 'logs', '/users/:address/names'>
-): Promise<PaginatedResponse<Name>> {
+): Promise<{ status: 200; body: GetNames200 }> {
   const { address } = context.params
   const { namesFetcher } = context.components
   const pagination = paginationObject(context.url, Number.MAX_VALUE)

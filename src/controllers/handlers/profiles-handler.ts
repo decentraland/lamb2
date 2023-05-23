@@ -1,13 +1,14 @@
 import { Request } from 'node-fetch'
 import { getProfiles } from '../../logic/profiles'
-import { HandlerContextWithPath, InvalidRequestError } from '../../types'
+import { HandlerContextWithPath, InvalidRequestError, NotFoundError } from '../../types'
+import { GetAvatarsDetailsByPost200Item, GetAvatarDetails200 } from '@dcl/catalyst-api-specs/lib/client'
 
 export async function profilesHandler(
   context: HandlerContextWithPath<
     'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches',
     '/profiles'
   >
-) {
+): Promise<{ status: 200; body: GetAvatarsDetailsByPost200Item[] } | { status: 304 }> {
   // Get the profile ids
   const body = await context.request.json()
   const ids = body.ids
@@ -23,10 +24,11 @@ export async function profilesHandler(
   // The only case in which we receive undefined profiles is when no profile was updated after de If-Modified-Since specified moment.
   // In this case, as per spec, we return 304 (not modified) and empty body
   // See here: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-Modified-Since
-  if (!profiles)
+  if (!profiles) {
     return {
       status: 304
     }
+  }
 
   return {
     status: 200,
@@ -39,13 +41,10 @@ export async function profileHandler(
     'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches',
     '/profile/:id'
   >
-) {
+): Promise<{ status: 200; body: GetAvatarDetails200 }> {
   const profiles = await getProfiles(context.components, [context.params.id])
   if (!profiles || profiles.length === 0) {
-    return {
-      status: 404,
-      body: {}
-    }
+    throw new NotFoundError('Profile not found')
   }
 
   return {
