@@ -151,7 +151,7 @@ export type Name = {
   name: string
   contractAddress: string
   tokenId: string
-  price?: string
+  price?: number
 }
 
 export type LAND = {
@@ -162,7 +162,7 @@ export type LAND = {
   x?: string
   y?: string
   description?: string
-  price?: string
+  price?: number
   image?: string
 }
 
@@ -177,6 +177,13 @@ export type PaginatedResponse<T> = {
 }
 
 export class InvalidRequestError extends Error {
+  constructor(message: string) {
+    super(message)
+    Error.captureStackTrace(this, this.constructor)
+  }
+}
+
+export class NotFoundError extends Error {
   constructor(message: string) {
     super(message)
     Error.captureStackTrace(this, this.constructor)

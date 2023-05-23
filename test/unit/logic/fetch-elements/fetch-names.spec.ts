@@ -1,5 +1,5 @@
-import { fetchAllNames, NameFromQuery } from "../../../../src/logic/fetch-elements/fetch-names"
-import { createTheGraphComponentMock } from "../../../mocks/the-graph-mock"
+import { fetchAllNames, NameFromQuery } from '../../../../src/logic/fetch-elements/fetch-names'
+import { createTheGraphComponentMock } from '../../../mocks/the-graph-mock'
 import { Name } from '../../../../src/types'
 
 it('the ensSubgraph is queried', async () => {
@@ -18,7 +18,7 @@ it('names are mapped correctly', async () => {
       contractAddress: 'address1',
       tokenId: 'tokenId1',
       activeOrder: {
-        price: '100'
+        price: 100
       }
     },
     {
@@ -37,7 +37,7 @@ it('names are mapped correctly', async () => {
       name: 'name1',
       contractAddress: 'address1',
       tokenId: 'tokenId1',
-      price: '100'
+      price: 100
     },
     {
       name: 'name2',
