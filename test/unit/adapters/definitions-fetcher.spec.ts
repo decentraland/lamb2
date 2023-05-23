@@ -2,10 +2,10 @@ import { Emote, EntityType, Wearable } from "@dcl/schemas"
 import { createDotEnvConfigComponent } from "@well-known-components/env-config-provider"
 import { createLogComponent } from "@well-known-components/logger"
 import { createEmoteDefinitionsFetcherComponent, createWearableDefinitionsFetcherComponent } from "../../../src/adapters/definitions-fetcher"
-import { createContentComponentMock } from "../../mocks/content-mock"
+import { createContentClientMock } from "../../mocks/content-mock"
 
 it('wearables are fetched and mapped to WearableDefinition', async () => {
-  const contentMock = createContentComponentMock()
+  const contentMock = createContentClientMock()
   const logs = await createLogComponent({})
   const config = await createDotEnvConfigComponent({ path: ['.env.default', '.env'] })
   const urn = 'urn:wearable:0'
@@ -33,9 +33,9 @@ it('wearables are fetched and mapped to WearableDefinition', async () => {
     } as Wearable
   }
   contentMock.fetchEntitiesByPointers = jest.fn().mockResolvedValue([wearable])
-  contentMock.getExternalContentServerUrl = jest.fn().mockReturnValue('baseUrl')
+  const contentServerUrl = 'baseUrl'
   const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent(
-    { config, logs, content: contentMock }
+    { config, logs, content: contentMock, contentServerUrl }
   )
   const wearableDefinitions = await wearableDefinitionsFetcher.fetchItemsDefinitions([urn])
   expect(wearableDefinitions[0]).toEqual({
@@ -58,7 +58,7 @@ it('wearables are fetched and mapped to WearableDefinition', async () => {
 })
 
 it('emotes are fetched and mapped to EmoteDefinition', async () => {
-  const contentMock = createContentComponentMock()
+  const contentMock = createContentClientMock()
   const logs = await createLogComponent({})
   const config = await createDotEnvConfigComponent({ path: ['.env.default', '.env'] })
   const urn = 'urn:emote:0'
@@ -86,9 +86,9 @@ it('emotes are fetched and mapped to EmoteDefinition', async () => {
     } as Emote
   }
   contentMock.fetchEntitiesByPointers = jest.fn().mockResolvedValue([emote])
-  contentMock.getExternalContentServerUrl = jest.fn().mockReturnValue('baseUrl')
+  const contentServerUrl = 'baseUrl'
   const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent(
-    { config, logs, content: contentMock }
+    { config, logs, content: contentMock, contentServerUrl }
   )
   const emoteDefinitions = await emoteDefinitionsFetcher.fetchItemsDefinitions([urn])
 
@@ -112,7 +112,7 @@ it('emotes are fetched and mapped to EmoteDefinition', async () => {
 })
 
 it('items are cached in lowercase', async () => {
-  const contentMock = createContentComponentMock()
+  const contentMock = createContentClientMock()
   const logs = await createLogComponent({})
   const config = await createDotEnvConfigComponent({ path: ['.env.default', '.env'] })
   const urn = 'urn:wearable:0'
@@ -140,9 +140,9 @@ it('items are cached in lowercase', async () => {
     } as Wearable
   }
   contentMock.fetchEntitiesByPointers = jest.fn().mockResolvedValue([wearable])
-  contentMock.getExternalContentServerUrl = jest.fn().mockReturnValue('baseUrl')
+  const contentServerUrl = 'baseUrl'
   const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent(
-    { config, logs, content: contentMock }
+    { config, logs, content: contentMock, contentServerUrl }
   )
   const wearableDefinitions = await wearableDefinitionsFetcher.fetchItemsDefinitions(['urn:wearable:0'])
   expect(wearableDefinitions[0]).toEqual({
@@ -184,7 +184,7 @@ it('items are cached in lowercase', async () => {
 })
 
 it('definitions are fetched despite being evicted from cache', async () => {
-  const contentMock = createContentComponentMock()
+  const contentMock = createContentClientMock()
   const logs = await createLogComponent({})
   const config = await createDotEnvConfigComponent({ path: ['.env.default', '.env'] }, {
     ITEMS_CACHE_MAX_SIZE: '1'
@@ -236,9 +236,9 @@ it('definitions are fetched despite being evicted from cache', async () => {
     } as Wearable
   }
   contentMock.fetchEntitiesByPointers = jest.fn().mockResolvedValue([wearable0, wearable1])
-  contentMock.getExternalContentServerUrl = jest.fn().mockReturnValue('baseUrl')
+  const contentServerUrl = 'baseUrl'
   const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent(
-    { config, logs, content: contentMock }
+    { config, logs, content: contentMock, contentServerUrl }
   )
   const wearableDefinitions = await wearableDefinitionsFetcher.fetchItemsDefinitions(['urn:wearable:0', 'urn:wearable:1'])
   expect(wearableDefinitions).toEqual(expect.arrayContaining([
