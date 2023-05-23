@@ -1,4 +1,4 @@
-import { NameFromQuery } from "../../src/logic/fetch-elements/fetch-names"
+import { NameFromQuery } from '../../src/logic/fetch-elements/fetch-names'
 
 export function generateNames(quantity: number): NameFromQuery[] {
   const generatedNames: NameFromQuery[] = []
@@ -9,7 +9,7 @@ export function generateNames(quantity: number): NameFromQuery[] {
       contractAddress: 'contractAddress-' + i,
       tokenId: 'tokenId-' + i,
       activeOrder: {
-        price: 'price-' + i
+        price: i
       }
     })
   }

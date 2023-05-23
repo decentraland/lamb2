@@ -1,6 +1,6 @@
-import { createTheGraphComponentMock } from "../../../mocks/the-graph-mock"
+import { createTheGraphComponentMock } from '../../../mocks/the-graph-mock'
 import { LAND } from '../../../../src/types'
-import { fetchAllLANDs, LANDFromQuery } from "../../../../src/logic/fetch-elements/fetch-lands"
+import { fetchAllLANDs, LANDFromQuery } from '../../../../src/logic/fetch-elements/fetch-lands'
 
 it('the ensSubgraph is queried', async () => {
   const theGraph = createTheGraphComponentMock()
@@ -40,7 +40,7 @@ it('lands are mapped correctly', async () => {
           }
         },
         activeOrder: {
-          price: '100'
+          price: 100
         }
       }
     ] as LANDFromQuery[]
@@ -63,7 +63,7 @@ it('lands are mapped correctly', async () => {
       category: 'estate',
       name: undefined,
       description: 'i am an estate',
-      price: '100'
+      price: 100
     }
   ] as LAND[])
 })

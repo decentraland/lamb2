@@ -1,4 +1,4 @@
-import { LANDFromQuery } from "../../src/logic/fetch-elements/fetch-lands"
+import { LANDFromQuery } from '../../src/logic/fetch-elements/fetch-lands'
 
 export function generateLANDs(quantity: number): LANDFromQuery[] {
   const generatedLANDs: LANDFromQuery[] = []
@@ -14,7 +14,7 @@ export function generateLANDs(quantity: number): LANDFromQuery[] {
       parcel: isParcel ? parcelInfoFor(i) : undefined,
       estate: isParcel ? undefined : estateInfoFor(i),
       activeOrder: {
-        price: 'price-' + i
+        price: i
       }
     })
   }

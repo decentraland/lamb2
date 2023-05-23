@@ -34,7 +34,13 @@ function handleError(error: any): { status: number; body: LambdasErrorResponse }
     }
   }
 
-  throw error
+  return {
+    status: 500,
+    body: {
+      error: 'Internal Server Error',
+      message: error.message
+    }
+  }
 }
 
 export async function errorHandler(
