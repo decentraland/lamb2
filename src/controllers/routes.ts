@@ -22,13 +22,9 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
 
   router.get('/status', statusHandler)
   router.get('/users/:address/wearables', wearablesHandler)
-
-  /**** TODO: missing in the api spec endpoints *******/
   router.get('/users/:address/third-party-wearables', thirdPartyWearablesHandler)
   router.get('/users/:address/third-party-wearables/:collectionId', thirdPartyCollectionWearablesHandler)
   router.get('/third-party-integrations', thirdPartyIntegrationsHandler)
-  /**** end missing *******/
-
   router.get('/users/:address/emotes', emotesHandler)
   router.get('/users/:address/names', namesHandler)
   router.get('/users/:address/lands', landsHandler)
