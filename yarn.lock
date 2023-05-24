@@ -257,10 +257,10 @@
   version "0.2.3"
   resolved "https://registry.npmjs.org/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz"
 
-"@dcl/catalyst-api-specs@^3.1.6":
-  version "3.1.6"
-  resolved "https://registry.yarnpkg.com/@dcl/catalyst-api-specs/-/catalyst-api-specs-3.1.6.tgz#e6f838489d36a23ad03f8b6e830d048c0a0b6b3e"
-  integrity sha512-vgN9ZGRNXthGIfSQ0qNbsmYp81YjJG8dD/KoTAlutwBrVYXzqIM2WLNDEoctfKqSadcvEkS+qU++8R48t6NxoQ==
+"@dcl/catalyst-api-specs@^3.1.7":
+  version "3.1.7"
+  resolved "https://registry.yarnpkg.com/@dcl/catalyst-api-specs/-/catalyst-api-specs-3.1.7.tgz#670b071e58f33ff15ce2589aaf3c3bd6bd64c4e4"
+  integrity sha512-qOEXkZ0R/L4lj2wBFYZQqgvpxFlnKOlIqcnK9cu7+E2Qzsztx9scUXisIYeqnKMJO1xPDFrSKye5mTqJd1Lb2g==
   dependencies:
     yaml "2.2.2"
 
