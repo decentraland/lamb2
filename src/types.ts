@@ -22,6 +22,8 @@ import { ContentClient } from 'dcl-catalyst-client'
 import { DefinitionsFetcher } from './adapters/definitions-fetcher'
 import { ElementsFetcher } from './adapters/elements-fetcher'
 import { EntitiesFetcher } from './adapters/entities-fetcher'
+import { IResourcesStatusComponent } from './adapters/resource-status'
+import { IStatusComponent } from './adapters/status'
 import { ThirdPartyProvidersFetcher } from './adapters/third-party-providers-fetcher'
 import { metricDeclarations } from './metrics'
 import { OwnershipCachesComponent } from './ports/ownership-caches'
@@ -52,6 +54,8 @@ export type BaseComponents = {
   entitiesFetcher: EntitiesFetcher
   namesFetcher: ElementsFetcher<Name>
   landsFetcher: ElementsFetcher<LAND>
+  resourcesStatusCheck: IResourcesStatusComponent
+  status: IStatusComponent
 }
 
 // components used in runtime

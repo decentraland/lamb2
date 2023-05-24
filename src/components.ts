@@ -10,6 +10,8 @@ import {
 } from './adapters/definitions-fetcher'
 import { createElementsFetcherComponent } from './adapters/elements-fetcher'
 import { createEntitiesFetcherComponent } from './adapters/entities-fetcher'
+import { createResourcesStatusComponent } from './adapters/resource-status'
+import { createStatusComponent } from './adapters/status'
 import { createThirdPartyProvidersFetcherComponent } from './adapters/third-party-providers-fetcher'
 import { fetchAllBaseWearables } from './logic/fetch-elements/fetch-base-items'
 import { fetchAllEmotes, fetchAllWearables } from './logic/fetch-elements/fetch-items'
@@ -82,6 +84,9 @@ export async function initComponents(
   const namesFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllNames({ theGraph }, address))
   const landsFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllLANDs({ theGraph }, address))
 
+  const resourcesStatusCheck = createResourcesStatusComponent({ logs })
+  const status = await createStatusComponent({ logs, fetch })
+
   return {
     config,
     logs,
@@ -102,6 +107,8 @@ export async function initComponents(
     namesFetcher,
     landsFetcher,
     thirdPartyProvidersFetcher,
-    contentServerUrl
+    contentServerUrl,
+    resourcesStatusCheck,
+    status
   }
 }

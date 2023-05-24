@@ -148,7 +148,7 @@ async function extendProfiles(
   namesOwnershipChecker: NFTsOwnershipChecker,
   tpwOwnershipChecker: NFTsOwnershipChecker
 ): Promise<ProfileMetadata[]> {
-  const baseUrl = (await config.getString('CONTENT_SERVER_ADDRESS')) ?? ''
+  const baseUrl = (await config.getString('CONTENT_URL')) ?? ''
   const extendedProfiles = profileEntities.map(async (entity) => {
     // Extract data from each entity, which is used to fill the final response
     const { ethAddress, metadata, content } = await extractProfileDataFromEntity(entity)
