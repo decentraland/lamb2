@@ -1,5 +1,4 @@
 import { HandlerContextWithPath } from '../../types'
-import { protobufPackage } from '@dcl/protocol/out-js/about.gen'
 import { GetAboutCatalystInfo200 } from '@dcl/catalyst-api-specs/lib/client'
 
 const networkIds: Record<string, number> = {
@@ -107,7 +106,7 @@ export async function aboutHandler(
     bff: {
       healthy: true,
       userCount,
-      protocolVersion: protobufPackage.replace('_', '.').replace(/^v/, '')
+      protocolVersion: '1.0_0'
     },
     acceptingUsers
   }

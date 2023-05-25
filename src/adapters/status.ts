@@ -19,7 +19,7 @@ export async function createStatusComponent(
   const logger = logs.getLogger('status-component')
 
   const cache = new LRUCache<string, any>({
-    maxSize: 3,
+    max: 3,
     ttl: 1000 * 60 * 5, // 5mins
     fetchMethod: async function (url: string): Promise<any> {
       try {
