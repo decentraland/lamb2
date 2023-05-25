@@ -14,9 +14,15 @@ describe('about-controller-unit', () => {
     ARCHIPELAGO_URL: 'https://peer.decentraland.org/archipelago',
     INTERNAL_ARCHIPELAGO_URL: 'http://archipelgo',
     COMMIT_HASH: 'commit_hash',
-    CURRENT_VERSION: '1.0.0'
+    CURRENT_VERSION: '1.0.0',
+    MAX_USERS: '400'
   }
-  it('ok', async () => {
+
+  async function getValidatedRealmName(): Promise<string | undefined> {
+    return 'testName'
+  }
+
+  it('sevices are unhealthy', async () => {
     const url = new URL('https://github.com/well-known-components')
     const config = createConfigComponent(defaultConfig)
 
@@ -26,10 +32,6 @@ describe('about-controller-unit', () => {
 
     async function areResourcesOverloaded(): Promise<boolean> {
       return false
-    }
-
-    async function getValidatedRealmName(): Promise<string | undefined> {
-      return 'testName'
     }
 
     const components = {
@@ -77,6 +79,225 @@ describe('about-controller-unit', () => {
           healthy: true,
           protocolVersion: '1.0_0',
           userCount: 0
+        },
+        acceptingUsers: false
+      }
+    })
+  })
+
+  it('sevices are healthy', async () => {
+    const url = new URL('https://github.com/well-known-components')
+    const config = createConfigComponent(defaultConfig)
+
+    async function getServiceStatus(statusUrl: string): Promise<ServiceStatus<any>> {
+      switch (statusUrl) {
+        case `${defaultConfig.INTERNAL_LAMBDAS_URL}/status`:
+          return { healthy: true, data: { version: 'lambdas_1', commitHash: 'lambdas_hash' } }
+        case `${defaultConfig.INTERNAL_ARCHIPELAGO_URL}/status`:
+          return { healthy: true, data: { version: 'archipelago_1', commitHash: 'archipelago_hash', usersCount: 10 } }
+        case `${defaultConfig.INTERNAL_CONTENT_URL}/status`:
+          return { healthy: true, data: { version: 'content_1', commitHash: 'content_hash' } }
+        default:
+          return { healthy: false }
+      }
+    }
+
+    async function areResourcesOverloaded(): Promise<boolean> {
+      return false
+    }
+
+    const components = {
+      config,
+      status: { getServiceStatus },
+      resourcesStatusCheck: { areResourcesOverloaded },
+      realmName: { getValidatedRealmName }
+    }
+
+    const response = await aboutHandler({ url, components })
+
+    // NOTE: this is just a type check against the protocol
+    const aboutResponse: AboutResponse = response.body
+    expect(aboutResponse).toBeTruthy()
+
+    expect(response).toMatchObject({
+      status: 200,
+      body: {
+        healthy: true,
+        content: {
+          healthy: true,
+          publicUrl: defaultConfig.CONTENT_URL,
+          commitHash: 'content_hash',
+          version: 'content_1'
+        },
+        lambdas: {
+          healthy: true,
+          version: defaultConfig.CURRENT_VERSION,
+          commitHash: defaultConfig.COMMIT_HASH,
+          publicUrl: defaultConfig.LAMBDAS_URL
+        },
+        configurations: {
+          networkId: 1,
+          globalScenesUrn: [],
+          scenesUrn: [],
+          realmName: 'testName'
+        },
+        comms: {
+          healthy: true,
+          protocol: 'v3',
+          commitHash: 'archipelago_hash',
+          version: 'archipelago_1',
+          usersCount: 10
+        },
+        bff: {
+          healthy: true,
+          protocolVersion: '1.0_0',
+          userCount: 10
+        },
+        acceptingUsers: true
+      }
+    })
+  })
+
+  it('sevices are healthy, but resources are overloaded', async () => {
+    const url = new URL('https://github.com/well-known-components')
+    const config = createConfigComponent(defaultConfig)
+
+    async function getServiceStatus(statusUrl: string): Promise<ServiceStatus<any>> {
+      switch (statusUrl) {
+        case `${defaultConfig.INTERNAL_LAMBDAS_URL}/status`:
+          return { healthy: true, data: { version: 'lambdas_1', commitHash: 'lambdas_hash' } }
+        case `${defaultConfig.INTERNAL_ARCHIPELAGO_URL}/status`:
+          return { healthy: true, data: { version: 'archipelago_1', commitHash: 'archipelago_hash', usersCount: 10 } }
+        case `${defaultConfig.INTERNAL_CONTENT_URL}/status`:
+          return { healthy: true, data: { version: 'content_1', commitHash: 'content_hash' } }
+        default:
+          return { healthy: false }
+      }
+    }
+
+    async function areResourcesOverloaded(): Promise<boolean> {
+      return true
+    }
+
+    const components = {
+      config,
+      status: { getServiceStatus },
+      resourcesStatusCheck: { areResourcesOverloaded },
+      realmName: { getValidatedRealmName }
+    }
+
+    const response = await aboutHandler({ url, components })
+
+    // NOTE: this is just a type check against the protocol
+    const aboutResponse: AboutResponse = response.body
+    expect(aboutResponse).toBeTruthy()
+
+    expect(response).toMatchObject({
+      status: 200,
+      body: {
+        healthy: true,
+        content: {
+          healthy: true,
+          publicUrl: defaultConfig.CONTENT_URL,
+          commitHash: 'content_hash',
+          version: 'content_1'
+        },
+        lambdas: {
+          healthy: true,
+          version: defaultConfig.CURRENT_VERSION,
+          commitHash: defaultConfig.COMMIT_HASH,
+          publicUrl: defaultConfig.LAMBDAS_URL
+        },
+        configurations: {
+          networkId: 1,
+          globalScenesUrn: [],
+          scenesUrn: [],
+          realmName: 'testName'
+        },
+        comms: {
+          healthy: true,
+          protocol: 'v3',
+          commitHash: 'archipelago_hash',
+          version: 'archipelago_1',
+          usersCount: 10
+        },
+        bff: {
+          healthy: true,
+          protocolVersion: '1.0_0',
+          userCount: 10
+        },
+        acceptingUsers: false
+      }
+    })
+  })
+
+  it('sevices are healthy, but there are too many users', async () => {
+    const url = new URL('https://github.com/well-known-components')
+    const config = createConfigComponent(defaultConfig)
+
+    async function getServiceStatus(statusUrl: string): Promise<ServiceStatus<any>> {
+      switch (statusUrl) {
+        case `${defaultConfig.INTERNAL_LAMBDAS_URL}/status`:
+          return { healthy: true, data: { version: 'lambdas_1', commitHash: 'lambdas_hash' } }
+        case `${defaultConfig.INTERNAL_ARCHIPELAGO_URL}/status`:
+          return { healthy: true, data: { version: 'archipelago_1', commitHash: 'archipelago_hash', usersCount: 1000 } }
+        case `${defaultConfig.INTERNAL_CONTENT_URL}/status`:
+          return { healthy: true, data: { version: 'content_1', commitHash: 'content_hash' } }
+        default:
+          return { healthy: false }
+      }
+    }
+
+    async function areResourcesOverloaded(): Promise<boolean> {
+      return false
+    }
+
+    const components = {
+      config,
+      status: { getServiceStatus },
+      resourcesStatusCheck: { areResourcesOverloaded },
+      realmName: { getValidatedRealmName }
+    }
+
+    const response = await aboutHandler({ url, components })
+
+    // NOTE: this is just a type check against the protocol
+    const aboutResponse: AboutResponse = response.body
+    expect(aboutResponse).toBeTruthy()
+
+    expect(response).toMatchObject({
+      status: 200,
+      body: {
+        healthy: true,
+        content: {
+          healthy: true,
+          publicUrl: defaultConfig.CONTENT_URL,
+          commitHash: 'content_hash',
+          version: 'content_1'
+        },
+        lambdas: {
+          healthy: true,
+          version: defaultConfig.CURRENT_VERSION,
+          commitHash: defaultConfig.COMMIT_HASH,
+          publicUrl: defaultConfig.LAMBDAS_URL
+        },
+        configurations: {
+          networkId: 1,
+          globalScenesUrn: [],
+          scenesUrn: [],
+          realmName: 'testName'
+        },
+        comms: {
+          healthy: true,
+          protocol: 'v3',
+          commitHash: 'archipelago_hash',
+          version: 'archipelago_1',
+          usersCount: 1000
+        },
+        bff: {
+          healthy: true,
+          protocolVersion: '1.0_0',
+          userCount: 1000
         },
         acceptingUsers: false
       }
