@@ -2,10 +2,9 @@
 # yarn lockfile v1
 
 
-"@adraffy/ens-normalize@1.9.0":
+"@adraffy/ens-normalize@https://github.com/ricmoo/ens-normalize.js":
   version "1.9.0"
-  resolved "https://registry.yarnpkg.com/@adraffy/ens-normalize/-/ens-normalize-1.9.0.tgz#223572538f6bea336750039bb43a4016dcc8182d"
-  integrity sha512-iowxq3U30sghZotgl4s/oJRci6WPBfNO5YYgk2cIOMCHr3LeGPcsZjCEr+33Q4N+oV3OABDAtA+pyvWjbvBifQ==
+  resolved "https://github.com/ricmoo/ens-normalize.js#2d040533e57e4f25f9a7cc4715e219658ad454b5"
 
 "@ampproject/remapping@^2.1.0":
   version "2.2.0"
@@ -257,10 +256,15 @@
   version "0.2.3"
   resolved "https://registry.npmjs.org/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz"
 
-"@dcl/catalyst-api-specs@^3.1.7":
-  version "3.1.7"
-  resolved "https://registry.yarnpkg.com/@dcl/catalyst-api-specs/-/catalyst-api-specs-3.1.7.tgz#670b071e58f33ff15ce2589aaf3c3bd6bd64c4e4"
-  integrity sha512-qOEXkZ0R/L4lj2wBFYZQqgvpxFlnKOlIqcnK9cu7+E2Qzsztx9scUXisIYeqnKMJO1xPDFrSKye5mTqJd1Lb2g==
+"@dcl/catalyst-api-specs@https://sdk-team-cdn.decentraland.org/@dcl//branch//dcl-catalyst-api-specs-3.1.9-5082819409.commit-2bcce75.tgz":
+  version "3.1.9-5082819409.commit-2bcce75"
+  resolved "https://sdk-team-cdn.decentraland.org/@dcl//branch//dcl-catalyst-api-specs-3.1.9-5082819409.commit-2bcce75.tgz#f5894a88096b05dd39f9cb8c51ba8893b0c6d39f"
+  dependencies:
+    yaml "2.2.2"
+
+"@dcl/catalyst-api-specs@https://sdk-team-cdn.decentraland.org/@dcl//branch//dcl-catalyst-api-specs-3.1.9-5082839452.commit-6bba8da.tgz":
+  version "3.1.9-5082839452.commit-6bba8da"
+  resolved "https://sdk-team-cdn.decentraland.org/@dcl//branch//dcl-catalyst-api-specs-3.1.9-5082839452.commit-6bba8da.tgz#2da886c4060dfdf247e8cbbb6c0a2bc9ce8446c3"
   dependencies:
     yaml "2.2.2"
 
@@ -884,6 +888,11 @@
   version "18.11.18"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-18.11.18.tgz#8dfb97f0da23c2293e554c5a50d61ef134d7697f"
 
+"@types/node@18.15.13":
+  version "18.15.13"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.15.13.tgz#f64277c341150c979e42b00e4ac289290c9df469"
+  integrity sha512-N+0kuo9KgrUQ1Sn/ifDXsvg0TTleP7rIy4zOBGECxAljqvqfqpTfzx0Q1NUedOixRMBfe2Whhb056a42cWs26Q==
+
 "@types/node@^16.11.19":
   version "16.11.44"
   resolved "https://registry.npmjs.org/@types/node/-/node-16.11.44.tgz"
@@ -1149,10 +1158,10 @@ acorn@^8.8.0:
   resolved "https://registry.yarnpkg.com/acorn/-/acorn-8.8.2.tgz#1b2f25db02af965399b9776b0c2c391276d37c4a"
   integrity sha512-xjIYgE8HBrkpd/sJqOGNspf8uHG+NOHGOw6a/Urj8taM2EXfdNAH2oFcPeIFfsv3+kz/mJrS5VuMqbNLjCa2vw==
 
-aes-js@4.0.0-beta.3:
-  version "4.0.0-beta.3"
-  resolved "https://registry.yarnpkg.com/aes-js/-/aes-js-4.0.0-beta.3.tgz#da2253f0ff03a0b3a9e445c8cbdf78e7fda7d48c"
-  integrity sha512-/xJX0/VTPcbc5xQE2VUP91y1xN8q/rDfhEzLm+vLc3hYvb5+qHCnpJRuFcrKn63zumK/sCwYYzhG8HP78JYSTA==
+aes-js@4.0.0-beta.5:
+  version "4.0.0-beta.5"
+  resolved "https://registry.yarnpkg.com/aes-js/-/aes-js-4.0.0-beta.5.tgz#8d2452c52adedebc3a3e28465d858c11ca315873"
+  integrity sha512-G965FqalsNyrPqgEGON7nIx1e/OVENSgiEIzyC63haUMuvNnwIgIjMs52hlTCKhkBny7A2ORNlfY9Zu+jmGk1Q==
 
 aes-js@^3.1.2:
   version "3.1.2"
@@ -1727,10 +1736,10 @@ dataloader@^1.4.0:
   resolved "https://registry.yarnpkg.com/dataloader/-/dataloader-1.4.0.tgz#bca11d867f5d3f1b9ed9f737bd15970c65dff5c8"
   integrity sha512-68s5jYdlvasItOJnCuI2Q9s4q98g0pCyL3HrcKJu8KNugUl8ahgmZYg38ysLTgQjjXX3H8CJLkAvWrclWfcalw==
 
-dcl-catalyst-client@^18.1.0:
-  version "18.1.0"
-  resolved "https://registry.yarnpkg.com/dcl-catalyst-client/-/dcl-catalyst-client-18.1.0.tgz#9431532b761d74a5e9d3d1456e4bce3240b8e1d5"
-  integrity sha512-zVzbmS8ebDOBxK8ZbuRjFbplRJuvxcfgA6Nm/lIiPjVMtFMXNEWx5mH5LzUBKN234EPltoO5CCnAXtKl97ZZkg==
+dcl-catalyst-client@^18.1.1:
+  version "18.1.1"
+  resolved "https://registry.yarnpkg.com/dcl-catalyst-client/-/dcl-catalyst-client-18.1.1.tgz#6d2a736e2a4d95472e869f2bd992aafa3460bd10"
+  integrity sha512-R7/DUDu2jo76umxZfCBSh+goGAF0LVW4RUyZ3L2elbdJY0bPC1KApl1TbrBev5GjMdRQ3Jq+mQAQ9QLtMbl8GA==
   dependencies:
     "@dcl/crypto" "^3.4.0"
     "@dcl/hashing" "^1.1.0"
@@ -1741,7 +1750,7 @@ dcl-catalyst-client@^18.1.0:
     cross-fetch "^3.1.5"
     form-data "^4.0.0"
   optionalDependencies:
-    ethers "6.2.3"
+    ethers "^6.4.0"
 
 debug@2.6.9:
   version "2.6.9"
@@ -2290,15 +2299,16 @@ ethereumjs-wallet@^1.0.2:
     utf8 "^3.0.0"
     uuid "^8.3.2"
 
-ethers@6.2.3:
-  version "6.2.3"
-  resolved "https://registry.yarnpkg.com/ethers/-/ethers-6.2.3.tgz#9ddee438b5949e9724ba4c5d2c3b8deb5202ce96"
-  integrity sha512-l1Z/Yr+HrOk+7LTeYRHGMvYwVLGpTuVrT/kJ7Kagi3nekGISYILIby0f1ipV9BGzgERyy+w4emH+d3PhhcxIfA==
+ethers@^6.4.0:
+  version "6.4.0"
+  resolved "https://registry.yarnpkg.com/ethers/-/ethers-6.4.0.tgz#82c230a3a018a2627593d24ec4b9c20e9681c341"
+  integrity sha512-nksaMCwX+BOdV2NQ1/57OehSD2JtujbhrdC2+Fb9VpvBO0WO6h+WWwu3oMMw7aUiTa5lvQcWX1vl4aOy7Q3CTg==
   dependencies:
-    "@adraffy/ens-normalize" "1.9.0"
+    "@adraffy/ens-normalize" "https://github.com/ricmoo/ens-normalize.js"
     "@noble/hashes" "1.1.2"
     "@noble/secp256k1" "1.7.1"
-    aes-js "4.0.0-beta.3"
+    "@types/node" "18.15.13"
+    aes-js "4.0.0-beta.5"
     tslib "2.4.0"
     ws "8.5.0"
 

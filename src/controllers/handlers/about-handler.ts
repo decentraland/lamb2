@@ -14,8 +14,6 @@ export type ArchipelagoStatus = {
 
 export type DefaultStatus = Omit<ArchipelagoStatus, 'userCount'>
 
-// TODO: test against @dcl/protocol
-
 function getUrl(publicURL: string, healthCheckURL?: string) {
   let url = healthCheckURL ? healthCheckURL : publicURL
   if (!url.endsWith('/')) {
@@ -31,9 +29,12 @@ function getUrl(publicURL: string, healthCheckURL?: string) {
 
 // handlers arguments only type what they need, to make unit testing easier
 export async function aboutHandler(
-  context: Pick<HandlerContextWithPath<'status' | 'resourcesStatusCheck' | 'config', '/about'>, 'url' | 'components'>
+  context: Pick<
+    HandlerContextWithPath<'status' | 'resourcesStatusCheck' | 'config' | 'realmName', '/about'>,
+    'url' | 'components'
+  >
 ): Promise<{ status: 200 | 503; body: GetAboutCatalystInfo200 }> {
-  const { config, status, resourcesStatusCheck } = context.components
+  const { config, status, resourcesStatusCheck, realmName } = context.components
 
   const ethNetwork = (await config.getString('ETH_NETWORK')) ?? 'mainnet'
   const maxUsers = await config.getNumber('MAX_USERS')
@@ -63,13 +64,12 @@ export async function aboutHandler(
   const contentUrl = getUrl(contentPublicUrl, contentInternalUrl)
   const archipelagoUrl = getUrl(archipelagoPublicUrl, archipelagoInternalUrl)
 
-  const [archipelagoStatus, contentStatus, lambdasStatus, resourcesOverload, realmName] = await Promise.all([
+  const [archipelagoStatus, contentStatus, lambdasStatus, resourcesOverload, name] = await Promise.all([
     status.getServiceStatus<ArchipelagoStatus>(archipelagoUrl.statusUrl),
     status.getServiceStatus<DefaultStatus>(contentUrl.statusUrl),
     status.getServiceStatus<DefaultStatus>(lambdasUrl.statusUrl),
     resourcesStatusCheck.areResourcesOverloaded(),
-    'name' //TODO
-    // realm.getName()
+    realmName.getValidatedRealmName()
   ])
 
   const healthy = archipelagoStatus.healthy && contentStatus.healthy && lambdasStatus.healthy
@@ -94,7 +94,7 @@ export async function aboutHandler(
       networkId,
       globalScenesUrn: [],
       scenesUrn: [],
-      realmName
+      realmName: name
     },
     comms: {
       healthy: archipelagoStatus.healthy,

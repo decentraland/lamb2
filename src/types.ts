@@ -19,9 +19,11 @@ import type {
 } from '@well-known-components/interfaces'
 import { Variables } from '@well-known-components/thegraph-component'
 import { ContentClient } from 'dcl-catalyst-client'
+import { Provider } from 'ethers'
 import { DefinitionsFetcher } from './adapters/definitions-fetcher'
 import { ElementsFetcher } from './adapters/elements-fetcher'
 import { EntitiesFetcher } from './adapters/entities-fetcher'
+import { IRealmNameComponent } from './adapters/realm-name-validator'
 import { IResourcesStatusComponent } from './adapters/resource-status'
 import { IStatusComponent } from './adapters/status'
 import { ThirdPartyProvidersFetcher } from './adapters/third-party-providers-fetcher'
@@ -56,6 +58,8 @@ export type BaseComponents = {
   landsFetcher: ElementsFetcher<LAND>
   resourcesStatusCheck: IResourcesStatusComponent
   status: IStatusComponent
+  realmName: IRealmNameComponent
+  provider: Provider
 }
 
 // components used in runtime
@@ -187,13 +191,6 @@ export class NotFoundError extends Error {
   constructor(message: string) {
     super(message)
     Error.captureStackTrace(this, this.constructor)
-  }
-}
-
-export type ErrorResponse = {
-  status: number
-  body: {
-    error: string
   }
 }
 

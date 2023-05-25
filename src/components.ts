@@ -3,6 +3,7 @@ import { createServerComponent, createStatusCheckComponent, IFetchComponent } fr
 import { createLogComponent } from '@well-known-components/logger'
 import { createMetricsComponent, instrumentHttpServerWithMetrics } from '@well-known-components/metrics'
 import { createContentClient } from 'dcl-catalyst-client'
+import { JsonRpcProvider } from 'ethers'
 import { createContentServerUrl } from './adapters/content-server-url'
 import {
   createEmoteDefinitionsFetcherComponent,
@@ -10,6 +11,7 @@ import {
 } from './adapters/definitions-fetcher'
 import { createElementsFetcherComponent } from './adapters/elements-fetcher'
 import { createEntitiesFetcherComponent } from './adapters/entities-fetcher'
+import { createRealmNameComponent } from './adapters/realm-name-validator'
 import { createResourcesStatusComponent } from './adapters/resource-status'
 import { createStatusComponent } from './adapters/status'
 import { createThirdPartyProvidersFetcherComponent } from './adapters/third-party-providers-fetcher'
@@ -86,6 +88,10 @@ export async function initComponents(
 
   const resourcesStatusCheck = createResourcesStatusComponent({ logs })
   const status = await createStatusComponent({ logs, fetch })
+  const ethNetwork = (await config.getString('ETH_NETWORK')) ?? 'mainnet'
+  const provider = new JsonRpcProvider(`https://rpc.decentraland.org/${encodeURIComponent(ethNetwork)}?project=lamb2`)
+
+  const realmName = await createRealmNameComponent({ config, provider, fetch })
 
   return {
     config,
@@ -109,6 +115,8 @@ export async function initComponents(
     thirdPartyProvidersFetcher,
     contentServerUrl,
     resourcesStatusCheck,
-    status
+    status,
+    realmName,
+    provider
   }
 }

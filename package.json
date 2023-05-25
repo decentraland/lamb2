@@ -26,7 +26,7 @@
     "tabWidth": 2
   },
   "dependencies": {
-    "@dcl/catalyst-api-specs": "^3.1.7",
+    "@dcl/catalyst-api-specs": "https://sdk-team-cdn.decentraland.org/@dcl//branch//dcl-catalyst-api-specs-3.1.9-5082839452.commit-6bba8da.tgz",
     "@dcl/crypto": "^3.4.1",
     "@dcl/schemas": "^7.1.0",
     "@dcl/urn-resolver": "^2.0.3",
@@ -36,7 +36,8 @@
     "@well-known-components/logger": "^3.1.2",
     "@well-known-components/metrics": "^2.0.1",
     "@well-known-components/thegraph-component": "^1.4.3",
-    "dcl-catalyst-client": "^18.1.0",
+    "dcl-catalyst-client": "^18.1.1",
+    "ethers": "^6.4.0",
     "lodash": "^4.17.21",
     "lru-cache": "^8.0.4"
   }
