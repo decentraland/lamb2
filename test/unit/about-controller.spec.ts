@@ -78,7 +78,8 @@ describe('about-controller-unit', () => {
         bff: {
           healthy: true,
           protocolVersion: '1.0_0',
-          userCount: 0
+          userCount: 0,
+          publicUrl: '/bff'
         },
         acceptingUsers: false
       }
@@ -151,7 +152,8 @@ describe('about-controller-unit', () => {
         bff: {
           healthy: true,
           protocolVersion: '1.0_0',
-          userCount: 10
+          userCount: 10,
+          publicUrl: '/bff'
         },
         acceptingUsers: true
       }
@@ -224,7 +226,8 @@ describe('about-controller-unit', () => {
         bff: {
           healthy: true,
           protocolVersion: '1.0_0',
-          userCount: 10
+          userCount: 10,
+          publicUrl: '/bff'
         },
         acceptingUsers: false
       }
@@ -297,7 +300,8 @@ describe('about-controller-unit', () => {
         bff: {
           healthy: true,
           protocolVersion: '1.0_0',
-          userCount: 1000
+          userCount: 1000,
+          publicUrl: '/bff'
         },
         acceptingUsers: false
       }
