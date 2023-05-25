@@ -26,7 +26,7 @@
     "tabWidth": 2
   },
   "dependencies": {
-    "@dcl/catalyst-api-specs": "https://sdk-team-cdn.decentraland.org/@dcl//branch//dcl-catalyst-api-specs-3.1.9-5082839452.commit-6bba8da.tgz",
+    "@dcl/catalyst-api-specs": "^3.1.9",
     "@dcl/crypto": "^3.4.1",
     "@dcl/schemas": "^7.1.0",
     "@dcl/urn-resolver": "^2.0.3",

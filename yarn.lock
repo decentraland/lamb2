@@ -256,15 +256,10 @@
   version "0.2.3"
   resolved "https://registry.npmjs.org/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz"
 
-"@dcl/catalyst-api-specs@https://sdk-team-cdn.decentraland.org/@dcl//branch//dcl-catalyst-api-specs-3.1.9-5082819409.commit-2bcce75.tgz":
-  version "3.1.9-5082819409.commit-2bcce75"
-  resolved "https://sdk-team-cdn.decentraland.org/@dcl//branch//dcl-catalyst-api-specs-3.1.9-5082819409.commit-2bcce75.tgz#f5894a88096b05dd39f9cb8c51ba8893b0c6d39f"
-  dependencies:
-    yaml "2.2.2"
-
-"@dcl/catalyst-api-specs@https://sdk-team-cdn.decentraland.org/@dcl//branch//dcl-catalyst-api-specs-3.1.9-5082839452.commit-6bba8da.tgz":
-  version "3.1.9-5082839452.commit-6bba8da"
-  resolved "https://sdk-team-cdn.decentraland.org/@dcl//branch//dcl-catalyst-api-specs-3.1.9-5082839452.commit-6bba8da.tgz#2da886c4060dfdf247e8cbbb6c0a2bc9ce8446c3"
+"@dcl/catalyst-api-specs@^3.1.9":
+  version "3.1.9"
+  resolved "https://registry.yarnpkg.com/@dcl/catalyst-api-specs/-/catalyst-api-specs-3.1.9.tgz#3dbd83a149b8c69ea4fbf96f2ac580249cf5288e"
+  integrity sha512-THPj0YgGQyrtYlfIybT1nWENXXCMntOAycxXJZwb0x6nmEvOMSN8mJZkXjdvKjSs707rBwBRpdEe7vG15UwrOg==
   dependencies:
     yaml "2.2.2"
 
