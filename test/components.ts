@@ -22,6 +22,7 @@ import { main } from '../src/service'
 import { TestComponents } from '../src/types'
 import { createContentClientMock } from './mocks/content-mock'
 import { createTheGraphComponentMock } from './mocks/the-graph-mock'
+import { createStatusComponent } from '../src/adapters/status'
 
 /**
  * Behaves like Jest "describe" function, used to describe a test for a
@@ -53,7 +54,9 @@ async function initComponents(
   const defaultFetchConfig = defaultServerConfig()
   const config = createConfigComponent({
     ...defaultFetchConfig,
-    CONTENT_SERVER_ADDRESS: 'https://peer.decentraland.org/content',
+    CONTENT_URL: 'https://peer.decentraland.org/content',
+    LAMBDAS_URL: 'https://peer.decentraland.org/lambdas',
+    ARCHIPELAGO_URL: 'https://peer.decentraland.org/archipelago',
     COMMIT_HASH: 'commit_hash',
     CURRENT_VERSION: 'version',
     HTTP_SERVER_PORT: '7272'
@@ -101,7 +104,12 @@ async function initComponents(
     content,
     contentServerUrl
   })
-  const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent({ config, logs, content, contentServerUrl })
+  const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent({
+    config,
+    logs,
+    content,
+    contentServerUrl
+  })
 
   const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllThirdPartyWearables(
@@ -117,7 +125,7 @@ async function initComponents(
 
   return {
     ...components,
-    config: config,
+    config,
     metrics: createTestMetricsComponent(metricDeclarations),
     localFetch: await createLocalFetchCompoment(config),
     theGraph: theGraphMock,

@@ -1,8 +1,7 @@
 import { AppComponents } from '../types'
 
 export async function createContentServerUrl(components: Pick<AppComponents, 'config'>): Promise<string> {
-  let configAddress: string =
-    (await components.config.getString('CONTENT_SERVER_ADDRESS')) ?? 'http://content-server:6969'
+  let configAddress: string = (await components.config.getString('CONTENT_URL')) ?? 'http://content-server:6969'
   configAddress = configAddress.toLowerCase()
   if (!configAddress.startsWith('http')) {
     configAddress = 'http://' + configAddress
