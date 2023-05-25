@@ -22,7 +22,7 @@ function getUrl(publicURL: string, healthCheckURL?: string) {
   if (!url.endsWith('/')) {
     url += '/'
   }
-  url += '/status'
+  url += 'status'
 
   return {
     publicUrl: publicURL,
