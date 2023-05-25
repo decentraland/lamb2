@@ -106,7 +106,8 @@ export async function aboutHandler(
     bff: {
       healthy: true,
       userCount,
-      protocolVersion: '1.0_0'
+      protocolVersion: '1.0_0',
+      publicUrl: '/bff'
     },
     acceptingUsers
   }
