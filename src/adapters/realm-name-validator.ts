@@ -44,7 +44,7 @@ export async function createRealmNameComponent(
     const servers = await getCatalystServersFromDAO(network as any, provider)
     const names = new Set(await Promise.all(servers.map(resolveRealmName)))
 
-    logger.log(`Realm names for ${JSON.stringify(Array.from(names))}`)
+    logger.log(`Realm names found: ${JSON.stringify(Array.from(names))}`)
     if (!names.has(realmName)) {
       validatedRealmName = realmName
       return realmName
