@@ -2,7 +2,7 @@ import { IBaseComponent } from '@well-known-components/interfaces'
 import { BaseComponents } from '../types'
 import { getCatalystServersFromDAO } from 'dcl-catalyst-client/dist/contracts'
 import { CatalystServerInfo } from 'dcl-catalyst-client/dist/types'
-import { GetAboutCatalystInfo200 } from '@dcl/catalyst-api-specs/lib/client'
+import { About } from '@dcl/catalyst-api-specs/lib/client'
 
 export type IRealmNameComponent = IBaseComponent & {
   getValidatedRealmName(): Promise<string | undefined>
@@ -20,7 +20,7 @@ export async function createRealmNameComponent(
     }
 
     try {
-      const data: GetAboutCatalystInfo200 = await response.json()
+      const data: About = await response.json()
       return data.configurations.realmName
     } catch (err) {
       return undefined

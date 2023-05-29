@@ -1,9 +1,9 @@
-import { LambdasErrorResponse } from '@dcl/catalyst-api-specs/lib/client'
+import { LambdasError } from '@dcl/catalyst-api-specs/lib/client'
 import { IHttpServerComponent } from '@well-known-components/interfaces'
 import { InvalidRequestError, NotFoundError } from '../../types'
 import { FetcherError } from '../../adapters/elements-fetcher'
 
-function handleError(error: any): { status: number; body: LambdasErrorResponse } {
+function handleError(error: any): { status: number; body: LambdasError } {
   if (error instanceof InvalidRequestError) {
     return {
       status: 400,
