@@ -16,12 +16,12 @@ export async function createRealmNameComponent(
   const logger = logs.getLogger('realm-name')
 
   async function resolveRealmName({ address }: CatalystServerInfo): Promise<string | undefined> {
-    const response = await fetch.fetch(`${address}/about`)
-    if (!response.ok) {
-      return undefined
-    }
-
     try {
+      const response = await fetch.fetch(`${address}/about`)
+      if (!response.ok) {
+        return undefined
+      }
+
       const data: About = await response.json()
       return data.configurations.realmName
     } catch (err) {
