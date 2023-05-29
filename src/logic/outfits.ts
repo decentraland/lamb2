@@ -3,33 +3,6 @@ import { createNamesOwnershipChecker } from '../ports/ownership-checker/names-ow
 import { createWearablesOwnershipChecker } from '../ports/ownership-checker/wearables-ownership-checker'
 import { AppComponents, TypedEntity } from '../types'
 
-// function createWearablesQuery(category: string) {
-//   return `query fetchOwnedWearables($owner: String, $idFrom: String) {
-//     nfts(
-//       where: { id_gt: $idFrom, owner: $owner, category: "${category}"},
-//       orderBy: id,
-//       orderDirection: asc,
-//       first: ${THE_GRAPH_PAGE_SIZE}
-//     ) {
-//       urn,
-//       id,
-//       tokenId,
-//       category,
-//       transferredAt,
-//       metadata {
-//         ${category} {
-//           name,
-//           category
-//         }
-//       },
-//       item {
-//         rarity,
-//         price
-//       }
-//     }
-//   }`
-// }
-
 export async function getOutfits(
   components: Pick<AppComponents, 'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches'>,
   ethAddress: string
@@ -60,6 +33,7 @@ export async function getOutfits(
   })
 
   const namesOwnershipChecker = createNamesOwnershipChecker(components)
+  namesOwnershipChecker.addNFTsForAddress(ethAddress, outfits.namesForExtraSlots)
   namesOwnershipChecker.checkNFTsOwnership()
   const ownedNames = new Set(namesOwnershipChecker.getOwnedNFTsForAddress(ethAddress))
   let extraSlots = ownedNames.size
