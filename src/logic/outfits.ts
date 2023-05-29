@@ -39,25 +39,15 @@ export async function getOutfits(
   namesOwnershipChecker.addNFTsForAddress(ethAddress, outfits.namesForExtraSlots)
   namesOwnershipChecker.checkNFTsOwnership()
   const ownedNames = new Set(namesOwnershipChecker.getOwnedNFTsForAddress(ethAddress))
-  let extraSlots = ownedNames.size
 
-  const outfitsWithOwnedNamesAndWearables = outfitsWithOwnedWearables.filter((outfit) => {
-    const isExtraSlot = outfit.slot > 4
-    if (!isExtraSlot) {
-      return true
-    } else {
-      if (extraSlots > 0) {
-        extraSlots--
-        return true
-      }
-      return false
-    }
-  })
+  const normalOutfitsWithOwnedWearables = outfitsWithOwnedWearables.filter((outfit) => outfit.slot <= 4)
+  const extraOutfitsWithOwnedWearables = outfitsWithOwnedWearables.filter((outfit) => outfit.slot > 4)
+  const extraOutfitsWithOwnedWearablesAndNames = extraOutfitsWithOwnedWearables.slice(0, ownedNames.size)
 
   return {
     ...outfitsEntity,
     metadata: {
-      outfits: outfitsWithOwnedNamesAndWearables,
+      outfits: [...normalOutfitsWithOwnedWearables, ...extraOutfitsWithOwnedWearablesAndNames],
       namesForExtraSlots: Array.from(ownedNames)
     }
   }
