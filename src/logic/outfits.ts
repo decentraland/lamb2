@@ -14,12 +14,15 @@ export async function getOutfits(
   }
 
   const outfitsEntity = outfitsEntities[0]
-
   if (!outfitsEntity.metadata || outfitsEntity.metadata.outfits.length === 0) {
     return outfitsEntities[0]
   }
 
-  const outfits = outfitsEntities[0].metadata as Outfits
+  const outfits = outfitsEntities[0].metadata
+
+  if (!outfits) {
+    return undefined
+  }
 
   const wearablesOwnershipChecker = createWearablesOwnershipChecker(components)
   const outfitsWearables = outfits.outfits.map((outfit) => outfit.outfit.wearables).flat()
