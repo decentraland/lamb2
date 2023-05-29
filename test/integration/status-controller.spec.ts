@@ -8,7 +8,6 @@ test('integration sanity tests using a real server backend', function ({ compone
     expect(r.status).toEqual(200)
     expect(await r.json()).toEqual({
       commitHash: 'commit_hash',
-      contentServerUrl: 'https://peer.decentraland.org/content',
       currentTime: expect.any(Number),
       version: 'version'
     })

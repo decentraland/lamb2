@@ -19,11 +19,14 @@ import type {
 } from '@well-known-components/interfaces'
 import { Variables } from '@well-known-components/thegraph-component'
 import { ContentClient } from 'dcl-catalyst-client'
+import { Provider } from 'ethers'
 import { DefinitionsFetcher } from './adapters/definitions-fetcher'
 import { ElementsFetcher } from './adapters/elements-fetcher'
 import { EntitiesFetcher } from './adapters/entities-fetcher'
+import { IRealmNameComponent } from './adapters/realm-name-validator'
+import { IResourcesStatusComponent } from './adapters/resource-status'
+import { IStatusComponent } from './adapters/status'
 import { ThirdPartyProvidersFetcher } from './adapters/third-party-providers-fetcher'
-import { WearablesCachesComponent } from './controllers/handlers/old-wearables-handler'
 import { metricDeclarations } from './metrics'
 import { OwnershipCachesComponent } from './ports/ownership-caches'
 import { TheGraphComponent } from './ports/the-graph'
@@ -53,9 +56,10 @@ export type BaseComponents = {
   entitiesFetcher: EntitiesFetcher
   namesFetcher: ElementsFetcher<Name>
   landsFetcher: ElementsFetcher<LAND>
-
-  // old components
-  wearablesCaches: WearablesCachesComponent
+  resourcesStatusCheck: IResourcesStatusComponent
+  status: IStatusComponent
+  realmName: IRealmNameComponent
+  provider: Provider
 }
 
 // components used in runtime
@@ -187,13 +191,6 @@ export class NotFoundError extends Error {
   constructor(message: string) {
     super(message)
     Error.captureStackTrace(this, this.constructor)
-  }
-}
-
-export type ErrorResponse = {
-  status: number
-  body: {
-    error: string
   }
 }
 

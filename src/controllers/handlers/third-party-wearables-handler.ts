@@ -2,14 +2,13 @@ import { WearableDefinition } from '@dcl/schemas'
 import { fetchThirdPartyWearablesFromThirdPartyName } from '../../logic/fetch-elements/fetch-third-party-wearables'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { parseUrn } from '../../logic/utils'
-import {
-  ErrorResponse,
-  HandlerContextWithPath,
-  InvalidRequestError,
-  PaginatedResponse,
-  ThirdPartyWearable
-} from '../../types'
+import { HandlerContextWithPath, InvalidRequestError, ThirdPartyWearable } from '../../types'
 import { createBaseSorting } from '../../logic/sorting'
+import {
+  GetThirdPartyCollection200,
+  GetThirdPartyWearables200,
+  ThirdPartyIntegrations
+} from '@dcl/catalyst-api-specs/lib/client'
 
 function createFilter(url: URL): (item: ThirdPartyWearable) => boolean {
   const categories = url.searchParams.has('category') ? url.searchParams.getAll('category') : []
@@ -36,7 +35,7 @@ export async function thirdPartyWearablesHandler(
     'wearableDefinitionsFetcher' | 'logs' | 'thirdPartyWearablesFetcher',
     '/users/:address/third-party-wearables'
   >
-): Promise<PaginatedResponse<ThirdPartyWearableResponse>> {
+): Promise<{ status: 200; body: GetThirdPartyWearables200 }> {
   const { thirdPartyWearablesFetcher, wearableDefinitionsFetcher } = context.components
   const { address } = context.params
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
@@ -73,16 +72,11 @@ export async function thirdPartyWearablesHandler(
 
 export async function thirdPartyCollectionWearablesHandler(
   context: HandlerContextWithPath<
-    | 'wearableDefinitionsFetcher'
-    | 'logs'
-    | 'thirdPartyWearablesFetcher'
-    | 'thirdPartyProvidersFetcher'
-    | 'fetch'
-    | 'entitiesFetcher',
+    'wearableDefinitionsFetcher' | 'logs' | 'thirdPartyWearablesFetcher' | 'thirdPartyProvidersFetcher' | 'fetch',
     '/users/:address/third-party-wearables/:collectionId'
   >
-): Promise<PaginatedResponse<ThirdPartyWearableResponse> | ErrorResponse> {
-  const { wearableDefinitionsFetcher, entitiesFetcher } = context.components
+): Promise<{ status: 200; body: GetThirdPartyCollection200 }> {
+  const { wearableDefinitionsFetcher } = context.components
   const { address, collectionId } = context.params
 
   // Strip the last part (the 6th part) if a collection contract id is specified
@@ -145,7 +139,7 @@ export type ThirdPartyIntegrationsResponse = {
 
 export async function thirdPartyIntegrationsHandler(
   context: HandlerContextWithPath<'thirdPartyProvidersFetcher', '/third-party-integrations'>
-): Promise<ThirdPartyIntegrationsResponse | ErrorResponse> {
+): Promise<{ status: 200; body: ThirdPartyIntegrations }> {
   const providers = await context.components.thirdPartyProvidersFetcher.getAll()
   const integrations = providers.map((p) => ({
     name: p.metadata.thirdParty.name,

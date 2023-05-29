@@ -1,7 +1,5 @@
-import { createConfigComponent, createDotEnvConfigComponent } from '@well-known-components/env-config-provider'
-import { createTestMetricsComponent } from '@well-known-components/metrics'
+import { createDotEnvConfigComponent } from '@well-known-components/env-config-provider'
 import { statusHandler } from '../../src/controllers/handlers/status-handler'
-import { metricDeclarations } from '../../src/metrics'
 
 describe('status-controller-unit', () => {
   it('must return commit hash', async () => {
@@ -14,17 +12,6 @@ describe('status-controller-unit', () => {
     const url = new URL('https://github.com/well-known-components')
     const config = await createDotEnvConfigComponent({}, { CURRENT_VERSION: 'current_version' })
     expect(await statusHandler({ url, components: { config } })).toMatchObject({ body: { version: 'current_version' } })
-  })
-
-  it('must return default content server address', async () => {
-    const url = new URL('https://github.com/well-known-components')
-    const config = await createDotEnvConfigComponent(
-      {},
-      { CONTENT_SERVER_ADDRESS: 'https://peer.decentraland.org/content' }
-    )
-    expect(await statusHandler({ url, components: { config } })).toMatchObject({
-      body: { contentServerUrl: 'https://peer.decentraland.org/content' }
-    })
   })
 
   it('must return currentTime', async () => {
