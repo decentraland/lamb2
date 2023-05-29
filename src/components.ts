@@ -91,7 +91,7 @@ export async function initComponents(
   const ethNetwork = (await config.getString('ETH_NETWORK')) ?? 'mainnet'
   const provider = new JsonRpcProvider(`https://rpc.decentraland.org/${encodeURIComponent(ethNetwork)}?project=lamb2`)
 
-  const realmName = await createRealmNameComponent({ config, provider, fetch })
+  const realmName = await createRealmNameComponent({ config, provider, fetch, logs })
 
   return {
     config,

@@ -9,17 +9,19 @@ export type IRealmNameComponent = IBaseComponent & {
 }
 
 export async function createRealmNameComponent(
-  components: Pick<BaseComponents, 'fetch' | 'config' | 'provider'>
+  components: Pick<BaseComponents, 'fetch' | 'config' | 'provider' | 'logs'>
 ): Promise<IRealmNameComponent> {
-  const { config, fetch, provider } = components
+  const { config, fetch, provider, logs } = components
+
+  const logger = logs.getLogger('realm-name')
 
   async function resolveRealmName({ address }: CatalystServerInfo): Promise<string | undefined> {
-    const response = await fetch.fetch(`${address}/about`)
-    if (!response.ok) {
-      return undefined
-    }
-
     try {
+      const response = await fetch.fetch(`${address}/about`)
+      if (!response.ok) {
+        return undefined
+      }
+
       const data: About = await response.json()
       return data.configurations.realmName
     } catch (err) {
@@ -42,6 +44,7 @@ export async function createRealmNameComponent(
     const servers = await getCatalystServersFromDAO(network as any, provider)
     const names = new Set(await Promise.all(servers.map(resolveRealmName)))
 
+    logger.log(`Realm names found: ${JSON.stringify(Array.from(names))}`)
     if (!names.has(realmName)) {
       validatedRealmName = realmName
       return realmName
