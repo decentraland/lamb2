@@ -1,5 +1,5 @@
 import { HandlerContextWithPath } from '../../types'
-import { GetAboutCatalystInfo200 } from '@dcl/catalyst-api-specs/lib/client'
+import { About } from '@dcl/catalyst-api-specs/lib/client'
 
 const networkIds: Record<string, number> = {
   goerli: 5,
@@ -33,7 +33,7 @@ export async function aboutHandler(
     HandlerContextWithPath<'status' | 'resourcesStatusCheck' | 'config' | 'realmName', '/about'>,
     'url' | 'components'
   >
-): Promise<{ status: 200 | 503; body: GetAboutCatalystInfo200 }> {
+): Promise<{ status: 200 | 503; body: About }> {
   const { config, status, resourcesStatusCheck, realmName } = context.components
 
   const ethNetwork = (await config.getString('ETH_NETWORK')) ?? 'mainnet'

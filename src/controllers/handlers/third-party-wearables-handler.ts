@@ -6,8 +6,8 @@ import { HandlerContextWithPath, InvalidRequestError, ThirdPartyWearable } from 
 import { createBaseSorting } from '../../logic/sorting'
 import {
   GetThirdPartyCollection200,
-  GetThirdPartyIntegrations200,
-  GetThirdPartyWearables200
+  GetThirdPartyWearables200,
+  ThirdPartyIntegrations
 } from '@dcl/catalyst-api-specs/lib/client'
 
 function createFilter(url: URL): (item: ThirdPartyWearable) => boolean {
@@ -139,7 +139,7 @@ export type ThirdPartyIntegrationsResponse = {
 
 export async function thirdPartyIntegrationsHandler(
   context: HandlerContextWithPath<'thirdPartyProvidersFetcher', '/third-party-integrations'>
-): Promise<{ status: 200; body: GetThirdPartyIntegrations200 }> {
+): Promise<{ status: 200; body: ThirdPartyIntegrations }> {
   const providers = await context.components.thirdPartyProvidersFetcher.getAll()
   const integrations = providers.map((p) => ({
     name: p.metadata.thirdParty.name,
