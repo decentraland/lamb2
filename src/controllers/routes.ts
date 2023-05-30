@@ -15,6 +15,7 @@ import { wearablesHandler } from './handlers/wearables-handler'
 import { explorerHandler } from './handlers/explorer-handler'
 import { errorHandler } from './handlers/errorHandler'
 import { aboutHandler } from './handlers/about-handler'
+import { outfitsHandler } from './handlers/outfits-handler'
 
 // We return the entire router because it will be easier to test than a whole server
 export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContext>> {
@@ -33,6 +34,7 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
   router.post('/profiles', profilesHandler)
   router.get('/profiles/:id', profileHandler)
   router.get('/nfts/collections', allCollectionsHandler)
+  router.get('/outfits/:id', outfitsHandler)
 
   /* internal */
   router.get('/explorer/:address/wearables', explorerHandler)

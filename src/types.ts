@@ -269,3 +269,7 @@ export type OnChainWearableSorting = {
 export type ThirdPartyWearableSorting = BaseWearableSorting
 
 export type WearableSorting = BaseWearableSorting & OnChainWearableSorting & ThirdPartyWearableSorting
+
+export type TypedEntity<T> = Omit<Entity, 'metadata'> & {
+  metadata?: T
+}
