@@ -11,7 +11,6 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@dcl/eslint-config": "^1.1.1",
-    "@dcl/protocol": "^1.0.0-5048370069.commit-00abb1b",
     "@types/lodash": "^4.14.191",
     "@types/node": "^18.11.18",
     "@well-known-components/test-helpers": "^1.4.0",
