@@ -9,7 +9,7 @@ const networkIds: Record<string, number> = {
 export type ArchipelagoStatus = {
   version: string
   commitHash: string
-  usersCount: number
+  userCount: number
 }
 
 export type DefaultStatus = Omit<ArchipelagoStatus, 'userCount'>
@@ -73,7 +73,7 @@ export async function aboutHandler(
   ])
 
   const healthy = archipelagoStatus.healthy && contentStatus.healthy && lambdasStatus.healthy
-  const userCount = archipelagoStatus.data?.usersCount || 0
+  const userCount = archipelagoStatus.data?.userCount || 0
   const acceptingUsers = healthy && !resourcesOverload && (!maxUsers || userCount < maxUsers)
 
   const result = {
