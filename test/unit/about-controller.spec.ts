@@ -1,9 +1,7 @@
-import { createConfigComponent, createDotEnvConfigComponent } from '@well-known-components/env-config-provider'
+import { createConfigComponent } from '@well-known-components/env-config-provider'
 import { ServiceStatus } from '../../src/adapters/status'
 import { aboutHandler } from '../../src/controllers/handlers/about-handler'
 import { AboutResponse } from '@dcl/protocol/out-js/decentraland/realm/about.gen'
-
-// TODO: test against @dcl/protocol
 
 describe('about-controller-unit', () => {
   const defaultConfig = {
