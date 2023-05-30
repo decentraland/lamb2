@@ -169,7 +169,7 @@ describe('about-controller-unit', () => {
         case `${defaultConfig.INTERNAL_LAMBDAS_URL}/status`:
           return { healthy: true, data: { version: 'lambdas_1', commitHash: 'lambdas_hash' } }
         case `${defaultConfig.INTERNAL_ARCHIPELAGO_URL}/status`:
-          return { healthy: true, data: { version: 'archipelago_1', commitHash: 'archipelago_hash', usersCount: 10 } }
+          return { healthy: true, data: { version: 'archipelago_1', commitHash: 'archipelago_hash', userCount: 10 } }
         case `${defaultConfig.INTERNAL_CONTENT_URL}/status`:
           return { healthy: true, data: { version: 'content_1', commitHash: 'content_hash' } }
         default:
@@ -243,7 +243,7 @@ describe('about-controller-unit', () => {
         case `${defaultConfig.INTERNAL_LAMBDAS_URL}/status`:
           return { healthy: true, data: { version: 'lambdas_1', commitHash: 'lambdas_hash' } }
         case `${defaultConfig.INTERNAL_ARCHIPELAGO_URL}/status`:
-          return { healthy: true, data: { version: 'archipelago_1', commitHash: 'archipelago_hash', usersCount: 1000 } }
+          return { healthy: true, data: { version: 'archipelago_1', commitHash: 'archipelago_hash', userCount: 1000 } }
         case `${defaultConfig.INTERNAL_CONTENT_URL}/status`:
           return { healthy: true, data: { version: 'content_1', commitHash: 'content_hash' } }
         default:
