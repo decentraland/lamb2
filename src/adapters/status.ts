@@ -20,7 +20,7 @@ export async function createStatusComponent(
 
   const cache = new LRUCache<string, any>({
     max: 3,
-    ttl: 1000 * 60 * 5, // 5mins
+    ttl: 1000 * 60, // 1min
     fetchMethod: async function (url: string): Promise<any> {
       try {
         const response = await fetch.fetch(url, {
