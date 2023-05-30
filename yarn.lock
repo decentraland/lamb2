@@ -299,13 +299,6 @@
     ipfs-unixfs-importer "^7.0.3"
     multiformats "^9.6.3"
 
-"@dcl/protocol@^1.0.0-4747376947.commit-d770e0d":
-  version "1.0.0-4984397350.commit-6fe3e1b"
-  resolved "https://registry.yarnpkg.com/@dcl/protocol/-/protocol-1.0.0-4984397350.commit-6fe3e1b.tgz#73a259e2df5db35e05b8fb05d69c195fcb411eb6"
-  integrity sha512-wuLhU6hd0DDO7qinDtZD+vgHVmiFXBqmhkxm6QKAwKEzebcXd8P5PjZUmISQ6eKt6pzK/iqO7eiZ6V4OqaNQog==
-  dependencies:
-    "@dcl/ts-proto" "^1.146.2"
-
 "@dcl/schemas@^6.4.2":
   version "6.19.0"
   resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-6.19.0.tgz#42cfe23226782a736e3956ebcbd39ef21e63aeb1"
@@ -323,19 +316,6 @@
     ajv "^8.11.0"
     ajv-errors "^3.0.0"
     ajv-keywords "^5.1.0"
-
-"@dcl/ts-proto@^1.146.2":
-  version "1.146.2"
-  resolved "https://registry.yarnpkg.com/@dcl/ts-proto/-/ts-proto-1.146.2.tgz#1607fc378e3f76e8f88e974a6c031508de7e8811"
-  integrity sha512-r6iUFT+eO4/Kaafvg+vyLtq2dHkSpfehdhWd3J2mO16tcqclLjJ61CwRBXWBm31nk1L8HQFZc7iYgboMxT9g6g==
-  dependencies:
-    "@types/object-hash" "^1.3.0"
-    case-anything "^2.1.10"
-    dataloader "^1.4.0"
-    object-hash "^1.3.1"
-    protobufjs "^6.11.3"
-    ts-poet "^6.4.1"
-    ts-proto-descriptors "1.9.0"
 
 "@dcl/urn-resolver@^2.0.3":
   version "2.0.3"
@@ -880,11 +860,6 @@
 "@types/node@^16.11.19":
   version "16.11.44"
   resolved "https://registry.npmjs.org/@types/node/-/node-16.11.44.tgz"
-
-"@types/object-hash@^1.3.0":
-  version "1.3.4"
-  resolved "https://registry.yarnpkg.com/@types/object-hash/-/object-hash-1.3.4.tgz#079ba142be65833293673254831b5e3e847fe58b"
-  integrity sha512-xFdpkAkikBgqBdG9vIlsqffDV8GpvnPEzs0IUtr1v3BEB97ijsFQ4RXVbUZwjFThhB4MDSTUfvmxUD5PGx0wXA==
 
 "@types/pbkdf2@^3.0.0":
   version "3.1.0"
@@ -1511,11 +1486,6 @@ caniuse-lite@^1.0.30001366:
   version "1.0.30001366"
   resolved "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001366.tgz"
 
-case-anything@^2.1.10:
-  version "2.1.11"
-  resolved "https://registry.yarnpkg.com/case-anything/-/case-anything-2.1.11.tgz#39a00ff733f26e48729f5c6c7f23763ac8fa0467"
-  integrity sha512-uzKDXzdM/x914cepWPzElU3y50NRKYhjkO4ittOHLq+rF6M0AgRLF/+yPR1tvwLNAh8WHEPTfhuciZGPfX+oyg==
-
 chalk@^2.0.0:
   version "2.4.2"
   resolved "https://registry.npmjs.org/chalk/-/chalk-2.4.2.tgz"
@@ -1714,19 +1684,13 @@ data-urls@^2.0.0:
     whatwg-mimetype "^2.3.0"
     whatwg-url "^8.0.0"
 
-dataloader@^1.4.0:
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/dataloader/-/dataloader-1.4.0.tgz#bca11d867f5d3f1b9ed9f737bd15970c65dff5c8"
-  integrity sha512-68s5jYdlvasItOJnCuI2Q9s4q98g0pCyL3HrcKJu8KNugUl8ahgmZYg38ysLTgQjjXX3H8CJLkAvWrclWfcalw==
-
-dcl-catalyst-client@^18.1.1:
-  version "18.1.1"
-  resolved "https://registry.yarnpkg.com/dcl-catalyst-client/-/dcl-catalyst-client-18.1.1.tgz#6d2a736e2a4d95472e869f2bd992aafa3460bd10"
-  integrity sha512-R7/DUDu2jo76umxZfCBSh+goGAF0LVW4RUyZ3L2elbdJY0bPC1KApl1TbrBev5GjMdRQ3Jq+mQAQ9QLtMbl8GA==
+dcl-catalyst-client@^19.0.0:
+  version "19.0.0"
+  resolved "https://registry.yarnpkg.com/dcl-catalyst-client/-/dcl-catalyst-client-19.0.0.tgz#031652bff3de49b6cecb620ff15450ae044db54b"
+  integrity sha512-jbWw086m23G4P1hruGuJoAfJhMmKQczHHiysmINyrShFGm8Xrf6s+Q6hH0a/7Ys1L9XTycBTISwi53cTHHE39w==
   dependencies:
     "@dcl/crypto" "^3.4.0"
     "@dcl/hashing" "^1.1.0"
-    "@dcl/protocol" "^1.0.0-4747376947.commit-d770e0d"
     "@dcl/schemas" "^7.1.0"
     "@well-known-components/fetch-component" "^1.0.0"
     cookie "^0.5.0"
@@ -1799,11 +1763,6 @@ destroy@1.2.0, destroy@^1.2.0:
   version "1.2.0"
   resolved "https://registry.npmjs.org/destroy/-/destroy-1.2.0.tgz"
 
-detect-libc@^1.0.3:
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/detect-libc/-/detect-libc-1.0.3.tgz#fa137c4bd698edf55cd5cd02ac559f91a4c4ba9b"
-  integrity sha512-pGjwhsmsp4kL2RTz08wcOlGN83otlqHeD/Z5T8GXZB+/YcpQ/dgo+lbU8ZsGxV0HIvqqxo9l7mqYwyYMD9bKDg==
-
 detect-newline@^3.0.0:
   version "3.1.0"
   resolved "https://registry.npmjs.org/detect-newline/-/detect-newline-3.1.0.tgz"
@@ -1846,13 +1805,6 @@ domexception@^2.0.1:
 dotenv@^16.0.1:
   version "16.0.3"
   resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.0.3.tgz#115aec42bac5053db3c456db30cc243a5a836a07"
-
-dprint-node@^1.0.7:
-  version "1.0.7"
-  resolved "https://registry.yarnpkg.com/dprint-node/-/dprint-node-1.0.7.tgz#f571eaf61affb3a696cff1bdde78a021875ba540"
-  integrity sha512-NTZOW9A7ipb0n7z7nC3wftvsbceircwVHSgzobJsEQa+7RnOMbhrfX5IflA6CtC4GA63DSAiHYXa4JKEy9F7cA==
-  dependencies:
-    detect-libc "^1.0.3"
 
 ee-first@1.1.1:
   version "1.1.1"
@@ -3912,11 +3864,6 @@ object-assign@^4:
   version "4.1.1"
   resolved "https://registry.npmjs.org/object-assign/-/object-assign-4.1.1.tgz"
 
-object-hash@^1.3.1:
-  version "1.3.1"
-  resolved "https://registry.yarnpkg.com/object-hash/-/object-hash-1.3.1.tgz#fde452098a951cb145f039bb7d455449ddc126df"
-  integrity sha512-OSuu/pU4ENM9kmREg0BdNrUDIl1heYa4mBZacJc+vVWz4GtAwu7jO8s4AIt2aGRUTqxykpWzI3Oqnsm13tTMDA==
-
 object-inspect@^1.12.2:
   version "1.12.3"
   resolved "https://registry.yarnpkg.com/object-inspect/-/object-inspect-1.12.3.tgz#ba62dffd67ee256c8c086dfae69e016cd1f198b9"
@@ -4184,7 +4131,7 @@ prompts@^2.0.1:
     kleur "^3.0.3"
     sisteransi "^1.0.5"
 
-protobufjs@^6.10.2, protobufjs@^6.11.3, protobufjs@^6.8.8:
+protobufjs@^6.10.2:
   version "6.11.3"
   resolved "https://registry.npmjs.org/protobufjs/-/protobufjs-6.11.3.tgz"
   dependencies:
@@ -4741,21 +4688,6 @@ ts-jest@^27.1.3:
     make-error "1.x"
     semver "7.x"
     yargs-parser "20.x"
-
-ts-poet@^6.4.1:
-  version "6.4.1"
-  resolved "https://registry.yarnpkg.com/ts-poet/-/ts-poet-6.4.1.tgz#e68d314a07cf9c0d568a3bfd87023ec91ff77964"
-  integrity sha512-AjZEs4h2w4sDfwpHMxQKHrTlNh2wRbM5NRXmLz0RiH+yPGtSQFbe9hBpNocU8vqVNgfh0BIOiXR80xDz3kKxUQ==
-  dependencies:
-    dprint-node "^1.0.7"
-
-ts-proto-descriptors@1.9.0:
-  version "1.9.0"
-  resolved "https://registry.yarnpkg.com/ts-proto-descriptors/-/ts-proto-descriptors-1.9.0.tgz#0ed5631f11851846c8de21be2bff346719edce71"
-  integrity sha512-Ui8zA5Q4Jnq6JIGRraUWvECrqixxtwwin8GkhIkvwCpR+JcSPsxWe8HfTj5eHfyruGYI6Zjf96XlC87hTakHfQ==
-  dependencies:
-    long "^4.0.0"
-    protobufjs "^6.8.8"
 
 tsconfig-paths@^3.14.1:
   version "3.14.1"
