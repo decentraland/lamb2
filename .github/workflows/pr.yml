@@ -3,10 +3,10 @@ name: CI/CD on PR
 on:
   pull_request:
 
-
 jobs:
   pr:
     uses: decentraland/platform-actions/.github/workflows/apps-pr.yml@main
     with:
       service-name: lamb2
+      dockerfile-url: https://raw.githubusercontent.com/decentraland/platform-actions/183667cbd859b45c368186c3a4448b0231f011c5/Dockerfile.alpine
     secrets: inherit
