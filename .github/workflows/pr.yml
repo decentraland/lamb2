@@ -6,8 +6,13 @@ on:
 
 jobs:
   pr:
-    uses: decentraland/platform-actions/.github/workflows/apps-pr.yml@dockerfile
-    with:
-      service-name: lamb2
-      dockerfile-url: https://raw.githubusercontent.com/decentraland/platform-actions/183667cbd859b45c368186c3a4448b0231f011c5/Dockerfile.alpine
-    secrets: inherit
+    - name: wget
+      if: ${{ inputs.dockerfile-url }}
+      uses: wei/wget@v1
+      with:
+        args: -O Dockerfile ${{ inputs.dockerfile-url }}
+    - name: build
+      uses: decentraland/platform-actions/.github/workflows/apps-pr.yml@main
+      with:
+        service-name: lamb2
+      secrets: inherit
