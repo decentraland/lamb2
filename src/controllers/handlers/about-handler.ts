@@ -1,5 +1,5 @@
 import { HandlerContextWithPath } from '../../types'
-import { About } from '@dcl/catalyst-api-specs/lib/client'
+import { About, StatusContent } from '@dcl/catalyst-api-specs/lib/client'
 
 const networkIds: Record<string, number> = {
   goerli: 5,
@@ -66,7 +66,7 @@ export async function aboutHandler(
 
   const [archipelagoStatus, contentStatus, lambdasStatus, resourcesOverload, name] = await Promise.all([
     status.getServiceStatus<ArchipelagoStatus>(archipelagoUrl.statusUrl),
-    status.getServiceStatus<DefaultStatus>(contentUrl.statusUrl),
+    status.getServiceStatus<StatusContent>(contentUrl.statusUrl),
     status.getServiceStatus<DefaultStatus>(lambdasUrl.statusUrl),
     resourcesStatusCheck.areResourcesOverloaded(),
     realmName.getValidatedRealmName()
@@ -81,6 +81,8 @@ export async function aboutHandler(
     content: {
       healthy: contentStatus.healthy,
       version: contentStatus.data?.version,
+      syn: contentStatus?.data?.commitHash,
+      synchronizationStatus: contentStatus.data?.synchronizationStatus.synchronizationState || 'Unkonwn',
       commitHash: contentStatus?.data?.commitHash,
       publicUrl: contentUrl.publicUrl
     },
