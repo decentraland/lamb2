@@ -95,7 +95,14 @@ describe('about-controller-unit', () => {
         case `${defaultConfig.INTERNAL_ARCHIPELAGO_URL}/status`:
           return { healthy: true, data: { version: 'archipelago_1', commitHash: 'archipelago_hash', userCount: 10 } }
         case `${defaultConfig.INTERNAL_CONTENT_URL}/status`:
-          return { healthy: true, data: { version: 'content_1', commitHash: 'content_hash' } }
+          return {
+            healthy: true,
+            data: {
+              version: 'content_1',
+              commitHash: 'content_hash',
+              synchronizationStatus: { synchronizationState: 'Syncing' }
+            }
+          }
         default:
           return { healthy: false }
       }
@@ -126,7 +133,8 @@ describe('about-controller-unit', () => {
           healthy: true,
           publicUrl: defaultConfig.CONTENT_URL,
           commitHash: 'content_hash',
-          version: 'content_1'
+          version: 'content_1',
+          synchronizationStatus: 'Syncing'
         },
         lambdas: {
           healthy: true,
@@ -169,7 +177,14 @@ describe('about-controller-unit', () => {
         case `${defaultConfig.INTERNAL_ARCHIPELAGO_URL}/status`:
           return { healthy: true, data: { version: 'archipelago_1', commitHash: 'archipelago_hash', userCount: 10 } }
         case `${defaultConfig.INTERNAL_CONTENT_URL}/status`:
-          return { healthy: true, data: { version: 'content_1', commitHash: 'content_hash' } }
+          return {
+            healthy: true,
+            data: {
+              version: 'content_1',
+              commitHash: 'content_hash',
+              synchronizationStatus: { synchronizationState: 'Syncing' }
+            }
+          }
         default:
           return { healthy: false }
       }
@@ -200,7 +215,8 @@ describe('about-controller-unit', () => {
           healthy: true,
           publicUrl: defaultConfig.CONTENT_URL,
           commitHash: 'content_hash',
-          version: 'content_1'
+          version: 'content_1',
+          synchronizationStatus: 'Syncing'
         },
         lambdas: {
           healthy: true,
@@ -243,7 +259,14 @@ describe('about-controller-unit', () => {
         case `${defaultConfig.INTERNAL_ARCHIPELAGO_URL}/status`:
           return { healthy: true, data: { version: 'archipelago_1', commitHash: 'archipelago_hash', userCount: 1000 } }
         case `${defaultConfig.INTERNAL_CONTENT_URL}/status`:
-          return { healthy: true, data: { version: 'content_1', commitHash: 'content_hash' } }
+          return {
+            healthy: true,
+            data: {
+              version: 'content_1',
+              commitHash: 'content_hash',
+              synchronizationStatus: { synchronizationState: 'Syncing' }
+            }
+          }
         default:
           return { healthy: false }
       }
