@@ -302,11 +302,9 @@
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
 "@dcl/catalyst-api-specs@^3.2.0":
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/@dcl/catalyst-api-specs/-/catalyst-api-specs-3.2.0.tgz#fa1f82e68d9317868c9ad1b8d20cd175f0f17093"
-  integrity sha512-ggiMGS5Um74IRdvvD5UiiWDfdX4b9g1/VVFz32SDpXkSs4nDnKxQiSHSyrhcJFxIO0SQNA6YwfVZL33b7gORng==
-  dependencies:
-    yaml "2.2.2"
+  version "3.2.1"
+  resolved "https://registry.yarnpkg.com/@dcl/catalyst-api-specs/-/catalyst-api-specs-3.2.1.tgz#6d15382326bf9fbe86bc9325f1388896d3e81e16"
+  integrity sha512-9yHFLUg3PcwwTcZupeelpruFFNg+lD1/+YQ3dwfz0l3gWtjPXGSmAAYaggtyqiukbObjs7cbxagx4RjsBmMkpw==
 
 "@dcl/crypto@^3.4.0", "@dcl/crypto@^3.4.1":
   version "3.4.1"
@@ -5719,11 +5717,6 @@ yallist@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/yallist/-/yallist-4.0.0.tgz#9bb92790d9c0effec63be73519e11a35019a3a72"
   integrity sha512-3wdGidZyq5PB084XLES5TpOSRA3wjXAlIWMhum2kRcv/41Sn2emQ0dycQW4uZXLejwKvg6EsvbdlVL+FYEct7A==
-
-yaml@2.2.2:
-  version "2.2.2"
-  resolved "https://registry.yarnpkg.com/yaml/-/yaml-2.2.2.tgz#ec551ef37326e6d42872dad1970300f8eb83a073"
-  integrity sha512-CBKFWExMn46Foo4cldiChEzn7S7SRV+wqiluAb6xmueD/fGyRHIhX8m14vVGgeFWjN540nKCNVj6P21eQjgTuA==
 
 yargs-parser@20.x, yargs-parser@^20.2.2:
   version "20.2.9"
