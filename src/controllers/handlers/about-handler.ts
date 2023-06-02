@@ -81,7 +81,6 @@ export async function aboutHandler(
     content: {
       healthy: contentStatus.healthy,
       version: contentStatus.data?.version,
-      syn: contentStatus?.data?.commitHash,
       synchronizationStatus: contentStatus.data?.synchronizationStatus.synchronizationState || 'Unkonwn',
       commitHash: contentStatus?.data?.commitHash,
       publicUrl: contentUrl.publicUrl
