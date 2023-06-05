@@ -3,14 +3,13 @@ import { BaseComponents } from '../types'
 import { About } from '@dcl/catalyst-api-specs/lib/client'
 
 export type IRealmNameComponent = IBaseComponent & {
-  getValidatedRealmName(): Promise<string | undefined>
+  getRealmName(): Promise<string | undefined>
 }
 
 export async function createRealmNameComponent(
   components: Pick<BaseComponents, 'fetch' | 'config' | 'catalystsFetcher' | 'logs'>
 ): Promise<IRealmNameComponent> {
   const { config, fetch, catalystsFetcher, logs } = components
-
   const logger = logs.getLogger('realm-name')
 
   async function resolveRealmName(baseUrl: string): Promise<string | undefined> {
@@ -27,29 +26,27 @@ export async function createRealmNameComponent(
     }
   }
 
-  let validatedRealmName: string | undefined = undefined
-  async function getValidatedRealmName(): Promise<string | undefined> {
-    if (validatedRealmName) {
-      return validatedRealmName
-    }
+  let realmName: string | undefined = await config.getString('REALM_NAME')
 
-    const realmName = await config.getString('REALM_NAME')
+  async function start(): Promise<void> {
     if (!realmName) {
-      return undefined
+      return
     }
-
     const servers = await catalystsFetcher.getCatalystServers()
     const names = new Set(await Promise.all(servers.map((s) => resolveRealmName(s.baseUrl))))
 
     logger.log(`Realm names found: ${JSON.stringify(Array.from(names))}`)
-    if (!names.has(realmName)) {
-      validatedRealmName = realmName
-      return realmName
+    if (names.has(realmName)) {
+      realmName = undefined
     }
-
-    return undefined
   }
+
+  async function getRealmName() {
+    return realmName
+  }
+
   return {
-    getValidatedRealmName
+    start,
+    getRealmName
   }
 }
