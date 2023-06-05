@@ -16,6 +16,9 @@ import { explorerHandler } from './handlers/explorer-handler'
 import { errorHandler } from './handlers/errorHandler'
 import { aboutHandler } from './handlers/about-handler'
 import { outfitsHandler } from './handlers/outfits-handler'
+import { getCatalystServersHandler } from './handlers/catalyst-servers-handler'
+import { getNameDenylistHandler } from './handlers/get-name-denylist-handler'
+import { getPOIsHandler } from './handlers/get-pois-handler'
 
 // We return the entire router because it will be easier to test than a whole server
 export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContext>> {
@@ -35,6 +38,9 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
   router.get('/profiles/:id', profileHandler)
   router.get('/nfts/collections', allCollectionsHandler)
   router.get('/outfits/:id', outfitsHandler)
+  router.get('/contracts/servers', getCatalystServersHandler)
+  router.get('/contracts/pois', getPOIsHandler)
+  router.get('/contracts/denylisted-names', getNameDenylistHandler)
 
   /* internal */
   router.get('/explorer/:address/wearables', explorerHandler)

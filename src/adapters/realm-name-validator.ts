@@ -1,7 +1,5 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { BaseComponents } from '../types'
-import { getCatalystServersFromDAO } from 'dcl-catalyst-client/dist/contracts'
-import { CatalystServerInfo } from 'dcl-catalyst-client/dist/types'
 import { About } from '@dcl/catalyst-api-specs/lib/client'
 
 export type IRealmNameComponent = IBaseComponent & {
@@ -9,15 +7,15 @@ export type IRealmNameComponent = IBaseComponent & {
 }
 
 export async function createRealmNameComponent(
-  components: Pick<BaseComponents, 'fetch' | 'config' | 'provider' | 'logs'>
+  components: Pick<BaseComponents, 'fetch' | 'config' | 'catalystsFetcher' | 'logs'>
 ): Promise<IRealmNameComponent> {
-  const { config, fetch, provider, logs } = components
+  const { config, fetch, catalystsFetcher, logs } = components
 
   const logger = logs.getLogger('realm-name')
 
-  async function resolveRealmName({ address }: CatalystServerInfo): Promise<string | undefined> {
+  async function resolveRealmName(baseUrl: string): Promise<string | undefined> {
     try {
-      const response = await fetch.fetch(`${address}/about`)
+      const response = await fetch.fetch(`${baseUrl}/about`)
       if (!response.ok) {
         return undefined
       }
@@ -40,9 +38,8 @@ export async function createRealmNameComponent(
       return undefined
     }
 
-    const network = (await config.getString('ETH_NETWORK')) ?? 'mainnet'
-    const servers = await getCatalystServersFromDAO(network as any, provider)
-    const names = new Set(await Promise.all(servers.map(resolveRealmName)))
+    const servers = await catalystsFetcher.getCatalystServers()
+    const names = new Set(await Promise.all(servers.map((s) => resolveRealmName(s.baseUrl))))
 
     logger.log(`Realm names found: ${JSON.stringify(Array.from(names))}`)
     if (!names.has(realmName)) {

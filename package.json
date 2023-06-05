@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@dcl/catalyst-api-specs": "^3.2.0",
+    "@dcl/catalyst-contracts": "^4.0.2",
     "@dcl/crypto": "^3.4.1",
     "@dcl/schemas": "^7.2.0",
     "@dcl/urn-resolver": "^2.0.3",
@@ -37,7 +38,7 @@
     "@well-known-components/metrics": "^2.0.1",
     "@well-known-components/thegraph-component": "^1.5.0",
     "dcl-catalyst-client": "^19.0.0",
-    "ethers": "^6.4.0",
+    "eth-connect": "^6.1.0",
     "lodash": "^4.17.21",
     "lru-cache": "^8.0.4"
   }
