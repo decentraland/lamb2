@@ -19,10 +19,13 @@ import type {
 } from '@well-known-components/interfaces'
 import { Variables } from '@well-known-components/thegraph-component'
 import { ContentClient } from 'dcl-catalyst-client'
-import { Provider } from 'ethers'
+import { HTTPProvider } from 'eth-connect'
+import { CatalystsFetcher } from './adapters/catalysts-fetcher'
 import { DefinitionsFetcher } from './adapters/definitions-fetcher'
 import { ElementsFetcher } from './adapters/elements-fetcher'
 import { EntitiesFetcher } from './adapters/entities-fetcher'
+import { NameDenylistFetcher } from './adapters/name-denylist-fetcher'
+import { POIsFetcher } from './adapters/pois-fetcher'
 import { IRealmNameComponent } from './adapters/realm-name-validator'
 import { IResourcesStatusComponent } from './adapters/resource-status'
 import { IStatusComponent } from './adapters/status'
@@ -59,7 +62,11 @@ export type BaseComponents = {
   resourcesStatusCheck: IResourcesStatusComponent
   status: IStatusComponent
   realmName: IRealmNameComponent
-  provider: Provider
+  l1Provider: HTTPProvider
+  l2Provider: HTTPProvider
+  catalystsFetcher: CatalystsFetcher
+  poisFetcher: POIsFetcher
+  nameDenylistFetcher: NameDenylistFetcher
 }
 
 // components used in runtime

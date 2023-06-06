@@ -1,9 +1,11 @@
+import { L1Network, L2Network } from '@dcl/catalyst-contracts'
 import { createDotEnvConfigComponent } from '@well-known-components/env-config-provider'
 import { createServerComponent, createStatusCheckComponent, IFetchComponent } from '@well-known-components/http-server'
 import { createLogComponent } from '@well-known-components/logger'
 import { createMetricsComponent, instrumentHttpServerWithMetrics } from '@well-known-components/metrics'
 import { createContentClient } from 'dcl-catalyst-client'
-import { JsonRpcProvider } from 'ethers'
+import { HTTPProvider } from 'eth-connect'
+import { createCatalystsFetcher } from './adapters/catalysts-fetcher'
 import { createContentServerUrl } from './adapters/content-server-url'
 import {
   createEmoteDefinitionsFetcherComponent,
@@ -11,6 +13,8 @@ import {
 } from './adapters/definitions-fetcher'
 import { createElementsFetcherComponent } from './adapters/elements-fetcher'
 import { createEntitiesFetcherComponent } from './adapters/entities-fetcher'
+import { createNameDenylistFetcher } from './adapters/name-denylist-fetcher'
+import { createPOIsFetcher } from './adapters/pois-fetcher'
 import { createRealmNameComponent } from './adapters/realm-name-validator'
 import { createResourcesStatusComponent } from './adapters/resource-status'
 import { createStatusComponent } from './adapters/status'
@@ -88,10 +92,23 @@ export async function initComponents(
 
   const resourcesStatusCheck = createResourcesStatusComponent({ logs })
   const status = await createStatusComponent({ logs, fetch })
-  const ethNetwork = (await config.getString('ETH_NETWORK')) ?? 'mainnet'
-  const provider = new JsonRpcProvider(`https://rpc.decentraland.org/${encodeURIComponent(ethNetwork)}?project=lamb2`)
 
-  const realmName = await createRealmNameComponent({ config, provider, fetch, logs })
+  const ethNetwork = (await config.getString('ETH_NETWORK')) ?? 'mainnet'
+  if (!['mainnet', 'goerli'].includes(ethNetwork)) {
+    throw new Error(`Invalid ETH_NETWORK ${ethNetwork}`)
+  }
+  const l1Network: L1Network = ethNetwork as any
+  const l2Network: L2Network = l1Network === 'mainnet' ? 'polygon' : 'mumbai'
+  const l1Provider = new HTTPProvider(`https://rpc.decentraland.org/${encodeURIComponent(l1Network)}?project=lamb2`, {
+    fetch: fetch.fetch
+  })
+  const l2Provider = new HTTPProvider(`https://rpc.decentraland.org/${encodeURIComponent(l2Network)}?project=lamb2`, {
+    fetch: fetch.fetch
+  })
+  const catalystsFetcher = await createCatalystsFetcher({ l1Provider }, l1Network)
+  const poisFetcher = await createPOIsFetcher({ l2Provider }, l2Network)
+  const nameDenylistFetcher = await createNameDenylistFetcher({ l1Provider }, l1Network)
+  const realmName = await createRealmNameComponent({ config, catalystsFetcher, fetch, logs })
 
   return {
     config,
@@ -117,6 +134,10 @@ export async function initComponents(
     resourcesStatusCheck,
     status,
     realmName,
-    provider
+    l1Provider,
+    l2Provider,
+    catalystsFetcher,
+    poisFetcher,
+    nameDenylistFetcher
   }
 }

@@ -69,7 +69,7 @@ export async function aboutHandler(
     status.getServiceStatus<StatusContent>(contentUrl.statusUrl),
     status.getServiceStatus<DefaultStatus>(lambdasUrl.statusUrl),
     resourcesStatusCheck.areResourcesOverloaded(),
-    realmName.getValidatedRealmName()
+    realmName.getRealmName()
   ])
 
   const healthy = archipelagoStatus.healthy && contentStatus.healthy && lambdasStatus.healthy

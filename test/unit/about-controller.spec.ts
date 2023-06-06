@@ -16,7 +16,7 @@ describe('about-controller-unit', () => {
     MAX_USERS: '400'
   }
 
-  async function getValidatedRealmName(): Promise<string | undefined> {
+  async function getRealmName(): Promise<string | undefined> {
     return 'testName'
   }
 
@@ -36,7 +36,7 @@ describe('about-controller-unit', () => {
       config,
       status: { getServiceStatus },
       resourcesStatusCheck: { areResourcesOverloaded },
-      realmName: { getValidatedRealmName }
+      realmName: { getRealmName }
     }
 
     const response = await aboutHandler({ url, components })
@@ -116,7 +116,7 @@ describe('about-controller-unit', () => {
       config,
       status: { getServiceStatus },
       resourcesStatusCheck: { areResourcesOverloaded },
-      realmName: { getValidatedRealmName }
+      realmName: { getRealmName }
     }
 
     const response = await aboutHandler({ url, components })
@@ -198,7 +198,7 @@ describe('about-controller-unit', () => {
       config,
       status: { getServiceStatus },
       resourcesStatusCheck: { areResourcesOverloaded },
-      realmName: { getValidatedRealmName }
+      realmName: { getRealmName }
     }
 
     const response = await aboutHandler({ url, components })
@@ -280,7 +280,7 @@ describe('about-controller-unit', () => {
       config,
       status: { getServiceStatus },
       resourcesStatusCheck: { areResourcesOverloaded },
-      realmName: { getValidatedRealmName }
+      realmName: { getRealmName }
     }
 
     const response = await aboutHandler({ url, components })
