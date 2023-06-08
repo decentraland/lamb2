@@ -1,15 +1,15 @@
 import { Entity, Wearable } from '@dcl/schemas'
 import { BlockchainCollectionThirdPartyName, parseUrn } from '@dcl/urn-resolver'
 import { FetcherError } from '../../adapters/elements-fetcher'
-import { AppComponents, ThirdParty, ThirdPartyAsset, ThirdPartyAssets, ThirdPartyWearable } from '../../types'
+import { AppComponents, ThirdPartyProvider, ThirdPartyAsset, ThirdPartyAssets, ThirdPartyWearable } from '../../types'
 
 const URN_THIRD_PARTY_NAME_TYPE = 'blockchain-collection-third-party-name'
 const URN_THIRD_PARTY_ASSET_TYPE = 'blockchain-collection-third-party'
 
 async function fetchAssets(
-  components: Pick<AppComponents, 'thirdPartyProvidersFetcher' | 'fetch' | 'logs'>,
+  components: Pick<AppComponents, 'fetch' | 'logs'>,
   owner: string,
-  thirdParty: ThirdParty
+  thirdParty: ThirdPartyProvider
 ) {
   const { logs, fetch } = components
   const logger = logs.getLogger('fetch-assets')
@@ -79,14 +79,14 @@ function groupThirdPartyWearablesByURN(assets: (ThirdPartyAsset & { entity: Enti
 }
 
 export async function fetchAllThirdPartyWearables(
-  components: Pick<AppComponents, 'thirdPartyProvidersFetcher' | 'fetch' | 'logs' | 'entitiesFetcher'>,
+  components: Pick<AppComponents, 'thirdPartyProvidersStorage' | 'fetch' | 'logs' | 'entitiesFetcher'>,
   owner: string
 ): Promise<ThirdPartyWearable[]> {
-  const thirdParties = await components.thirdPartyProvidersFetcher.getAll()
+  const thirdParties = await components.thirdPartyProvidersStorage.getAll()
 
   // TODO: test if stateValue is kept in case of an exception
   const thirdPartyAssets = (
-    await Promise.all(thirdParties.map((thirdParty: ThirdParty) => fetchAssets(components, owner, thirdParty)))
+    await Promise.all(thirdParties.map((thirdParty: ThirdPartyProvider) => fetchAssets(components, owner, thirdParty)))
   ).flat()
 
   const entities = await components.entitiesFetcher.fetchEntities(thirdPartyAssets.map((tpa) => tpa.urn.decentraland))
@@ -105,7 +105,7 @@ export async function fetchAllThirdPartyWearables(
 }
 
 export async function fetchThirdPartyWearablesFromThirdPartyName(
-  components: Pick<AppComponents, 'thirdPartyWearablesFetcher' | 'thirdPartyProvidersFetcher' | 'fetch'>,
+  components: Pick<AppComponents, 'thirdPartyWearablesFetcher' | 'thirdPartyProvidersStorage' | 'fetch'>,
   address: string,
   thirdPartyNameUrn: BlockchainCollectionThirdPartyName
 ): Promise<ThirdPartyWearable[]> {
@@ -126,7 +126,7 @@ export async function fetchThirdPartyWearablesFromThirdPartyName(
     }
   }
 
-  const thirdParty = await components.thirdPartyProvidersFetcher.get(thirdPartyNameUrn)
+  const thirdParty = await components.thirdPartyProvidersStorage.get(thirdPartyNameUrn)
 
   if (!thirdParty) {
     // NOTE: currently lambdas return an empty array with status code 200 for this case

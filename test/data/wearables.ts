@@ -1,6 +1,6 @@
 import { Entity, EntityType, Wearable, WearableCategory, WearableRepresentation } from '@dcl/schemas'
 import { WearableFromQuery } from '../../src/logic/fetch-elements/fetch-items'
-import { BaseWearable, ThirdParty, ThirdPartyAsset } from '../../src/types'
+import { BaseWearable, ThirdPartyProvider, ThirdPartyAsset } from '../../src/types'
 import { BASE_WEARABLES } from '../../src/logic/fetch-elements/fetch-base-items'
 
 const TWO_DAYS = 2 * 24 * 60 * 60 * 1000
@@ -119,7 +119,7 @@ export function generateThirdPartyWearables(quantity: number): ThirdPartyAsset[]
   return generatedThirdPartyWearables
 }
 
-export function getThirdPartyProviders(): ThirdParty[] {
+export function getThirdPartyProviders(): ThirdPartyProvider[] {
   return [
     {
       id: 'urn:decentraland:matic:collections-thirdparty:baby-doge-coin',

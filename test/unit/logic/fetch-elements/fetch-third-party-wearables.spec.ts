@@ -12,7 +12,7 @@ import { FetcherError } from '../../../../src/adapters/elements-fetcher'
 describe('fetchAllThirdPartyWearables', () => {
   test('resolver apis is called correctly', function ({ components }) {
     it('run test', async () => {
-      jest.spyOn(components.thirdPartyProvidersFetcher, 'getAll').mockResolvedValue(getThirdPartyProviders())
+      jest.spyOn(components.thirdPartyProvidersStorage, 'getAll').mockResolvedValue(getThirdPartyProviders())
       const fetchSpy = jest.spyOn(components.fetch, 'fetch').mockImplementation(
         jest.fn(() =>
           Promise.resolve({
@@ -46,7 +46,7 @@ describe('fetchAllThirdPartyWearables', () => {
 
   test('third-party wearables are mapped correctly', function ({ components }) {
     it('run test', async () => {
-      jest.spyOn(components.thirdPartyProvidersFetcher, 'getAll').mockResolvedValue([getThirdPartyProviders()[0]])
+      jest.spyOn(components.thirdPartyProvidersStorage, 'getAll').mockResolvedValue([getThirdPartyProviders()[0]])
       jest.spyOn(components.fetch, 'fetch').mockImplementation(
         jest.fn(() =>
           Promise.resolve({
@@ -85,7 +85,7 @@ describe('fetchAllThirdPartyWearables', () => {
     it('run test', async () => {
       const entities = generateWearableEntities(['urn1', 'urn2'])
       jest.spyOn(components.content, 'fetchEntitiesByPointers').mockResolvedValue(entities)
-      jest.spyOn(components.thirdPartyProvidersFetcher, 'getAll').mockResolvedValue([getThirdPartyProviders()[0]])
+      jest.spyOn(components.thirdPartyProvidersStorage, 'getAll').mockResolvedValue([getThirdPartyProviders()[0]])
       jest.spyOn(components.fetch, 'fetch').mockImplementation(
         jest.fn(() =>
           Promise.resolve({
@@ -125,7 +125,7 @@ describe('fetchAllThirdPartyWearables', () => {
 
   test('multiple pages from same api are called', function ({ components }) {
     it('run test', async () => {
-      jest.spyOn(components.thirdPartyProvidersFetcher, 'getAll').mockResolvedValue([getThirdPartyProviders()[0]])
+      jest.spyOn(components.thirdPartyProvidersStorage, 'getAll').mockResolvedValue([getThirdPartyProviders()[0]])
 
       const jsonMock = jest
         .fn()
@@ -188,7 +188,7 @@ describe('fetchThirdPartyWearablesFromThirdPartyName', () => {
           )
         }
       ]
-      jest.spyOn(components.thirdPartyProvidersFetcher, 'get').mockResolvedValue({
+      jest.spyOn(components.thirdPartyProvidersStorage, 'get').mockResolvedValue({
         id: 'urn:decentraland:matic:collections-thirdparty:ntr1-meta',
         resolver: 'ntr1-meta-resolver',
         metadata: {
@@ -220,7 +220,7 @@ describe('fetchThirdPartyWearablesFromThirdPartyName', () => {
 
   test('if thirdparty is nonexistent, it throws', function ({ components }) {
     it('run test', async () => {
-      jest.spyOn(components.thirdPartyProvidersFetcher, 'get').mockResolvedValue(undefined)
+      jest.spyOn(components.thirdPartyProvidersStorage, 'get').mockResolvedValue(undefined)
       components.thirdPartyWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([])
       const nonExistentThirdPartyNameUrn = await parseUrn('urn:decentraland:matic:collections-thirdparty:non-exist')
       if (nonExistentThirdPartyNameUrn.type !== 'blockchain-collection-third-party-name') {

@@ -114,7 +114,7 @@ async function initComponents(
   const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllThirdPartyWearables(
       {
-        thirdPartyProvidersFetcher: components.thirdPartyProvidersFetcher,
+        thirdPartyProvidersStorage: components.thirdPartyProvidersStorage,
         fetch,
         logs,
         entitiesFetcher
