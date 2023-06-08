@@ -42,8 +42,8 @@ async function fetchCombinedElements(
     | 'baseWearablesFetcher'
     | 'wearablesFetcher'
     | 'entitiesFetcher'
-    | 'thirdPartyProvidersFetcher'
     | 'thirdPartyWearablesFetcher'
+    | 'thirdPartyProvidersStorage'
   >,
   collectionTypes: string[],
   thirdPartyCollectionId: string[],
@@ -136,9 +136,9 @@ export async function explorerHandler(
     | 'fetch'
     | 'baseWearablesFetcher'
     | 'wearablesFetcher'
-    | 'thirdPartyProvidersFetcher'
     | 'thirdPartyWearablesFetcher'
-    | 'entitiesFetcher',
+    | 'entitiesFetcher'
+    | 'thirdPartyProvidersStorage',
     '/explorer/:address/wearables'
   >
 ): Promise<PaginatedResponse<MixedWearableResponse>> {

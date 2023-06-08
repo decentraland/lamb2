@@ -72,7 +72,7 @@ export async function thirdPartyWearablesHandler(
 
 export async function thirdPartyCollectionWearablesHandler(
   context: HandlerContextWithPath<
-    'wearableDefinitionsFetcher' | 'logs' | 'thirdPartyWearablesFetcher' | 'thirdPartyProvidersFetcher' | 'fetch',
+    'wearableDefinitionsFetcher' | 'logs' | 'thirdPartyWearablesFetcher' | 'thirdPartyProvidersStorage' | 'fetch',
     '/users/:address/third-party-wearables/:collectionId'
   >
 ): Promise<{ status: 200; body: GetThirdPartyCollection200 }> {
@@ -138,9 +138,9 @@ export type ThirdPartyIntegrationsResponse = {
 }
 
 export async function thirdPartyIntegrationsHandler(
-  context: HandlerContextWithPath<'thirdPartyProvidersFetcher', '/third-party-integrations'>
+  context: HandlerContextWithPath<'thirdPartyProvidersStorage', '/third-party-integrations'>
 ): Promise<{ status: 200; body: ThirdPartyIntegrations }> {
-  const providers = await context.components.thirdPartyProvidersFetcher.getAll()
+  const providers = await context.components.thirdPartyProvidersStorage.getAll()
   const integrations = providers.map((p) => ({
     name: p.metadata.thirdParty.name,
     description: p.metadata.thirdParty.description,

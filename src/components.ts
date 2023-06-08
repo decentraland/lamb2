@@ -18,7 +18,6 @@ import { createPOIsFetcher } from './adapters/pois-fetcher'
 import { createRealmNameComponent } from './adapters/realm-name-validator'
 import { createResourcesStatusComponent } from './adapters/resource-status'
 import { createStatusComponent } from './adapters/status'
-import { createThirdPartyProvidersFetcherComponent } from './adapters/third-party-providers-fetcher'
 import { fetchAllBaseWearables } from './logic/fetch-elements/fetch-base-items'
 import { fetchAllEmotes, fetchAllWearables } from './logic/fetch-elements/fetch-items'
 import { fetchAllLANDs } from './logic/fetch-elements/fetch-lands'
@@ -29,6 +28,9 @@ import { createFetchComponent } from './ports/fetch'
 import { createOwnershipCachesComponent } from './ports/ownership-caches'
 import { createTheGraphComponent, TheGraphComponent } from './ports/the-graph'
 import { AppComponents, BaseWearable, GlobalContext } from './types'
+import { createThirdPartyProvidersGraphFetcherComponent } from './adapters/third-party-providers-graph-fetcher'
+import { createThirdPartyProvidersServiceFetcherComponent } from './adapters/third-party-providers-service-fetcher'
+import { createThirdPartyProvidersStorage } from './logic/third-party-providers-storage'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -68,9 +70,15 @@ export async function initComponents(
 
   const entitiesFetcher = await createEntitiesFetcherComponent({ config, logs, content })
 
-  const thirdPartyProvidersFetcher = createThirdPartyProvidersFetcherComponent({ logs, theGraph })
+  const thirdPartyProvidersGraphFetcher = createThirdPartyProvidersGraphFetcherComponent({ theGraph })
+  const thirdPartyProvidersServiceFetcher = await createThirdPartyProvidersServiceFetcherComponent({ config, fetch })
+  const thirdPartyProvidersStorage = await createThirdPartyProvidersStorage({
+    logs,
+    thirdPartyProvidersGraphFetcher,
+    thirdPartyProvidersServiceFetcher
+  })
   const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllThirdPartyWearables({ thirdPartyProvidersFetcher, fetch, logs, entitiesFetcher }, address)
+    fetchAllThirdPartyWearables({ thirdPartyProvidersStorage, fetch, logs, entitiesFetcher }, address)
   )
   const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent({
     config,
@@ -129,7 +137,9 @@ export async function initComponents(
     emotesFetcher,
     namesFetcher,
     landsFetcher,
-    thirdPartyProvidersFetcher,
+    thirdPartyProvidersGraphFetcher,
+    thirdPartyProvidersServiceFetcher,
+    thirdPartyProvidersStorage,
     contentServerUrl,
     resourcesStatusCheck,
     status,

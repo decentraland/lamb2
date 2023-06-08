@@ -29,10 +29,12 @@ import { POIsFetcher } from './adapters/pois-fetcher'
 import { IRealmNameComponent } from './adapters/realm-name-validator'
 import { IResourcesStatusComponent } from './adapters/resource-status'
 import { IStatusComponent } from './adapters/status'
-import { ThirdPartyProvidersFetcher } from './adapters/third-party-providers-fetcher'
 import { metricDeclarations } from './metrics'
 import { OwnershipCachesComponent } from './ports/ownership-caches'
 import { TheGraphComponent } from './ports/the-graph'
+import { ThirdPartyProvidersServiceFetcher } from './adapters/third-party-providers-service-fetcher'
+import { ThirdPartyProvidersGraphFetcher } from './adapters/third-party-providers-graph-fetcher'
+import { ThirdPartyProvidersStorage } from './logic/third-party-providers-storage'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -51,7 +53,9 @@ export type BaseComponents = {
   ownershipCaches: OwnershipCachesComponent
   baseWearablesFetcher: ElementsFetcher<BaseWearable>
   wearablesFetcher: ElementsFetcher<OnChainWearable>
-  thirdPartyProvidersFetcher: ThirdPartyProvidersFetcher
+  thirdPartyProvidersGraphFetcher: ThirdPartyProvidersGraphFetcher
+  thirdPartyProvidersServiceFetcher: ThirdPartyProvidersServiceFetcher
+  thirdPartyProvidersStorage: ThirdPartyProvidersStorage
   thirdPartyWearablesFetcher: ElementsFetcher<ThirdPartyWearable>
   emotesFetcher: ElementsFetcher<OnChainEmote>
   emoteDefinitionsFetcher: DefinitionsFetcher<EmoteDefinition>
@@ -211,7 +215,7 @@ export type Pagination = Limits & {
   pageNum: number
 }
 
-export type ThirdParty = {
+export type ThirdPartyProvider = {
   id: string
   resolver: string
   metadata: {
