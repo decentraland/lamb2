@@ -3,9 +3,9 @@ import { createThirdPartyProvidersServiceFetcherComponent } from '../../../src/a
 import { ThirdPartyProvider } from '../../../src/types'
 
 describe('third-party-providers-service-fetcher', () => {
-  it('should call service when USE_THIRD_PARTY_PROVIDERS_RESOLVER_SERVICE is set', async () => {
+  it('should call service when DISABLE_THIRD_PARTY_PROVIDERS_RESOLVER_SERVICE_USAGE is not set', async () => {
     // Arrange
-    const config = await createConfigComponent({ USE_THIRD_PARTY_PROVIDERS_RESOLVER_SERVICE: 'true' })
+    const config = createConfigComponent({ DISABLE_THIRD_PARTY_PROVIDERS_RESOLVER_SERVICE_USAGE: 'false' })
     const mockedFetch = {
       fetch: jest.fn().mockResolvedValue({ json: async () => Promise.resolve({}) })
     }
@@ -24,9 +24,9 @@ describe('third-party-providers-service-fetcher', () => {
     expect(mockedFetch.fetch).toHaveBeenCalled()
   })
 
-  it('should throw an error when USE_THIRD_PARTY_PROVIDERS_RESOLVER_SERVICE is not set', async () => {
+  it('should throw an error when DISABLE_THIRD_PARTY_PROVIDERS_RESOLVER_SERVICE_USAGE is set', async () => {
     // Arrange
-    const config = await createConfigComponent({})
+    const config = createConfigComponent({ DISABLE_THIRD_PARTY_PROVIDERS_RESOLVER_SERVICE_USAGE: 'true' })
     const mockedFetch = {
       fetch: jest.fn().mockResolvedValue({ json: async () => Promise.resolve({}) })
     }
@@ -40,7 +40,7 @@ describe('third-party-providers-service-fetcher', () => {
 
     // Act & Assert
     await expect(sut.get()).rejects.toThrow(
-      'The environment variable USE_THIRD_PARTY_PROVIDERS_RESOLVER_SERVICE must be set to fetch providers from service'
+      'Third Party Providers resolver service will not be used since DISABLE_THIRD_PARTY_PROVIDERS_RESOLVER_SERVICE_USAGE is set'
     )
     expect(mockedFetch.fetch).not.toHaveBeenCalled()
   })
@@ -61,7 +61,7 @@ describe('third-party-providers-service-fetcher', () => {
         resolver: 'https://wearables-api.unxd.com'
       }
     ]
-    const config = await createConfigComponent({ USE_THIRD_PARTY_PROVIDERS_RESOLVER_SERVICE: 'true' })
+    const config = createConfigComponent({ DISABLE_THIRD_PARTY_PROVIDERS_RESOLVER_SERVICE_USAGE: 'false' })
     const mockedFetch = {
       fetch: jest
         .fn()
