@@ -5,7 +5,7 @@ on:
 
 jobs:
   pr:
-    uses: decentraland/platform-actions/.github/workflows/apps-pr.yml@main
+    uses: decentraland/platform-actions/.github/workflows/apps-pr.yml@test2
     with:
       service-name: lamb2
       dockerfile-url: https://raw.githubusercontent.com/decentraland/platform-actions/main/Dockerfile.alpine
