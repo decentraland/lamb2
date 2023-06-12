@@ -70,16 +70,6 @@ export async function initComponents(
 
   const entitiesFetcher = await createEntitiesFetcherComponent({ config, logs, content })
 
-  const thirdPartyProvidersGraphFetcher = createThirdPartyProvidersGraphFetcherComponent({ theGraph })
-  const thirdPartyProvidersServiceFetcher = await createThirdPartyProvidersServiceFetcherComponent({ config, fetch })
-  const thirdPartyProvidersStorage = await createThirdPartyProvidersStorage({
-    logs,
-    thirdPartyProvidersGraphFetcher,
-    thirdPartyProvidersServiceFetcher
-  })
-  const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllThirdPartyWearables({ thirdPartyProvidersStorage, fetch, logs, entitiesFetcher }, address)
-  )
   const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent({
     config,
     logs,
@@ -117,6 +107,20 @@ export async function initComponents(
   const poisFetcher = await createPOIsFetcher({ l2Provider }, l2Network)
   const nameDenylistFetcher = await createNameDenylistFetcher({ l1Provider }, l1Network)
   const realmName = await createRealmNameComponent({ config, catalystsFetcher, fetch, logs })
+
+  const thirdPartyProvidersGraphFetcher = createThirdPartyProvidersGraphFetcherComponent({ theGraph })
+  const thirdPartyProvidersServiceFetcher = await createThirdPartyProvidersServiceFetcherComponent(
+    { config, fetch },
+    l2Network
+  )
+  const thirdPartyProvidersStorage = await createThirdPartyProvidersStorage({
+    logs,
+    thirdPartyProvidersGraphFetcher,
+    thirdPartyProvidersServiceFetcher
+  })
+  const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
+    fetchAllThirdPartyWearables({ thirdPartyProvidersStorage, fetch, logs, entitiesFetcher }, address)
+  )
 
   return {
     config,
