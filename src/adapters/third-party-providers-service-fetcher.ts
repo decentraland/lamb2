@@ -19,14 +19,14 @@ export async function createThirdPartyProvidersServiceFetcherComponent(
   l2Network: L2Network
 ): Promise<ThirdPartyProvidersServiceFetcher> {
   const serviceUrl = SERVICE_URL_DICTIONARY[l2Network]
-  const useServiceToFetchProviders: boolean =
-    (await config.getString('USE_THIRD_PARTY_PROVIDERS_RESOLVER_SERVICE')) === 'true' ? true : false
+  const isThirdPartyProvidersResolverServiceDisabled: boolean =
+    (await config.getString('DISABLE_THIRD_PARTY_PROVIDERS_RESOLVER_SERVICE_USAGE')) === 'true'
 
   return {
     async get(): Promise<ThirdPartyProvider[]> {
-      if (!useServiceToFetchProviders)
+      if (isThirdPartyProvidersResolverServiceDisabled)
         throw new Error(
-          'The environment variable USE_THIRD_PARTY_PROVIDERS_RESOLVER_SERVICE must be set to fetch providers from service'
+          'Third Party Providers resolver service will not be used since DISABLE_THIRD_PARTY_PROVIDERS_RESOLVER_SERVICE_USAGE is set'
         )
       const response: ThirdPartyProvidersServiceResponse = await (await fetch.fetch(`${serviceUrl}/providers`)).json()
       return response.thirdPartyProviders
