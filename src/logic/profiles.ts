@@ -50,43 +50,49 @@ export async function getProfiles(
   ethAddresses: string[],
   ifModifiedSinceTimestamp?: number | undefined
 ): Promise<ProfileMetadata[] | undefined> {
-  // Fetch entities by pointers
-  let profileEntities: Entity[] = await components.content.fetchEntitiesByPointers(ethAddresses)
+  try {
+    // Fetch entities by pointers
+    let profileEntities: Entity[] = await components.content.fetchEntitiesByPointers(ethAddresses)
 
-  // Avoid querying profiles if there wasn't any new deployment
-  if (noNewDeployments(ifModifiedSinceTimestamp, profileEntities)) return
+    // Avoid querying profiles if there wasn't any new deployment
+    if (noNewDeployments(ifModifiedSinceTimestamp, profileEntities)) return
 
-  // Filter entities
-  profileEntities = profileEntities.filter(hasMetadata)
+    // Filter entities
+    profileEntities = profileEntities.filter(hasMetadata)
 
-  // Create the NFTs ownership checkers
-  const wearablesOwnershipChecker = createWearablesOwnershipChecker(components)
-  const namesOwnershipChecker = createNamesOwnershipChecker(components)
-  const tpwOwnershipChecker = createTPWOwnershipChecker(components)
+    // Create the NFTs ownership checkers
+    const wearablesOwnershipChecker = createWearablesOwnershipChecker(components)
+    const namesOwnershipChecker = createNamesOwnershipChecker(components)
+    const tpwOwnershipChecker = createTPWOwnershipChecker(components)
 
-  // Get data from entities and add them to the ownership checkers
-  await addNFTsToCheckersFromEntities(
-    profileEntities,
-    wearablesOwnershipChecker,
-    namesOwnershipChecker,
-    tpwOwnershipChecker
-  )
+    // Get data from entities and add them to the ownership checkers
+    await addNFTsToCheckersFromEntities(
+      profileEntities,
+      wearablesOwnershipChecker,
+      namesOwnershipChecker,
+      tpwOwnershipChecker
+    )
 
-  // Check ownership for every nft in parallel
-  await Promise.all([
-    wearablesOwnershipChecker.checkNFTsOwnership(),
-    namesOwnershipChecker.checkNFTsOwnership(),
-    tpwOwnershipChecker.checkNFTsOwnership()
-  ])
+    // Check ownership for every nft in parallel
+    await Promise.all([
+      wearablesOwnershipChecker.checkNFTsOwnership(),
+      namesOwnershipChecker.checkNFTsOwnership(),
+      tpwOwnershipChecker.checkNFTsOwnership()
+    ])
 
-  // Add name data and snapshot urls to profiles
-  return await extendProfiles(
-    components.config,
-    profileEntities,
-    wearablesOwnershipChecker,
-    namesOwnershipChecker,
-    tpwOwnershipChecker
-  )
+    // Add name data and snapshot urls to profiles
+    return await extendProfiles(
+      components.config,
+      profileEntities,
+      wearablesOwnershipChecker,
+      namesOwnershipChecker,
+      tpwOwnershipChecker
+    )
+  } catch (error) {
+    // TODO: logger
+    console.log(error)
+    return []
+  }
 }
 
 function noNewDeployments(ifModifiedSinceTimestamp: number | undefined, entities: Entity[]) {
