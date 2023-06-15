@@ -3,7 +3,7 @@ import { AppComponents } from '../types'
 
 /*
  * Checks the ownership for every nft resulting in a map of ownership for every eth address.
- * Receives a `querySubgraph` method to know how to do the query.
+ * Receive a `querySubgraph` method to know how to do the query.
  */
 export async function ownedNFTsByAddress(
   components: Pick<AppComponents, 'theGraph' | 'config'>,
@@ -13,7 +13,7 @@ export async function ownedNFTsByAddress(
   // Check ownership for unknown nfts
   const ownedNftIdsByEthAddress = await querySubgraphByFragments(components, nftIdsByAddressToCheck, querySubgraph)
 
-  // Fill final map with nfts ownership
+  // Fill the final map with nfts ownership
   for (const [ethAddress, nfts] of nftIdsByAddressToCheck) {
     const ownedNfts = ownedNftIdsByEthAddress.get(ethAddress)
     // If the query to the subgraph failed, then consider the nft as owned
