@@ -5,10 +5,10 @@ import { Entity } from '@dcl/schemas'
 export async function outfitsHandler(
   context: HandlerContextWithPath<
     'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches',
-    '/profile/:id'
+    '/outfits/:id'
   >
 ): Promise<{ status: 200; body: Entity }> {
-  const outfits = await getOutfits(context.components, `${context.params.id}:outfits`)
+  const outfits = await getOutfits(context.components, `${context.params.id}`)
   if (!outfits) {
     throw new NotFoundError('Outfits not found')
   }

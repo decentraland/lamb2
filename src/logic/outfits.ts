@@ -7,7 +7,9 @@ export async function getOutfits(
   components: Pick<AppComponents, 'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches'>,
   ethAddress: string
 ): Promise<TypedEntity<Outfits> | undefined> {
-  const outfitsEntities: TypedEntity<Outfits>[] = await components.content.fetchEntitiesByPointers([ethAddress])
+  const outfitsEntities: TypedEntity<Outfits>[] = await components.content.fetchEntitiesByPointers([
+    `${ethAddress}:outfits`
+  ])
 
   if (!outfitsEntities || outfitsEntities.length === 0) {
     return undefined

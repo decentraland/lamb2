@@ -43,12 +43,14 @@ test('when all wearables and names are owned, outfits entity is not modified', f
       id: 'entityId',
       version: 'v3',
       type: EntityType.OUTFITS,
-      pointers: ['address'],
+      pointers: ['address:outfits'],
       timestamp: 123,
       metadata: outfitsMetadata,
       content: []
     }
-    const fetchEntitiesSpy = jest.spyOn(components.content, 'fetchEntitiesByPointers').mockResolvedValue([outfitsEntity])
+    const fetchEntitiesSpy = jest
+      .spyOn(components.content, 'fetchEntitiesByPointers')
+      .mockResolvedValue([outfitsEntity])
     const wearablesChecker = createAllOwnedOwnershipCheckerMock()
     const namesChecker = createAllOwnedOwnershipCheckerMock()
     jest.spyOn(wearablesOwnershipChecker, 'createWearablesOwnershipChecker').mockReturnValue(wearablesChecker)
@@ -57,11 +59,13 @@ test('when all wearables and names are owned, outfits entity is not modified', f
     const outfits = await getOutfits(components, 'address')
 
     expect(outfits).toEqual(outfitsEntity)
-    expect(fetchEntitiesSpy).toBeCalledWith(['address'])
+    expect(fetchEntitiesSpy).toBeCalledWith(['address:outfits'])
   })
 })
 
-test('when some wearables are not owned, the outfits with those wearables are removed from entity', function ({ components }) {
+test('when some wearables are not owned, the outfits with those wearables are removed from entity', function ({
+  components
+}) {
   it('run test', async () => {
     const ownedWearable = 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet'
     const outfitWithNotOwnedWearables = {
@@ -85,9 +89,7 @@ test('when some wearables are not owned, the outfits with those wearables are re
         eyes: { color: { r: 0.23046875, g: 0.625, b: 0.3125 } },
         hair: { color: { r: 0.35546875, g: 0.19140625, b: 0.05859375 } },
         skin: { color: { r: 0.94921875, g: 0.76171875, b: 0.6484375 } },
-        wearables: [
-          ownedWearable
-        ]
+        wearables: [ownedWearable]
       }
     }
     const outfitsEntity: Entity = {
@@ -97,11 +99,7 @@ test('when some wearables are not owned, the outfits with those wearables are re
       pointers: ['address'],
       timestamp: 123,
       metadata: {
-        outfits: [
-          outfitWithNotOwnedWearables,
-          outfitWithOwnedWearables,
-
-        ],
+        outfits: [outfitWithNotOwnedWearables, outfitWithOwnedWearables],
         namesForExtraSlots: []
       },
       content: []
@@ -117,7 +115,9 @@ test('when some wearables are not owned, the outfits with those wearables are re
   })
 })
 
-test('when some names are not owned, extra outfits and not owned names are removed from entity', function ({ components }) {
+test('when some names are not owned, extra outfits and not owned names are removed from entity', function ({
+  components
+}) {
   it('run test', async () => {
     const anOutfit = {
       bodyShape: 'urn:decentraland:off-chain:base-avatars:BaseMale',
@@ -157,7 +157,6 @@ test('when some names are not owned, extra outfits and not owned names are remov
     expect(outfits.metadata.namesForExtraSlots).toEqual(ownedNames)
   })
 })
-
 
 function createAllOwnedOwnershipCheckerMock() {
   const ownedNFTS = []
