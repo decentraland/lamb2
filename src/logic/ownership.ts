@@ -24,7 +24,7 @@ export async function ownedNFTsByAddress(
 
 /*
  * Return a set of the NFTs that are actually owned by the eth address, for every eth address.
- * Receives a `querySubgraph` method to know how to do the query.
+ * Receive a `querySubgraph` method to know how to do the query.
  */
 async function querySubgraphByFragments(
   components: Pick<AppComponents, 'theGraph' | 'config'>,
@@ -36,7 +36,7 @@ async function querySubgraphByFragments(
   const entries = Array.from(nftIdsByAddressToCheck.entries())
   const result: Map<string, string[]> = new Map()
 
-  // Make multilpe queries to graph as at most NFT_FRAGMENTS_PER_QUERY per time
+  // Make multiple queries to graph as at most NFT_FRAGMENTS_PER_QUERY per time
   let offset = 0
   while (offset < entries.length) {
     const slice = entries.slice(offset, offset + nft_fragments_per_query)
