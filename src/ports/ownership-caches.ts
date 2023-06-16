@@ -13,12 +13,12 @@ export async function createOwnershipCachesComponent(
 ): Promise<OwnershipCachesComponent> {
   const { config } = components
 
-  const wearablesSize = parseInt((await config.getString('WEARABLES_CACHE_MAX_SIZE')) ?? '10000')
-  const wearablesAge = parseInt((await config.getString('WEARABLES_CACHE_MAX_AGE')) ?? '300000')
-  const namesSize = parseInt((await config.getString('NAMES_CACHE_MAX_SIZE')) ?? '10000')
-  const namesAge = parseInt((await config.getString('NAMES_CACHE_MAX_AGE')) ?? '300000')
-  const tpwSize = parseInt((await config.getString('THIRD_PARTY_CACHE_MAX_SIZE')) ?? '10000')
-  const tpwAge = parseInt((await config.getString('THIRD_PARTY_CACHE_MAX_AGE')) ?? '300000')
+  const wearablesSize = (await config.getNumber('WEARABLES_CACHE_MAX_SIZE')) || 10_000
+  const wearablesAge = (await config.getNumber('WEARABLES_CACHE_MAX_AGE')) || 300000
+  const namesSize = (await config.getNumber('NAMES_CACHE_MAX_SIZE')) || 10000
+  const namesAge = (await config.getNumber('NAMES_CACHE_MAX_AGE')) || 300000
+  const tpwSize = (await config.getNumber('THIRD_PARTY_CACHE_MAX_SIZE')) || 10000
+  const tpwAge = (await config.getNumber('THIRD_PARTY_CACHE_MAX_AGE')) || 300000
 
   const wearablesCache: LRU<string, Map<string, boolean>> = new LRU({ max: wearablesSize, ttl: wearablesAge })
   const namesCache: LRU<string, Map<string, boolean>> = new LRU({ max: namesSize, ttl: namesAge })
