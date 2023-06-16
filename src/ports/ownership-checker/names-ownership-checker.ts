@@ -28,7 +28,7 @@ export function createNamesOwnershipChecker(
     // Traverse the checked nfts to set the cache depending on its ownership
     fillCacheWithRecentlyCheckedWearables(nftsToCheckByAddress, ownedNamesByAddress, cache)
 
-    // Merge cachedOwnedNFTsByAddress (contains the nfts which ownershipwas cached) into ownedWearablesByAddress (recently checked ownnership map)
+    // Merge cachedOwnedNFTsByAddress (contains the nfts which ownership was cached) into ownedWearablesByAddress (recently checked ownership map)
     mergeMapIntoMap(cachedOwnedNFTsByAddress, ownedNamesByAddress)
   }
 

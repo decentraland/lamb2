@@ -6,10 +6,9 @@ import { getCachedNFTsAndPendingCheckNFTs, fillCacheWithRecentlyCheckedWearables
 import { mergeMapIntoMap } from '../../logic/maps'
 
 export function createWearablesOwnershipChecker(
-  cmpnnts: Pick<AppComponents, 'metrics' | 'content' | 'theGraph' | 'config' | 'ownershipCaches'>
+  components: Pick<AppComponents, 'metrics' | 'content' | 'theGraph' | 'config' | 'ownershipCaches'>
 ): NFTsOwnershipChecker {
   let ownedWearablesByAddress: Map<string, string[]> = new Map()
-  const components = cmpnnts
   const cache = components.ownershipCaches.wearablesCache
 
   function addNFTsForAddress(address: string, nfts: string[]) {
