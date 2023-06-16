@@ -1,17 +1,45 @@
 import { TheGraphComponent } from '../ports/the-graph'
 import { AppComponents } from '../types'
 
+function eqSet(xs: Set<string>, ys: Set<string>) {
+  return xs.size === ys.size && [...xs].every((x) => ys.has(x))
+}
+
+function equal(actual: Map<string, string[]>, expected: Map<string, string[]>) {
+  if (!eqSet(new Set(actual.keys()), new Set(expected.keys()))) {
+    return false
+  }
+
+  for (const [ethAddress, nfts] of actual) {
+    const expectedNfts = expected.get(ethAddress)
+    if (!expectedNfts || !eqSet(new Set(nfts), new Set(expectedNfts))) {
+      return false
+    }
+  }
+
+  return true
+}
+
 /*
  * Checks the ownership for every nft resulting in a map of ownership for every eth address.
  * Receive a `querySubgraph` method to know how to do the query.
  */
 export async function ownedNFTsByAddress(
-  components: Pick<AppComponents, 'theGraph' | 'config'>,
+  components: Pick<AppComponents, 'config' | 'fetch' | 'theGraph'>,
   nftIdsByAddressToCheck: Map<string, string[]>,
   querySubgraph: (theGraph: TheGraphComponent, nftsToCheck: [string, string[]][]) => any
 ): Promise<Map<string, string[]>> {
   // Check ownership for unknown nfts
   const ownedNftIdsByEthAddress = await querySubgraphByFragments(components, nftIdsByAddressToCheck, querySubgraph)
+
+  const peter = await queryPeter(components, nftIdsByAddressToCheck)
+
+  if (!equal(ownedNftIdsByEthAddress, peter)) {
+    console.log('different results', {
+      theGraph: JSON.stringify(Object.fromEntries(ownedNftIdsByEthAddress)),
+      peter: JSON.stringify(Object.fromEntries(peter))
+    })
+  }
 
   // Fill the final map with nfts ownership
   for (const [ethAddress, nfts] of nftIdsByAddressToCheck) {
@@ -20,6 +48,36 @@ export async function ownedNFTsByAddress(
     if (!ownedNfts) ownedNftIdsByEthAddress.set(ethAddress, nfts)
   }
   return ownedNftIdsByEthAddress
+}
+
+/**
+ * Return a set of the NFTs that are actually owned by the eth address, for every eth address, based on ownership-server
+ */
+async function queryPeter(
+  components: Pick<AppComponents, 'fetch' | 'config'>,
+  nftIdsByAddressToCheck: Map<string, string[]>
+): Promise<Map<string, string[]>> {
+  const { fetch } = components
+
+  const timestamp = Date.now()
+  const result: Map<string, string[]> = new Map()
+
+  for (const [ethAddress, nfts] of nftIdsByAddressToCheck.entries()) {
+    if (nfts.length > 0) {
+      const response = await fetch.fetch(
+        // GET /ownsItems?address=xx&timestamp=xx&itemUrn=xx&itemUrn=yy
+        `http://206.189.206.1:1234/ownsItems?address=${ethAddress}&timestamp=${timestamp}&itemUrn=${nfts.join(
+          '&itemUrn='
+        )}`
+      )
+      if (response.ok) {
+        const json = await response.json()
+        result.set(ethAddress, json.ownedUrns)
+      }
+    }
+  }
+
+  return result
 }
 
 /*
