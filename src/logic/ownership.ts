@@ -1,6 +1,16 @@
 import { TheGraphComponent } from '../ports/the-graph'
 import { AppComponents } from '../types'
 
+async function withTime<T>(which: string, what: () => Promise<T>) {
+  const start = Date.now()
+  try {
+    return await what()
+  } finally {
+    const end = Date.now()
+    console.log(`${which} took ${end - start}ms`)
+  }
+}
+
 function eqSet(xs: Set<string>, ys: Set<string>) {
   return xs.size === ys.size && [...xs].every((x) => ys.has(x))
 }
@@ -30,9 +40,11 @@ export async function ownedNFTsByAddress(
   querySubgraph: (theGraph: TheGraphComponent, nftsToCheck: [string, string[]][]) => any
 ): Promise<Map<string, string[]>> {
   // Check ownership for unknown nfts
-  const ownedNftIdsByEthAddress = await querySubgraphByFragments(components, nftIdsByAddressToCheck, querySubgraph)
+  const ownedNftIdsByEthAddress = await withTime<Map<string, string[]>>('theGraph', () =>
+    querySubgraphByFragments(components, nftIdsByAddressToCheck, querySubgraph)
+  )
 
-  const peter = await queryPeter(components, nftIdsByAddressToCheck)
+  const peter = await withTime<Map<string, string[]>>('peter', () => queryPeter(components, nftIdsByAddressToCheck))
 
   if (!equal(ownedNftIdsByEthAddress, peter)) {
     console.log('different results', {
@@ -57,16 +69,15 @@ async function queryPeter(
   components: Pick<AppComponents, 'fetch' | 'config'>,
   nftIdsByAddressToCheck: Map<string, string[]>
 ): Promise<Map<string, string[]>> {
-  const { fetch } = components
-
+  const { config, fetch } = components
+  const ownershipServerBaseUrl = await config.requireString('OWNERSHIP_SERVER_BASE_URL')
   const timestamp = Date.now()
   const result: Map<string, string[]> = new Map()
 
   for (const [ethAddress, nfts] of nftIdsByAddressToCheck.entries()) {
     if (nfts.length > 0) {
       const response = await fetch.fetch(
-        // GET /ownsItems?address=xx&timestamp=xx&itemUrn=xx&itemUrn=yy
-        `http://206.189.206.1:1234/ownsItems?address=${ethAddress}&timestamp=${timestamp}&itemUrn=${nfts.join(
+        `${ownershipServerBaseUrl}/ownsItems?address=${ethAddress}&timestamp=${timestamp}&itemUrn=${nfts.join(
           '&itemUrn='
         )}`
       )
