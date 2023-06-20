@@ -8,6 +8,7 @@ type ThirdPartyAssets = {
   assets: ThirdPartyAsset[]
   next?: string
 }
+
 export async function createThirdPartyResolverForCollection(
   components: Pick<AppComponents, 'theGraph' | 'fetch'>,
   collectionId: string
@@ -20,6 +21,7 @@ export async function createThirdPartyResolverForCollection(
   if (!thirdPartyResolverAPI) throw new Error(`Could not find third party resolver for collectionId: ${collectionId}`)
 
   return {
+    collectionId,
     findThirdPartyAssetsByOwner: async (owner) => {
       const assetsByOwner = await fetchAssets(components, thirdPartyResolverAPI, registryId, owner)
       if (!assetsByOwner) throw new Error(`Could not fetch assets for owner: ${owner}`)

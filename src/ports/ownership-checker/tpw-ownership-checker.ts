@@ -2,7 +2,7 @@ import { parseUrn } from '@dcl/urn-resolver'
 import { getCachedNFTsAndPendingCheckNFTs, fillCacheWithRecentlyCheckedWearables } from '../../logic/cache'
 import { mergeMapIntoMap } from '../../logic/maps'
 import { createThirdPartyResolverForCollection } from '../../logic/third-party-wearables'
-import { AppComponents, NFTsOwnershipChecker, ThirdPartyAsset } from '../../types'
+import { AppComponents, NFTsOwnershipChecker, TPWResolver } from '../../types'
 
 export function createTPWOwnershipChecker(
   cmpnnts: Pick<AppComponents, 'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches'>
@@ -56,46 +56,62 @@ async function ownedThirdPartyWearables(
   wearableIdsByAddress: Map<string, string[]>
 ): Promise<Map<string, string[]>> {
   const response = new Map()
+
+  const collectionsByAddress = new Map<string, string[]>()
+  const processedCollections = new Set<string>()
+  const pendingResolversByCollections: Promise<TPWResolver>[] = []
+
   for (const [address, wearableIds] of wearableIdsByAddress) {
-    // Get collectionIds from all wearables
     const collectionIds = await filterCollectionIdsFromWearables(wearableIds) // This can be done before and store only collection ids
-
-    // Get all owned TPW for every collectionId
-    const ownedTPW: Set<string> = new Set()
+    collectionsByAddress.set(address, collectionIds)
     for (const collectionId of collectionIds) {
-      // Get API for collection
-      const resolver = await createThirdPartyResolverForCollection(components, collectionId)
+      if (processedCollections.has(collectionId)) {
+        continue
+      }
 
-      // Get owned wearables for the collection
-      const ownedTPWForCollection = (await resolver.findThirdPartyAssetsByOwner(address)).map(
-        (asset: ThirdPartyAsset) => asset.urn.decentraland
-      )
-
-      // Add wearables for collection to all owned wearables set
-      for (const tpw of ownedTPWForCollection) ownedTPW.add(tpw)
+      processedCollections.add(collectionId)
+      pendingResolversByCollections.push(createThirdPartyResolverForCollection(components, collectionId))
     }
-
-    // Filter the wearables from the map with the actually owned wearables
-    const sanitizedWearables = wearableIds.filter((tpw) => ownedTPW.has(tpw))
-
-    // Add wearables to final response
-    response.set(address, sanitizedWearables)
   }
+
+  const resolversByCollections = new Map<string, TPWResolver>()
+  for (const resolver of await Promise.all(pendingResolversByCollections)) {
+    resolversByCollections.set(resolver.collectionId, resolver)
+  }
+
+  for (const [address, collectionIds] of collectionsByAddress) {
+    const ownedTPW: Set<string> = new Set()
+    await Promise.all(
+      collectionIds.map(async (collectionId) => {
+        const resolver = resolversByCollections.get(collectionId)
+        for (const asset of await resolver!.findThirdPartyAssetsByOwner(address)) {
+          ownedTPW.add(asset.urn.decentraland)
+        }
+      })
+    )
+
+    const wearablesIds = wearableIdsByAddress.get(address)
+    response.set(
+      address,
+      wearablesIds!.filter((tpw) => ownedTPW.has(tpw))
+    )
+  }
+
   return response
 }
 
 async function filterCollectionIdsFromWearables(wearableIds: string[]): Promise<string[]> {
   const collectionIds: string[] = []
-  for (const wearableId of wearableIds) {
-    try {
-      const parsedUrn = await parseUrn(wearableId)
+  const parsedUrns = await Promise.allSettled(wearableIds.map(parseUrn))
+  for (const result of parsedUrns) {
+    if (result.status === 'fulfilled') {
+      const parsedUrn = result.value
       if (parsedUrn?.type === 'blockchain-collection-third-party') {
         const collectionId = parsedUrn.uri.toString().split(':').slice(0, -1).join(':')
         collectionIds.push(collectionId)
       }
-    } catch (error) {
-      console.debug(`There was an error parsing the urn: ${wearableId}`)
     }
   }
+
   return collectionIds
 }
