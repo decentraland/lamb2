@@ -5,7 +5,7 @@ import { Profile } from '@dcl/catalyst-api-specs/lib/client'
 
 export async function profilesHandler(
   context: HandlerContextWithPath<
-    'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches',
+    'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches' | 'thirdPartyProvidersStorage',
     '/profiles'
   >
 ): Promise<{ status: 200; body: Profile[] } | { status: 304 }> {
@@ -38,7 +38,7 @@ export async function profilesHandler(
 
 export async function profileHandler(
   context: HandlerContextWithPath<
-    'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches',
+    'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches' | 'thirdPartyProvidersStorage',
     '/profile/:id'
   >
 ): Promise<{ status: 200; body: Profile }> {

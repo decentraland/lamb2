@@ -46,7 +46,10 @@ export async function getBaseWearables(wearables: string[]): Promise<string[]> {
 }
 
 export async function getProfiles(
-  components: Pick<AppComponents, 'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches'>,
+  components: Pick<
+    AppComponents,
+    'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches' | 'thirdPartyProvidersStorage'
+  >,
   ethAddresses: string[],
   ifModifiedSinceTimestamp?: number | undefined
 ): Promise<ProfileMetadata[] | undefined> {

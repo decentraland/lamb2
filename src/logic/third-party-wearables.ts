@@ -1,4 +1,3 @@
-import { runQuery } from '../ports/the-graph'
 import { AppComponents, ThirdPartyAsset, TPWResolver } from '../types'
 
 type ThirdPartyAssets = {
@@ -10,21 +9,33 @@ type ThirdPartyAssets = {
 }
 
 export async function createThirdPartyResolverForCollection(
-  components: Pick<AppComponents, 'theGraph' | 'fetch'>,
+  components: Pick<AppComponents, 'thirdPartyProvidersStorage' | 'fetch'>,
   collectionId: string
 ): Promise<TPWResolver> {
   // Parse collection Id
   const { thirdPartyId, registryId } = parseCollectionId(collectionId)
 
-  // Get resolver
-  const thirdPartyResolverAPI = await findThirdPartyResolver(components, thirdPartyId)
-  if (!thirdPartyResolverAPI) throw new Error(`Could not find third party resolver for collectionId: ${collectionId}`)
+  let thirdPartyResolverAPI: string | undefined = undefined
+
+  const thirdPartyProviders = await components.thirdPartyProvidersStorage.getAll()
+  for (const provider of thirdPartyProviders) {
+    if (provider.id === thirdPartyId) {
+      thirdPartyResolverAPI = provider.resolver
+      break
+    }
+  }
+
+  if (!thirdPartyResolverAPI) {
+    throw new Error(`Could not find third party resolver for collectionId: ${collectionId}`)
+  }
 
   return {
     collectionId,
     findThirdPartyAssetsByOwner: async (owner) => {
-      const assetsByOwner = await fetchAssets(components, thirdPartyResolverAPI, registryId, owner)
-      if (!assetsByOwner) throw new Error(`Could not fetch assets for owner: ${owner}`)
+      const assetsByOwner = await fetchAssets(components, thirdPartyResolverAPI!, registryId, owner)
+      if (!assetsByOwner) {
+        throw new Error(`Could not fetch assets for owner: ${owner}`)
+      }
       return assetsByOwner?.filter((asset) => asset.urn.decentraland.startsWith(thirdPartyId)) ?? []
     }
   }
@@ -45,31 +56,6 @@ function parseCollectionId(collectionId: string): { thirdPartyId: string; regist
     registryId: parts[4]
   }
 }
-
-/**
- * Returns the third party resolver API to be used to query assets from any collection
- * of given third party integration
- */
-async function findThirdPartyResolver(
-  components: Pick<AppComponents, 'theGraph'>,
-  id: string
-): Promise<string | undefined> {
-  const queryResponse = await runQuery<{ thirdParties: [{ resolver: string }] }>(
-    components.theGraph.thirdPartyRegistrySubgraph,
-    QUERY_THIRD_PARTY_RESOLVER,
-    { id }
-  )
-  return queryResponse.thirdParties[0]?.resolver
-}
-
-const QUERY_THIRD_PARTY_RESOLVER = `
-query ThirdPartyResolver($id: String!) {
-  thirdParties(where: {id: $id, isApproved: true}) {
-    id,
-    resolver
-  }
-}
-`
 
 async function fetchAssets(
   components: Pick<AppComponents, 'fetch'>,

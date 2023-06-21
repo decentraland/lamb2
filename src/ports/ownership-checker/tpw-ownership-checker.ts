@@ -5,10 +5,9 @@ import { createThirdPartyResolverForCollection } from '../../logic/third-party-w
 import { AppComponents, NFTsOwnershipChecker, TPWResolver } from '../../types'
 
 export function createTPWOwnershipChecker(
-  cmpnnts: Pick<AppComponents, 'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches'>
+  components: Pick<AppComponents, 'theGraph' | 'thirdPartyProvidersStorage' | 'fetch' | 'content' | 'ownershipCaches'>
 ): NFTsOwnershipChecker {
   let ownedTPWByAddress: Map<string, string[]> = new Map()
-  const components = cmpnnts
   const cache = components.ownershipCaches.tpwCache
 
   function addNFTsForAddress(address: string, nfts: string[]) {
@@ -52,7 +51,7 @@ export function createTPWOwnershipChecker(
  * finally sanitize wearableIdsByAddress with the owned wearables.
  */
 async function ownedThirdPartyWearables(
-  components: Pick<AppComponents, 'theGraph' | 'fetch' | 'content'>,
+  components: Pick<AppComponents, 'theGraph' | 'thirdPartyProvidersStorage' | 'fetch' | 'content'>,
   wearableIdsByAddress: Map<string, string[]>
 ): Promise<Map<string, string[]>> {
   const response = new Map()
