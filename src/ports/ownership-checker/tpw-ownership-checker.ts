@@ -1,11 +1,14 @@
 import { parseUrn } from '@dcl/urn-resolver'
 import { getCachedNFTsAndPendingCheckNFTs, fillCacheWithRecentlyCheckedWearables } from '../../logic/cache'
+import { fetchUserThirdPartyAssets } from '../../logic/fetch-elements/fetch-third-party-wearables'
 import { mergeMapIntoMap } from '../../logic/maps'
-import { createThirdPartyResolverForCollection } from '../../logic/third-party-wearables'
-import { AppComponents, NFTsOwnershipChecker, TPWResolver } from '../../types'
+import { AppComponents, NFTsOwnershipChecker } from '../../types'
 
 export function createTPWOwnershipChecker(
-  components: Pick<AppComponents, 'theGraph' | 'thirdPartyProvidersStorage' | 'fetch' | 'content' | 'ownershipCaches'>
+  components: Pick<
+    AppComponents,
+    'theGraph' | 'thirdPartyProvidersStorage' | 'fetch' | 'content' | 'ownershipCaches' | 'logs'
+  >
 ): NFTsOwnershipChecker {
   let ownedTPWByAddress: Map<string, string[]> = new Map()
   const cache = components.ownershipCaches.tpwCache
@@ -51,39 +54,27 @@ export function createTPWOwnershipChecker(
  * finally sanitize wearableIdsByAddress with the owned wearables.
  */
 async function ownedThirdPartyWearables(
-  components: Pick<AppComponents, 'theGraph' | 'thirdPartyProvidersStorage' | 'fetch' | 'content'>,
+  { thirdPartyProvidersStorage, fetch, logs }: Pick<AppComponents, 'thirdPartyProvidersStorage' | 'fetch' | 'logs'>,
   wearableIdsByAddress: Map<string, string[]>
 ): Promise<Map<string, string[]>> {
   const response = new Map()
 
   const collectionsByAddress = new Map<string, string[]>()
-  const processedCollections = new Set<string>()
-  const pendingResolversByCollections: Promise<TPWResolver>[] = []
 
   for (const [address, wearableIds] of wearableIdsByAddress) {
     const collectionIds = await filterCollectionIdsFromWearables(wearableIds) // This can be done before and store only collection ids
     collectionsByAddress.set(address, collectionIds)
-    for (const collectionId of collectionIds) {
-      if (processedCollections.has(collectionId)) {
-        continue
-      }
-
-      processedCollections.add(collectionId)
-      pendingResolversByCollections.push(createThirdPartyResolverForCollection(components, collectionId))
-    }
-  }
-
-  const resolversByCollections = new Map<string, TPWResolver>()
-  for (const resolver of await Promise.all(pendingResolversByCollections)) {
-    resolversByCollections.set(resolver.collectionId, resolver)
   }
 
   for (const [address, collectionIds] of collectionsByAddress) {
     const ownedTPW: Set<string> = new Set()
     await Promise.all(
       collectionIds.map(async (collectionId) => {
-        const resolver = resolversByCollections.get(collectionId)
-        for (const asset of await resolver!.findThirdPartyAssetsByOwner(address)) {
+        for (const asset of await fetchUserThirdPartyAssets(
+          { thirdPartyProvidersStorage, fetch, logs },
+          address,
+          collectionId
+        )) {
           ownedTPW.add(asset.urn.decentraland)
         }
       })

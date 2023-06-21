@@ -48,7 +48,7 @@ export async function getBaseWearables(wearables: string[]): Promise<string[]> {
 export async function getProfiles(
   components: Pick<
     AppComponents,
-    'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches' | 'thirdPartyProvidersStorage'
+    'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches' | 'thirdPartyProvidersStorage' | 'logs'
   >,
   ethAddresses: string[],
   ifModifiedSinceTimestamp?: number | undefined
