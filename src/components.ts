@@ -119,7 +119,7 @@ export async function initComponents(
     thirdPartyProvidersServiceFetcher
   })
   const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllThirdPartyWearables({ thirdPartyProvidersStorage, fetch, logs, entitiesFetcher }, address)
+    fetchAllThirdPartyWearables({ thirdPartyProvidersStorage, fetch, logs, entitiesFetcher, metrics }, address)
   )
 
   return {

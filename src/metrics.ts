@@ -17,6 +17,11 @@ export const metricDeclarations = {
     help: 'Lamb2 server static build info.',
     type: IMetricsComponent.GaugeType,
     labelNames: ['commitHash']
+  },
+  tpw_provider_fetch_assets_duration_seconds: {
+    help: 'Third Party Provider fetch assets request duration in seconds.',
+    type: IMetricsComponent.HistogramType,
+    labelNames: ['id']
   }
 }
 

@@ -111,9 +111,11 @@ async function initComponents(
     contentServerUrl
   })
 
+  const metrics = createTestMetricsComponent(metricDeclarations)
   const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllThirdPartyWearables(
       {
+        metrics,
         thirdPartyProvidersStorage: components.thirdPartyProvidersStorage,
         fetch,
         logs,
@@ -126,7 +128,7 @@ async function initComponents(
   return {
     ...components,
     config,
-    metrics: createTestMetricsComponent(metricDeclarations),
+    metrics,
     localFetch: await createLocalFetchCompoment(config),
     theGraph: theGraphMock,
     content,

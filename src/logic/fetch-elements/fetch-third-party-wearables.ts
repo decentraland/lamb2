@@ -7,11 +7,10 @@ const URN_THIRD_PARTY_NAME_TYPE = 'blockchain-collection-third-party-name'
 const URN_THIRD_PARTY_ASSET_TYPE = 'blockchain-collection-third-party'
 
 async function fetchAssets(
-  components: Pick<AppComponents, 'fetch' | 'logs'>,
+  { logs, fetch, metrics }: Pick<AppComponents, 'fetch' | 'logs' | 'metrics'>,
   owner: string,
   thirdParty: ThirdPartyProvider
 ) {
-  const { logs, fetch } = components
   const logger = logs.getLogger('fetch-assets')
   const urn = await parseUrn(thirdParty.id)
   if (!urn || urn.type !== URN_THIRD_PARTY_NAME_TYPE) {
@@ -24,7 +23,9 @@ async function fetchAssets(
   const allAssets: ThirdPartyAsset[] = []
   try {
     do {
+      const timer = metrics.startTimer('tpw_provider_fetch_assets_duration_seconds', { id: thirdParty.id })
       const response = await fetch.fetch(url, { timeout: 5000 })
+      timer.end({ id: thirdParty.id })
       if (!response.ok) {
         logger.error(`Http status ${response.status} from ${url}`)
         break
@@ -79,7 +80,7 @@ function groupThirdPartyWearablesByURN(assets: (ThirdPartyAsset & { entity: Enti
 }
 
 export async function fetchUserThirdPartyAssets(
-  components: Pick<AppComponents, 'thirdPartyProvidersStorage' | 'fetch' | 'logs'>,
+  components: Pick<AppComponents, 'thirdPartyProvidersStorage' | 'fetch' | 'logs' | 'metrics'>,
   owner: string,
   collectionId: string
 ): Promise<ThirdPartyAsset[]> {
@@ -117,7 +118,7 @@ export async function fetchUserThirdPartyAssets(
 }
 
 export async function fetchAllThirdPartyWearables(
-  components: Pick<AppComponents, 'thirdPartyProvidersStorage' | 'fetch' | 'logs' | 'entitiesFetcher'>,
+  components: Pick<AppComponents, 'thirdPartyProvidersStorage' | 'fetch' | 'logs' | 'entitiesFetcher' | 'metrics'>,
   owner: string
 ): Promise<ThirdPartyWearable[]> {
   const thirdParties = await components.thirdPartyProvidersStorage.getAll()

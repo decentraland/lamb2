@@ -5,10 +5,7 @@ import { mergeMapIntoMap } from '../../logic/maps'
 import { AppComponents, NFTsOwnershipChecker } from '../../types'
 
 export function createTPWOwnershipChecker(
-  components: Pick<
-    AppComponents,
-    'theGraph' | 'thirdPartyProvidersStorage' | 'fetch' | 'content' | 'ownershipCaches' | 'logs'
-  >
+  components: Pick<AppComponents, 'thirdPartyProvidersStorage' | 'fetch' | 'ownershipCaches' | 'logs' | 'metrics'>
 ): NFTsOwnershipChecker {
   let ownedTPWByAddress: Map<string, string[]> = new Map()
   const cache = components.ownershipCaches.tpwCache
@@ -54,7 +51,12 @@ export function createTPWOwnershipChecker(
  * finally sanitize wearableIdsByAddress with the owned wearables.
  */
 async function ownedThirdPartyWearables(
-  { thirdPartyProvidersStorage, fetch, logs }: Pick<AppComponents, 'thirdPartyProvidersStorage' | 'fetch' | 'logs'>,
+  {
+    metrics,
+    thirdPartyProvidersStorage,
+    fetch,
+    logs
+  }: Pick<AppComponents, 'thirdPartyProvidersStorage' | 'fetch' | 'logs' | 'metrics'>,
   wearableIdsByAddress: Map<string, string[]>
 ): Promise<Map<string, string[]>> {
   const response = new Map<string, string[]>()
@@ -70,7 +72,7 @@ async function ownedThirdPartyWearables(
     await Promise.all(
       collectionIds.map(async (collectionId) => {
         for (const asset of await fetchUserThirdPartyAssets(
-          { thirdPartyProvidersStorage, fetch, logs },
+          { thirdPartyProvidersStorage, fetch, logs, metrics },
           address,
           collectionId
         )) {
