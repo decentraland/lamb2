@@ -230,14 +230,6 @@ export type ThirdPartyAsset = {
   }
 }
 
-export type ThirdPartyAssets = {
-  address: string
-  total: number
-  page: number
-  assets: ThirdPartyAsset[]
-  next?: string
-}
-
 export type OnChainWearableResponse = Omit<OnChainWearable, 'minTransferredAt' | 'maxTransferredAt'> & {
   definition?: WearableDefinition
   entity?: Entity
