@@ -38,20 +38,18 @@ test('integration tests for /profile/{id}', function ({ components, stubComponen
       .withArgs(namesQuery, {})
       .resolves({ P0x1: [{ name: 'cryptonico' }] })
 
-    const tpwQuery =
-      '\nquery ThirdPartyResolver($id: String!) {\n  thirdParties(where: {id: $id, isApproved: true}) {\n    id\n    resolver\n  }\n}\n'
-    const tpwId = 'urn:decentraland:matic:collections-thirdparty:ntr1-meta'
-    theGraph.thirdPartyRegistrySubgraph.query = sinon
-      .stub()
-      .withArgs(tpwQuery, { tpwId })
-      .resolves({
-        thirdParties: [
-          {
-            id: 'urn:decentraland:matic:collections-thirdparty:ntr1-meta',
-            resolver: 'https://api.swappable.io/api/v1'
+    jest.spyOn(components.thirdPartyProvidersStorage, 'getAll').mockResolvedValue([
+      {
+        id: 'urn:decentraland:matic:collections-thirdparty:ntr1-meta',
+        resolver: 'https://api.swappable.io/api/v1',
+        metadata: {
+          thirdParty: {
+            name: 'test',
+            description: 'test'
           }
-        ]
-      })
+        }
+      }
+    ])
     fetch.fetch
       .withArgs('https://api.swappable.io/api/v1/registry/ntr1-meta/address/0x1/assets')
       .onCall(0)

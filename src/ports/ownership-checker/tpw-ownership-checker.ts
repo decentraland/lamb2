@@ -57,12 +57,11 @@ async function ownedThirdPartyWearables(
   { thirdPartyProvidersStorage, fetch, logs }: Pick<AppComponents, 'thirdPartyProvidersStorage' | 'fetch' | 'logs'>,
   wearableIdsByAddress: Map<string, string[]>
 ): Promise<Map<string, string[]>> {
-  const response = new Map()
+  const response = new Map<string, string[]>()
 
   const collectionsByAddress = new Map<string, string[]>()
-
   for (const [address, wearableIds] of wearableIdsByAddress) {
-    const collectionIds = await filterCollectionIdsFromWearables(wearableIds) // This can be done before and store only collection ids
+    const collectionIds = await filterCollectionIdsFromWearables(wearableIds)
     collectionsByAddress.set(address, collectionIds)
   }
 
