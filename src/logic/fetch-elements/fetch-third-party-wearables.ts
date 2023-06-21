@@ -1,10 +1,18 @@
 import { Entity, Wearable } from '@dcl/schemas'
 import { BlockchainCollectionThirdPartyName, parseUrn } from '@dcl/urn-resolver'
 import { FetcherError } from '../../adapters/elements-fetcher'
-import { AppComponents, ThirdPartyProvider, ThirdPartyAsset, ThirdPartyAssets, ThirdPartyWearable } from '../../types'
+import { AppComponents, ThirdPartyProvider, ThirdPartyAsset, ThirdPartyWearable } from '../../types'
 
 const URN_THIRD_PARTY_NAME_TYPE = 'blockchain-collection-third-party-name'
 const URN_THIRD_PARTY_ASSET_TYPE = 'blockchain-collection-third-party'
+
+export type ThirdPartyAssets = {
+  address: string
+  total: number
+  page: number
+  assets: ThirdPartyAsset[]
+  next?: string
+}
 
 async function fetchAssets(
   { logs, fetch, metrics }: Pick<AppComponents, 'fetch' | 'logs' | 'metrics'>,
@@ -21,32 +29,30 @@ async function fetchAssets(
   let url: string | undefined = `${baseUrl}/registry/${urn.thirdPartyName}/address/${owner}/assets`
 
   const allAssets: ThirdPartyAsset[] = []
-  try {
-    do {
-      const timer = metrics.startTimer('tpw_provider_fetch_assets_duration_seconds', { id: thirdParty.id })
+  do {
+    const timer = metrics.startTimer('tpw_provider_fetch_assets_duration_seconds', { id: thirdParty.id })
+    let assetsByOwner: ThirdPartyAssets
+    try {
       const response = await fetch.fetch(url, { timeout: 5000 })
+      assetsByOwner = await response.json()
+    } catch (err: any) {
+      logger.warn(`Error fetching assets with owner: ${owner}, url: ${url}, error: ${err.message}`)
+      break
+    } finally {
       timer.end({ id: thirdParty.id })
-      if (!response.ok) {
-        logger.error(`Http status ${response.status} from ${url}`)
-        break
-      }
+    }
 
-      const responseVal = await response.json()
-      const assetsByOwner = responseVal as ThirdPartyAssets
-      if (!assetsByOwner) {
-        logger.error(`No assets found with owner: ${owner}, url: ${url}`)
-        break
-      }
+    if (!assetsByOwner) {
+      logger.error(`No assets found with owner: ${owner}, url: ${url}`)
+      break
+    }
 
-      for (const asset of assetsByOwner.assets ?? []) {
-        allAssets.push(asset)
-      }
+    for (const asset of assetsByOwner.assets ?? []) {
+      allAssets.push(asset)
+    }
 
-      url = assetsByOwner.next
-    } while (url)
-  } catch (err: any) {
-    logger.warn(`Error fetching assets with owner: ${owner}, url: ${url}, error: ${err.message}`)
-  }
+    url = assetsByOwner.next
+  } while (url)
 
   return allAssets
 }
@@ -106,7 +112,7 @@ export async function fetchUserThirdPartyAssets(
   }
 
   if (!thirdPartyProvider) {
-    throw new Error(`Could not find third party resolver for collectionId: ${collectionId}`)
+    return []
   }
 
   const assetsByOwner = await fetchAssets(components, owner, thirdPartyProvider)
