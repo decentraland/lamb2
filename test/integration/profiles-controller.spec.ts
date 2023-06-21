@@ -99,20 +99,18 @@ test('integration tests for /profiles', function ({ components, stubComponents }
       .withArgs(namesQuery, {})
       .resolves({ P0x1: [{ name: 'cryptonico' }] })
 
-    const tpwQuery =
-      '\nquery ThirdPartyResolver($id: String!) {\n  thirdParties(where: {id: $id, isApproved: true}) {\n    id\n    resolver\n  }\n}\n'
-    const tpwId = 'urn:decentraland:matic:collections-thirdparty:ntr1-meta'
-    theGraph.thirdPartyRegistrySubgraph.query = sinon
-      .stub()
-      .withArgs(tpwQuery, { tpwId })
-      .resolves({
-        thirdParties: [
-          {
-            id: 'urn:decentraland:matic:collections-thirdparty:ntr1-meta',
-            resolver: 'https://api.swappable.io/api/v1'
+    jest.spyOn(components.thirdPartyProvidersStorage, 'getAll').mockResolvedValue([
+      {
+        id: 'urn:decentraland:matic:collections-thirdparty:ntr1-meta',
+        resolver: 'https://api.swappable.io/api/v1',
+        metadata: {
+          thirdParty: {
+            name: 'test',
+            description: 'test'
           }
-        ]
-      })
+        }
+      }
+    ])
     fetch.fetch
       .withArgs('https://api.swappable.io/api/v1/registry/ntr1-meta/address/0x1/assets')
       .onCall(0)
@@ -371,20 +369,18 @@ test('integration tests for /profiles', function ({ components, stubComponents }
       '{\n      P0x6: nfts(where: { owner: "0x6", category: ens, name_in: ["cryptonico#e602"] }, first: 1000) {\n        name\n      }\n    }'
     theGraph.ensSubgraph.query = sinon.stub().withArgs(namesQuery, {}).resolves({ P0x6: [] })
 
-    const tpwQuery =
-      '\nquery ThirdPartyResolver($id: String!) {\n  thirdParties(where: {id: $id, isApproved: true}) {\n    id\n    resolver\n  }\n}\n'
-    const tpwId = 'urn:decentraland:matic:collections-thirdparty:ntr1-meta'
-    theGraph.thirdPartyRegistrySubgraph.query = sinon
-      .stub()
-      .withArgs(tpwQuery, { tpwId })
-      .resolves({
-        thirdParties: [
-          {
-            id: 'urn:decentraland:matic:collections-thirdparty:ntr1-meta',
-            resolver: 'https://api.swappable.io/api/v1'
+    jest.spyOn(components.thirdPartyProvidersStorage, 'getAll').mockResolvedValue([
+      {
+        id: 'urn:decentraland:matic:collections-thirdparty:ntr1-meta',
+        resolver: 'https://api.swappable.io/api/v1',
+        metadata: {
+          thirdParty: {
+            name: 'test',
+            description: 'test'
           }
-        ]
-      })
+        }
+      }
+    ])
     fetch.fetch
       .withArgs('https://api.swappable.io/api/v1/registry/ntr1-meta/address/0x6/assets')
       .onCall(0)
@@ -437,30 +433,28 @@ test('integration tests for /profiles', function ({ components, stubComponents }
       '{\n      P0x7: nfts(where: { owner: "0x7", category: ens, name_in: ["cryptonico#e602"] }, first: 1000) {\n        name\n      }\n    }'
     theGraph.ensSubgraph.query = sinon.stub().withArgs(namesQuery, {}).resolves({ P0x7: [] })
 
-    const tpwQuery =
-      '\nquery ThirdPartyResolver($id: String!) {\n  thirdParties(where: {id: $id, isApproved: true}) {\n    id\n    resolver\n  }\n}\n'
-    const tpwId1 = 'urn:decentraland:matic:collections-thirdparty:ntr1-meta'
-    const tpwId2 = 'urn:decentraland:matic:collections-thirdparty:ntr2-meta'
-    theGraph.thirdPartyRegistrySubgraph.query = sinon
-      .stub()
-      .withArgs(tpwQuery, { tpwId1 })
-      .resolves({
-        thirdParties: [
-          {
-            id: 'urn:decentraland:matic:collections-thirdparty:ntr1-meta',
-            resolver: 'https://api.swappable.io/api/v1'
+    jest.spyOn(components.thirdPartyProvidersStorage, 'getAll').mockResolvedValue([
+      {
+        id: 'urn:decentraland:matic:collections-thirdparty:ntr1-meta',
+        resolver: 'https://api.swappable.io/api/v1',
+        metadata: {
+          thirdParty: {
+            name: 'test',
+            description: 'test'
           }
-        ]
-      })
-      .withArgs(tpwQuery, { tpwId2 })
-      .resolves({
-        thirdParties: [
-          {
-            id: 'urn:decentraland:matic:collections-thirdparty:ntr2-meta',
-            resolver: 'https://api.swappable.io/api/v1'
+        }
+      },
+      {
+        id: 'urn:decentraland:matic:collections-thirdparty:ntr2-meta',
+        resolver: 'https://api.swappable.io/api/v1',
+        metadata: {
+          thirdParty: {
+            name: 'test',
+            description: 'test'
           }
-        ]
-      })
+        }
+      }
+    ])
     fetch.fetch
       .withArgs('https://api.swappable.io/api/v1/registry/ntr1-meta/address/0x7/assets')
       .onCall(0)
@@ -553,20 +547,30 @@ test('integration tests for /profiles', function ({ components, stubComponents }
         P0x1b: [{ name: 'cryptonico' }],
         P0x8: [{ name: 'testing' }]
       })
-    const tpwQuery =
-      '\nquery ThirdPartyResolver($id: String!) {\n  thirdParties(where: {id: $id, isApproved: true}) {\n    id\n    resolver\n  }\n}\n'
-    const tpwId = 'urn:decentraland:matic:collections-thirdparty:ntr1-meta'
-    theGraph.thirdPartyRegistrySubgraph.query = sinon
-      .stub()
-      .withArgs(tpwQuery, { tpwId })
-      .resolves({
-        thirdParties: [
-          {
-            id: 'urn:decentraland:matic:collections-thirdparty:ntr1-meta',
-            resolver: 'https://api.swappable.io/api/v1'
+
+    jest.spyOn(components.thirdPartyProvidersStorage, 'getAll').mockResolvedValue([
+      {
+        id: 'urn:decentraland:matic:collections-thirdparty:ntr1-meta',
+        resolver: 'https://api.swappable.io/api/v1',
+        metadata: {
+          thirdParty: {
+            name: 'test',
+            description: 'test'
           }
-        ]
-      })
+        }
+      },
+      {
+        id: 'urn:decentraland:matic:collections-thirdparty:ntr2-meta',
+        resolver: 'https://api.swappable.io/api/v1',
+        metadata: {
+          thirdParty: {
+            name: 'test',
+            description: 'test'
+          }
+        }
+      }
+    ])
+
     fetch.fetch
       .withArgs('https://api.swappable.io/api/v1/registry/ntr1-meta/address/0x1b/assets')
       .onCall(0)

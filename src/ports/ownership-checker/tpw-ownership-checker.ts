@@ -1,14 +1,13 @@
 import { parseUrn } from '@dcl/urn-resolver'
 import { getCachedNFTsAndPendingCheckNFTs, fillCacheWithRecentlyCheckedWearables } from '../../logic/cache'
+import { fetchUserThirdPartyAssets } from '../../logic/fetch-elements/fetch-third-party-wearables'
 import { mergeMapIntoMap } from '../../logic/maps'
-import { createThirdPartyResolverForCollection } from '../../logic/third-party-wearables'
-import { AppComponents, NFTsOwnershipChecker, ThirdPartyAsset } from '../../types'
+import { AppComponents, NFTsOwnershipChecker } from '../../types'
 
 export function createTPWOwnershipChecker(
-  cmpnnts: Pick<AppComponents, 'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches'>
+  components: Pick<AppComponents, 'thirdPartyProvidersStorage' | 'fetch' | 'ownershipCaches' | 'logs' | 'metrics'>
 ): NFTsOwnershipChecker {
   let ownedTPWByAddress: Map<string, string[]> = new Map()
-  const components = cmpnnts
   const cache = components.ownershipCaches.tpwCache
 
   function addNFTsForAddress(address: string, nfts: string[]) {
@@ -52,50 +51,58 @@ export function createTPWOwnershipChecker(
  * finally sanitize wearableIdsByAddress with the owned wearables.
  */
 async function ownedThirdPartyWearables(
-  components: Pick<AppComponents, 'theGraph' | 'fetch' | 'content'>,
+  {
+    metrics,
+    thirdPartyProvidersStorage,
+    fetch,
+    logs
+  }: Pick<AppComponents, 'thirdPartyProvidersStorage' | 'fetch' | 'logs' | 'metrics'>,
   wearableIdsByAddress: Map<string, string[]>
 ): Promise<Map<string, string[]>> {
-  const response = new Map()
+  const response = new Map<string, string[]>()
+
+  const collectionsByAddress = new Map<string, string[]>()
   for (const [address, wearableIds] of wearableIdsByAddress) {
-    // Get collectionIds from all wearables
-    const collectionIds = await filterCollectionIdsFromWearables(wearableIds) // This can be done before and store only collection ids
-
-    // Get all owned TPW for every collectionId
-    const ownedTPW: Set<string> = new Set()
-    for (const collectionId of collectionIds) {
-      // Get API for collection
-      const resolver = await createThirdPartyResolverForCollection(components, collectionId)
-
-      // Get owned wearables for the collection
-      const ownedTPWForCollection = (await resolver.findThirdPartyAssetsByOwner(address)).map(
-        (asset: ThirdPartyAsset) => asset.urn.decentraland
-      )
-
-      // Add wearables for collection to all owned wearables set
-      for (const tpw of ownedTPWForCollection) ownedTPW.add(tpw)
-    }
-
-    // Filter the wearables from the map with the actually owned wearables
-    const sanitizedWearables = wearableIds.filter((tpw) => ownedTPW.has(tpw))
-
-    // Add wearables to final response
-    response.set(address, sanitizedWearables)
+    const collectionIds = await filterCollectionIdsFromWearables(wearableIds)
+    collectionsByAddress.set(address, collectionIds)
   }
+
+  for (const [address, collectionIds] of collectionsByAddress) {
+    const ownedTPW: Set<string> = new Set()
+    await Promise.all(
+      collectionIds.map(async (collectionId) => {
+        for (const asset of await fetchUserThirdPartyAssets(
+          { thirdPartyProvidersStorage, fetch, logs, metrics },
+          address,
+          collectionId
+        )) {
+          ownedTPW.add(asset.urn.decentraland)
+        }
+      })
+    )
+
+    const wearablesIds = wearableIdsByAddress.get(address)
+    response.set(
+      address,
+      wearablesIds!.filter((tpw) => ownedTPW.has(tpw))
+    )
+  }
+
   return response
 }
 
 async function filterCollectionIdsFromWearables(wearableIds: string[]): Promise<string[]> {
   const collectionIds: string[] = []
-  for (const wearableId of wearableIds) {
-    try {
-      const parsedUrn = await parseUrn(wearableId)
+  const parsedUrns = await Promise.allSettled(wearableIds.map(parseUrn))
+  for (const result of parsedUrns) {
+    if (result.status === 'fulfilled') {
+      const parsedUrn = result.value
       if (parsedUrn?.type === 'blockchain-collection-third-party') {
         const collectionId = parsedUrn.uri.toString().split(':').slice(0, -1).join(':')
         collectionIds.push(collectionId)
       }
-    } catch (error) {
-      console.debug(`There was an error parsing the urn: ${wearableId}`)
     }
   }
+
   return collectionIds
 }

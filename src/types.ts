@@ -112,10 +112,6 @@ export interface NFTsOwnershipChecker {
   getOwnedNFTsForAddress: (address: string) => string[]
 }
 
-export interface TPWResolver {
-  findThirdPartyAssetsByOwner: (owner: string) => Promise<ThirdPartyAsset[]>
-}
-
 /**
  * Function used to fetch TheGraph
  * @public

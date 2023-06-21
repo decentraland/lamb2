@@ -7,11 +7,10 @@ const URN_THIRD_PARTY_NAME_TYPE = 'blockchain-collection-third-party-name'
 const URN_THIRD_PARTY_ASSET_TYPE = 'blockchain-collection-third-party'
 
 async function fetchAssets(
-  components: Pick<AppComponents, 'fetch' | 'logs'>,
+  { logs, fetch, metrics }: Pick<AppComponents, 'fetch' | 'logs' | 'metrics'>,
   owner: string,
   thirdParty: ThirdPartyProvider
 ) {
-  const { logs, fetch } = components
   const logger = logs.getLogger('fetch-assets')
   const urn = await parseUrn(thirdParty.id)
   if (!urn || urn.type !== URN_THIRD_PARTY_NAME_TYPE) {
@@ -24,7 +23,9 @@ async function fetchAssets(
   const allAssets: ThirdPartyAsset[] = []
   try {
     do {
+      const timer = metrics.startTimer('tpw_provider_fetch_assets_duration_seconds', { id: thirdParty.id })
       const response = await fetch.fetch(url, { timeout: 5000 })
+      timer.end({ id: thirdParty.id })
       if (!response.ok) {
         logger.error(`Http status ${response.status} from ${url}`)
         break
@@ -78,8 +79,46 @@ function groupThirdPartyWearablesByURN(assets: (ThirdPartyAsset & { entity: Enti
   return Array.from(wearablesByURN.values())
 }
 
+export async function fetchUserThirdPartyAssets(
+  components: Pick<AppComponents, 'thirdPartyProvidersStorage' | 'fetch' | 'logs' | 'metrics'>,
+  owner: string,
+  collectionId: string
+): Promise<ThirdPartyAsset[]> {
+  const parts = collectionId.split(':')
+
+  // TODO: [TPW] Use urn parser here
+  if (!(parts.length === 5 || parts.length === 6)) {
+    throw new Error(`Couldn't parse collectionId ${collectionId}, valid ones are like:
+    \n - urn:decentraland:{protocol}:collections-thirdparty:{third-party-name}
+    \n - urn:decentraland:{protocol}:collections-thirdparty:{third-party-name}:{collection-id}`)
+  }
+
+  const thirdPartyId = parts.slice(0, 5).join(':')
+
+  let thirdPartyProvider: ThirdPartyProvider | undefined = undefined
+
+  const thirdPartyProviders = await components.thirdPartyProvidersStorage.getAll()
+  for (const provider of thirdPartyProviders) {
+    if (provider.id === thirdPartyId) {
+      thirdPartyProvider = provider
+      break
+    }
+  }
+
+  if (!thirdPartyProvider) {
+    throw new Error(`Could not find third party resolver for collectionId: ${collectionId}`)
+  }
+
+  const assetsByOwner = await fetchAssets(components, owner, thirdPartyProvider)
+  if (!assetsByOwner) {
+    throw new Error(`Could not fetch assets for owner: ${owner}`)
+  }
+
+  return assetsByOwner.filter((asset) => asset.urn.decentraland.startsWith(thirdPartyId)) ?? []
+}
+
 export async function fetchAllThirdPartyWearables(
-  components: Pick<AppComponents, 'thirdPartyProvidersStorage' | 'fetch' | 'logs' | 'entitiesFetcher'>,
+  components: Pick<AppComponents, 'thirdPartyProvidersStorage' | 'fetch' | 'logs' | 'entitiesFetcher' | 'metrics'>,
   owner: string
 ): Promise<ThirdPartyWearable[]> {
   const thirdParties = await components.thirdPartyProvidersStorage.getAll()
