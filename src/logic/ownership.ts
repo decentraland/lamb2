@@ -44,12 +44,14 @@ export async function ownedNFTsByAddress(
     querySubgraphByFragments(components, nftIdsByAddressToCheck, querySubgraph)
   )
 
-  const peter = await withTime<Map<string, string[]>>('peter', () => queryPeter(components, nftIdsByAddressToCheck))
+  const ownershipIndex = await withTime<Map<string, string[]>>('ownershipIndex', () =>
+    queryOwnershipIndex(components, nftIdsByAddressToCheck)
+  )
 
-  if (!equal(ownedNftIdsByEthAddress, peter)) {
+  if (!equal(ownedNftIdsByEthAddress, ownershipIndex)) {
     console.log('different results', {
       theGraph: JSON.stringify(Object.fromEntries(ownedNftIdsByEthAddress)),
-      peter: JSON.stringify(Object.fromEntries(peter))
+      ownershipIndex: JSON.stringify(Object.fromEntries(ownershipIndex))
     })
   }
 
@@ -65,7 +67,7 @@ export async function ownedNFTsByAddress(
 /**
  * Return a set of the NFTs that are actually owned by the eth address, for every eth address, based on ownership-server
  */
-async function queryPeter(
+async function queryOwnershipIndex(
   components: Pick<AppComponents, 'fetch' | 'config'>,
   nftIdsByAddressToCheck: Map<string, string[]>
 ): Promise<Map<string, string[]>> {
@@ -101,14 +103,14 @@ async function querySubgraphByFragments(
   querySubgraph: (theGraph: TheGraphComponent, nftsToCheck: [string, string[]][]) => any
 ): Promise<Map<string, string[]>> {
   const { theGraph, config } = components
-  const nft_fragments_per_query = parseInt((await config.getString('NFT_FRAGMENTS_PER_QUERY')) ?? '10')
+  const nftFragmentsPerQuery = parseInt((await config.getString('NFT_FRAGMENTS_PER_QUERY')) ?? '10')
   const entries = Array.from(nftIdsByAddressToCheck.entries())
   const result: Map<string, string[]> = new Map()
 
   // Make multiple queries to graph as at most NFT_FRAGMENTS_PER_QUERY per time
   let offset = 0
   while (offset < entries.length) {
-    const slice = entries.slice(offset, offset + nft_fragments_per_query)
+    const slice = entries.slice(offset, offset + nftFragmentsPerQuery)
     try {
       const queryResult = await querySubgraph(theGraph, slice)
       for (const { ownedNFTs, owner } of queryResult) {
@@ -118,7 +120,7 @@ async function querySubgraphByFragments(
       // TODO: logger
       console.log(error)
     } finally {
-      offset += nft_fragments_per_query
+      offset += nftFragmentsPerQuery
     }
   }
 
