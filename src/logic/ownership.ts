@@ -2,6 +2,18 @@ import { TheGraphComponent } from '../ports/the-graph'
 import { AppComponents } from '../types'
 import { createFetchComponent } from '../ports/fetch'
 
+function generateRandomId(length: number) {
+  const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  let randomId = ''
+
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length)
+    randomId += characters.charAt(randomIndex)
+  }
+
+  return randomId
+}
+
 async function withTime<T>(which: string, what: () => Promise<T>) {
   const start = Date.now()
   try {
@@ -41,14 +53,15 @@ export async function ownedNFTsByAddress(
   querySubgraph: (theGraph: TheGraphComponent, nftsToCheck: [string, string[]][]) => any
 ): Promise<Map<string, string[]>> {
   // Check ownership for unknown nfts
-  const ownedNftIdsByEthAddress = await withTime<Map<string, string[]>>('theGraph', () =>
+  const requestId = generateRandomId(10)
+  const ownedNftIdsByEthAddress = await withTime<Map<string, string[]>>(`[${requestId}] theGraph  `, () =>
     querySubgraphByFragments(components, nftIdsByAddressToCheck, querySubgraph)
   )
 
   const ownershipServerBaseUrl = await components.config.getString('OWNERSHIP_SERVER_BASE_URL')
   try {
     if (ownershipServerBaseUrl) {
-      const ownershipIndex = await withTime<Map<string, string[]>>('ownershipIndex', () =>
+      const ownershipIndex = await withTime<Map<string, string[]>>(`[${requestId}] ownership `, () =>
         queryOwnershipIndex(components, nftIdsByAddressToCheck)
       )
       if (!equal(ownedNftIdsByEthAddress, ownershipIndex)) {
@@ -89,7 +102,10 @@ async function queryOwnershipIndex(
       const response = await fetch.fetch(
         `${ownershipServerBaseUrl}/ownsItems?address=${ethAddress}&timestamp=${timestamp}&itemUrn=${nfts.join(
           '&itemUrn='
-        )}`
+        )}`,
+        {
+          timeout: 1000
+        }
       )
       if (response.ok) {
         const json = await response.json()
