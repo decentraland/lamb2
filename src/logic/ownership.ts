@@ -1,5 +1,6 @@
 import { TheGraphComponent } from '../ports/the-graph'
 import { AppComponents } from '../types'
+import { createFetchComponent } from '../ports/fetch'
 
 async function withTime<T>(which: string, what: () => Promise<T>) {
   const start = Date.now()
@@ -35,7 +36,7 @@ function equal(actual: Map<string, string[]>, expected: Map<string, string[]>) {
  * Receive a `querySubgraph` method to know how to do the query.
  */
 export async function ownedNFTsByAddress(
-  components: Pick<AppComponents, 'config' | 'fetch' | 'theGraph'>,
+  components: Pick<AppComponents, 'config' | 'theGraph'>,
   nftIdsByAddressToCheck: Map<string, string[]>,
   querySubgraph: (theGraph: TheGraphComponent, nftsToCheck: [string, string[]][]) => any
 ): Promise<Map<string, string[]>> {
@@ -44,15 +45,19 @@ export async function ownedNFTsByAddress(
     querySubgraphByFragments(components, nftIdsByAddressToCheck, querySubgraph)
   )
 
-  const ownershipIndex = await withTime<Map<string, string[]>>('ownershipIndex', () =>
-    queryOwnershipIndex(components, nftIdsByAddressToCheck)
-  )
+  const ownershipServerBaseUrl = await components.config.getString('OWNERSHIP_SERVER_BASE_URL')
+  console.log('ownershipServerBaseUrl', ownershipServerBaseUrl)
+  if (ownershipServerBaseUrl) {
+    const ownershipIndex = await withTime<Map<string, string[]>>('ownershipIndex', () =>
+      queryOwnershipIndex(components, nftIdsByAddressToCheck)
+    )
 
-  if (!equal(ownedNftIdsByEthAddress, ownershipIndex)) {
-    console.log('different results', {
-      theGraph: JSON.stringify(Object.fromEntries(ownedNftIdsByEthAddress)),
-      ownershipIndex: JSON.stringify(Object.fromEntries(ownershipIndex))
-    })
+    if (!equal(ownedNftIdsByEthAddress, ownershipIndex)) {
+      console.log('different results', {
+        theGraph: JSON.stringify(Object.fromEntries(ownedNftIdsByEthAddress)),
+        ownershipIndex: JSON.stringify(Object.fromEntries(ownershipIndex))
+      })
+    }
   }
 
   // Fill the final map with nfts ownership
@@ -68,10 +73,11 @@ export async function ownedNFTsByAddress(
  * Return a set of the NFTs that are actually owned by the eth address, for every eth address, based on ownership-server
  */
 async function queryOwnershipIndex(
-  components: Pick<AppComponents, 'fetch' | 'config'>,
+  components: Pick<AppComponents, 'config'>,
   nftIdsByAddressToCheck: Map<string, string[]>
 ): Promise<Map<string, string[]>> {
-  const { config, fetch } = components
+  const { config } = components
+  const fetch = await createFetchComponent()
   const ownershipServerBaseUrl = await config.requireString('OWNERSHIP_SERVER_BASE_URL')
   const timestamp = Date.now()
   const result: Map<string, string[]> = new Map()
