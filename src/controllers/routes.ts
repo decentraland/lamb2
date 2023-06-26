@@ -13,7 +13,7 @@ import {
 } from './handlers/third-party-wearables-handler'
 import { wearablesHandler } from './handlers/wearables-handler'
 import { explorerHandler } from './handlers/explorer-handler'
-import { errorHandler } from './handlers/errorHandler'
+import { errorHandler } from './handlers/error-handler'
 import { aboutHandler } from './handlers/about-handler'
 import { outfitsHandler } from './handlers/outfits-handler'
 import { getCatalystServersHandler } from './handlers/catalyst-servers-handler'
