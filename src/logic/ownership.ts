@@ -46,17 +46,20 @@ export async function ownedNFTsByAddress(
   )
 
   const ownershipServerBaseUrl = await components.config.getString('OWNERSHIP_SERVER_BASE_URL')
-  if (ownershipServerBaseUrl) {
-    const ownershipIndex = await withTime<Map<string, string[]>>('ownershipIndex', () =>
-      queryOwnershipIndex(components, nftIdsByAddressToCheck)
-    )
-
-    if (!equal(ownedNftIdsByEthAddress, ownershipIndex)) {
-      console.log('different results', {
-        theGraph: JSON.stringify(Object.fromEntries(ownedNftIdsByEthAddress)),
-        ownershipIndex: JSON.stringify(Object.fromEntries(ownershipIndex))
-      })
+  try {
+    if (ownershipServerBaseUrl) {
+      const ownershipIndex = await withTime<Map<string, string[]>>('ownershipIndex', () =>
+        queryOwnershipIndex(components, nftIdsByAddressToCheck)
+      )
+      if (!equal(ownedNftIdsByEthAddress, ownershipIndex)) {
+        console.log('different results', {
+          theGraph: JSON.stringify(Object.fromEntries(ownedNftIdsByEthAddress)),
+          ownershipIndex: JSON.stringify(Object.fromEntries(ownershipIndex))
+        })
+      }
     }
+  } catch (error) {
+    console.log('error', error)
   }
 
   // Fill the final map with nfts ownership
