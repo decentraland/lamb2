@@ -1,6 +1,8 @@
 import { TheGraphComponent } from '../ports/the-graph'
 import { AppComponents } from '../types'
 import { createFetchComponent } from '../ports/fetch'
+import { IMetricsComponent } from '@well-known-components/interfaces'
+import { metricDeclarations } from '../metrics'
 
 function generateRandomId(length: number) {
   const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
@@ -14,12 +16,20 @@ function generateRandomId(length: number) {
   return randomId
 }
 
-async function withTime<T>(which: string, what: () => Promise<T>) {
+async function withTime<T>(
+  metrics: IMetricsComponent<keyof typeof metricDeclarations>,
+  id: string,
+  which: string,
+  what: () => Promise<T>
+) {
   const start = Date.now()
+  const timer = metrics.startTimer('ownership_check_duration_seconds', { id })
+
   try {
     return await what()
   } finally {
     const end = Date.now()
+    timer.end({ id })
     console.log(`${which} took ${end - start}ms`)
   }
 }
@@ -48,21 +58,27 @@ function equal(actual: Map<string, string[]>, expected: Map<string, string[]>) {
  * Receive a `querySubgraph` method to know how to do the query.
  */
 export async function ownedNFTsByAddress(
-  components: Pick<AppComponents, 'config' | 'theGraph'>,
+  components: Pick<AppComponents, 'config' | 'metrics' | 'theGraph'>,
   nftIdsByAddressToCheck: Map<string, string[]>,
   querySubgraph: (theGraph: TheGraphComponent, nftsToCheck: [string, string[]][]) => any
 ): Promise<Map<string, string[]>> {
   // Check ownership for unknown nfts
   const requestId = generateRandomId(10)
-  const ownedNftIdsByEthAddress = await withTime<Map<string, string[]>>(`[${requestId}] theGraph  `, () =>
-    querySubgraphByFragments(components, nftIdsByAddressToCheck, querySubgraph)
+  const ownedNftIdsByEthAddress = await withTime<Map<string, string[]>>(
+    components.metrics,
+    'the-graph',
+    `[${requestId}] theGraph  `,
+    () => querySubgraphByFragments(components, nftIdsByAddressToCheck, querySubgraph)
   )
 
   const ownershipServerBaseUrl = await components.config.getString('OWNERSHIP_SERVER_BASE_URL')
   try {
     if (ownershipServerBaseUrl) {
-      const ownershipIndex = await withTime<Map<string, string[]>>(`[${requestId}] ownership `, () =>
-        queryOwnershipIndex(components, nftIdsByAddressToCheck)
+      const ownershipIndex = await withTime<Map<string, string[]>>(
+        components.metrics,
+        'ownership-server',
+        `[${requestId}] ownership `,
+        () => queryOwnershipIndex(components, nftIdsByAddressToCheck)
       )
       if (!equal(ownedNftIdsByEthAddress, ownershipIndex)) {
         console.log('different results', {
