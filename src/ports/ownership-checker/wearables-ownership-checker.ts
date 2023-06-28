@@ -2,7 +2,7 @@ import { ISubgraphComponent } from '@well-known-components/thegraph-component'
 import { ownedNFTsByAddress } from '../../logic/ownership'
 import { AppComponents, NFTsOwnershipChecker } from '../../types'
 import { runQuery, TheGraphComponent } from '../the-graph'
-import { getCachedNFTsAndPendingCheckNFTs, fillCacheWithRecentlyCheckedWearables } from '../../logic/cache'
+import { fillCacheWithRecentlyCheckedWearables, getCachedNFTsAndPendingCheckNFTs } from '../../logic/cache'
 import { mergeMapIntoMap } from '../../logic/maps'
 
 export function createWearablesOwnershipChecker(
@@ -51,8 +51,27 @@ async function queryWearablesSubgraph(
   return result.map(({ urns, owner }) => ({ ownedNFTs: urns, owner }))
 }
 
+function splitWearablesByNetwork(wearableIdsToCheck: [string, string[]][]) {
+  const ethereum: [string, string[]][] = []
+  const matic: [string, string[]][] = []
+
+  for (const [owner, urns] of wearableIdsToCheck) {
+    const ethUrns = urns.filter((urn) => urn.startsWith('urn:decentraland:ethereum'))
+    if (ethUrns.length > 0) {
+      ethereum.push([owner, ethUrns])
+    }
+    const maticUrns = urns.filter((urn) => urn.startsWith('urn:decentraland:matic'))
+    if (maticUrns.length > 0) {
+      matic.push([owner, maticUrns])
+    }
+  }
+
+  return { ethereum, matic }
+}
+
 /**
  * This method returns all the owners from the given wearables URNs. It looks for them first in Ethereum and then in Matic
+ * @param theGraph the graph component
  * @param wearableIdsToCheck pairs of ethAddress and a list of urns to check ownership
  * @returns the pairs of ethAddress and list of urns
  */
@@ -60,8 +79,9 @@ async function checkForWearablesOwnership(
   theGraph: TheGraphComponent,
   wearableIdsToCheck: [string, string[]][]
 ): Promise<{ owner: string; urns: string[] }[]> {
-  const ethereumWearablesOwnersPromise = getOwnedWearables(wearableIdsToCheck, theGraph.ethereumCollectionsSubgraph)
-  const maticWearablesOwnersPromise = getOwnedWearables(wearableIdsToCheck, theGraph.maticCollectionsSubgraph)
+  const { ethereum, matic } = splitWearablesByNetwork(wearableIdsToCheck)
+  const ethereumWearablesOwnersPromise = getOwnedWearables(ethereum, theGraph.ethereumCollectionsSubgraph)
+  const maticWearablesOwnersPromise = getOwnedWearables(matic, theGraph.maticCollectionsSubgraph)
   const [ethereumWearablesOwners, maticWearablesOwners] = await Promise.all([
     ethereumWearablesOwnersPromise,
     maticWearablesOwnersPromise
@@ -92,13 +112,11 @@ async function getOwnersByWearable(
   // Run query
   const queryResponse = await runQuery<Map<string, { urn: string }[]>>(subgraph, subgraphQuery, {})
 
-  // Transform result to array of { owner, urns }
-  const result = Object.entries(queryResponse).map(([addressWithPrefix, wearables]) => ({
+  // Transform the result to an array of { owner, urns }
+  return Object.entries(queryResponse).map(([addressWithPrefix, wearables]) => ({
     owner: addressWithPrefix.substring(1), // Remove the 'P' prefix added previously because the graph needs the fragment name to start with a letter
     urns: wearables.map((urnObj: { urn: string }) => urnObj.urn)
   }))
-
-  return result
 }
 
 function getWearablesFragment([ethAddress, wearableIds]: [string, string[]]) {
