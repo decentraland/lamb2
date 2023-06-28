@@ -122,9 +122,6 @@ async function getOwnersByWearable(
   return wearableIdsToCheck.map(([owner]) => ({ owner, urns: [] }))
 }
 
-  return wearableIdsToCheck.map(([owner]) => ({ owner, urns: [] }))
-}
-
 function getWearablesFragment([ethAddress, wearableIds]: [string, string[]]) {
   const urnList = wearableIds.map((wearableId) => `"${wearableId}"`).join(',')
 
