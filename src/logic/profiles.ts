@@ -12,7 +12,9 @@ export async function getValidNonBaseWearables(metadata: ProfileMetadata): Promi
     for (const wearableId of avatar.avatar.wearables) {
       if (!isBaseWearable(wearableId)) {
         const translatedWearableId = await translateWearablesIdFormat(wearableId)
-        if (translatedWearableId) wearablesInProfile.push(translatedWearableId)
+        if (translatedWearableId) {
+          wearablesInProfile.push(translatedWearableId)
+        }
       }
     }
   }
@@ -25,7 +27,9 @@ function isBaseWearable(wearable: string): boolean {
 }
 
 export async function translateWearablesIdFormat(wearableId: string): Promise<string | undefined> {
-  if (!wearableId.startsWith('dcl://')) return wearableId
+  if (!wearableId.startsWith('dcl://')) {
+    return wearableId
+  }
 
   const parsed = await parseUrn(wearableId)
   return parsed?.uri?.toString()
@@ -133,7 +137,10 @@ async function extractDataFromEntity(entity: Entity): Promise<{
   const ethAddress = entity.pointers[0]
   const metadata: ProfileMetadata = entity.metadata
   const content = new Map((entity.content ?? []).map(({ file, hash }) => [file, hash]))
-  const filteredNames = metadata.avatars.map(({ name }) => name).filter((name) => name && name.trim().length > 0)
+  const filteredNames = metadata.avatars
+    .filter((avatar) => avatar.hasClaimedName)
+    .map(({ name }) => name)
+    .filter((name) => name && name.trim().length > 0)
 
   // Add timestamp to the metadata
   metadata.timestamp = entity.timestamp
