@@ -100,6 +100,11 @@ export async function ownedNFTsByAddress(
   return ownedNftIdsByEthAddress
 }
 
+export type OwnsItemsByAddressSingle = {
+  address: string
+  itemUrns: string[]
+}
+
 /**
  * Return a set of the NFTs that are actually owned by the eth address, for every eth address, based on ownership-server
  */
@@ -109,27 +114,33 @@ async function queryOwnershipIndex(
 ): Promise<Map<string, string[]>> {
   const { config } = components
   const fetch = await createFetchComponent()
-  const ownershipServerBaseUrl = await config.requireString('OWNERSHIP_SERVER_BASE_URL')
-  const timestamp = Date.now()
   const result: Map<string, string[]> = new Map()
 
+  const itemUrnsByAddress: OwnsItemsByAddressSingle[] = []
+
   for (const [ethAddress, nfts] of nftIdsByAddressToCheck.entries()) {
-    if (nfts.length > 0) {
-      const response = await fetch.fetch(
-        `${ownershipServerBaseUrl}/ownsItems?address=${ethAddress}&timestamp=${timestamp}&itemUrn=${nfts.join(
-          '&itemUrn='
-        )}`,
-        {
-          timeout: 1000
-        }
-      )
-      if (response.ok) {
-        const json = await response.json()
-        result.set(ethAddress, json.ownedUrns)
+    if (nfts.length === 0) {
+      result.set(ethAddress, [])
+      continue
+    }
+    itemUrnsByAddress.push({ address: ethAddress, itemUrns: nfts })
+  }
+
+  if (itemUrnsByAddress.length > 0) {
+    const ownershipServerBaseUrl = await config.requireString('OWNERSHIP_SERVER_BASE_URL')
+    console.log('querying ownership server', ownershipServerBaseUrl, 'itemUrnsByAddress', itemUrnsByAddress)
+    const response = await fetch.fetch(`${ownershipServerBaseUrl}/ownsItemsByAddress`, {
+      method: 'POST',
+      body: JSON.stringify({ itemUrnsByAddress }),
+      timeout: 1000
+    })
+    if (response.ok) {
+      const json = await response.json()
+      for (const { address, itemUrns } of json.itemUrnsByAddress) {
+        result.set(address, itemUrns)
       }
     }
   }
-
   return result
 }
 
