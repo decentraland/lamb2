@@ -133,7 +133,10 @@ async function extractDataFromEntity(entity: Entity): Promise<{
   const ethAddress = entity.pointers[0]
   const metadata: ProfileMetadata = entity.metadata
   const content = new Map((entity.content ?? []).map(({ file, hash }) => [file, hash]))
-  const filteredNames = metadata.avatars.map(({ name }) => name).filter((name) => name && name.trim().length > 0)
+  const filteredNames = metadata.avatars
+    .filter((avatar) => avatar.hasClaimedName)
+    .map(({ name }) => name)
+    .filter((name) => name && name.trim().length > 0)
 
   // Add timestamp to the metadata
   metadata.timestamp = entity.timestamp
