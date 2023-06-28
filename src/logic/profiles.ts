@@ -12,7 +12,9 @@ export async function getValidNonBaseWearables(metadata: ProfileMetadata): Promi
     for (const wearableId of avatar.avatar.wearables) {
       if (!isBaseWearable(wearableId)) {
         const translatedWearableId = await translateWearablesIdFormat(wearableId)
-        if (translatedWearableId) wearablesInProfile.push(translatedWearableId)
+        if (translatedWearableId) {
+          wearablesInProfile.push(translatedWearableId)
+        }
       }
     }
   }
@@ -25,7 +27,9 @@ function isBaseWearable(wearable: string): boolean {
 }
 
 export async function translateWearablesIdFormat(wearableId: string): Promise<string | undefined> {
-  if (!wearableId.startsWith('dcl://')) return wearableId
+  if (!wearableId.startsWith('dcl://')) {
+    return wearableId
+  }
 
   const parsed = await parseUrn(wearableId)
   return parsed?.uri?.toString()
