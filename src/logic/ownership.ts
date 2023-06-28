@@ -128,7 +128,6 @@ async function queryOwnershipIndex(
 
   if (itemUrnsByAddress.length > 0) {
     const ownershipServerBaseUrl = await config.requireString('OWNERSHIP_SERVER_BASE_URL')
-    console.log('querying ownership server', ownershipServerBaseUrl, 'itemUrnsByAddress', itemUrnsByAddress)
     const response = await fetch.fetch(`${ownershipServerBaseUrl}/ownsItemsByAddress`, {
       method: 'POST',
       body: JSON.stringify({ itemUrnsByAddress }),
