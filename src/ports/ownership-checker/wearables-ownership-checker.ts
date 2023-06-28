@@ -107,16 +107,19 @@ async function getOwnersByWearable(
   subgraph: ISubgraphComponent
 ): Promise<{ owner: string; urns: string[] }[]> {
   // Build query for subgraph
-  const subgraphQuery = `{` + wearableIdsToCheck.map((query) => getWearablesFragment(query)).join('\n') + `}`
+  const filtered = wearableIdsToCheck.filter(([, urns]) => urns.length > 0)
+  if (filtered.length > 0) {
+    const subgraphQuery = `{` + filtered.map((query) => getWearablesFragment(query)).join('\n') + `}`
+    // Run query
+    const queryResponse = await runQuery<Map<string, { urn: string }[]>>(subgraph, subgraphQuery, {})
 
-  // Run query
-  const queryResponse = await runQuery<Map<string, { urn: string }[]>>(subgraph, subgraphQuery, {})
-
-  // Transform the result to an array of { owner, urns }
-  return Object.entries(queryResponse).map(([addressWithPrefix, wearables]) => ({
-    owner: addressWithPrefix.substring(1), // Remove the 'P' prefix added previously because the graph needs the fragment name to start with a letter
-    urns: wearables.map((urnObj: { urn: string }) => urnObj.urn)
-  }))
+    // Transform the result to an array of { owner, urns }
+    return Object.entries(queryResponse).map(([addressWithPrefix, wearables]) => ({
+      owner: addressWithPrefix.substring(1), // Remove the 'P' prefix added previously because the graph needs the fragment name to start with a letter
+      urns: wearables.map((urnObj: { urn: string }) => urnObj.urn)
+    }))
+  }
+  return wearableIdsToCheck.map(([owner]) => ({ owner, urns: [] }))
 }
 
 function getWearablesFragment([ethAddress, wearableIds]: [string, string[]]) {
