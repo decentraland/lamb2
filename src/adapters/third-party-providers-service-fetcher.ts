@@ -24,10 +24,11 @@ export async function createThirdPartyProvidersServiceFetcherComponent(
 
   return {
     async get(): Promise<ThirdPartyProvider[]> {
-      if (isThirdPartyProvidersResolverServiceDisabled)
+      if (isThirdPartyProvidersResolverServiceDisabled) {
         throw new Error(
           'Third Party Providers resolver service will not be used since DISABLE_THIRD_PARTY_PROVIDERS_RESOLVER_SERVICE_USAGE is set'
         )
+      }
       const response: ThirdPartyProvidersServiceResponse = await (await fetch.fetch(`${serviceUrl}/providers`)).json()
       return response.thirdPartyProviders
     }

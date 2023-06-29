@@ -23,7 +23,9 @@ export function getCachedNFTsAndPendingCheckNFTs(
         // If the nft is present on the map, ownership for the nft won't be checked in the blockchain.
         if (cachedOwnershipForAddress?.has(nft)) {
           // If the nft is owned, it will be added to the cached owned map. If not, it is ignored.
-          if (cachedOwnershipForAddress.get(nft)) cachedOwnedNfts.push(nft)
+          if (cachedOwnershipForAddress.get(nft)) {
+            cachedOwnedNfts.push(nft)
+          }
         } else {
           // Add the nft to the nftsToCheck
           nftsToCheck.push(nft)
@@ -31,10 +33,14 @@ export function getCachedNFTsAndPendingCheckNFTs(
       }
 
       // Add cached nfts to the cached map
-      if (cachedOwnedNfts.length > 0) cachedOwnedNFTsByAddress.set(address, cachedOwnedNfts)
+      if (cachedOwnedNfts.length > 0) {
+        cachedOwnedNFTsByAddress.set(address, cachedOwnedNfts)
+      }
 
       // Add nfts to be checked to the map to be checked
-      if (nftsToCheck.length > 0) nftsToCheckByAddress.set(address, nftsToCheck)
+      if (nftsToCheck.length > 0) {
+        nftsToCheckByAddress.set(address, nftsToCheck)
+      }
     } else {
       // Since the address is not cached, add every nft for the address to the nftsToCheck
       nftsToCheckByAddress.set(address, nfts)

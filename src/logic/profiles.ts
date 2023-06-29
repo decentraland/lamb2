@@ -43,7 +43,9 @@ export async function getBaseWearables(wearables: string[]): Promise<string[]> {
   const validBaseWearables = []
   for (const wearableId of baseWearables) {
     const translatedWearableId = await translateWearablesIdFormat(wearableId)
-    if (translatedWearableId) validBaseWearables.push(translatedWearableId)
+    if (translatedWearableId) {
+      validBaseWearables.push(translatedWearableId)
+    }
   }
 
   return validBaseWearables
@@ -62,7 +64,9 @@ export async function getProfiles(
     let profileEntities: Entity[] = await components.content.fetchEntitiesByPointers(ethAddresses)
 
     // Avoid querying profiles if there wasn't any new deployment
-    if (noNewDeployments(ifModifiedSinceTimestamp, profileEntities)) return
+    if (noNewDeployments(ifModifiedSinceTimestamp, profileEntities)) {
+      return
+    }
 
     // Filter entities
     profileEntities = profileEntities.filter(hasMetadata)
