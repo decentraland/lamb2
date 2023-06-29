@@ -45,12 +45,16 @@ function createExternalContentUrl(
   fileName: string | undefined
 ): string | undefined {
   const hash = findHashForFile(entity, fileName)
-  if (hash) return components.contentServerUrl + `/contents/` + hash
+  if (hash) {
+    return components.contentServerUrl + `/contents/` + hash
+  }
   return undefined
 }
 
 function findHashForFile(entity: Entity, fileName: string | undefined) {
-  if (fileName) return entity.content?.find((item) => item.file === fileName)?.hash
+  if (fileName) {
+    return entity.content?.find((item) => item.file === fileName)?.hash
+  }
   return undefined
 }
 

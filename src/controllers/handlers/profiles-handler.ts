@@ -57,7 +57,9 @@ function getIfModifiedSinceTimestamp(req: Request): number | undefined {
   // This is a standard HTTP header. See the link below for more information
   // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-Modified-Since
   const headerValue = req.headers.get('if-modified-since')
-  if (!headerValue) return
+  if (!headerValue) {
+    return
+  }
   try {
     const timestamp = Date.parse(headerValue)
     return isNaN(timestamp) ? undefined : timestamp

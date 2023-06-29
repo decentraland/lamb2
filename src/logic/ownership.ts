@@ -95,7 +95,9 @@ export async function ownedNFTsByAddress(
   for (const [ethAddress, nfts] of nftIdsByAddressToCheck) {
     const ownedNfts = ownedNftIdsByEthAddress.get(ethAddress)
     // If the query to the subgraph failed, then consider the nft as owned
-    if (!ownedNfts) ownedNftIdsByEthAddress.set(ethAddress, nfts)
+    if (!ownedNfts) {
+      ownedNftIdsByEthAddress.set(ethAddress, nfts)
+    }
   }
   return ownedNftIdsByEthAddress
 }
