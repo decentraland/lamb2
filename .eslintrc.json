@@ -13,6 +13,7 @@
       "trailingComma": "none",
       "tabWidth": 2
     }],
-    "func-style": ["error", "declaration", { "allowArrowFunctions": false }]
+    "func-style": ["error", "declaration", { "allowArrowFunctions": false }],
+    "curly": "error"
   }
 }
