@@ -356,10 +356,10 @@
   dependencies:
     "@dcl/ts-proto" "^1.146.2"
 
-"@dcl/schemas@^7.1.0", "@dcl/schemas@^7.3.4", "@dcl/schemas@^7.4.1":
-  version "7.4.1"
-  resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-7.4.1.tgz#f2209e7be165ec445bc428bfe35f7a236f5429ae"
-  integrity sha512-gYqhzU1q7+XpME+oF1HrzuVxM6fw+EvAN8M5HVwppyHOthy6ortNMOmMhspIQ8eXNAwGmwxKlBjUM2jh0qNy5Q==
+"@dcl/schemas@^7.3.4", "@dcl/schemas@^7.4.1", "@dcl/schemas@^7.6.0":
+  version "7.6.0"
+  resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-7.6.0.tgz#8a244e97d6478c6d30db6376177aae611db46786"
+  integrity sha512-TDIk7tDc4VB9ky0EgVUjFB/EBKkgjadcQ/ia4b9kU5vYlx7XUSB2kao/EDNRFfR17W1pssmZlUDtjmzFWTYSgQ==
   dependencies:
     ajv "^8.11.0"
     ajv-errors "^3.0.0"
@@ -1781,15 +1781,15 @@ dataloader@^1.4.0:
   resolved "https://registry.yarnpkg.com/dataloader/-/dataloader-1.4.0.tgz#bca11d867f5d3f1b9ed9f737bd15970c65dff5c8"
   integrity sha512-68s5jYdlvasItOJnCuI2Q9s4q98g0pCyL3HrcKJu8KNugUl8ahgmZYg38ysLTgQjjXX3H8CJLkAvWrclWfcalw==
 
-dcl-catalyst-client@^20.1.1:
-  version "20.1.1"
-  resolved "https://registry.yarnpkg.com/dcl-catalyst-client/-/dcl-catalyst-client-20.1.1.tgz#3b31b9b5caa06c5fef3c31954fd5345b67eb4ceb"
-  integrity sha512-EE6TN+u+TOs9H83YMYVTUZauvwfOtXfZEXqVL/C7j5aYgl4o6gpxzus+divjj1wBmdmZkhwykJox4vaNBpwcNQ==
+dcl-catalyst-client@^21.2.0:
+  version "21.2.0"
+  resolved "https://registry.yarnpkg.com/dcl-catalyst-client/-/dcl-catalyst-client-21.2.0.tgz#d048f9d0de093ba1cf298617d9fae68759c1d605"
+  integrity sha512-R6TBJmk3UPT3JSuvfJNu8ByIx+qWhkb/v9mxB9OYmjupLKYj3wWcBVJoPgj33dMHI3/Vjja8mZT4UonGaafYTw==
   dependencies:
     "@dcl/catalyst-contracts" "^4.0.2"
     "@dcl/crypto" "^3.4.0"
     "@dcl/hashing" "^2.0.0"
-    "@dcl/schemas" "^7.1.0"
+    "@dcl/schemas" "^7.6.0"
     "@well-known-components/fetch-component" "^2.0.0"
     cookie "^0.5.0"
     cross-fetch "^3.1.5"
