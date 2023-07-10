@@ -1,10 +1,6 @@
 import { HandlerContextWithPath } from '../../types'
 import { About, StatusContent } from '@dcl/catalyst-api-specs/lib/client'
-
-const networkIds: Record<string, number> = {
-  goerli: 5,
-  mainnet: 1
-}
+import { l1Contracts, L1Network } from '@dcl/catalyst-contracts'
 
 export type ArchipelagoStatus = {
   version: string
@@ -37,8 +33,11 @@ export async function aboutHandler(
   const { config, status, resourcesStatusCheck, realmName } = context.components
 
   const ethNetwork = (await config.getString('ETH_NETWORK')) ?? 'mainnet'
+  const contracts = l1Contracts[ethNetwork as L1Network]
+  if (!contracts) {
+    throw new Error(`Invalid ETH_NETWORK: ${ethNetwork}`)
+  }
   const maxUsers = await config.getNumber('MAX_USERS')
-  const networkId = networkIds[ethNetwork]
 
   const [
     lambdasPublicUrl,
@@ -81,7 +80,7 @@ export async function aboutHandler(
     content: {
       healthy: contentStatus.healthy,
       version: contentStatus.data?.version,
-      synchronizationStatus: contentStatus.data?.synchronizationStatus.synchronizationState || 'Unkonwn',
+      synchronizationStatus: contentStatus.data?.synchronizationStatus.synchronizationState || 'Unknown',
       commitHash: contentStatus?.data?.commitHash,
       publicUrl: contentUrl.publicUrl
     },
@@ -92,7 +91,7 @@ export async function aboutHandler(
       publicUrl: lambdasUrl.publicUrl
     },
     configurations: {
-      networkId,
+      networkId: contracts.chainId,
       globalScenesUrn: [],
       scenesUrn: [],
       realmName: name
