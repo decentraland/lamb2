@@ -549,10 +549,19 @@
   dependencies:
     "@dcl/ts-proto" "^1.146.2"
 
-"@dcl/schemas@^7.3.4", "@dcl/schemas@^7.4.1", "@dcl/schemas@^7.6.0":
+"@dcl/schemas@^7.3.4", "@dcl/schemas@^7.6.0":
   version "7.6.0"
   resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-7.6.0.tgz#8a244e97d6478c6d30db6376177aae611db46786"
   integrity sha512-TDIk7tDc4VB9ky0EgVUjFB/EBKkgjadcQ/ia4b9kU5vYlx7XUSB2kao/EDNRFfR17W1pssmZlUDtjmzFWTYSgQ==
+  dependencies:
+    ajv "^8.11.0"
+    ajv-errors "^3.0.0"
+    ajv-keywords "^5.1.0"
+
+"@dcl/schemas@^8.2.0":
+  version "8.2.0"
+  resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-8.2.0.tgz#68f4acfa51da69846fd71e44f40e6743cee070af"
+  integrity sha512-Rk1FN8Z+VZ9Imh4HAYK+fQCGZFQjDVFRfGkbiHB57KJJRpjQQ/7CiI1m7nHuqglakrU0FoF1s8LfSavhfFJLnw==
   dependencies:
     ajv "^8.11.0"
     ajv-errors "^3.0.0"
