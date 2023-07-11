@@ -502,12 +502,7 @@
   dependencies:
     yaml "^2.3.1"
 
-"@dcl/catalyst-contracts@^4.0.2":
-  version "4.0.4"
-  resolved "https://registry.yarnpkg.com/@dcl/catalyst-contracts/-/catalyst-contracts-4.0.4.tgz#0e08e882383218915384e48f81d45d5e381bc6d5"
-  integrity sha512-EkJcaLAAw7kNNtVbgoMBfKwLqF4bXpJ6ZcYlOfsgkKaaozsyrUXBUE+H5s3vtQmReBdeMZ+X8OOLY0Xp2LKkxA==
-
-"@dcl/catalyst-contracts@^4.0.5":
+"@dcl/catalyst-contracts@^4.0.2", "@dcl/catalyst-contracts@^4.0.5":
   version "4.0.5"
   resolved "https://registry.yarnpkg.com/@dcl/catalyst-contracts/-/catalyst-contracts-4.0.5.tgz#4062174cd5de41cbf8a152cac12233adca1b67c5"
   integrity sha512-6GqfQ8cYGT+W0ZVcAX6GKRxklCm0tgYPKYV4QtkuuFybmCRZmmmsZ6ACTH22ic3TL+l4Aph0KjVmhnAY7RyC7w==
@@ -554,7 +549,7 @@
   dependencies:
     "@dcl/ts-proto" "^1.146.2"
 
-"@dcl/schemas@^7.3.4", "@dcl/schemas@^7.6.0":
+"@dcl/schemas@^7.3.4":
   version "7.6.0"
   resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-7.6.0.tgz#8a244e97d6478c6d30db6376177aae611db46786"
   integrity sha512-TDIk7tDc4VB9ky0EgVUjFB/EBKkgjadcQ/ia4b9kU5vYlx7XUSB2kao/EDNRFfR17W1pssmZlUDtjmzFWTYSgQ==
@@ -563,7 +558,7 @@
     ajv-errors "^3.0.0"
     ajv-keywords "^5.1.0"
 
-"@dcl/schemas@^8.2.0":
+"@dcl/schemas@^8.1.0", "@dcl/schemas@^8.2.0":
   version "8.2.0"
   resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-8.2.0.tgz#68f4acfa51da69846fd71e44f40e6743cee070af"
   integrity sha512-Rk1FN8Z+VZ9Imh4HAYK+fQCGZFQjDVFRfGkbiHB57KJJRpjQQ/7CiI1m7nHuqglakrU0FoF1s8LfSavhfFJLnw==
@@ -1967,15 +1962,15 @@ dataloader@^1.4.0:
   resolved "https://registry.yarnpkg.com/dataloader/-/dataloader-1.4.0.tgz#bca11d867f5d3f1b9ed9f737bd15970c65dff5c8"
   integrity sha512-68s5jYdlvasItOJnCuI2Q9s4q98g0pCyL3HrcKJu8KNugUl8ahgmZYg38ysLTgQjjXX3H8CJLkAvWrclWfcalw==
 
-dcl-catalyst-client@^21.2.0:
-  version "21.2.0"
-  resolved "https://registry.yarnpkg.com/dcl-catalyst-client/-/dcl-catalyst-client-21.2.0.tgz#d048f9d0de093ba1cf298617d9fae68759c1d605"
-  integrity sha512-R6TBJmk3UPT3JSuvfJNu8ByIx+qWhkb/v9mxB9OYmjupLKYj3wWcBVJoPgj33dMHI3/Vjja8mZT4UonGaafYTw==
+dcl-catalyst-client@^21.4.0:
+  version "21.4.0"
+  resolved "https://registry.yarnpkg.com/dcl-catalyst-client/-/dcl-catalyst-client-21.4.0.tgz#741604195c0a5caccf418241a97db114c9378683"
+  integrity sha512-uH76qJReeJVd5O9QMMardGbBB4Lo1P0bnR2gGFGd0MwUIYfiaXYG4ZY+fOTQCUzba1YJrH401sKtwQ9/g2YmmA==
   dependencies:
     "@dcl/catalyst-contracts" "^4.0.2"
     "@dcl/crypto" "^3.4.0"
     "@dcl/hashing" "^2.0.0"
-    "@dcl/schemas" "^7.6.0"
+    "@dcl/schemas" "^8.1.0"
     "@well-known-components/fetch-component" "^2.0.0"
     cookie "^0.5.0"
     cross-fetch "^3.1.5"
