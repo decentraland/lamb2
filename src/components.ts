@@ -1,4 +1,4 @@
-import { L1Network, L2Network } from '@dcl/catalyst-contracts'
+import { l1Contracts, L1Network, L2Network } from '@dcl/catalyst-contracts'
 import { createDotEnvConfigComponent } from '@well-known-components/env-config-provider'
 import { createServerComponent, createStatusCheckComponent, IFetchComponent } from '@well-known-components/http-server'
 import { createLogComponent } from '@well-known-components/logger'
@@ -91,11 +91,11 @@ export async function initComponents(
   const resourcesStatusCheck = createResourcesStatusComponent({ logs })
   const status = await createStatusComponent({ logs, fetch })
 
-  const ethNetwork = (await config.getString('ETH_NETWORK')) ?? 'mainnet'
-  if (!['mainnet', 'goerli'].includes(ethNetwork)) {
-    throw new Error(`Invalid ETH_NETWORK ${ethNetwork}`)
+  const l1Network: L1Network = ((await config.getString('ETH_NETWORK')) ?? 'mainnet') as L1Network
+  const contracts = l1Contracts[l1Network]
+  if (!contracts) {
+    throw new Error(`Invalid ETH_NETWORK ${l1Network}`)
   }
-  const l1Network: L1Network = ethNetwork as any
   const l2Network: L2Network = l1Network === 'mainnet' ? 'polygon' : 'mumbai'
   const l1Provider = new HTTPProvider(`https://rpc.decentraland.org/${encodeURIComponent(l1Network)}?project=lamb2`, {
     fetch: fetch.fetch
