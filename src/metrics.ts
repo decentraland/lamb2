@@ -22,6 +22,11 @@ export const metricDeclarations = {
     help: 'Third Party Provider fetch assets request duration in seconds.',
     type: IMetricsComponent.HistogramType,
     labelNames: ['id']
+  },
+  ownership_check_duration_seconds: {
+    help: 'Ownership check duration in seconds.',
+    type: IMetricsComponent.HistogramType,
+    labelNames: ['id']
   }
 }
 

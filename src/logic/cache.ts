@@ -2,7 +2,7 @@ import LRU from 'lru-cache'
 
 /*
  * Reads the provided map and returns those nfts that are cached and those that are unknown.
- * The cache must be {adress -> {nft -> isOwned} }.
+ * The cache must be {address -> {nft -> isOwned} }.
  */
 export function getCachedNFTsAndPendingCheckNFTs(
   ownedNFTsByAddress: Map<string, string[]>,
