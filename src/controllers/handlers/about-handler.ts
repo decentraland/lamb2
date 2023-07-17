@@ -71,7 +71,7 @@ export async function aboutHandler(
     realmName.getRealmName()
   ])
 
-  const synchronizationStatus = contentStatus.data?.synchronizationStatus.synchronizationState
+  const synchronizationStatus = contentStatus.data?.synchronizationStatus.synchronizationState || 'Unknown'
   contentStatus.healthy = contentStatus.healthy && synchronizationStatus === 'Syncing'
 
   const healthy = archipelagoStatus.healthy && contentStatus.healthy && lambdasStatus.healthy
