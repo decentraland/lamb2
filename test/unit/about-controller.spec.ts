@@ -20,6 +20,82 @@ describe('about-controller-unit', () => {
     return 'testName'
   }
 
+  it('content is bootstrapping', async () => {
+    const url = new URL('https://github.com/well-known-components')
+    const config = createConfigComponent(defaultConfig)
+
+    async function getServiceStatus(statusUrl: string): Promise<ServiceStatus<any>> {
+      switch (statusUrl) {
+        case `${defaultConfig.INTERNAL_CONTENT_URL}/status`:
+          return {
+            healthy: true,
+            data: {
+              version: 'content_1',
+              commitHash: 'content_hash',
+              synchronizationStatus: { synchronizationState: 'Bootstrapping' }
+            }
+          }
+        default:
+          return { healthy: false }
+      }
+    }
+
+    async function areResourcesOverloaded(): Promise<boolean> {
+      return false
+    }
+
+    const components = {
+      config,
+      status: { getServiceStatus },
+      resourcesStatusCheck: { areResourcesOverloaded },
+      realmName: { getRealmName }
+    }
+
+    const response = await aboutHandler({ url, components })
+
+    // NOTE: this is just a type check against the protocol
+    const aboutResponse: AboutResponse = response.body
+    expect(aboutResponse).toBeTruthy()
+
+    expect(response).toMatchObject({
+      status: 503,
+      body: {
+        healthy: false,
+        content: {
+          healthy: false,
+          publicUrl: defaultConfig.CONTENT_URL,
+          version: 'content_1',
+          commitHash: 'content_hash'
+        },
+        lambdas: {
+          healthy: true,
+          version: defaultConfig.CURRENT_VERSION,
+          commitHash: defaultConfig.COMMIT_HASH,
+          publicUrl: defaultConfig.LAMBDAS_URL
+        },
+        configurations: {
+          networkId: 1,
+          globalScenesUrn: [],
+          scenesUrn: [],
+          realmName: 'testName'
+        },
+        comms: {
+          healthy: false,
+          protocol: 'v3',
+          commitHash: undefined,
+          usersCount: 0
+        },
+        bff: {
+          healthy: true,
+          protocolVersion: '1.0_0',
+          userCount: 0,
+          publicUrl: '/bff'
+        },
+        acceptingUsers: false
+      }
+    })
+  })
+
   it('sevices are unhealthy', async () => {
     const url = new URL('https://github.com/well-known-components')
     const config = createConfigComponent(defaultConfig)

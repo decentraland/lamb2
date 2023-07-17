@@ -71,6 +71,9 @@ export async function aboutHandler(
     realmName.getRealmName()
   ])
 
+  const synchronizationStatus = contentStatus.data?.synchronizationStatus.synchronizationState || 'Unknown'
+  contentStatus.healthy = contentStatus.healthy && synchronizationStatus === 'Syncing'
+
   const healthy = archipelagoStatus.healthy && contentStatus.healthy && lambdasStatus.healthy
   const userCount = archipelagoStatus.data?.userCount || 0
   const acceptingUsers = healthy && !resourcesOverload && (!maxUsers || userCount < maxUsers)
@@ -80,7 +83,7 @@ export async function aboutHandler(
     content: {
       healthy: contentStatus.healthy,
       version: contentStatus.data?.version,
-      synchronizationStatus: contentStatus.data?.synchronizationStatus.synchronizationState || 'Unknown',
+      synchronizationStatus,
       commitHash: contentStatus?.data?.commitHash,
       publicUrl: contentUrl.publicUrl
     },
