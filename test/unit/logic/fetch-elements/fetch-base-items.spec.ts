@@ -11,6 +11,6 @@ describe('fetchBaseWearables', () => {
     }
 
     const baseWearables = await fetchAllBaseWearables({ entitiesFetcher })
-    expect(baseWearables.length).toBe(278)
+    expect(baseWearables.length).toBe(282)
   })
 })
