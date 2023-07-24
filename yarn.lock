@@ -542,10 +542,10 @@
     ipfs-unixfs-importer "^7.0.3"
     multiformats "^9.6.3"
 
-"@dcl/protocol@^1.0.0-5557204664.commit-964ab88":
-  version "1.0.0-5557204664.commit-964ab88"
-  resolved "https://registry.yarnpkg.com/@dcl/protocol/-/protocol-1.0.0-5557204664.commit-964ab88.tgz#81e2eeadbc2c7247831133f99150565cd53355c9"
-  integrity sha512-OKYTh55GNVN09L5hwCpAbsCnICsDfbWjSRSvoIbV14Zopxtq3bpxsIPXPtjikDIsATPcHkQI/HI6JWU/KpeuLw==
+"@dcl/protocol@^1.0.0-5623934099.commit-07e0626":
+  version "1.0.0-5623934099.commit-07e0626"
+  resolved "https://registry.yarnpkg.com/@dcl/protocol/-/protocol-1.0.0-5623934099.commit-07e0626.tgz#f25212543f1d03a9a310d81de9f78a1e561b75d7"
+  integrity sha512-OTa7l4HwHIaj/GgMwvy2+u3fHhyq5EvyO8XRXBbaWOdQTTxa8QdNCINzoT4W36kWwZ3nidoyj0vODR/EyEu+RA==
   dependencies:
     "@dcl/ts-proto" "1.153.0"
 
