@@ -112,6 +112,12 @@ export interface NFTsOwnershipChecker {
   getOwnedNFTsForAddress: (address: string) => string[]
 }
 
+export interface ExtendedNFTsOwnershipChecker {
+  addNFTsForAddress: (address: string, nfts: string[]) => Promise<void>
+  checkNFTsOwnership: () => Promise<void>
+  getOwnedNFTsForAddress: (address: string) => { urn: string; tokenId: string | undefined }[]
+}
+
 /**
  * Function used to fetch TheGraph
  * @public

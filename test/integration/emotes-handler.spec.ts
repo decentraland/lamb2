@@ -467,7 +467,7 @@ type ContentInfo = {
 function convertToDataModel(emotes: EmoteFromQuery[], contentInfo?: ContentInfo): OnChainEmoteResponse[] {
   return emotes.map((emote): OnChainEmoteResponse => {
     const individualData = {
-      id: emote.id,
+      id: `${emote.urn}:${emote.tokenId}`,
       tokenId: emote.tokenId,
       transferredAt: emote.transferredAt,
       price: emote.item.price
@@ -483,7 +483,9 @@ function convertToDataModel(emotes: EmoteFromQuery[], contentInfo?: ContentInfo)
       name: emote.metadata.emote.name,
       rarity,
       definition:
-        contentInfo?.includeDefinition && entity ? extractEmoteDefinitionFromEntity({ contentServerUrl }, entity) : undefined,
+        contentInfo?.includeDefinition && entity
+          ? extractEmoteDefinitionFromEntity({ contentServerUrl }, entity)
+          : undefined,
       entity: contentInfo?.includeEntity && entity ? entity : undefined
     }
   })

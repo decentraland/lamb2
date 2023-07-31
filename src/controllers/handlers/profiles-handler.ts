@@ -20,6 +20,9 @@ export async function profilesHandler(
   // Get the profile ids
   const body = await context.request.json()
   const ids = body.ids
+  // This property ensures that all the NFTs being returned by this endpoint
+  // will contain the tokenId part as described on the ERC-721 standard
+  const ensureERC721Standard = context.url.searchParams.has('erc721')
 
   // Return 400 if there are no ids in the payload
   if (!ids) {
@@ -27,9 +30,14 @@ export async function profilesHandler(
   }
 
   // Get profiles depending on their addresses
-  const profiles = await getProfiles(context.components, ids, getIfModifiedSinceTimestamp(context.request))
+  const profiles = await getProfiles(
+    context.components,
+    ids,
+    ensureERC721Standard,
+    getIfModifiedSinceTimestamp(context.request)
+  )
 
-  // The only case in which we receive undefined profiles is when no profile was updated after de If-Modified-Since specified moment.
+  // The only case in which we receive undefined profiles is when no profile was updated after the If-Modified-Since specified moment.
   // In this case, as per spec, we return 304 (not modified) and empty body
   // See here: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-Modified-Since
   if (!profiles) {
@@ -55,10 +63,13 @@ export async function profileHandler(
     | 'thirdPartyProvidersStorage'
     | 'logs'
     | 'metrics',
-    '/profile/:id'
+    '/profiles/:id'
   >
 ): Promise<{ status: 200; body: Profile }> {
-  const profiles = await getProfiles(context.components, [context.params.id])
+  // This property ensures that all the NFTs being returned by this endpoint
+  // will contain the tokenId part as described on the ERC-721 standard
+  const ensureERC721Standard = context.url.searchParams.has('erc721')
+  const profiles = await getProfiles(context.components, [context.params.id], ensureERC721Standard)
   if (!profiles || profiles.length === 0) {
     throw new NotFoundError('Profile not found')
   }

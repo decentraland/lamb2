@@ -8,7 +8,11 @@ export async function outfitsHandler(
     '/outfits/:id'
   >
 ): Promise<{ status: 200; body: Entity }> {
-  const outfits = await getOutfits(context.components, `${context.params.id}`)
+  // This property ensures that all the NFTs being returned by this endpoint
+  // will contain the tokenId part as described on the ERC-721 standard
+  const ensureERC721Standard = context.url.searchParams.has('erc721')
+
+  const outfits = await getOutfits(context.components, `${context.params.id}`, ensureERC721Standard)
   if (!outfits) {
     throw new NotFoundError('Outfits not found')
   }

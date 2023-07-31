@@ -1,12 +1,20 @@
-import { AppComponents, ProfileMetadata, Filename, Filehash, NFTsOwnershipChecker } from '../types'
+import {
+  AppComponents,
+  ProfileMetadata,
+  Filename,
+  Filehash,
+  NFTsOwnershipChecker,
+  ExtendedNFTsOwnershipChecker
+} from '../types'
 import { Entity, Snapshots } from '@dcl/schemas'
 import { IConfigComponent } from '@well-known-components/interfaces'
 import { createWearablesOwnershipChecker } from '../ports/ownership-checker/wearables-ownership-checker'
 import { createNamesOwnershipChecker } from '../ports/ownership-checker/names-ownership-checker'
 import { createTPWOwnershipChecker } from '../ports/ownership-checker/tpw-ownership-checker'
-import { parseUrn } from '@dcl/urn-resolver'
+import { isExtendedUrn, parseUrn } from '@dcl/urn-resolver'
+import { isBaseWearable, resolveUrn } from './utils'
 
-export async function getValidNonBaseWearables(metadata: ProfileMetadata): Promise<string[]> {
+async function getValidNonBaseWearables(metadata: ProfileMetadata): Promise<string[]> {
   const wearablesInProfile: string[] = []
   for (const avatar of metadata.avatars) {
     for (const wearableId of avatar.avatar.wearables) {
@@ -22,11 +30,26 @@ export async function getValidNonBaseWearables(metadata: ProfileMetadata): Promi
   return filteredWearables
 }
 
-function isBaseWearable(wearable: string): boolean {
-  return wearable.includes('base-avatars')
+export async function getNonBaseEmotes(metadata: ProfileMetadata): Promise<string[]> {
+  const emotesInProfile: string[] = []
+  for (const avatar of metadata.avatars) {
+    if (avatar.avatar.emotes) {
+      for (const emote of avatar.avatar.emotes) {
+        if (!isBaseEmote(emote.urn)) {
+          emotesInProfile.push(emote.urn)
+        }
+      }
+    }
+  }
+  const filteredEmotes = emotesInProfile.filter((emoteUrn): emoteUrn is string => !!emoteUrn)
+  return filteredEmotes
 }
 
-export async function translateWearablesIdFormat(wearableId: string): Promise<string | undefined> {
+function isBaseEmote(emote: string): boolean {
+  return !emote.includes(':')
+}
+
+async function translateWearablesIdFormat(wearableId: string): Promise<string | undefined> {
   if (!wearableId.startsWith('dcl://')) {
     return wearableId
   }
@@ -35,7 +58,7 @@ export async function translateWearablesIdFormat(wearableId: string): Promise<st
   return parsed?.uri?.toString()
 }
 
-export async function getBaseWearables(wearables: string[]): Promise<string[]> {
+async function getBaseWearables(wearables: string[]): Promise<string[]> {
   // Filter base wearables
   const baseWearables = wearables.filter(isBaseWearable)
 
@@ -57,6 +80,7 @@ export async function getProfiles(
     'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches' | 'thirdPartyProvidersStorage' | 'logs'
   >,
   ethAddresses: string[],
+  ensureERC721Standard: boolean,
   ifModifiedSinceTimestamp?: number | undefined
 ): Promise<ProfileMetadata[] | undefined> {
   try {
@@ -73,6 +97,7 @@ export async function getProfiles(
 
     // Create the NFTs ownership checkers
     const wearablesOwnershipChecker = createWearablesOwnershipChecker(components)
+    const emotesOwnershipChecker = createWearablesOwnershipChecker(components)
     const namesOwnershipChecker = createNamesOwnershipChecker(components)
     const tpwOwnershipChecker = createTPWOwnershipChecker(components)
 
@@ -80,6 +105,7 @@ export async function getProfiles(
     await addNFTsToCheckersFromEntities(
       profileEntities,
       wearablesOwnershipChecker,
+      emotesOwnershipChecker,
       namesOwnershipChecker,
       tpwOwnershipChecker
     )
@@ -87,6 +113,7 @@ export async function getProfiles(
     // Check ownership for every nft in parallel
     await Promise.all([
       wearablesOwnershipChecker.checkNFTsOwnership(),
+      emotesOwnershipChecker.checkNFTsOwnership(),
       namesOwnershipChecker.checkNFTsOwnership(),
       tpwOwnershipChecker.checkNFTsOwnership()
     ])
@@ -97,7 +124,9 @@ export async function getProfiles(
       profileEntities,
       wearablesOwnershipChecker,
       namesOwnershipChecker,
-      tpwOwnershipChecker
+      tpwOwnershipChecker,
+      emotesOwnershipChecker,
+      ensureERC721Standard
     )
   } catch (error) {
     // TODO: logger
@@ -118,15 +147,17 @@ function roundToSeconds(timestamp: number) {
 // Extract data from every entity and fills the nfts ownership checkers
 async function addNFTsToCheckersFromEntities(
   profileEntities: Entity[],
-  wearablesOwnershipChecker: NFTsOwnershipChecker,
+  wearablesOwnershipChecker: ExtendedNFTsOwnershipChecker,
+  emotesOwnershipChecker: ExtendedNFTsOwnershipChecker,
   namesOwnershipChecker: NFTsOwnershipChecker,
   tpwOwnershipChecker: NFTsOwnershipChecker
 ): Promise<void> {
   const entityPromises = profileEntities.map(async (entity) => {
-    const { ethAddress, names, wearables } = await extractDataFromEntity(entity)
-    wearablesOwnershipChecker.addNFTsForAddress(ethAddress, wearables)
+    const { ethAddress, names, wearables, emotes } = await extractDataFromEntity(entity)
     namesOwnershipChecker.addNFTsForAddress(ethAddress, names)
     tpwOwnershipChecker.addNFTsForAddress(ethAddress, wearables)
+    await wearablesOwnershipChecker.addNFTsForAddress(ethAddress, wearables)
+    await emotesOwnershipChecker.addNFTsForAddress(ethAddress, emotes)
   })
   await Promise.all(entityPromises)
 }
@@ -137,6 +168,7 @@ async function extractDataFromEntity(entity: Entity): Promise<{
   content: Map<Filename, Filehash>
   names: string[]
   wearables: string[]
+  emotes: string[]
 }> {
   const ethAddress = entity.pointers[0]
   const metadata: ProfileMetadata = entity.metadata
@@ -151,16 +183,19 @@ async function extractDataFromEntity(entity: Entity): Promise<{
 
   // Get non-base wearables which urn are valid
   const nonBaseWearables = await getValidNonBaseWearables(metadata)
+  const nonBaseEmotes = await getNonBaseEmotes(metadata)
 
-  return { ethAddress, metadata, content, names: filteredNames, wearables: nonBaseWearables }
+  return { ethAddress, metadata, content, names: filteredNames, wearables: nonBaseWearables, emotes: nonBaseEmotes }
 }
 
 async function extendProfiles(
   config: IConfigComponent,
   profileEntities: Entity[],
-  wearablesOwnershipChecker: NFTsOwnershipChecker,
+  wearablesOwnershipChecker: ExtendedNFTsOwnershipChecker,
   namesOwnershipChecker: NFTsOwnershipChecker,
-  tpwOwnershipChecker: NFTsOwnershipChecker
+  tpwOwnershipChecker: NFTsOwnershipChecker,
+  emotesOwnershipChecker: ExtendedNFTsOwnershipChecker,
+  ensureERC721Standard: boolean
 ): Promise<ProfileMetadata[]> {
   const baseUrl = (await config.getString('CONTENT_URL')) ?? ''
   const extendedProfiles = profileEntities.map(async (entity) => {
@@ -169,8 +204,22 @@ async function extendProfiles(
 
     // Get owned nfts from every ownership checker
     const ownedNames = namesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
-    const ownedWearables = wearablesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
+    const ownedWearables = wearablesOwnershipChecker
+      .getOwnedNFTsForAddress(ethAddress)
+      .map((urn) => (ensureERC721Standard ? urn.urn + ':' + urn.tokenId : urn.urn))
     const thirdPartyWearables = tpwOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
+
+    const ownedEmotesRaw = emotesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
+    const ownedEmotes = new Map(ownedEmotesRaw.map((item) => [item.urn, `${item.urn}:${item.tokenId}`]))
+
+    // Iterate through avatars and update emotes URNs
+    for (const avatar of metadata.avatars) {
+      if (avatar.avatar.emotes) {
+        for (const emote of avatar.avatar.emotes) {
+          await updateEmoteUrn(emote, ensureERC721Standard, ownedEmotes)
+        }
+      }
+    }
 
     // Fill the avatars field for each profile
     const avatars = metadata.avatars.map(async (profileData) => ({
@@ -233,5 +282,31 @@ function addBaseUrlToSnapshot(baseUrl: string, snapshot: string, content: Map<st
   } else {
     // Snapshot is directly a hash
     return cleanedBaseUrl + `contents/${snapshot}`
+  }
+}
+
+async function updateEmoteUrn(
+  emote: { slot: number; urn: string },
+  ensureERC721Standard: boolean,
+  ownedEmotes: Map<string, string>
+): Promise<void> {
+  if (isBaseEmote(emote.urn)) {
+    return
+  }
+
+  const parsedUrn = await parseUrn(emote.urn)
+  if (parsedUrn === null) {
+    return
+  }
+
+  if (isExtendedUrn(parsedUrn)) {
+    if (!ensureERC721Standard) {
+      emote.urn = resolveUrn(emote.urn).urn
+    }
+  } else if (ensureERC721Standard) {
+    const updatedUrn = ownedEmotes.get(emote.urn)
+    if (updatedUrn) {
+      emote.urn = updatedUrn
+    }
   }
 }

@@ -19,3 +19,19 @@ export async function findAsync<T>(elements: T[], f: (e: T) => Promise<boolean>)
 
   return undefined
 }
+
+export function resolveUrn(urnString: string) {
+  const urnLength = urnString.split(':').length
+
+  if (urnLength === 7) {
+    const lastColonIndex = urnString.lastIndexOf(':')
+    const urnValue = urnString.slice(0, lastColonIndex)
+    return { urn: urnValue, tokenId: urnString.slice(lastColonIndex + 1) }
+  } else {
+    return { urn: urnString, tokenId: undefined }
+  }
+}
+
+export function isBaseWearable(wearable: string): boolean {
+  return wearable.includes('base-avatars')
+}

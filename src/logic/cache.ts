@@ -50,14 +50,67 @@ export function getCachedNFTsAndPendingCheckNFTs(
 }
 
 /*
+ * Reads the provided map and returns those nfts that are cached and those that are unknown.
+ * The cache must be {adress -> {nft -> isOwned} }, where NFT is an extended URN which follows the standard ERC-721.
+ */
+export function getCachedNFTsAndPendingCheckExtendedNFTs(
+  ownedNFTsByAddress: Map<string, { urn: string; tokenId: string | undefined }[]>,
+  cache: LRU<string, Map<string, boolean>>
+) {
+  const nftsToCheckByAddress: Map<string, { urn: string; tokenId: string | undefined }[]> = new Map()
+  const cachedOwnedNFTsByAddress: Map<string, string[]> = new Map()
+
+  for (const [address, nfts] of ownedNFTsByAddress.entries()) {
+    if (cache.has(address)) {
+      // Get a map {nft -> isOwned} for address
+      const cachedOwnershipForAddress = cache.get(address)
+
+      // Check for every nft if it is in the cache and add them to cachedOwnedNfts or nftsToCheck
+      const cachedOwnedNfts = []
+      const nftsToCheck = []
+      for (const nft of nfts) {
+        const nftUrn = nft.tokenId ? nft.urn + ':' + nft.tokenId : nft.urn
+        // If the nft is present on the map, ownership for the nft won't be checked in the blockchain.
+        if (cachedOwnershipForAddress?.has(nftUrn)) {
+          // If the nft is owned, it will be added to the cached owned map. If not, it is ignored.
+          if (cachedOwnershipForAddress.get(nftUrn)) {
+            cachedOwnedNfts.push(nftUrn)
+          }
+        } else {
+          // Add the nft to the nftsToCheck
+          nftsToCheck.push(nft)
+        }
+      }
+
+      // Add cached nfts to the cached map
+      if (cachedOwnedNfts.length > 0) {
+        cachedOwnedNFTsByAddress.set(
+          address,
+          cachedOwnedNfts.map((nft) => nft)
+        )
+      }
+
+      // Add nfts to be checked to the map to be checked
+      if (nftsToCheck.length > 0) {
+        nftsToCheckByAddress.set(address, nftsToCheck)
+      }
+    } else {
+      // Since the address is not cached, add every nft for the address to the nftsToCheck
+      nftsToCheckByAddress.set(address, nfts)
+    }
+  }
+  return { nftsToCheckByAddress, cachedOwnedNFTsByAddress }
+}
+
+/*
  * Traverse the already checked nfts to set the cache depending on its ownership
  */
 export function fillCacheWithRecentlyCheckedWearables(
-  checkedNFTsByAddress: Map<string, string[]>,
+  nftsToCheckByAddress: Map<string, string[]>,
   ownedNFTsByAddress: Map<string, string[]>,
   cache: LRU<string, Map<string, boolean>>
 ) {
-  for (const [address, nfts] of checkedNFTsByAddress) {
+  for (const [address, nfts] of nftsToCheckByAddress) {
     const ownedNftsForAddress = ownedNFTsByAddress.get(address)
 
     // Get the cached map for the address or initialize it if address is not present
@@ -75,6 +128,43 @@ export function fillCacheWithRecentlyCheckedWearables(
       } else {
         // Address isn't in the ownership map so the nft is not owned by this address
         ownershipForAddressToBeCached?.set(nft, false)
+      }
+    }
+
+    // Set the map to the cache
+    cache.set(address, ownershipForAddressToBeCached)
+  }
+}
+
+/*
+ * Traverse the already checked nfts to set the cache depending on its ownership.
+ * Use for extended URNs following the standard ERC-721.
+ */
+export function fillCacheWithRecentlyCheckedExtendedWearables(
+  nftsToCheckByAddress: Map<string, { urn: string; tokenId: string | undefined }[]>,
+  ownedNFTsByAddress: Map<string, { urn: string; tokenId: string | undefined }[]>,
+  cache: LRU<string, Map<string, boolean>>
+) {
+  for (const [address, nfts] of nftsToCheckByAddress) {
+    const ownedNftsForAddress = ownedNFTsByAddress.get(address)
+
+    // Get the cached map for the address or initialize it if the address is not present
+    const ownershipForAddressToBeCached: Map<string, boolean> = cache.get(address) ?? new Map()
+
+    // Fill the map with the recently acquired NFTs ownership
+    for (const nft of nfts) {
+      if (ownedNftsForAddress) {
+        const matchingItem = ownedNftsForAddress.find((item) =>
+          nft.tokenId ? item.urn === nft.urn && item.tokenId === nft.tokenId : item.urn === nft.urn
+        )
+
+        if (matchingItem) {
+          const key = `${matchingItem.urn}:${matchingItem.tokenId}`
+          ownershipForAddressToBeCached.set(key, true)
+        }
+      } else {
+        // Address isn't in the ownership map so the NFT is not owned by this address
+        ownershipForAddressToBeCached.set(nft.tokenId ? nft.urn + ':' + nft.tokenId : nft.urn, false)
       }
     }
 

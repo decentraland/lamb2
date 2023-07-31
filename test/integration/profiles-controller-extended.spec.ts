@@ -3,13 +3,18 @@ import { Response } from 'node-fetch'
 import sinon from 'sinon'
 import {
   completeProfileEntityWithExtendedURNs,
+  completeProfileEntityWithShortenedURNs,
   profileEntityFullAnotherExtended,
+  profileEntityFullAnotherShortened,
   profileEntityFullBExtended,
+  profileEntityFullBShortened,
   profileEntityOldBodyshape,
   profileEntitySeveralTPWFromDifferentCollections,
   profileEntitySnapshotsReferenceContentFile,
   profileEntityTwoEthWearablesExtended,
+  profileEntityTwoEthWearablesShortened,
   profileEntityTwoMaticWearablesExtended,
+  profileEntityTwoMaticWearablesShortened,
   profileEntityTwoTPWFromSameCollection,
   profileEntityWithClaimedName,
   profileEntityWithNewTimestamp,
@@ -21,11 +26,215 @@ import {
   tpwResolverResponseOwnOnlyOne
 } from './data/profiles-responses'
 
-test('integration tests for /profiles', function ({ components, stubComponents }) {
+test('integration tests for /profiles?erc721', function ({ components, stubComponents }) {
+  it('calling with a single profile address, owning everything claimed including emotes (retrieved shortened URNs from active entities)', async () => {
+    const { localFetch } = components
+    const { theGraph, fetch, content } = stubComponents
+    const addresses = ['0x1']
+
+    content.fetchEntitiesByPointers
+      .withArgs(addresses)
+      .resolves(await Promise.all([completeProfileEntityWithShortenedURNs]))
+    const wearablesQuery =
+      '{\n        P0x1: nfts(where: { owner: "0x1", searchItemType_in: ["wearable_v1", "wearable_v2", "smart_wearable_v1", "emote_v1"], urn_in: ["urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7","urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1","urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet","urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand","urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f","urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:12341234-1234-3434-3434-f9dfde9f9393"] }, first: 1000) {\n        urn\n        }\n    }'
+    theGraph.ethereumCollectionsSubgraph.query = sinon
+      .stub()
+      .withArgs(wearablesQuery, {})
+      .resolves({
+        P0x1: [
+          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet', tokenId: '123' },
+          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand', tokenId: '123' }
+        ]
+      })
+    theGraph.maticCollectionsSubgraph.query = sinon
+      .stub()
+      .withArgs(wearablesQuery, {})
+      .resolves({
+        P0x1: [
+          { urn: 'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7', tokenId: '123' },
+          { urn: 'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1', tokenId: '123' },
+          { urn: 'urn:decentraland:mumbai:collections-v2:0x81028f51a57d1aa4a454ea7f281ad18575b2dc0b:0', tokenId: '333' }
+        ]
+      })
+
+    const namesQuery =
+      '{\n      P0x1: nfts(where: { owner: "0x1", category: ens, name_in: ["cryptonico"] }, first: 1000) {\n        name\n      }\n    }'
+    theGraph.ensSubgraph.query = sinon
+      .stub()
+      .withArgs(namesQuery, {})
+      .resolves({ P0x1: [{ name: 'cryptonico' }] })
+
+    jest.spyOn(components.thirdPartyProvidersStorage, 'getAll').mockResolvedValue([
+      {
+        id: 'urn:decentraland:matic:collections-thirdparty:ntr1-meta',
+        resolver: 'https://api.swappable.io/api/v1',
+        metadata: {
+          thirdParty: {
+            name: 'test',
+            description: 'test'
+          }
+        }
+      }
+    ])
+    fetch.fetch
+      .withArgs('https://api.swappable.io/api/v1/registry/ntr1-meta/address/0x1/assets')
+      .onCall(0)
+      .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
+      .onCall(1)
+      .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
+
+    const response = await localFetch.fetch('/profiles?erc721', {
+      method: 'post',
+      body: JSON.stringify({ ids: addresses })
+    })
+
+    sinon.assert.calledOnceWithMatch(content.fetchEntitiesByPointers, addresses)
+
+    expect(response.status).toEqual(200)
+    const responseObj = await response.json()
+    expect(responseObj.length).toEqual(1)
+    expect(responseObj[0].avatars.length).toEqual(1)
+    expect(responseObj[0].avatars?.[0].hasClaimedName).toEqual(true)
+    expect(responseObj[0].avatars?.[0].ethAddress).toEqual('0x1')
+    expect(responseObj[0].avatars?.[0].name).toEqual('cryptonico')
+    expect(responseObj[0].avatars?.[0].unclaimedName).toBeUndefined()
+    expect(responseObj[0].avatars?.[0].avatar.bodyShape).toEqual('urn:decentraland:off-chain:base-avatars:BaseMale')
+    expect(responseObj[0].avatars?.[0].avatar.wearables.length).toEqual(8)
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:off-chain:base-avatars:eyebrows_00'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:short_hair')
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7:123'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1:123'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:123'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:123'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:12341234-1234-3434-3434-f9dfde9f9393'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.emotes[0]).toEqual({
+      slot: 0,
+      urn: 'urn:decentraland:mumbai:collections-v2:0x81028f51a57d1aa4a454ea7f281ad18575b2dc0b:0:333'
+    })
+  })
+
+  it('calling with a single profile address, owning everything claimed including emotes without extending (retrieved shortened URNs from active entities)', async () => {
+    const { localFetch } = components
+    const { theGraph, fetch, content } = stubComponents
+    const addresses = ['0x1']
+
+    content.fetchEntitiesByPointers
+      .withArgs(addresses)
+      .resolves(await Promise.all([completeProfileEntityWithShortenedURNs]))
+    const wearablesQuery =
+      '{\n        P0x1: nfts(where: { owner: "0x1", searchItemType_in: ["wearable_v1", "wearable_v2", "smart_wearable_v1", "emote_v1"], urn_in: ["urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7","urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1","urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet","urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand","urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f","urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:12341234-1234-3434-3434-f9dfde9f9393"] }, first: 1000) {\n        urn\n        }\n    }'
+    theGraph.ethereumCollectionsSubgraph.query = sinon
+      .stub()
+      .withArgs(wearablesQuery, {})
+      .resolves({
+        P0x1: [
+          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet', tokenId: '123' },
+          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand', tokenId: '123' }
+        ]
+      })
+    theGraph.maticCollectionsSubgraph.query = sinon
+      .stub()
+      .withArgs(wearablesQuery, {})
+      .resolves({
+        P0x1: [
+          { urn: 'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7', tokenId: '123' },
+          { urn: 'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1', tokenId: '123' },
+          { urn: 'urn:decentraland:mumbai:collections-v2:0x81028f51a57d1aa4a454ea7f281ad18575b2dc0b:0', tokenId: '333' }
+        ]
+      })
+
+    const namesQuery =
+      '{\n      P0x1: nfts(where: { owner: "0x1", category: ens, name_in: ["cryptonico"] }, first: 1000) {\n        name\n      }\n    }'
+    theGraph.ensSubgraph.query = sinon
+      .stub()
+      .withArgs(namesQuery, {})
+      .resolves({ P0x1: [{ name: 'cryptonico' }] })
+
+    jest.spyOn(components.thirdPartyProvidersStorage, 'getAll').mockResolvedValue([
+      {
+        id: 'urn:decentraland:matic:collections-thirdparty:ntr1-meta',
+        resolver: 'https://api.swappable.io/api/v1',
+        metadata: {
+          thirdParty: {
+            name: 'test',
+            description: 'test'
+          }
+        }
+      }
+    ])
+    fetch.fetch
+      .withArgs('https://api.swappable.io/api/v1/registry/ntr1-meta/address/0x1/assets')
+      .onCall(0)
+      .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
+      .onCall(1)
+      .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
+
+    const response = await localFetch.fetch('/profiles', {
+      method: 'post',
+      body: JSON.stringify({ ids: addresses })
+    })
+
+    sinon.assert.calledOnceWithMatch(content.fetchEntitiesByPointers, addresses)
+
+    expect(response.status).toEqual(200)
+    const responseObj = await response.json()
+    expect(responseObj.length).toEqual(1)
+    expect(responseObj[0].avatars.length).toEqual(1)
+    expect(responseObj[0].avatars?.[0].hasClaimedName).toEqual(true)
+    expect(responseObj[0].avatars?.[0].ethAddress).toEqual('0x1')
+    expect(responseObj[0].avatars?.[0].name).toEqual('cryptonico')
+    expect(responseObj[0].avatars?.[0].unclaimedName).toBeUndefined()
+    expect(responseObj[0].avatars?.[0].avatar.bodyShape).toEqual('urn:decentraland:off-chain:base-avatars:BaseMale')
+
+    expect(responseObj[0].avatars?.[0].avatar.wearables.length).toEqual(8)
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:off-chain:base-avatars:eyebrows_00'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:short_hair')
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:12341234-1234-3434-3434-f9dfde9f9393'
+    )
+
+    expect(responseObj[0].avatars?.[0].avatar.emotes[0]).toEqual({
+      slot: 0,
+      urn: 'urn:decentraland:mumbai:collections-v2:0x81028f51a57d1aa4a454ea7f281ad18575b2dc0b:0'
+    })
+  })
+
   it('calling without body should return 500', async () => {
     const { localFetch } = components
 
-    const r = await localFetch.fetch('/profiles', { method: 'post' })
+    const r = await localFetch.fetch('/profiles?erc721', { method: 'post' })
 
     expect(r.status).toEqual(500)
     expect(await r.json()).toEqual({
@@ -36,7 +245,7 @@ test('integration tests for /profiles', function ({ components, stubComponents }
   it('calling with an empty body should return 500', async () => {
     const { localFetch } = components
 
-    const r = await localFetch.fetch('/profiles', { method: 'post', body: '' })
+    const r = await localFetch.fetch('/profiles?erc721', { method: 'post', body: '' })
 
     expect(r.status).toEqual(500)
     expect(await r.json()).toEqual({
@@ -47,7 +256,7 @@ test('integration tests for /profiles', function ({ components, stubComponents }
   it('calling with body with empty object should return 400', async () => {
     const { localFetch } = components
 
-    const r = await localFetch.fetch('/profiles', { method: 'post', body: '{}' })
+    const r = await localFetch.fetch('/profiles?erc721', { method: 'post', body: '{}' })
 
     expect(r.status).toEqual(400)
     expect(await r.json()).toEqual({
@@ -59,13 +268,13 @@ test('integration tests for /profiles', function ({ components, stubComponents }
   it('calling with an empty list', async () => {
     const { localFetch } = components
 
-    const r = await localFetch.fetch('/profiles', { method: 'post', body: '{"ids":[]}' })
+    const r = await localFetch.fetch('/profiles?erc721', { method: 'post', body: '{"ids":[]}' })
 
     expect(r.status).toEqual(200)
     expect(await r.json()).toEqual([])
   })
 
-  it('calling with a single profile address, owning everything claimed', async () => {
+  it('calling with a single profile address, owning everything claimed (retrieved extended URNs from active entities)', async () => {
     const { localFetch } = components
     const { theGraph, fetch, content } = stubComponents
     const addresses = ['0x1']
@@ -120,7 +329,10 @@ test('integration tests for /profiles', function ({ components, stubComponents }
       .onCall(1)
       .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
 
-    const response = await localFetch.fetch('/profiles', { method: 'post', body: JSON.stringify({ ids: addresses }) })
+    const response = await localFetch.fetch('/profiles?erc721', {
+      method: 'post',
+      body: JSON.stringify({ ids: addresses })
+    })
 
     sinon.assert.calledOnceWithMatch(content.fetchEntitiesByPointers, addresses)
 
@@ -145,16 +357,112 @@ test('integration tests for /profiles', function ({ components, stubComponents }
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:short_hair')
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7'
+      'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7:123'
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1'
+      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1:123'
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet'
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:123'
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet'
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:123'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:12341234-1234-3434-3434-f9dfde9f9393'
+    )
+  })
+
+  it('calling with a single profile address, owning everything claimed (retrieved shortened URNs from active entities)', async () => {
+    const { localFetch } = components
+    const { theGraph, fetch, content } = stubComponents
+    const addresses = ['0x1']
+
+    content.fetchEntitiesByPointers
+      .withArgs(addresses)
+      .resolves(await Promise.all([completeProfileEntityWithShortenedURNs]))
+    const wearablesQuery =
+      '{\n        P0x1: nfts(where: { owner: "0x1", searchItemType_in: ["wearable_v1", "wearable_v2", "smart_wearable_v1", "emote_v1"], urn_in: ["urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7","urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1","urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet","urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand","urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f","urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:12341234-1234-3434-3434-f9dfde9f9393"] }, first: 1000) {\n        urn\n        }\n    }'
+    theGraph.ethereumCollectionsSubgraph.query = sinon
+      .stub()
+      .withArgs(wearablesQuery, {})
+      .resolves({
+        P0x1: [
+          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet', tokenId: '123' },
+          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand', tokenId: '123' }
+        ]
+      })
+    theGraph.maticCollectionsSubgraph.query = sinon
+      .stub()
+      .withArgs(wearablesQuery, {})
+      .resolves({
+        P0x1: [
+          { urn: 'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7', tokenId: '123' },
+          { urn: 'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1', tokenId: '123' }
+        ]
+      })
+
+    const namesQuery =
+      '{\n      P0x1: nfts(where: { owner: "0x1", category: ens, name_in: ["cryptonico"] }, first: 1000) {\n        name\n      }\n    }'
+    theGraph.ensSubgraph.query = sinon
+      .stub()
+      .withArgs(namesQuery, {})
+      .resolves({ P0x1: [{ name: 'cryptonico' }] })
+
+    jest.spyOn(components.thirdPartyProvidersStorage, 'getAll').mockResolvedValue([
+      {
+        id: 'urn:decentraland:matic:collections-thirdparty:ntr1-meta',
+        resolver: 'https://api.swappable.io/api/v1',
+        metadata: {
+          thirdParty: {
+            name: 'test',
+            description: 'test'
+          }
+        }
+      }
+    ])
+    fetch.fetch
+      .withArgs('https://api.swappable.io/api/v1/registry/ntr1-meta/address/0x1/assets')
+      .onCall(0)
+      .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
+      .onCall(1)
+      .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
+
+    const response = await localFetch.fetch('/profiles?erc721', {
+      method: 'post',
+      body: JSON.stringify({ ids: addresses })
+    })
+
+    sinon.assert.calledOnceWithMatch(content.fetchEntitiesByPointers, addresses)
+
+    expect(response.status).toEqual(200)
+    const responseObj = await response.json()
+    expect(responseObj.length).toEqual(1)
+    expect(responseObj[0].avatars.length).toEqual(1)
+    expect(responseObj[0].avatars?.[0].hasClaimedName).toEqual(true)
+    expect(responseObj[0].avatars?.[0].ethAddress).toEqual('0x1')
+    expect(responseObj[0].avatars?.[0].name).toEqual('cryptonico')
+    expect(responseObj[0].avatars?.[0].unclaimedName).toBeUndefined()
+    expect(responseObj[0].avatars?.[0].avatar.bodyShape).toEqual('urn:decentraland:off-chain:base-avatars:BaseMale')
+    expect(responseObj[0].avatars?.[0].avatar.wearables.length).toEqual(8)
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:off-chain:base-avatars:eyebrows_00'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:short_hair')
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7:123'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1:123'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:123'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:123'
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
       'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f'
@@ -185,7 +493,10 @@ test('integration tests for /profiles', function ({ components, stubComponents }
       P0x2: []
     })
 
-    const response = await localFetch.fetch('/profiles', { method: 'post', body: JSON.stringify({ ids: addresses }) })
+    const response = await localFetch.fetch('/profiles?erc721', {
+      method: 'post',
+      body: JSON.stringify({ ids: addresses })
+    })
 
     expect(response.status).toEqual(200)
     const responseText = await response.text()
@@ -206,7 +517,7 @@ test('integration tests for /profiles', function ({ components, stubComponents }
     expect(responseObj[0].avatars?.[0].avatar.wearables.length).toEqual(0)
   })
 
-  it('calling with a single profile address, two eth wearables, one of them not owned', async () => {
+  it('calling with a single profile address, two eth wearables, one of them not owned (retrieved extended URNs from active entities)', async () => {
     const { localFetch } = components
     const { theGraph, content } = stubComponents
     const addresses = ['0x3']
@@ -232,7 +543,10 @@ test('integration tests for /profiles', function ({ components, stubComponents }
       P0x3: []
     })
 
-    const response = await localFetch.fetch('/profiles', { method: 'post', body: JSON.stringify({ ids: addresses }) })
+    const response = await localFetch.fetch('/profiles?erc721', {
+      method: 'post',
+      body: JSON.stringify({ ids: addresses })
+    })
 
     expect(response.status).toEqual(200)
     const responseText = await response.text()
@@ -256,11 +570,68 @@ test('integration tests for /profiles', function ({ components, stubComponents }
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:short_hair')
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet'
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:123'
     )
   })
 
-  it('calling with a single profile address, two matic wearables, one of them not owned', async () => {
+  it('calling with a single profile address, two eth wearables, one of them not owned (retrieved shortened URNs from active entities)', async () => {
+    const { localFetch } = components
+    const { theGraph, content } = stubComponents
+    const addresses = ['0x3']
+
+    content.fetchEntitiesByPointers
+      .withArgs(addresses)
+      .resolves(await Promise.all([profileEntityTwoEthWearablesShortened]))
+
+    const wearablesQuery =
+      '{\n        P0x3: nfts(where: { owner: "0x3", searchItemType_in: ["wearable_v1", "wearable_v2", "smart_wearable_v1", "emote_v1"], urn_in: ["urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet","urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand"] }, first: 1000) {\n        urn\n        }\n    }'
+    theGraph.ethereumCollectionsSubgraph.query = sinon
+      .stub()
+      .withArgs(wearablesQuery, {})
+      .resolves({
+        P0x3: [{ urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet', tokenId: '123' }]
+      })
+    theGraph.maticCollectionsSubgraph.query = sinon.stub().withArgs(wearablesQuery, {}).resolves({
+      P0x3: []
+    })
+    const namesQuery =
+      '{\n      P0x3: nfts(where: { owner: "0x3", category: ens, name_in: ["cryptonico#e602"] }, first: 1000) {\n        name\n      }\n    }'
+    theGraph.ensSubgraph.query = sinon.stub().withArgs(namesQuery, {}).resolves({
+      P0x3: []
+    })
+
+    const response = await localFetch.fetch('/profiles?erc721', {
+      method: 'post',
+      body: JSON.stringify({ ids: addresses })
+    })
+
+    expect(response.status).toEqual(200)
+    const responseText = await response.text()
+    const responseObj = JSON.parse(responseText)
+    expect(responseObj.length).toEqual(1)
+    expect(responseObj[0].avatars.length).toEqual(1)
+    expect(responseObj[0].avatars?.[0].hasClaimedName).toEqual(false)
+    expect(responseObj[0].avatars?.[0].ethAddress).toEqual('0x3')
+    expect(responseObj[0].avatars?.[0].name).toEqual('cryptonico#e602')
+    expect(responseObj[0].avatars?.[0].unclaimedName).toEqual('cryptonico')
+    expect(responseObj[0].avatars?.[0].avatar.bodyShape).toEqual('urn:decentraland:off-chain:base-avatars:BaseMale')
+    expect(responseObj[0].avatars?.[0].avatar.snapshots.body).toEqual(
+      'https://peer.decentraland.org/content/contents/bafkreicilawwtbjyf6ahyzv64ssoamdm73rif75qncee5lv6j3a3352lua'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.snapshots.face256).toEqual(
+      'https://peer.decentraland.org/content/contents/bafkreigi3yrgdhvjr2cqzxvfztnsubnll2cfdioo4vfzu6o6vibwoag2ma'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables.length).toEqual(3)
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:off-chain:base-avatars:eyebrows_00'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:short_hair')
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:123'
+    )
+  })
+
+  it('calling with a single profile address, two matic wearables, one of them not owned (retrieved extended URNs from active entities)', async () => {
     const { localFetch } = components
     const { theGraph, content } = stubComponents
     const addresses = ['0x4']
@@ -287,7 +658,10 @@ test('integration tests for /profiles', function ({ components, stubComponents }
       P0x4: []
     })
 
-    const response = await localFetch.fetch('/profiles', { method: 'post', body: JSON.stringify({ ids: addresses }) })
+    const response = await localFetch.fetch('/profiles?erc721', {
+      method: 'post',
+      body: JSON.stringify({ ids: addresses })
+    })
 
     expect(response.status).toEqual(200)
     const responseText = await response.text()
@@ -311,7 +685,65 @@ test('integration tests for /profiles', function ({ components, stubComponents }
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:short_hair')
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1'
+      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1:123'
+    )
+  })
+
+  it('calling with a single profile address, two matic wearables, one of them not owned (retrieved shortened URNs from active entities)', async () => {
+    const { localFetch } = components
+    const { theGraph, content } = stubComponents
+    const addresses = ['0x4']
+
+    content.fetchEntitiesByPointers
+      .withArgs(addresses)
+      .resolves(await Promise.all([profileEntityTwoMaticWearablesShortened]))
+    const wearablesQuery =
+      '{\n        P0x4: nfts(where: { owner: "0x4", searchItemType_in: ["wearable_v1", "wearable_v2", "smart_wearable_v1", "emote_v1"], urn_in: ["urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7","urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1"] }, first: 1000) {\n        urn\n        }\n    }'
+    theGraph.ethereumCollectionsSubgraph.query = sinon.stub().withArgs(wearablesQuery, {}).resolves({
+      P0x4: []
+    })
+    theGraph.maticCollectionsSubgraph.query = sinon
+      .stub()
+      .withArgs(wearablesQuery, {})
+      .resolves({
+        P0x4: [
+          { urn: 'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1', tokenId: '123' }
+        ]
+      })
+    const namesQuery =
+      '{\n      P0x4: nfts(where: { owner: "0x4", category: ens, name_in: ["cryptonico#e602"] }, first: 1000) {\n        name\n      }\n    }'
+    theGraph.ensSubgraph.query = sinon.stub().withArgs(namesQuery, {}).resolves({
+      P0x4: []
+    })
+
+    const response = await localFetch.fetch('/profiles?erc721', {
+      method: 'post',
+      body: JSON.stringify({ ids: addresses })
+    })
+
+    expect(response.status).toEqual(200)
+    const responseText = await response.text()
+    const responseObj = JSON.parse(responseText)
+    expect(responseObj.length).toEqual(1)
+    expect(responseObj[0].avatars.length).toEqual(1)
+    expect(responseObj[0].avatars?.[0].hasClaimedName).toEqual(false)
+    expect(responseObj[0].avatars?.[0].ethAddress).toEqual('0x4')
+    expect(responseObj[0].avatars?.[0].name).toEqual('cryptonico#e602')
+    expect(responseObj[0].avatars?.[0].unclaimedName).toEqual('cryptonico')
+    expect(responseObj[0].avatars?.[0].avatar.bodyShape).toEqual('urn:decentraland:off-chain:base-avatars:BaseMale')
+    expect(responseObj[0].avatars?.[0].avatar.snapshots.body).toEqual(
+      'https://peer.decentraland.org/content/contents/bafkreicilawwtbjyf6ahyzv64ssoamdm73rif75qncee5lv6j3a3352lua'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.snapshots.face256).toEqual(
+      'https://peer.decentraland.org/content/contents/bafkreigi3yrgdhvjr2cqzxvfztnsubnll2cfdioo4vfzu6o6vibwoag2ma'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables.length).toEqual(3)
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:off-chain:base-avatars:eyebrows_00'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:short_hair')
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1:123'
     )
   })
 
@@ -338,7 +770,10 @@ test('integration tests for /profiles', function ({ components, stubComponents }
         P0x5: [{ name: 'cryptonico' }]
       })
 
-    const response = await localFetch.fetch('/profiles', { method: 'post', body: JSON.stringify({ ids: addresses }) })
+    const response = await localFetch.fetch('/profiles?erc721', {
+      method: 'post',
+      body: JSON.stringify({ ids: addresses })
+    })
 
     expect(response.status).toEqual(200)
     const responseText = await response.text()
@@ -396,7 +831,10 @@ test('integration tests for /profiles', function ({ components, stubComponents }
       .onCall(1)
       .resolves(new Response(JSON.stringify(tpwResolverResponseOwnOnlyOne)))
 
-    const response = await localFetch.fetch('/profiles', { method: 'post', body: JSON.stringify({ ids: addresses }) })
+    const response = await localFetch.fetch('/profiles?erc721', {
+      method: 'post',
+      body: JSON.stringify({ ids: addresses })
+    })
 
     expect(response.status).toEqual(200)
     const responseText = await response.text()
@@ -476,7 +914,10 @@ test('integration tests for /profiles', function ({ components, stubComponents }
       .resolves(new Response(JSON.stringify(tpwResolverResponseFromDifferentCollection)))
       .onCall(2)
       .resolves(new Response(JSON.stringify(tpwResolverResponseFromDifferentCollection)))
-    const response = await localFetch.fetch('/profiles', { method: 'post', body: JSON.stringify({ ids: addresses }) })
+    const response = await localFetch.fetch('/profiles?erc721', {
+      method: 'post',
+      body: JSON.stringify({ ids: addresses })
+    })
 
     expect(response.status).toEqual(200)
     const responseText = await response.text()
@@ -510,7 +951,7 @@ test('integration tests for /profiles', function ({ components, stubComponents }
     )
   })
 
-  it('calling with two profile addresses, owning everything claimed', async () => {
+  it('calling with two profile addresses, owning everything claimed (retrieved extended URNs from active entities)', async () => {
     const { localFetch } = components
     const { theGraph, fetch, content } = stubComponents
     const addresses = ['0x1b', '0x8']
@@ -591,7 +1032,10 @@ test('integration tests for /profiles', function ({ components, stubComponents }
       .onCall(1)
       .resolves(new Response(JSON.stringify(tpwResolverResponseFullAnother)))
 
-    const response = await localFetch.fetch('/profiles', { method: 'post', body: JSON.stringify({ ids: addresses }) })
+    const response = await localFetch.fetch('/profiles?erc721', {
+      method: 'post',
+      body: JSON.stringify({ ids: addresses })
+    })
 
     expect(response.status).toEqual(200)
     const responseText = await response.text()
@@ -616,16 +1060,16 @@ test('integration tests for /profiles', function ({ components, stubComponents }
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:short_hair')
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7'
+      'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7:123'
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1'
+      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1:123'
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet'
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:123'
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet'
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:123'
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
       'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f'
@@ -652,16 +1096,180 @@ test('integration tests for /profiles', function ({ components, stubComponents }
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:short_hair')
     expect(responseObj[1].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:6'
+      'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:6:123'
     )
     expect(responseObj[1].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:2'
+      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:2:123'
     )
     expect(responseObj[1].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hat'
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hat:123'
     )
     expect(responseObj[1].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_shirt'
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_shirt:123'
+    )
+    expect(responseObj[1].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:matic:collections-thirdparty:ntr2-meta:ntr2-meta-123v289a:w3499wer-523f-403f-9730-f09c992f386f'
+    )
+    expect(responseObj[1].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:matic:collections-thirdparty:ntr2-meta:ntr2-meta-123v289a:12341234-9876-3434-3434-f9dfde9f9393'
+    )
+  })
+
+  it('calling with two profile addresses, owning everything claimed (retrieved shortened URNs from active entities)', async () => {
+    const { localFetch } = components
+    const { theGraph, fetch, content } = stubComponents
+    const addresses = ['0x1b', '0x8']
+
+    content.fetchEntitiesByPointers
+      .withArgs(addresses)
+      .resolves(await Promise.all([profileEntityFullBShortened, profileEntityFullAnotherShortened]))
+    const wearablesQuery =
+      '{\n        P0x1b: nfts(where: { owner: "0x1b", searchItemType_in: ["wearable_v1", "wearable_v2", "smart_wearable_v1", "emote_v1"], urn_in: ["urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7","urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1","urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet","urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand","urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f","urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:12341234-1234-3434-3434-f9dfde9f9393"] }, first: 1000) {\n        urn\n        }\n    \n\n        P0x8: nfts(where: { owner: "0x8", searchItemType_in: ["wearable_v1", "wearable_v2", "smart_wearable_v1", "emote_v1"], urn_in: ["urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:6","urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:2","urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hat","urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_shirt","urn:decentraland:matic:collections-thirdparty:ntr2-meta:ntr2-meta-123v289a:w3499wer-523f-403f-9730-f09c992f386f","urn:decentraland:matic:collections-thirdparty:ntr2-meta:ntr2-meta-123v289a:12341234-9876-3434-3434-f9dfde9f9393"] }, first: 1000) {\n        urn\n        }\n    }'
+    theGraph.ethereumCollectionsSubgraph.query = sinon
+      .stub()
+      .withArgs(wearablesQuery, {})
+      .resolves({
+        P0x1b: [
+          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet', tokenId: '123' },
+          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand', tokenId: '123' }
+        ],
+        P0x8: [
+          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hat', tokenId: '123' },
+          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_shirt', tokenId: '123' }
+        ]
+      })
+    theGraph.maticCollectionsSubgraph.query = sinon
+      .stub()
+      .withArgs(wearablesQuery, {})
+      .resolves({
+        P0x1b: [
+          { urn: 'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7', tokenId: '123' },
+          { urn: 'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1', tokenId: '123' }
+        ],
+        P0x8: [
+          { urn: 'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:6', tokenId: '123' },
+          { urn: 'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:2', tokenId: '123' }
+        ]
+      })
+    const namesQuery =
+      '{\n      P0x1b: nfts(where: { owner: "0x1b", category: ens, name_in: ["cryptonico"] }, first: 1000) {\n        name\n      }\n    \n\n      P0x8: nfts(where: { owner: "0x8", category: ens, name_in: ["testing"] }, first: 1000) {\n        name\n      }\n    }'
+    theGraph.ensSubgraph.query = sinon
+      .stub()
+      .withArgs(namesQuery, {})
+      .resolves({
+        P0x1b: [{ name: 'cryptonico' }],
+        P0x8: [{ name: 'testing' }]
+      })
+
+    jest.spyOn(components.thirdPartyProvidersStorage, 'getAll').mockResolvedValue([
+      {
+        id: 'urn:decentraland:matic:collections-thirdparty:ntr1-meta',
+        resolver: 'https://api.swappable.io/api/v1',
+        metadata: {
+          thirdParty: {
+            name: 'test',
+            description: 'test'
+          }
+        }
+      },
+      {
+        id: 'urn:decentraland:matic:collections-thirdparty:ntr2-meta',
+        resolver: 'https://api.swappable.io/api/v1',
+        metadata: {
+          thirdParty: {
+            name: 'test',
+            description: 'test'
+          }
+        }
+      }
+    ])
+
+    fetch.fetch
+      .withArgs('https://api.swappable.io/api/v1/registry/ntr1-meta/address/0x1b/assets')
+      .onCall(0)
+      .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
+      .onCall(1)
+      .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
+      .withArgs('https://api.swappable.io/api/v1/registry/ntr2-meta/address/0x8/assets')
+      .onCall(0)
+      .resolves(new Response(JSON.stringify(tpwResolverResponseFullAnother)))
+      .onCall(1)
+      .resolves(new Response(JSON.stringify(tpwResolverResponseFullAnother)))
+
+    const response = await localFetch.fetch('/profiles?erc721', {
+      method: 'post',
+      body: JSON.stringify({ ids: addresses })
+    })
+
+    expect(response.status).toEqual(200)
+    const responseText = await response.text()
+    const responseObj = JSON.parse(responseText)
+    expect(responseObj.length).toEqual(2)
+
+    expect(responseObj[0].avatars.length).toEqual(1)
+    expect(responseObj[0].avatars?.[0].hasClaimedName).toEqual(true)
+    expect(responseObj[0].avatars?.[0].ethAddress).toEqual('0x1b')
+    expect(responseObj[0].avatars?.[0].name).toEqual('cryptonico')
+    expect(responseObj[0].avatars?.[0].unclaimedName).toBeUndefined()
+    expect(responseObj[0].avatars?.[0].avatar.bodyShape).toEqual('urn:decentraland:off-chain:base-avatars:BaseMale')
+    expect(responseObj[0].avatars?.[0].avatar.snapshots.body).toEqual(
+      'https://peer.decentraland.org/content/contents/bafkreicilawwtbjyf6ahyzv64ssoamdm73rif75qncee5lv6j3a3352lua'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.snapshots.face256).toEqual(
+      'https://peer.decentraland.org/content/contents/bafkreigi3yrgdhvjr2cqzxvfztnsubnll2cfdioo4vfzu6o6vibwoag2ma'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables.length).toEqual(8)
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:off-chain:base-avatars:eyebrows_00'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:short_hair')
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7:123'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1:123'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:123'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:123'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:12341234-1234-3434-3434-f9dfde9f9393'
+    )
+
+    expect(responseObj[1].avatars.length).toEqual(1)
+    expect(responseObj[1].avatars?.[0].hasClaimedName).toEqual(true)
+    expect(responseObj[1].avatars?.[0].ethAddress).toEqual('0x8')
+    expect(responseObj[1].avatars?.[0].name).toEqual('testing')
+    expect(responseObj[1].avatars?.[0].unclaimedName).toBeUndefined()
+    expect(responseObj[1].avatars?.[0].avatar.bodyShape).toEqual('urn:decentraland:off-chain:base-avatars:BaseFemale')
+    expect(responseObj[1].avatars?.[0].avatar.snapshots.body).toEqual(
+      'https://peer.decentraland.org/content/contents/bafkreicilawwtbjyf6ahyzv64ssoamdm73rif75qncee5lv6j3a3352lue'
+    )
+    expect(responseObj[1].avatars?.[0].avatar.snapshots.face256).toEqual(
+      'https://peer.decentraland.org/content/contents/bafkreigi3yrgdhvjr2cqzxvfztnsubnll2cfdioo4vfzu6o6vibwoag2me'
+    )
+    expect(responseObj[1].avatars?.[0].avatar.wearables.length).toEqual(8)
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:off-chain:base-avatars:eyebrows_00'
+    )
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:short_hair')
+    expect(responseObj[1].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:6:123'
+    )
+    expect(responseObj[1].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:2:123'
+    )
+    expect(responseObj[1].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hat:123'
+    )
+    expect(responseObj[1].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_shirt:123'
     )
     expect(responseObj[1].avatars?.[0].avatar.wearables).toContain(
       'urn:decentraland:matic:collections-thirdparty:ntr2-meta:ntr2-meta-123v289a:w3499wer-523f-403f-9730-f09c992f386f'
@@ -685,7 +1293,10 @@ test('integration tests for /profiles', function ({ components, stubComponents }
       '{\n      P0x9: nfts(where: { owner: "0x9", category: ens, name_in: ["cryptonico#e602"] }, first: 1000) {\n        name\n      }\n    }'
     theGraph.ensSubgraph.query = sinon.stub().withArgs(namesQuery, {}).resolves({ P0x9: [] })
 
-    const response = await localFetch.fetch('/profiles', { method: 'post', body: JSON.stringify({ ids: addresses }) })
+    const response = await localFetch.fetch('/profiles?erc721', {
+      method: 'post',
+      body: JSON.stringify({ ids: addresses })
+    })
 
     expect(response.status).toEqual(200)
     const responseText = await response.text()
@@ -722,7 +1333,10 @@ test('integration tests for /profiles', function ({ components, stubComponents }
       '{\n      P0x10: nfts(where: { owner: "0x10", category: ens, name_in: ["cryptonico#e602"] }, first: 1000) {\n        name\n      }\n    }'
     theGraph.ensSubgraph.query = sinon.stub().withArgs(namesQuery, {}).resolves({ P0x10: [] })
 
-    const response = await localFetch.fetch('/profiles', { method: 'post', body: JSON.stringify({ ids: addresses }) })
+    const response = await localFetch.fetch('/profiles?erc721', {
+      method: 'post',
+      body: JSON.stringify({ ids: addresses })
+    })
 
     expect(response.status).toEqual(200)
     const responseText = await response.text()
@@ -767,7 +1381,7 @@ test('integration tests for /profiles', function ({ components, stubComponents }
       '{\n      P0x11: nfts(where: { owner: "0x11", category: ens, name_in: ["cryptonico#e602"] }, first: 1000) {\n        name\n      }\n    \n\n      P0x12: nfts(where: { owner: "0x12", category: ens, name_in: ["cryptonico#e602"] }, first: 1000) {\n        name\n      }\n    }'
     theGraph.ensSubgraph.query = sinon.stub().withArgs(namesQuery, {}).resolves({ P0x11: [], P0x12: [] })
 
-    const response = await localFetch.fetch('/profiles', {
+    const response = await localFetch.fetch('/profiles?erc721', {
       method: 'post',
       body: JSON.stringify({ ids: addresses }),
       headers: { 'If-Modified-Since': 'Mon Jul 11 2022 15:53:46 GMT-0300 (Argentina Standard Time)' }
@@ -816,7 +1430,7 @@ test('integration tests for /profiles', function ({ components, stubComponents }
       .withArgs(addresses)
       .resolves(await Promise.all([profileEntityWithOldTimestamp, profileEntityWithNewTimestamp]))
 
-    const response = await localFetch.fetch('/profiles', {
+    const response = await localFetch.fetch('/profiles?erc721', {
       method: 'post',
       body: JSON.stringify({ ids: addresses }),
       headers: { 'If-Modified-Since': 'Mon Jul 11 2023 15:53:46 GMT-0300 (Argentina Standard Time)' }
