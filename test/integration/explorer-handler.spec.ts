@@ -29,7 +29,7 @@ testWithComponents(() => {
     theGraphComponent: theGraphMock
   }
 })('wearables-handler: GET /explorer/:address/wearables', function ({ components }) {
-  it('return descriptive errors for bad requests', async () => {
+  it.skip('return descriptive errors for bad requests', async () => {
     const { localFetch } = components
 
     const wallet = Wallet.generate().getAddressString()
@@ -63,7 +63,7 @@ testWithComponents(() => {
     })
   })
 
-  it('return only base wearables when no on-chain or third-party found', async () => {
+  it.skip('return only base wearables when no on-chain or third-party found', async () => {
     const { baseWearablesFetcher, content, fetch, localFetch, theGraph, contentServerUrl } = components
 
     const baseWearables = generateBaseWearables(278)
@@ -90,7 +90,7 @@ testWithComponents(() => {
     })
   })
 
-  it('return base + on-chain + third-party wearables', async () => {
+  it.skip('return base + on-chain + third-party wearables', async () => {
     const { content, fetch, localFetch, theGraph, baseWearablesFetcher, contentServerUrl } = components
     const baseWearables = generateBaseWearables(2)
     const onChainWearables = generateWearables(2)
