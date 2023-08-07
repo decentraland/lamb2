@@ -5,6 +5,8 @@ import { createWearablesOwnershipChecker } from '../ports/ownership-checker/wear
 import { createNamesOwnershipChecker } from '../ports/ownership-checker/names-ownership-checker'
 import { createTPWOwnershipChecker } from '../ports/ownership-checker/tpw-ownership-checker'
 import { parseUrn } from '@dcl/urn-resolver'
+import { ISubgraphComponent } from '@well-known-components/thegraph-component'
+import { TheGraphComponent, runQuery } from '../ports/the-graph'
 
 export async function getValidNonBaseWearables(metadata: ProfileMetadata): Promise<string[]> {
   const wearablesInProfile: string[] = []
@@ -62,6 +64,14 @@ export async function getProfiles(
   try {
     // Fetch entities by pointers
     let profileEntities: Entity[] = await components.content.fetchEntitiesByPointers(ethAddresses)
+
+    let nftsToCheckByAddress = extractEthAddressAndWearables(profileEntities)
+
+    nftsToCheckByAddress[0][1] = ['urn:decentraland:mumbai:collections-v2:0x10cd9f15bb7d58ac0c8f4ec5e1b77c0f5df0b652:0']
+
+    let result = await queryWearablesSubgraph(components.theGraph, nftsToCheckByAddress)
+
+    console.log(`JULI result ${JSON.stringify(result, null, 4)}`)
 
     // Avoid querying profiles if there wasn't any new deployment
     if (noNewDeployments(ifModifiedSinceTimestamp, profileEntities)) {
@@ -234,4 +244,85 @@ function addBaseUrlToSnapshot(baseUrl: string, snapshot: string, content: Map<st
     // Snapshot is directly a hash
     return cleanedBaseUrl + `contents/${snapshot}`
   }
+}
+
+function getWearablesUrnsAndTokenIds([ethAddress, wearableIds]: [string, string[]]) {
+  const urnList = wearableIds.map((wearableId) => `"${wearableId}"`).join(',')
+
+  // We need to add a 'P' prefix, because the graph needs the fragment name to start with a letter
+  return `
+        P${ethAddress}: nfts(where: { owner: "${ethAddress}", searchItemType_in: ["wearable_v1", "wearable_v2", "smart_wearable_v1", "emote_v1"], urn_in: [${urnList}] }, first: 1000) {
+        urn,
+        tokenId
+        }
+    `
+}
+
+async function getWearables(
+  wearableIdsToCheck: [string, string[]][],
+  subgraph: ISubgraphComponent
+): Promise<{ owner: string; urns: { urn: string; tokenId: string }[] }[]> {
+  // Build query for subgraph
+  console.log(`JULI getWearables ${JSON.stringify(wearableIdsToCheck, null, 4)}`)
+
+  const filtered = wearableIdsToCheck.filter(([, urns]) => urns.length > 0)
+  if (filtered.length > 0) {
+    const subgraphQuery = `{` + filtered.map((query) => getWearablesUrnsAndTokenIds(query)).join('\n') + `}`
+
+    console.log(`JULI subgraph ${JSON.stringify(subgraphQuery)}`)
+    // Run query
+    const queryResponse = await runQuery<Map<string, { urn: string; tokenId: string }[]>>(subgraph, subgraphQuery, {})
+
+    console.log(`JULI queryResponse ${JSON.stringify(queryResponse, null, 4)}`)
+    // Transform the result to an array of { owner, urns: { urn, tokenId} }
+    return Object.entries(queryResponse).map(([addressWithPrefix, wearables]) => ({
+      owner: addressWithPrefix.substring(1), // Remove the 'P' prefix added previously
+      urns: wearables.map((urnObj: { urn: string; tokenId: string }) => ({
+        urn: urnObj.urn,
+        tokenId: urnObj.tokenId
+      }))
+    }))
+  }
+
+  return wearableIdsToCheck.map(([owner]) => ({ owner, urns: [] }))
+}
+
+async function getOwnedWearables(
+  wearableIdsToCheck: [string, string[]][],
+  subgraph: ISubgraphComponent
+): Promise<{ owner: string; urns: { urn: string; tokenId: string }[] }[]> {
+  try {
+    return getWearables(wearableIdsToCheck, subgraph)
+  } catch (error) {
+    // TODO: logger
+    console.log(error)
+    return []
+  }
+}
+
+async function checkWearablesTokensIds(
+  theGraph: TheGraphComponent,
+  wearableIdsToCheck: [string, string[]][]
+): Promise<{ owner: string; urns: { urn: string; tokenId: string }[] }[]> {
+  const wearablesOwnersPromise = getOwnedWearables(wearableIdsToCheck, theGraph.ethereumCollectionsSubgraph)
+
+  const [wearablesOwners] = await Promise.all([wearablesOwnersPromise])
+
+  return wearablesOwners
+}
+
+async function queryWearablesSubgraph(
+  theGraph: TheGraphComponent,
+  nftsToCheck: [string, string[]][]
+): Promise<{ owner: string; ownedNFTs: { urn: string; tokenId: string }[] }[]> {
+  const result = await checkWearablesTokensIds(theGraph, nftsToCheck)
+  return result.map(({ urns, owner }) => ({ ownedNFTs: urns, owner }))
+}
+
+function extractEthAddressAndWearables(data: Entity[]): [string, string[]][] {
+  return data.map((item: Entity) => {
+    const ethAddress = item.metadata?.avatars[0].ethAddress
+    const wearables = item.metadata?.avatars[0].avatar.wearables
+    return [ethAddress, wearables]
+  })
 }
