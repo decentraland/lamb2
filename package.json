@@ -41,5 +41,8 @@
     "eth-connect": "^6.1.0",
     "lodash": "^4.17.21",
     "lru-cache": "^8.0.4"
+  },
+  "resolutions": {
+    "**/make-dir/semver": "^6.3.1"
   }
 }
