@@ -136,9 +136,7 @@ testWithComponents(() => {
     const wallet = Wallet.generate().getAddressString()
     const r = await localFetch.fetch(`/explorer/${wallet}/wearables`)
     expect(r.status).toBe(200)
-    const response = await r.json()
-    console.log({ response: JSON.stringify(response, null, 2) })
-    expect(response).toEqual({
+    expect(await r.json()).toEqual({
       elements: [
         ...convertedMixedBaseWearables,
         ...convertedMixedOnChainWearables,
