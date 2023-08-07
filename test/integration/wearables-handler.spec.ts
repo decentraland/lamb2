@@ -11,7 +11,7 @@ import { leastRare, nameAZ, nameZA, rarest } from '../../src/logic/sorting'
 
 // NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
 test('wearables-handler: GET /users/:address/wearables should', function ({ components }) {
-  it.skip('return empty when no wearables are found', async () => {
+  it('return empty when no wearables are found', async () => {
     const { localFetch, theGraph } = components
 
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
@@ -28,7 +28,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
-  it.skip('return empty when no wearables are found with includeDefinitions set', async () => {
+  it('return empty when no wearables are found with includeDefinitions set', async () => {
     const { localFetch, theGraph, content } = components
 
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
@@ -46,7 +46,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
-  it.skip('return a wearable from ethereum collection', async () => {
+  it('return a wearable from ethereum collection', async () => {
     const { localFetch, theGraph } = components
     const wearables = generateWearables(1)
 
@@ -64,7 +64,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
-  it.skip('return a wearable from matic collection', async () => {
+  it('return a wearable from matic collection', async () => {
     const { localFetch, theGraph } = components
     const wearables = generateWearables(1)
 
@@ -82,7 +82,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
-  it.skip('return wearables from both collections', async () => {
+  it('return wearables from both collections', async () => {
     const { localFetch, theGraph } = components
     const wearables = generateWearables(2)
 
@@ -100,7 +100,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
-  it.skip('return wearables from both collections with includeDefinitions set', async () => {
+  it('return wearables from both collections with includeDefinitions set', async () => {
     const { localFetch, theGraph, content, contentServerUrl } = components
     const wearables = generateWearables(2)
     const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn))
@@ -122,7 +122,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
-  it.skip('return wearables from both collections with includeEntities set', async () => {
+  it('return wearables from both collections with includeEntities set', async () => {
     const { localFetch, theGraph, content, contentServerUrl } = components
     const wearables = generateWearables(2)
     const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn))
@@ -142,7 +142,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
-  it.skip('return a wearable with definition and another one without definition', async () => {
+  it('return a wearable with definition and another one without definition', async () => {
     const { localFetch, theGraph, content, contentServerUrl } = components
     const wearables = generateWearables(2)
     const entities = generateWearableEntities([wearables[0].urn])
@@ -167,7 +167,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
-  it.skip('return wearables 2 from each collection and paginate them correctly (page 1, size 2, total 4)', async () => {
+  it('return wearables 2 from each collection and paginate them correctly (page 1, size 2, total 4)', async () => {
     const { localFetch, theGraph } = components
     const wearables = generateWearables(4)
 
@@ -185,7 +185,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
-  it.skip('return wearables 2 from each collection and paginate them correctly (page 2, size 2, total 4)', async () => {
+  it('return wearables 2 from each collection and paginate them correctly (page 2, size 2, total 4)', async () => {
     const { localFetch, theGraph } = components
     const wearables = generateWearables(4)
 
@@ -203,7 +203,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
-  it.skip('return wearables (3 eth and 1 matic) and paginate them correctly (page 1, size 2, total 4)', async () => {
+  it('return wearables (3 eth and 1 matic) and paginate them correctly (page 1, size 2, total 4)', async () => {
     const { localFetch, theGraph } = components
     const wearables = generateWearables(4)
 
@@ -223,7 +223,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
-  it.skip('return wearables (3 eth and 1 matic) and paginate them correctly (page 2, size 2, total 4)', async () => {
+  it('return wearables (3 eth and 1 matic) and paginate them correctly (page 2, size 2, total 4)', async () => {
     const { localFetch, theGraph } = components
     const wearables = generateWearables(4)
 
@@ -243,7 +243,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
-  it.skip('return wearables (4 eth and 3 matic) and paginate them correctly (page 1, size 3, total 7)', async () => {
+  it('return wearables (4 eth and 3 matic) and paginate them correctly (page 1, size 3, total 7)', async () => {
     const { localFetch, theGraph } = components
     const wearables = generateWearables(7)
 
@@ -265,7 +265,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
-  it.skip('return wearables (4 eth and 3 matic) and paginate them correctly (page 2, size 3, total 7)', async () => {
+  it('return wearables (4 eth and 3 matic) and paginate them correctly (page 2, size 3, total 7)', async () => {
     const { localFetch, theGraph } = components
     const wearables = generateWearables(7)
 
@@ -287,7 +287,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
-  it.skip('return wearables (4 eth and 3 matic) and paginate them correctly (page 3, size 3, total 7)', async () => {
+  it('return wearables (4 eth and 3 matic) and paginate them correctly (page 3, size 3, total 7)', async () => {
     const { localFetch, theGraph } = components
     const wearables = generateWearables(7)
 
@@ -309,7 +309,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
-  it.skip('return wearables from cache on second call for the same address', async () => {
+  it('return wearables from cache on second call for the same address', async () => {
     const { localFetch, theGraph } = components
     const wearables = generateWearables(7)
     const wallet = Wallet.generate().getAddressString()
@@ -339,7 +339,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     expect(theGraph.maticCollectionsSubgraph.query).toHaveBeenCalledTimes(1)
   })
 
-  it.skip('return wearables filtering by name', async () => {
+  it('return wearables filtering by name', async () => {
     const { localFetch, theGraph } = components
     const wearables = generateWearables(17)
     const wallet = Wallet.generate().getAddressString()
@@ -359,7 +359,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
-  it.skip('return wearables filtering by category', async () => {
+  it('return wearables filtering by category', async () => {
     const { localFetch, theGraph } = components
     const wearables: WearableFromQuery[] = generateWearables(17).map((w, i) => ({
       ...w,
@@ -419,7 +419,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
-  it.skip('return wearables filtering by rarity', async () => {
+  it('return wearables filtering by rarity', async () => {
     const { localFetch, theGraph } = components
     const wearables = generateWearables(17).map((w, i) => ({
       ...w,
@@ -461,7 +461,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
-  it.skip('return wearables sorted by newest / oldest', async () => {
+  it('return wearables sorted by newest / oldest', async () => {
     const { localFetch, theGraph } = components
     const wearables = generateWearables(17).map((w, i) => ({
       ...w,
@@ -496,7 +496,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
-  it.skip('return wearables sorted by rarest / least_rare', async () => {
+  it('return wearables sorted by rarest / least_rare', async () => {
     const { localFetch, theGraph } = components
     const wearables = generateWearables(17).map((w, i) => ({
       ...w,
@@ -534,7 +534,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
-  it.skip('return wearables sorted by name asc / desc', async () => {
+  it('return wearables sorted by name asc / desc', async () => {
     const { localFetch, theGraph } = components
     const wearables = generateWearables(17)
 
@@ -566,7 +566,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
-  it.skip('return an error when wearables cannot be fetched from ethereum collection', async () => {
+  it('return an error when wearables cannot be fetched from ethereum collection', async () => {
     const { localFetch, theGraph } = components
 
     theGraph.ethereumCollectionsSubgraph.query = jest
@@ -584,7 +584,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
-  it.skip('return an error when wearables cannot be fetched from matic collection', async () => {
+  it('return an error when wearables cannot be fetched from matic collection', async () => {
     const { localFetch, theGraph } = components
 
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
@@ -602,7 +602,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     })
   })
 
-  it.skip('return a generic error when an unexpected error occurs (definitions cannot be fetched)', async () => {
+  it('return a generic error when an unexpected error occurs (definitions cannot be fetched)', async () => {
     const { localFetch, theGraph, content } = components
     const wearables = generateWearables(2)
 
@@ -632,7 +632,7 @@ type ContentInfo = {
 function convertToDataModel(wearables: WearableFromQuery[], contentInfo?: ContentInfo): OnChainWearableResponse[] {
   return wearables.map((wearable): OnChainWearableResponse => {
     const individualData = {
-      id: wearable.id,
+      id: `${wearable.urn}:${wearable.tokenId}`,
       tokenId: wearable.tokenId,
       transferredAt: wearable.transferredAt,
       price: wearable.item.price
