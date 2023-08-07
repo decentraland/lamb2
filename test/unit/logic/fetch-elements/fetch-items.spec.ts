@@ -8,7 +8,7 @@ import {
 import { OnChainEmote, OnChainWearable } from '../../../../src/types'
 import { createTheGraphComponentMock } from '../../../mocks/the-graph-mock'
 
-describe.skip('fetchEmotes', () => {
+describe('fetchEmotes', () => {
   it('the maticCollectionsSubgraph is queried', async () => {
     const theGraph = createTheGraphComponentMock()
     jest.spyOn(theGraph.maticCollectionsSubgraph, 'query').mockResolvedValue({ nfts: [] })
@@ -70,7 +70,7 @@ describe.skip('fetchEmotes', () => {
       {
         urn: 'urn1',
         amount: 1,
-        individualData: [{ id: 'id1', tokenId: 'tokenId1', transferredAt: 1, price: 10 }],
+        individualData: [{ id: 'urn1:tokenId1', tokenId: 'tokenId1', transferredAt: 1, price: 10 }],
         rarity: 'common',
         category: EmoteCategory.FUN,
         maxTransferredAt: 1,
@@ -134,8 +134,8 @@ describe.skip('fetchEmotes', () => {
         urn: 'urn1',
         amount: 2,
         individualData: [
-          { id: 'id1', tokenId: 'tokenId1', transferredAt: 1, price: 10 },
-          { id: 'id2', tokenId: 'tokenId2', transferredAt: 2, price: 15 }
+          { id: 'urn1:tokenId1', tokenId: 'tokenId1', transferredAt: 1, price: 10 },
+          { id: 'urn1:tokenId2', tokenId: 'tokenId2', transferredAt: 2, price: 15 }
         ],
         rarity: 'common',
         category: EmoteCategory.FUN,
@@ -146,7 +146,7 @@ describe.skip('fetchEmotes', () => {
       {
         urn: 'urn5',
         amount: 1,
-        individualData: [{ id: 'id5', tokenId: 'tokenId5', transferredAt: 5, price: 5 }],
+        individualData: [{ id: 'urn5:tokenId5', tokenId: 'tokenId5', transferredAt: 5, price: 5 }],
         rarity: 'rarity5',
         category: EmoteCategory.DANCE,
         maxTransferredAt: 5,
@@ -209,7 +209,7 @@ describe.skip('fetchEmotes', () => {
       {
         urn: 'urn3',
         amount: 1,
-        individualData: [{ id: 'id3', tokenId: 'tokenId3', transferredAt: 3, price: 3 }],
+        individualData: [{ id: 'urn3:tokenId3', tokenId: 'tokenId3', transferredAt: 3, price: 3 }],
         rarity: 'unique',
         category: EmoteCategory.HORROR,
         maxTransferredAt: 3,
@@ -219,7 +219,7 @@ describe.skip('fetchEmotes', () => {
       {
         urn: 'urn2',
         amount: 1,
-        individualData: [{ id: 'id2', tokenId: 'tokenId2', transferredAt: 2, price: 2 }],
+        individualData: [{ id: 'urn2:tokenId2', tokenId: 'tokenId2', transferredAt: 2, price: 2 }],
         rarity: 'rare',
         category: EmoteCategory.DANCE,
         maxTransferredAt: 2,
@@ -229,7 +229,7 @@ describe.skip('fetchEmotes', () => {
       {
         urn: 'urn1',
         amount: 1,
-        individualData: [{ id: 'id1', tokenId: 'tokenId1', transferredAt: 1, price: 1 }],
+        individualData: [{ id: 'urn1:tokenId1', tokenId: 'tokenId1', transferredAt: 1, price: 1 }],
         rarity: 'common',
         category: EmoteCategory.FUN,
         maxTransferredAt: 1,
@@ -240,7 +240,7 @@ describe.skip('fetchEmotes', () => {
   })
 })
 
-describe.skip('fetchWearables', () => {
+describe('fetchWearables', () => {
   it('the ethereumCollectionsSubgraph and maticCollectionsSubgraph are queried', async () => {
     const theGraph = createTheGraphComponentMock()
     jest.spyOn(theGraph.maticCollectionsSubgraph, 'query').mockResolvedValue({ nfts: [] })
@@ -326,7 +326,7 @@ describe.skip('fetchWearables', () => {
       {
         urn: 'urn1',
         amount: 1,
-        individualData: [{ id: 'id1', tokenId: 'tokenId1', transferredAt: 1, price: 1 }],
+        individualData: [{ id: 'urn1:tokenId1', tokenId: 'tokenId1', transferredAt: 1, price: 1 }],
         rarity: 'common',
         name: 'fun wearable',
         category: WearableCategory.EARRING,
@@ -336,7 +336,7 @@ describe.skip('fetchWearables', () => {
       {
         urn: 'urn2',
         amount: 1,
-        individualData: [{ id: 'id2', tokenId: 'tokenId2', transferredAt: 2, price: 2 }],
+        individualData: [{ id: 'urn2:tokenId2', tokenId: 'tokenId2', transferredAt: 2, price: 2 }],
         rarity: 'common',
         name: 'dance wearable',
         category: WearableCategory.BODY_SHAPE,
@@ -403,7 +403,7 @@ describe.skip('fetchWearables', () => {
       {
         urn: 'urn5',
         amount: 1,
-        individualData: [{ id: 'id5', tokenId: 'tokenId5', transferredAt: 5, price: 5 }],
+        individualData: [{ id: 'urn5:tokenId5', tokenId: 'tokenId5', transferredAt: 5, price: 5 }],
         rarity: 'unique',
         category: WearableCategory.EARRING,
         maxTransferredAt: 5,
@@ -414,8 +414,8 @@ describe.skip('fetchWearables', () => {
         urn: 'urn1',
         amount: 2,
         individualData: [
-          { id: 'id1', tokenId: 'tokenId1', transferredAt: 1, price: 10 },
-          { id: 'id2', tokenId: 'tokenId2', transferredAt: 2, price: 15 }
+          { id: 'urn1:tokenId1', tokenId: 'tokenId1', transferredAt: 1, price: 10 },
+          { id: 'urn1:tokenId2', tokenId: 'tokenId2', transferredAt: 2, price: 15 }
         ],
         rarity: 'common',
         category: WearableCategory.EYEBROWS,
@@ -483,7 +483,7 @@ describe.skip('fetchWearables', () => {
       {
         urn: 'urn3',
         amount: 1,
-        individualData: [{ id: 'id3', tokenId: 'tokenId3', transferredAt: 3, price: 3 }],
+        individualData: [{ id: 'urn3:tokenId3', tokenId: 'tokenId3', transferredAt: 3, price: 3 }],
         rarity: 'unique',
         category: 'eyes',
         maxTransferredAt: 3,
@@ -493,7 +493,7 @@ describe.skip('fetchWearables', () => {
       {
         urn: 'urn2',
         amount: 1,
-        individualData: [{ id: 'id2', tokenId: 'tokenId2', transferredAt: 2, price: 2 }],
+        individualData: [{ id: 'urn2:tokenId2', tokenId: 'tokenId2', transferredAt: 2, price: 2 }],
         rarity: 'rare',
         category: 'eyes',
         maxTransferredAt: 2,
@@ -503,7 +503,7 @@ describe.skip('fetchWearables', () => {
       {
         urn: 'urn1',
         amount: 1,
-        individualData: [{ id: 'id1', tokenId: 'tokenId1', transferredAt: 1, price: 1 }],
+        individualData: [{ id: 'urn1:tokenId1', tokenId: 'tokenId1', transferredAt: 1, price: 1 }],
         rarity: 'common',
         category: 'eyebrows',
         maxTransferredAt: 1,
