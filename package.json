@@ -30,7 +30,7 @@
     "@dcl/catalyst-contracts": "^4.0.6",
     "@dcl/crypto": "^3.4.3",
     "@dcl/schemas": "^9.1.0",
-    "@dcl/urn-resolver": "^2.2.0",
+    "@dcl/urn-resolver": "https://sdk-team-cdn.decentraland.org/@dcl/urn-resolver/branch/feat/token-id-resolvers/dcl-urn-resolver-2.2.1-5780960803.commit-92cd2f2.tgz",
     "@well-known-components/env-config-provider": "^1.2.0",
     "@well-known-components/http-server": "^2.0.0",
     "@well-known-components/interfaces": "^1.4.2",
