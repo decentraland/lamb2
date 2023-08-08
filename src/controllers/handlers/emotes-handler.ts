@@ -4,22 +4,14 @@ import { createSorting } from '../../logic/sorting'
 import { HandlerContextWithPath, InvalidRequestError, OnChainEmote, OnChainEmoteResponse } from '../../types'
 import { createFilters } from './items-commons'
 import { GetEmotes200 } from '@dcl/catalyst-api-specs/lib/client'
-import { parseUrn } from '@dcl/urn-resolver'
 
-async function mapItemToItemResponse(
+function mapItemToItemResponse(
   item: OnChainEmote,
   definition: EmoteDefinition | undefined,
   entity: Entity | undefined
-): Promise<OnChainEmoteResponse> {
-  const urn = await parseUrn(item.urn)
-  let parsedUrn = item.urn
-
-  if (urn?.type === 'blockchain-collection-v2-item' || urn?.type === 'blockchain-collection-v1-item') {
-    parsedUrn = `${item.urn}:${item.individualData[0].tokenId}`
-  }
-
+): OnChainEmoteResponse {
   return {
-    urn: parsedUrn,
+    urn: item.urn,
     amount: item.individualData.length,
     individualData: item.individualData,
     name: item.name,
@@ -65,7 +57,7 @@ export async function emotesHandler(
 
   for (let i = 0; i < emotes.length; ++i) {
     results.push(
-      await mapItemToItemResponse(
+      mapItemToItemResponse(
         emotes[i],
         includeDefinitions ? definitions[i] : undefined,
         includeEntities ? entities[i] : undefined
