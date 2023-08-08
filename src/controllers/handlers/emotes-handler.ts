@@ -14,7 +14,7 @@ async function mapItemToItemResponse(
   const urn = await parseUrn(item.urn)
   let parsedUrn = item.urn
 
-  if (urn?.type === 'blockchain-collection-v2-asset' || urn?.type === 'blockchain-collection-v1-asset') {
+  if (urn?.type === 'blockchain-collection-v2-item' || urn?.type === 'blockchain-collection-v1-item') {
     parsedUrn = `${item.urn}:${item.individualData[0].tokenId}`
   }
 
