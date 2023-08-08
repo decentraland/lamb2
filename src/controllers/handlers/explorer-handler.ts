@@ -168,10 +168,7 @@ export async function explorerHandler(
   for (const wearable of page.elements) {
     if (wearable.type === 'on-chain') {
       const { minTransferredAt, maxTransferredAt, ...clean } = wearable
-      results.push({
-        ...clean,
-        entity: { ...clean.entity, metadata: { ...clean.entity.metadata, id: clean.individualData[0].id } }
-      })
+      results.push({ ...clean })
     } else {
       results.push(wearable)
     }
