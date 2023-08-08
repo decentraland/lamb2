@@ -183,8 +183,8 @@ async function extendProfiles(
     let ownedWearables = wearablesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
     const thirdPartyWearables = tpwOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
 
-    // Extend the urns with the tokenIds for the wearables that are older than today
-    if (isOlderThanToday(entity.timestamp)) {
+    // Extend the urns with the tokenIds for the wearables that are older than [timestamp]
+    if (isOlderThan(entity.timestamp)) {
       const ethAddressMap = resultMap.get(ethAddress)
       if (ethAddressMap) {
         ownedWearables = ownedWearables.map((urn) => {
@@ -331,8 +331,8 @@ function extractEthAddressAndWearables(data: Entity[]): [string, string[]][] {
       // Extract the timestamp from the entity
       const entityTimestamp = item.timestamp
 
-      // Check if the entity's timestamp is older than today
-      return isOlderThanToday(entityTimestamp)
+      // Check if the entity's timestamp is older than [timestamp]
+      return isOlderThan(entityTimestamp)
     })
     .map((item: Entity) => {
       const ethAddress = item.metadata?.avatars[0].ethAddress
@@ -377,12 +377,9 @@ function concatWearables(
   return Array.from(allWearables.entries()).map(([owner, urns]) => ({ owner, urns }))
 }
 
-function isOlderThanToday(timestamp: number) {
+function isOlderThan(timestamp: number) {
   const timestampDate = new Date(timestamp)
-  const today = new Date()
+  const constantDate = new Date(1691405986) // Yesterday
 
-  // Set the time part of today's date to 00:00:00 to compare just the date part
-  today.setHours(0, 0, 0, 0)
-
-  return timestampDate < today
+  return timestampDate < constantDate
 }
