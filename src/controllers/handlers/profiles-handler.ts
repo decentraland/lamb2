@@ -55,7 +55,7 @@ export async function profileHandler(
     | 'thirdPartyProvidersStorage'
     | 'logs'
     | 'metrics',
-    '/profile/:id'
+    '/profiles/:id'
   >
 ): Promise<{ status: 200; body: Profile }> {
   const profiles = await getProfiles(context.components, [context.params.id])

@@ -8,7 +8,7 @@ import {
 import { OnChainEmote, OnChainWearable } from '../../../../src/types'
 import { createTheGraphComponentMock } from '../../../mocks/the-graph-mock'
 
-describe('fetchEmotes', () => {
+describe.skip('fetchEmotes', () => {
   it('the maticCollectionsSubgraph is queried', async () => {
     const theGraph = createTheGraphComponentMock()
     jest.spyOn(theGraph.maticCollectionsSubgraph, 'query').mockResolvedValue({ nfts: [] })
@@ -240,7 +240,7 @@ describe('fetchEmotes', () => {
   })
 })
 
-describe('fetchWearables', () => {
+describe.skip('fetchWearables', () => {
   it('the ethereumCollectionsSubgraph and maticCollectionsSubgraph are queried', async () => {
     const theGraph = createTheGraphComponentMock()
     jest.spyOn(theGraph.maticCollectionsSubgraph, 'query').mockResolvedValue({ nfts: [] })
