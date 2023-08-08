@@ -29,7 +29,7 @@ testWithComponents(() => {
     theGraphComponent: theGraphMock
   }
 })('wearables-handler: GET /explorer/:address/wearables', function ({ components }) {
-  it.skip('return descriptive errors for bad requests', async () => {
+  it('return descriptive errors for bad requests', async () => {
     const { localFetch } = components
 
     const wallet = Wallet.generate().getAddressString()
@@ -63,7 +63,7 @@ testWithComponents(() => {
     })
   })
 
-  it.skip('return only base wearables when no on-chain or third-party found', async () => {
+  it('return only base wearables when no on-chain or third-party found', async () => {
     const { baseWearablesFetcher, content, fetch, localFetch, theGraph, contentServerUrl } = components
 
     const baseWearables = generateBaseWearables(278)
@@ -90,7 +90,7 @@ testWithComponents(() => {
     })
   })
 
-  it.skip('return base + on-chain + third-party wearables', async () => {
+  it('return base + on-chain + third-party wearables', async () => {
     const { content, fetch, localFetch, theGraph, baseWearablesFetcher, contentServerUrl } = components
     const baseWearables = generateBaseWearables(2)
     const onChainWearables = generateWearables(2)
@@ -135,6 +135,7 @@ testWithComponents(() => {
 
     const wallet = Wallet.generate().getAddressString()
     const r = await localFetch.fetch(`/explorer/${wallet}/wearables`)
+
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
       elements: [
@@ -318,7 +319,7 @@ function convertToMixedOnChainWearableResponse(
       rarity,
       category: wearable.metadata.wearable.category,
       name: wearable.metadata.wearable.name,
-      entity: { ...entity, metadata: { ...entity.metadata, id: `${wearable.urn}:${individualData.tokenId}` } }
+      entity
     }
   })
 }

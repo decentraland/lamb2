@@ -10,7 +10,7 @@ import { generateEmoteContentDefinitions, generateEmotes } from '../data/emotes'
 
 // NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
 test('emotes-handler: GET /users/:address/emotes should', function ({ components }) {
-  it.skip('return empty when no emotes are found', async () => {
+  it('return empty when no emotes are found', async () => {
     const { localFetch, theGraph } = components
 
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
@@ -26,7 +26,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     })
   })
 
-  it.skip('return empty when no emotes are found with includeDefinitions set', async () => {
+  it('return empty when no emotes are found with includeDefinitions set', async () => {
     const { localFetch, theGraph, content } = components
 
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
@@ -43,7 +43,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     })
   })
 
-  it.skip('return a emote from matic collection', async () => {
+  it('return a emote from matic collection', async () => {
     const { localFetch, theGraph } = components
     const emotes = generateEmotes(1)
 
@@ -60,7 +60,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     })
   })
 
-  it.skip('return emotes with includeDefinitions set', async () => {
+  it('return emotes with includeDefinitions set', async () => {
     const { localFetch, theGraph, content, contentServerUrl } = components
     const emotes = generateEmotes(1)
     const definitions = generateEmoteContentDefinitions(emotes.map((emote) => emote.urn))
@@ -79,7 +79,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     })
   })
 
-  it.skip('return emotes with includeEntities set', async () => {
+  it('return emotes with includeEntities set', async () => {
     const { localFetch, theGraph, content, contentServerUrl } = components
     const emotes = generateEmotes(1)
     const definitions = generateEmoteContentDefinitions(emotes.map((emote) => emote.urn))
@@ -98,7 +98,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     })
   })
 
-  it.skip('return a emote with definition and another one without definition', async () => {
+  it('return a emote with definition and another one without definition', async () => {
     const { localFetch, theGraph, content, contentServerUrl } = components
     const emotes = generateEmotes(2)
     const definitions = generateEmoteContentDefinitions([emotes[0].urn])
@@ -119,7 +119,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     })
   })
 
-  it.skip('return emotes 2 and paginate them correctly (page 1, size 2, total 5)', async () => {
+  it('return emotes 2 and paginate them correctly (page 1, size 2, total 5)', async () => {
     const { localFetch, theGraph } = components
     const emotes = generateEmotes(5)
 
@@ -136,7 +136,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     })
   })
 
-  it.skip('return emotes 2 and paginate them correctly (page 2, size 2, total 5)', async () => {
+  it('return emotes 2 and paginate them correctly (page 2, size 2, total 5)', async () => {
     const { localFetch, theGraph } = components
     const emotes = generateEmotes(5)
 
@@ -153,7 +153,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     })
   })
 
-  it.skip('return emotes 2 and paginate them correctly (page 3, size 2, total 5)', async () => {
+  it('return emotes 2 and paginate them correctly (page 3, size 2, total 5)', async () => {
     const { localFetch, theGraph } = components
     const emotes = generateEmotes(5)
 
@@ -170,7 +170,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     })
   })
 
-  it.skip('return emotes from cache on second call for the same address (case insensitive)', async () => {
+  it('return emotes from cache on second call for the same address (case insensitive)', async () => {
     const { localFetch, theGraph } = components
     const emotes = generateEmotes(7)
     const wallet = Wallet.generate().getAddressString()
@@ -194,7 +194,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     expect(theGraph.maticCollectionsSubgraph.query).toHaveBeenCalledTimes(1)
   })
 
-  it.skip('return emotes filtering by name', async () => {
+  it('return emotes filtering by name', async () => {
     const { localFetch, theGraph } = components
     const emotes = generateEmotes(17)
     const wallet = Wallet.generate().getAddressString()
@@ -213,7 +213,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     })
   })
 
-  it.skip('return emotes filtering by category', async () => {
+  it('return emotes filtering by category', async () => {
     const { localFetch, theGraph } = components
     const emotes = generateEmotes(17).map((w, i) => ({
       ...w,
@@ -268,7 +268,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     })
   })
 
-  it.skip('return emotes filtering by rarity', async () => {
+  it('return emotes filtering by rarity', async () => {
     const { localFetch, theGraph } = components
     const emotes = generateEmotes(17).map((w, i) => ({
       ...w,
@@ -310,7 +310,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     })
   })
 
-  it.skip('return emotes sorted by newest / oldest', async () => {
+  it('return emotes sorted by newest / oldest', async () => {
     const { localFetch, theGraph } = components
     const emotes = generateEmotes(17).map((w, i) => ({
       ...w,
@@ -340,7 +340,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     })
   })
 
-  it.skip('return emotes sorted by rarest / least_rare', async () => {
+  it('return emotes sorted by rarest / least_rare', async () => {
     const { localFetch, theGraph } = components
     const emotes = generateEmotes(17).map((w, i) => ({
       ...w,
@@ -373,7 +373,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     })
   })
 
-  it.skip('return emotes sorted by name_a_z / name_z_a', async () => {
+  it('return emotes sorted by name_a_z / name_z_a', async () => {
     const { localFetch, theGraph } = components
     const emotes = generateEmotes(17)
 
@@ -400,7 +400,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     })
   })
 
-  it.skip('return an error when invalid sorting spec requested', async () => {
+  it('return an error when invalid sorting spec requested', async () => {
     const { localFetch, theGraph } = components
 
     const addressString = Wallet.generate().getAddressString()
@@ -421,7 +421,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     })
   })
 
-  it.skip('return an error when emotes cannot be fetched from matic collection', async () => {
+  it('return an error when emotes cannot be fetched from matic collection', async () => {
     const { localFetch, theGraph } = components
 
     theGraph.maticCollectionsSubgraph.query = jest
@@ -438,7 +438,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     })
   })
 
-  it.skip('return a generic error when an unexpected error occurs (definitions cannot be fetched)', async () => {
+  it('return a generic error when an unexpected error occurs (definitions cannot be fetched)', async () => {
     const { localFetch, theGraph, content } = components
     const emotes = generateEmotes(2)
 
