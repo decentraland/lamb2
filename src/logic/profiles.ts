@@ -8,6 +8,9 @@ import { parseUrn } from '@dcl/urn-resolver'
 import { ISubgraphComponent } from '@well-known-components/thegraph-component'
 import { TheGraphComponent, runQuery } from '../ports/the-graph'
 
+// Map to store the urns and tokenIds by owner
+const resultMap = new Map<string, Map<string, string>>()
+
 export async function getValidNonBaseWearables(metadata: ProfileMetadata): Promise<string[]> {
   const wearablesInProfile: string[] = []
   for (const avatar of metadata.avatars) {
@@ -65,13 +68,11 @@ export async function getProfiles(
     // Fetch entities by pointers
     let profileEntities: Entity[] = await components.content.fetchEntitiesByPointers(ethAddresses)
 
+    // Extract the eth addresses and wearables from the entities
     const nftsToCheckByAddress = extractEthAddressAndWearables(profileEntities)
 
-    nftsToCheckByAddress[0][1] = ['urn:decentraland:mumbai:collections-v2:0x10cd9f15bb7d58ac0c8f4ec5e1b77c0f5df0b652:0']
-
-    const wearables = await queryWearablesSubgraph(components.theGraph, nftsToCheckByAddress)
-
-    console.log(`JULI wearables ${JSON.stringify(wearables, null, 4)}`)
+    // Query the subgraph for the wearables to get the urns and tokenIds
+    await queryWearablesSubgraph(components.theGraph, nftsToCheckByAddress)
 
     // Avoid querying profiles if there wasn't any new deployment
     if (noNewDeployments(ifModifiedSinceTimestamp, profileEntities)) {
@@ -179,8 +180,19 @@ async function extendProfiles(
 
     // Get owned nfts from every ownership checker
     const ownedNames = namesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
-    const ownedWearables = wearablesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
+    let ownedWearables = wearablesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
     const thirdPartyWearables = tpwOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
+
+    // Extend the urns with the tokenIds for the wearables that are older than today
+    if (isOlderThanToday(entity.timestamp)) {
+      const ethAddressMap = resultMap.get(ethAddress)
+      if (ethAddressMap) {
+        ownedWearables = ownedWearables.map((urn) => {
+          const extendedUrn = urn + ':' + ethAddressMap.get(urn)
+          return extendedUrn ? extendedUrn : urn
+        })
+      }
+    }
 
     // Fill the avatars field for each profile
     const avatars = metadata.avatars.map(async (profileData) => ({
@@ -246,17 +258,19 @@ function addBaseUrlToSnapshot(baseUrl: string, snapshot: string, content: Map<st
   }
 }
 
-async function queryWearablesSubgraph(
-  theGraph: TheGraphComponent,
-  nftsToCheck: [string, string[]][]
-): Promise<{ owner: string; ownedNFTs: { urn: string; tokenId: string }[] }[]> {
+async function queryWearablesSubgraph(theGraph: TheGraphComponent, nftsToCheck: [string, string[]][]) {
   try {
     const result = await getWearablesOwnersByNetwork(nftsToCheck, theGraph)
-    return result.map(({ urns, owner }) => ({ ownedNFTs: urns, owner }))
+
+    result.forEach(({ urns, owner }) => {
+      const urnMap = new Map<string, string>()
+      urns.forEach(({ urn, tokenId }) => {
+        urnMap.set(urn, tokenId)
+      })
+      resultMap.set(owner, urnMap)
+    })
   } catch (error) {
-    // TODO: logger
     console.log(error)
-    return []
   }
 }
 
@@ -277,13 +291,6 @@ async function getWearablesOwnersByNetwork(
 }
 
 async function getOwnedWearables(
-  wearableIdsToCheck: [string, string[]][],
-  subgraph: ISubgraphComponent
-): Promise<{ owner: string; urns: { urn: string; tokenId: string }[] }[]> {
-  return getWearables(wearableIdsToCheck, subgraph)
-}
-
-async function getWearables(
   wearableIdsToCheck: [string, string[]][],
   subgraph: ISubgraphComponent
 ): Promise<{ owner: string; urns: { urn: string; tokenId: string }[] }[]> {
@@ -319,11 +326,19 @@ function getWearablesUrnsAndTokenIds([ethAddress, wearableIds]: [string, string[
 }
 
 function extractEthAddressAndWearables(data: Entity[]): [string, string[]][] {
-  return data.map((item: Entity) => {
-    const ethAddress = item.metadata?.avatars[0].ethAddress
-    const wearables = item.metadata?.avatars[0].avatar.wearables
-    return [ethAddress, wearables]
-  })
+  return data
+    .filter((item: Entity) => {
+      // Extract the timestamp from the entity
+      const entityTimestamp = item.timestamp
+
+      // Check if the entity's timestamp is older than today
+      return isOlderThanToday(entityTimestamp)
+    })
+    .map((item: Entity) => {
+      const ethAddress = item.metadata?.avatars[0].ethAddress
+      const wearables = item.metadata?.avatars[0].avatar.wearables
+      return [ethAddress, wearables]
+    })
 }
 
 function splitWearablesByNetwork(wearableIdsToCheck: [string, string[]][]) {
@@ -336,6 +351,7 @@ function splitWearablesByNetwork(wearableIdsToCheck: [string, string[]][]) {
       ethereum.push([owner, ethUrns])
     }
     const maticUrns = urns.filter(
+      // TODO Juli: check this
       (urn) => urn.startsWith('urn:decentraland:matic') || urn.startsWith('urn:decentraland:mumbai')
     )
 
@@ -359,4 +375,14 @@ function concatWearables(
   })
 
   return Array.from(allWearables.entries()).map(([owner, urns]) => ({ owner, urns }))
+}
+
+function isOlderThanToday(timestamp: number) {
+  const timestampDate = new Date(timestamp)
+  const today = new Date()
+
+  // Set the time part of today's date to 00:00:00 to compare just the date part
+  today.setHours(0, 0, 0, 0)
+
+  return timestampDate < today
 }
