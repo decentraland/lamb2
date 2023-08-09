@@ -331,15 +331,15 @@
   dependencies:
     ethers "^5.6.8"
 
-"@dcl/content-validator@https://sdk-team-cdn.decentraland.org/@dcl/content-validator/branch/feat/token-id-validate-fns/dcl-content-validator-4.9.3-5801366066.commit-67aed90.tgz":
-  version "4.9.3-5801366066.commit-67aed90"
-  resolved "https://sdk-team-cdn.decentraland.org/@dcl/content-validator/branch/feat/token-id-validate-fns/dcl-content-validator-4.9.3-5801366066.commit-67aed90.tgz#a8f3d4d33938b7c299883ee25029adbf8718d995"
+"@dcl/content-validator@https://sdk-team-cdn.decentraland.org/@dcl/content-validator/branch/feat/token-id-validate-fns/dcl-content-validator-4.9.3-5806825783.commit-3f3e943.tgz":
+  version "4.9.3-5806825783.commit-3f3e943"
+  resolved "https://sdk-team-cdn.decentraland.org/@dcl/content-validator/branch/feat/token-id-validate-fns/dcl-content-validator-4.9.3-5806825783.commit-3f3e943.tgz#f32c7c5c600f339577b8ed0391066f5ed2eaccda"
   dependencies:
     "@dcl/block-indexer" "^1.1.1"
     "@dcl/content-hash-tree" "^1.1.4"
     "@dcl/hashing" "^3.0.1"
     "@dcl/schemas" "^8.2.2"
-    "@dcl/urn-resolver" "https://sdk-team-cdn.decentraland.org/@dcl/urn-resolver/branch/feat/token-id-resolvers/dcl-urn-resolver-2.2.1-5801355277.commit-0a191b3.tgz"
+    "@dcl/urn-resolver" "https://sdk-team-cdn.decentraland.org/@dcl/urn-resolver/branch/feat/token-id-resolvers/dcl-urn-resolver-2.2.1-5806747446.commit-6579a7c.tgz"
     "@well-known-components/interfaces" "^1.3.0"
     "@well-known-components/thegraph-component" "^1.5.0"
     ms "^2.1.3"
@@ -415,13 +415,9 @@
     ts-poet "^6.4.1"
     ts-proto-descriptors "^1.15.0"
 
-"@dcl/urn-resolver@https://sdk-team-cdn.decentraland.org/@dcl/urn-resolver/branch/feat/token-id-resolvers/dcl-urn-resolver-2.2.1-5801355277.commit-0a191b3.tgz":
-  version "2.2.1-5801355277.commit-0a191b3"
-  resolved "https://sdk-team-cdn.decentraland.org/@dcl/urn-resolver/branch/feat/token-id-resolvers/dcl-urn-resolver-2.2.1-5801355277.commit-0a191b3.tgz#9116dc3d06b54bb5c71d321423af792a206a8b5b"
-
-"@dcl/urn-resolver@https://sdk-team-cdn.decentraland.org/@dcl/urn-resolver/branch/feat/token-id-resolvers/dcl-urn-resolver-2.2.1-5801859142.commit-82124ae.tgz":
-  version "2.2.1-5801859142.commit-82124ae"
-  resolved "https://sdk-team-cdn.decentraland.org/@dcl/urn-resolver/branch/feat/token-id-resolvers/dcl-urn-resolver-2.2.1-5801859142.commit-82124ae.tgz#99d8b0f630a6cd2736b9e9b4ca1a2a54a373120e"
+"@dcl/urn-resolver@https://sdk-team-cdn.decentraland.org/@dcl/urn-resolver/branch/feat/token-id-resolvers/dcl-urn-resolver-2.2.1-5806747446.commit-6579a7c.tgz":
+  version "2.2.1-5806747446.commit-6579a7c"
+  resolved "https://sdk-team-cdn.decentraland.org/@dcl/urn-resolver/branch/feat/token-id-resolvers/dcl-urn-resolver-2.2.1-5806747446.commit-6579a7c.tgz#2381f693f6dcdf59e673b8ab8bb318c1bb92804a"
 
 "@eslint-community/eslint-utils@^4.2.0":
   version "4.4.0"

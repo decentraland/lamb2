@@ -28,10 +28,10 @@
   "dependencies": {
     "@dcl/catalyst-api-specs": "^3.2.3",
     "@dcl/catalyst-contracts": "^4.0.6",
-    "@dcl/content-validator": "https://sdk-team-cdn.decentraland.org/@dcl/content-validator/branch/feat/token-id-validate-fns/dcl-content-validator-4.9.3-5801366066.commit-67aed90.tgz",
+    "@dcl/content-validator": "https://sdk-team-cdn.decentraland.org/@dcl/content-validator/branch/feat/token-id-validate-fns/dcl-content-validator-4.9.3-5806825783.commit-3f3e943.tgz",
     "@dcl/crypto": "^3.4.3",
     "@dcl/schemas": "^9.1.0",
-    "@dcl/urn-resolver": "https://sdk-team-cdn.decentraland.org/@dcl/urn-resolver/branch/feat/token-id-resolvers/dcl-urn-resolver-2.2.1-5801859142.commit-82124ae.tgz",
+    "@dcl/urn-resolver": "https://sdk-team-cdn.decentraland.org/@dcl/urn-resolver/branch/feat/token-id-resolvers/dcl-urn-resolver-2.2.1-5806747446.commit-6579a7c.tgz",
     "@well-known-components/env-config-provider": "^1.2.0",
     "@well-known-components/http-server": "^2.0.0",
     "@well-known-components/interfaces": "^1.4.2",
