@@ -11,7 +11,7 @@ import { TheGraphComponent, runQuery } from '../ports/the-graph'
 // Map to store the urns and tokenIds by owner
 const resultMap = new Map<string, Map<string, string>>()
 
-export async function getValidNonBaseWearables(metadata: ProfileMetadata): Promise<string[]> {
+async function getValidNonBaseWearables(metadata: ProfileMetadata): Promise<string[]> {
   const wearablesInProfile: string[] = []
   for (const avatar of metadata.avatars) {
     for (const wearableId of avatar.avatar.wearables) {
@@ -31,7 +31,7 @@ function isBaseWearable(wearable: string): boolean {
   return wearable.includes('base-avatars')
 }
 
-export async function getNonBaseEmotes(metadata: ProfileMetadata): Promise<string[]> {
+async function getNonBaseEmotes(metadata: ProfileMetadata): Promise<string[]> {
   const emotesInProfile: string[] = []
   for (const avatar of metadata.avatars) {
     if (avatar.avatar.emotes) {
@@ -50,7 +50,7 @@ function isBaseEmote(emote: string): boolean {
   return !emote.includes(':')
 }
 
-export async function translateWearablesIdFormat(wearableId: string): Promise<string | undefined> {
+async function translateWearablesIdFormat(wearableId: string): Promise<string | undefined> {
   if (!wearableId.startsWith('dcl://')) {
     return wearableId
   }
@@ -59,7 +59,7 @@ export async function translateWearablesIdFormat(wearableId: string): Promise<st
   return parsed?.uri?.toString()
 }
 
-export async function getBaseWearables(wearables: string[]): Promise<string[]> {
+async function getBaseWearables(wearables: string[]): Promise<string[]> {
   // Filter base wearables
   const baseWearables = wearables.filter(isBaseWearable)
 
