@@ -11,7 +11,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@dcl/eslint-config": "^1.1.9",
-    "@dcl/protocol": "^1.0.0-5752058730.commit-921fc5d",
+    "@dcl/protocol": "^1.0.0-5810343446.commit-4ee6d08",
     "@types/lodash": "^4.14.191",
     "@types/node": "^18.11.18",
     "@well-known-components/test-helpers": "^1.5.3",
@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@dcl/catalyst-api-specs": "^3.2.3",
-    "@dcl/catalyst-contracts": "^4.0.6",
+    "@dcl/catalyst-contracts": "^4.1.0",
     "@dcl/crypto": "^3.4.3",
     "@dcl/schemas": "^9.1.0",
     "@dcl/urn-resolver": "https://sdk-team-cdn.decentraland.org/@dcl/urn-resolver/branch/feat/token-id-resolvers/dcl-urn-resolver-2.2.1-5811305944.commit-4836af7.tgz",
