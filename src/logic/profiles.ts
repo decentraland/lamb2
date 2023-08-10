@@ -361,7 +361,7 @@ async function extractEthAddressAndNFTs(data: Entity[]): Promise<[string, string
         // Extract the timestamp from the entity
         const entityTimestamp = item.timestamp
 
-        // Check if the entity's timestamp is older than [timestamp]
+        // Check if the entity's timestamp is older than [EXTENDED_URN_RELEASE_DATE_TIMESTAMP]
         return isOlderThanReleaseDate(entityTimestamp)
       })
       .map(async (item: Entity) => {
@@ -412,6 +412,6 @@ function concatNFTs(
 // Check if the entity's timestamp is older than the release date timestamp
 // If the entity's timestamp is older than the release date timestamp, we need to extend the urns with the tokenIds
 function isOlderThanReleaseDate(timestamp: number) {
-  const EXTENDED_URN_RELEASE_DATE_TIMESTAMP = 1691564848 * 1000
+  const EXTENDED_URN_RELEASE_DATE_TIMESTAMP = 1691564848 * 1000 // Wed Aug 09 2023 07:07:28 GMT+0000
   return timestamp < EXTENDED_URN_RELEASE_DATE_TIMESTAMP
 }
