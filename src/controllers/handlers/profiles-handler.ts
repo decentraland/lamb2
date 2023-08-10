@@ -14,7 +14,7 @@ export async function profilesHandler(
     | 'thirdPartyProvidersStorage'
     | 'logs'
     | 'metrics',
-    '/profiles'
+    '/profile'
   >
 ): Promise<{ status: 200; body: Profile[] } | { status: 304 }> {
   // Get the profile ids
