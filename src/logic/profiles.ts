@@ -1,15 +1,17 @@
-import { AppComponents, ProfileMetadata, Filename, Filehash, NFTsOwnershipChecker } from '../types'
+import {
+  AppComponents,
+  ProfileMetadata,
+  Filename,
+  Filehash,
+  NFTsOwnershipChecker,
+  ExtendedNFTsOwnershipChecker
+} from '../types'
 import { Entity, Snapshots } from '@dcl/schemas'
 import { IConfigComponent } from '@well-known-components/interfaces'
 import { createWearablesOwnershipChecker } from '../ports/ownership-checker/wearables-ownership-checker'
 import { createNamesOwnershipChecker } from '../ports/ownership-checker/names-ownership-checker'
 import { createTPWOwnershipChecker } from '../ports/ownership-checker/tpw-ownership-checker'
 import { parseUrn } from '@dcl/urn-resolver'
-import { ISubgraphComponent } from '@well-known-components/thegraph-component'
-import { TheGraphComponent, runQuery } from '../ports/the-graph'
-
-// Map to store the urns and tokenIds by owner
-const resultMap = new Map<string, Map<string, string>>()
 
 async function getValidNonBaseWearables(metadata: ProfileMetadata): Promise<string[]> {
   const wearablesInProfile: string[] = []
@@ -29,25 +31,6 @@ async function getValidNonBaseWearables(metadata: ProfileMetadata): Promise<stri
 
 function isBaseWearable(wearable: string): boolean {
   return wearable.includes('base-avatars')
-}
-
-async function getNonBaseEmotes(metadata: ProfileMetadata): Promise<string[]> {
-  const emotesInProfile: string[] = []
-  for (const avatar of metadata.avatars) {
-    if (avatar.avatar.emotes) {
-      for (const emote of avatar.avatar.emotes) {
-        if (!isBaseEmote(emote.urn)) {
-          emotesInProfile.push(emote.urn)
-        }
-      }
-    }
-  }
-  const filteredEmotes = emotesInProfile.filter((emoteUrn): emoteUrn is string => !!emoteUrn)
-  return filteredEmotes
-}
-
-function isBaseEmote(emote: string): boolean {
-  return !emote.includes(':')
 }
 
 async function translateWearablesIdFormat(wearableId: string): Promise<string | undefined> {
@@ -87,12 +70,6 @@ export async function getProfiles(
     // Fetch entities by pointers
     let profileEntities: Entity[] = await components.content.fetchEntitiesByPointers(ethAddresses)
 
-    // Extract the eth addresses and wearables from the entities
-    const nftsToCheckByAddress = await extractEthAddressAndNFTs(profileEntities)
-
-    // Query the subgraph for the wearables to get the urns and tokenIds
-    await queryNFTsSubgraph(components.theGraph, nftsToCheckByAddress)
-
     // Avoid querying profiles if there wasn't any new deployment
     if (noNewDeployments(ifModifiedSinceTimestamp, profileEntities)) {
       return
@@ -105,6 +82,10 @@ export async function getProfiles(
     const wearablesOwnershipChecker = createWearablesOwnershipChecker(components)
     const namesOwnershipChecker = createNamesOwnershipChecker(components)
     const tpwOwnershipChecker = createTPWOwnershipChecker(components)
+
+    // TODO Juli: get extended wearables and emotes from the graph if the timestamp is older than release date
+    //
+    //
 
     // Get data from entities and add them to the ownership checkers
     await addNFTsToCheckersFromEntities(
@@ -148,7 +129,7 @@ function roundToSeconds(timestamp: number) {
 // Extract data from every entity and fills the nfts ownership checkers
 async function addNFTsToCheckersFromEntities(
   profileEntities: Entity[],
-  wearablesOwnershipChecker: NFTsOwnershipChecker,
+  wearablesOwnershipChecker: ExtendedNFTsOwnershipChecker,
   namesOwnershipChecker: NFTsOwnershipChecker,
   tpwOwnershipChecker: NFTsOwnershipChecker
 ): Promise<void> {
@@ -188,7 +169,7 @@ async function extractDataFromEntity(entity: Entity): Promise<{
 async function extendProfiles(
   config: IConfigComponent,
   profileEntities: Entity[],
-  wearablesOwnershipChecker: NFTsOwnershipChecker,
+  wearablesOwnershipChecker: ExtendedNFTsOwnershipChecker,
   namesOwnershipChecker: NFTsOwnershipChecker,
   tpwOwnershipChecker: NFTsOwnershipChecker
 ): Promise<ProfileMetadata[]> {
@@ -199,29 +180,10 @@ async function extendProfiles(
 
     // Get owned nfts from every ownership checker
     const ownedNames = namesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
-    let ownedWearables = wearablesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
+    const ownedWearables = wearablesOwnershipChecker
+      .getOwnedNFTsForAddress(ethAddress)
+      .map((urn) => urn.urn + ':' + urn.tokenId)
     const thirdPartyWearables = tpwOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
-
-    // Extend the urns with the tokenIds for the NFTs that are older than [EXTENDED_URN_RELEASE_DATE_TIMESTAMP]
-    if (isOlderThanReleaseDate(entity.timestamp)) {
-      const ethAddressMap = resultMap.get(ethAddress)
-      if (ethAddressMap) {
-        ownedWearables = ownedWearables.map((urn) => {
-          const tokenId = ethAddressMap.get(urn)
-          return tokenId ? urn + ':' + tokenId : urn
-        })
-
-        // Iterate through emotes and update URNs
-        for (const avatar of metadata.avatars) {
-          if (avatar.avatar.emotes) {
-            for (const emote of avatar.avatar.emotes) {
-              const tokenId = ethAddressMap.get(emote.urn)
-              emote.urn = tokenId ? emote.urn + ':' + tokenId : emote.urn
-            }
-          }
-        }
-      }
-    }
 
     // Fill the avatars field for each profile
     const avatars = metadata.avatars.map(async (profileData) => ({
@@ -285,133 +247,4 @@ function addBaseUrlToSnapshot(baseUrl: string, snapshot: string, content: Map<st
     // Snapshot is directly a hash
     return cleanedBaseUrl + `contents/${snapshot}`
   }
-}
-
-async function queryNFTsSubgraph(theGraph: TheGraphComponent, nftsToCheck: [string, string[]][]) {
-  try {
-    const result = await getNTFsOwnersByNetwork(nftsToCheck, theGraph)
-
-    result.forEach(({ urns, owner }) => {
-      const urnMap = new Map<string, string>()
-      urns.forEach(({ urn, tokenId }) => {
-        urnMap.set(urn, tokenId)
-      })
-      resultMap.set(owner, urnMap)
-    })
-  } catch (error) {
-    console.log(error)
-  }
-}
-
-async function getNTFsOwnersByNetwork(
-  wearableIdsToCheck: [string, string[]][],
-  subgraph: TheGraphComponent
-): Promise<{ owner: string; urns: { urn: string; tokenId: string }[] }[]> {
-  const { ethereum, matic } = splitNFTsByNetwork(wearableIdsToCheck)
-
-  const networkPromises = [
-    getOwnedNFTs(ethereum, subgraph.ethereumCollectionsSubgraph),
-    getOwnedNFTs(matic, subgraph.maticCollectionsSubgraph)
-  ]
-
-  return Promise.all(networkPromises).then(([ethereumWearablesOwners, maticWearablesOwners]) =>
-    concatNFTs(ethereumWearablesOwners, maticWearablesOwners)
-  )
-}
-
-async function getOwnedNFTs(
-  wearableIdsToCheck: [string, string[]][],
-  subgraph: ISubgraphComponent
-): Promise<{ owner: string; urns: { urn: string; tokenId: string }[] }[]> {
-  // Build query for subgraph
-  const filtered = wearableIdsToCheck.filter(([, urns]) => urns.length > 0)
-  if (filtered.length > 0) {
-    const subgraphQuery = `{` + filtered.map((query) => getNFTsUrnsAndTokenIds(query)).join('\n') + `}`
-    // Run query
-    const queryResponse = await runQuery<Map<string, { urn: string; tokenId: string }[]>>(subgraph, subgraphQuery, {})
-    // Transform the result to an array of { owner, urns: { urn, tokenId} }
-    return Object.entries(queryResponse).map(([addressWithPrefix, wearables]) => ({
-      owner: addressWithPrefix.substring(1), // Remove the 'P' prefix added previously
-      urns: wearables.map((urnObj: { urn: string; tokenId: string }) => ({
-        urn: urnObj.urn,
-        tokenId: urnObj.tokenId
-      }))
-    }))
-  }
-
-  return wearableIdsToCheck.map(([owner]) => ({ owner, urns: [] }))
-}
-
-function getNFTsUrnsAndTokenIds([ethAddress, wearableIds]: [string, string[]]) {
-  const urnList = wearableIds.map((wearableId) => `"${wearableId}"`).join(',')
-
-  // We need to add a 'P' prefix, because the graph needs the fragment name to start with a letter
-  return `
-        P${ethAddress}: nfts(where: { owner: "${ethAddress}", searchItemType_in: ["wearable_v1", "wearable_v2", "smart_wearable_v1", "emote_v1"], urn_in: [${urnList}] }, first: 1000) {
-        urn,
-        tokenId
-        }
-    `
-}
-
-async function extractEthAddressAndNFTs(data: Entity[]): Promise<[string, string[]][]> {
-  return await Promise.all(
-    data
-      .filter((item: Entity) => {
-        // Extract the timestamp from the entity
-        const entityTimestamp = item.timestamp
-
-        // Check if the entity's timestamp is older than [EXTENDED_URN_RELEASE_DATE_TIMESTAMP]
-        return isOlderThanReleaseDate(entityTimestamp)
-      })
-      .map(async (item: Entity) => {
-        const ethAddress: string = item.metadata?.avatars[0].ethAddress
-        const wearables: string[] = await getValidNonBaseWearables(item.metadata)
-        const emotes: string[] = await getNonBaseEmotes(item.metadata)
-        return [ethAddress, wearables.concat(emotes)] as [string, string[]]
-      })
-  )
-}
-
-function splitNFTsByNetwork(wearableIdsToCheck: [string, string[]][]) {
-  const ethereum: [string, string[]][] = []
-  const matic: [string, string[]][] = []
-
-  for (const [owner, urns] of wearableIdsToCheck) {
-    const ethUrns = urns.filter((urn) => urn.startsWith('urn:decentraland:ethereum'))
-    if (ethUrns.length > 0) {
-      ethereum.push([owner, ethUrns])
-    }
-    const maticUrns = urns.filter(
-      // TODO Juli: check this
-      (urn) => urn.startsWith('urn:decentraland:matic') || urn.startsWith('urn:decentraland:mumbai')
-    )
-
-    if (maticUrns.length > 0) {
-      matic.push([owner, maticUrns])
-    }
-  }
-
-  return { ethereum, matic }
-}
-
-function concatNFTs(
-  ethereumWearablesOwners: { owner: string; urns: { urn: string; tokenId: string }[] }[],
-  maticWearablesOwners: { owner: string; urns: { urn: string; tokenId: string }[] }[]
-) {
-  const allWearables: Map<string, { urn: string; tokenId: string }[]> = new Map()
-
-  ;[...ethereumWearablesOwners, ...maticWearablesOwners].forEach(({ owner, urns }) => {
-    const existingUrns = allWearables.get(owner) ?? []
-    allWearables.set(owner, existingUrns.concat(urns))
-  })
-
-  return Array.from(allWearables.entries()).map(([owner, urns]) => ({ owner, urns }))
-}
-
-// Check if the entity's timestamp is older than the release date timestamp
-// If the entity's timestamp is older than the release date timestamp, we need to extend the urns with the tokenIds
-function isOlderThanReleaseDate(timestamp: number) {
-  const EXTENDED_URN_RELEASE_DATE_TIMESTAMP = 1691564848 * 1000 // Wed Aug 09 2023 07:07:28 GMT+0000
-  return timestamp < EXTENDED_URN_RELEASE_DATE_TIMESTAMP
 }

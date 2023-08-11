@@ -28,10 +28,17 @@ export async function getOutfits(
 
   const wearablesOwnershipChecker = createWearablesOwnershipChecker(components)
   const outfitsWearables = outfits.outfits.map((outfit) => outfit.outfit.wearables).flat()
+
+  // TODO Juli: get extended outfits from the graph if the timestamp is older than release date
+  //
+  //
+
   wearablesOwnershipChecker.addNFTsForAddress(ethAddress, outfitsWearables)
   wearablesOwnershipChecker.checkNFTsOwnership()
 
-  const ownedWearables = new Set(wearablesOwnershipChecker.getOwnedNFTsForAddress(ethAddress))
+  const ownedWearables = new Set(
+    wearablesOwnershipChecker.getOwnedNFTsForAddress(ethAddress).map((urn) => urn.urn + ':' + urn.tokenId)
+  )
   const outfitsWithOwnedWearables = outfits.outfits.filter((outfit) => {
     const outfitWearables = outfit.outfit.wearables
     return outfitWearables.every((wearable) => ownedWearables.has(wearable))
