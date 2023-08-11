@@ -20,7 +20,7 @@ export async function findAsync<T>(elements: T[], f: (e: T) => Promise<boolean>)
   return undefined
 }
 
-export const resolveUrn = (urnString: string) => {
+export function resolveUrn(urnString: string) {
   const lastColonIndex = urnString.lastIndexOf(':')
   const urnValue = urnString.slice(0, lastColonIndex)
   return { urn: urnValue, tokenId: urnString.slice(lastColonIndex + 1) }
