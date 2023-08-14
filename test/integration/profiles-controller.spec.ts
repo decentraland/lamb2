@@ -78,8 +78,8 @@ test('integration tests for /profiles', function ({ components, stubComponents }
       .withArgs(wearablesQuery, {})
       .resolves({
         P0x1: [
-          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet' },
-          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand' }
+          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet', tokenId: '123' },
+          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand', tokenId: '123' }
         ]
       })
     theGraph.maticCollectionsSubgraph.query = sinon
@@ -87,8 +87,8 @@ test('integration tests for /profiles', function ({ components, stubComponents }
       .withArgs(wearablesQuery, {})
       .resolves({
         P0x1: [
-          { urn: 'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7' },
-          { urn: 'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1' }
+          { urn: 'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7', tokenId: '123' },
+          { urn: 'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1', tokenId: '123' }
         ]
       })
 
@@ -143,16 +143,16 @@ test('integration tests for /profiles', function ({ components, stubComponents }
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:short_hair')
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7'
+      'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7:123'
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1'
+      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1:123'
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet'
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:123'
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet'
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:123'
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
       'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f'
@@ -217,7 +217,7 @@ test('integration tests for /profiles', function ({ components, stubComponents }
       .stub()
       .withArgs(wearablesQuery, {})
       .resolves({
-        P0x3: [{ urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet' }]
+        P0x3: [{ urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet', tokenId: '123' }]
       })
     theGraph.maticCollectionsSubgraph.query = sinon.stub().withArgs(wearablesQuery, {}).resolves({
       P0x3: []
@@ -252,7 +252,7 @@ test('integration tests for /profiles', function ({ components, stubComponents }
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:short_hair')
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet'
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:123'
     )
   })
 
@@ -271,7 +271,9 @@ test('integration tests for /profiles', function ({ components, stubComponents }
       .stub()
       .withArgs(wearablesQuery, {})
       .resolves({
-        P0x4: [{ urn: 'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1' }]
+        P0x4: [
+          { urn: 'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1', tokenId: '123' }
+        ]
       })
     const namesQuery =
       '{\n      P0x4: nfts(where: { owner: "0x4", category: ens, name_in: ["cryptonico#e602"] }, first: 1000) {\n        name\n      }\n    }'
@@ -303,7 +305,7 @@ test('integration tests for /profiles', function ({ components, stubComponents }
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:short_hair')
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1'
+      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1:123'
     )
   })
 
@@ -517,12 +519,12 @@ test('integration tests for /profiles', function ({ components, stubComponents }
       .withArgs(wearablesQuery, {})
       .resolves({
         P0x1b: [
-          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet' },
-          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand' }
+          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet', tokenId: '123' },
+          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand', tokenId: '123' }
         ],
         P0x8: [
-          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hat' },
-          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_shirt' }
+          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hat', tokenId: '123' },
+          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_shirt', tokenId: '123' }
         ]
       })
     theGraph.maticCollectionsSubgraph.query = sinon
@@ -530,12 +532,12 @@ test('integration tests for /profiles', function ({ components, stubComponents }
       .withArgs(wearablesQuery, {})
       .resolves({
         P0x1b: [
-          { urn: 'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7' },
-          { urn: 'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1' }
+          { urn: 'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7', tokenId: '123' },
+          { urn: 'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1', tokenId: '123' }
         ],
         P0x8: [
-          { urn: 'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:6' },
-          { urn: 'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:2' }
+          { urn: 'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:6', tokenId: '123' },
+          { urn: 'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:2', tokenId: '123' }
         ]
       })
     const namesQuery =
@@ -608,16 +610,16 @@ test('integration tests for /profiles', function ({ components, stubComponents }
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:short_hair')
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7'
+      'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7:123'
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1'
+      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1:123'
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet'
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:123'
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet'
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:123'
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
       'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f'
@@ -644,16 +646,16 @@ test('integration tests for /profiles', function ({ components, stubComponents }
     )
     expect(responseObj[0].avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:short_hair')
     expect(responseObj[1].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:6'
+      'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:6:123'
     )
     expect(responseObj[1].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:2'
+      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:2:123'
     )
     expect(responseObj[1].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hat'
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hat:123'
     )
     expect(responseObj[1].avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_shirt'
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_shirt:123'
     )
     expect(responseObj[1].avatars?.[0].avatar.wearables).toContain(
       'urn:decentraland:matic:collections-thirdparty:ntr2-meta:ntr2-meta-123v289a:w3499wer-523f-403f-9730-f09c992f386f'

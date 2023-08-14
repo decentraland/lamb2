@@ -17,8 +17,8 @@ test('integration tests for /profile/{id}', function ({ components, stubComponen
       .withArgs(wearablesQuery, {})
       .resolves({
         P0x1: [
-          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet' },
-          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand' }
+          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet', tokenId: '123' },
+          { urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand', tokenId: '123' }
         ]
       })
     theGraph.maticCollectionsSubgraph.query = sinon
@@ -26,8 +26,8 @@ test('integration tests for /profile/{id}', function ({ components, stubComponen
       .withArgs(wearablesQuery, {})
       .resolves({
         P0x1: [
-          { urn: 'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7' },
-          { urn: 'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1' }
+          { urn: 'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7', tokenId: '123' },
+          { urn: 'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1', tokenId: '123' }
         ]
       })
 
@@ -76,20 +76,21 @@ test('integration tests for /profile/{id}', function ({ components, stubComponen
     expect(responseObj.avatars?.[0].avatar.snapshots.face256).toEqual(
       'https://peer.decentraland.org/content/contents/bafkreigi3yrgdhvjr2cqzxvfztnsubnll2cfdioo4vfzu6o6vibwoag2ma'
     )
+
     expect(responseObj.avatars?.[0].avatar.wearables.length).toEqual(8)
     expect(responseObj.avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:eyebrows_00')
     expect(responseObj.avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:short_hair')
     expect(responseObj.avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7'
+      'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7:123'
     )
     expect(responseObj.avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1'
+      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1:123'
     )
     expect(responseObj.avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet'
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:123'
     )
     expect(responseObj.avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet'
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:123'
     )
     expect(responseObj.avatars?.[0].avatar.wearables).toContain(
       'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f'

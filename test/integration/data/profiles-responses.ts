@@ -32,10 +32,10 @@ export const profileEntityFull = {
           wearables: [
             'urn:decentraland:off-chain:base-avatars:eyebrows_00',
             'urn:decentraland:off-chain:base-avatars:short_hair',
-            'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7',
-            'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1',
-            'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet',
-            'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand',
+            'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7:123',
+            'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1:123',
+            'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:123',
+            'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand:123',
             'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f',
             'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:12341234-1234-3434-3434-f9dfde9f9393'
           ],
@@ -174,8 +174,8 @@ export const profileEntityTwoEthWearables = {
           wearables: [
             'urn:decentraland:off-chain:base-avatars:eyebrows_00',
             'urn:decentraland:off-chain:base-avatars:short_hair',
-            'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet',
-            'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand'
+            'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:123',
+            'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand:123'
           ],
           snapshots: {
             body: 'bafkreicilawwtbjyf6ahyzv64ssoamdm73rif75qncee5lv6j3a3352lua',
@@ -246,8 +246,8 @@ export const profileEntityTwoMaticWearables = {
           wearables: [
             'urn:decentraland:off-chain:base-avatars:eyebrows_00',
             'urn:decentraland:off-chain:base-avatars:short_hair',
-            'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7',
-            'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1'
+            'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7:123',
+            'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1:123'
           ],
           snapshots: {
             body: 'bafkreicilawwtbjyf6ahyzv64ssoamdm73rif75qncee5lv6j3a3352lua',
@@ -531,10 +531,10 @@ export const profileEntityFullB = {
           wearables: [
             'urn:decentraland:off-chain:base-avatars:eyebrows_00',
             'urn:decentraland:off-chain:base-avatars:short_hair',
-            'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7',
-            'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1',
-            'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet',
-            'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand',
+            'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7:123',
+            'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1:123',
+            'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:123',
+            'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand:123',
             'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f',
             'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:12341234-1234-3434-3434-f9dfde9f9393'
           ],
@@ -606,10 +606,10 @@ export const profileEntityFullAnother = {
           wearables: [
             'urn:decentraland:off-chain:base-avatars:eyebrows_01',
             'urn:decentraland:off-chain:base-avatars:long_hair',
-            'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:6',
-            'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:2',
-            'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hat',
-            'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_shirt',
+            'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:6:123',
+            'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:2:123',
+            'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hat:123',
+            'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_shirt:123',
             'urn:decentraland:matic:collections-thirdparty:ntr2-meta:ntr2-meta-123v289a:w3499wer-523f-403f-9730-f09c992f386f',
             'urn:decentraland:matic:collections-thirdparty:ntr2-meta:ntr2-meta-123v289a:12341234-9876-3434-3434-f9dfde9f9393'
           ],
