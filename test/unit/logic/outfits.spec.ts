@@ -3,6 +3,8 @@ import { test } from '../../components'
 import { Entity, EntityType, Outfits } from '@dcl/schemas'
 import * as namesOwnershipChecker from '../../../src/ports/ownership-checker/names-ownership-checker'
 import * as wearablesOwnershipChecker from '../../../src/ports/ownership-checker/wearables-ownership-checker'
+import { resolveUrlFromUrn } from '@dcl/urn-resolver'
+import { resolveUrn } from '../../../src/logic/utils'
 
 test('when all wearables and names are owned, outfits entity is not modified', function ({ components }) {
   it('run test', async () => {
@@ -174,7 +176,7 @@ function createAllExtendedOwnedOwnershipCheckerMock() {
   return {
     addNFTsForAddress: (address: string, nfts: string[]) => {
       nfts.forEach((urn) => {
-        ownedNFTS.push({ urn, tokenId: '123' })
+        ownedNFTS.push(resolveUrn(urn))
       })
     },
     checkNFTsOwnership: jest.fn(),
@@ -194,6 +196,6 @@ function createSpecificExtendedOwnedNftsOwnershipCheckerMock(ownedNFTs: string[]
   return {
     addNFTsForAddress: jest.fn(),
     checkNFTsOwnership: jest.fn(),
-    getOwnedNFTsForAddress: (address: string) => ownedNFTs.map((urn) => ({ urn, tokenId: '123' }))
+    getOwnedNFTsForAddress: (address: string) => ownedNFTs.map((urn) => resolveUrn(urn))
   }
 }
