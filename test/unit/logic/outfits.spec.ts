@@ -16,9 +16,9 @@ test('when all wearables and names are owned, outfits entity is not modified', f
             hair: { color: { r: 0.35546875, g: 0.19140625, b: 0.05859375 } },
             skin: { color: { r: 0.94921875, g: 0.76171875, b: 0.6484375 } },
             wearables: [
-              'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
-              'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2',
-              'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet'
+              'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0:123',
+              'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2:123',
+              'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet:123'
             ]
           }
         },
@@ -30,9 +30,9 @@ test('when all wearables and names are owned, outfits entity is not modified', f
             hair: { color: { r: 0.35546875, g: 0.19140625, b: 0.05859375 } },
             skin: { color: { r: 0.94921875, g: 0.76171875, b: 0.6484375 } },
             wearables: [
-              'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
-              'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2',
-              'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet'
+              'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0:123',
+              'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2:123',
+              'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet:123'
             ]
           }
         }
@@ -51,7 +51,7 @@ test('when all wearables and names are owned, outfits entity is not modified', f
     const fetchEntitiesSpy = jest
       .spyOn(components.content, 'fetchEntitiesByPointers')
       .mockResolvedValue([outfitsEntity])
-    const wearablesChecker = createAllOwnedOwnershipCheckerMock()
+    const wearablesChecker = createAllExtendedOwnedOwnershipCheckerMock()
     const namesChecker = createAllOwnedOwnershipCheckerMock()
     jest.spyOn(wearablesOwnershipChecker, 'createWearablesOwnershipChecker').mockReturnValue(wearablesChecker)
     jest.spyOn(namesOwnershipChecker, 'createNamesOwnershipChecker').mockReturnValue(namesChecker)
@@ -67,7 +67,7 @@ test('when some wearables are not owned, the outfits with those wearables are re
   components
 }) {
   it('run test', async () => {
-    const ownedWearable = 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet'
+    const ownedWearable = 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet:123'
     const outfitWithNotOwnedWearables = {
       slot: 1,
       outfit: {
@@ -76,8 +76,8 @@ test('when some wearables are not owned, the outfits with those wearables are re
         hair: { color: { r: 0.35546875, g: 0.19140625, b: 0.05859375 } },
         skin: { color: { r: 0.94921875, g: 0.76171875, b: 0.6484375 } },
         wearables: [
-          'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
-          'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2',
+          'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0:123',
+          'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2:123',
           ownedWearable
         ]
       }
@@ -105,7 +105,7 @@ test('when some wearables are not owned, the outfits with those wearables are re
       content: []
     }
     jest.spyOn(components.content, 'fetchEntitiesByPointers').mockResolvedValue([outfitsEntity])
-    const wearablesChecker = createSpecificOwnedNftsOwnershipCheckerMock([ownedWearable])
+    const wearablesChecker = createSpecificExtendedOwnedNftsOwnershipCheckerMock([ownedWearable])
     const namesChecker = createAllOwnedOwnershipCheckerMock()
     jest.spyOn(wearablesOwnershipChecker, 'createWearablesOwnershipChecker').mockReturnValue(wearablesChecker)
     jest.spyOn(namesOwnershipChecker, 'createNamesOwnershipChecker').mockReturnValue(namesChecker)
@@ -124,7 +124,7 @@ test('when some names are not owned, extra outfits and not owned names are remov
       eyes: { color: { r: 0.23046875, g: 0.625, b: 0.3125 } },
       hair: { color: { r: 0.35546875, g: 0.19140625, b: 0.05859375 } },
       skin: { color: { r: 0.94921875, g: 0.76171875, b: 0.6484375 } },
-      wearables: ['urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet']
+      wearables: ['urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet:123']
     }
     const ownedNames = ['iamowned', 'owned2']
     const outfitSlot1 = { slot: 1, outfit: { ...anOutfit } }
@@ -147,7 +147,7 @@ test('when some names are not owned, extra outfits and not owned names are remov
     const address = 'address'
 
     jest.spyOn(components.content, 'fetchEntitiesByPointers').mockResolvedValue([outfitsEntity])
-    const wearablesChecker = createAllOwnedOwnershipCheckerMock()
+    const wearablesChecker = createAllExtendedOwnedOwnershipCheckerMock()
     const namesChecker = createSpecificOwnedNftsOwnershipCheckerMock(ownedNames)
     jest.spyOn(wearablesOwnershipChecker, 'createWearablesOwnershipChecker').mockReturnValue(wearablesChecker)
     jest.spyOn(namesOwnershipChecker, 'createNamesOwnershipChecker').mockReturnValue(namesChecker)
@@ -169,10 +169,31 @@ function createAllOwnedOwnershipCheckerMock() {
   }
 }
 
+function createAllExtendedOwnedOwnershipCheckerMock() {
+  const ownedNFTS: { urn: string; tokenId: string }[] = []
+  return {
+    addNFTsForAddress: (address: string, nfts: string[]) => {
+      nfts.forEach((urn) => {
+        ownedNFTS.push({ urn, tokenId: '123' })
+      })
+    },
+    checkNFTsOwnership: jest.fn(),
+    getOwnedNFTsForAddress: (address: string) => ownedNFTS
+  }
+}
+
 function createSpecificOwnedNftsOwnershipCheckerMock(ownedNFTS: string[]) {
   return {
     addNFTsForAddress: jest.fn(),
     checkNFTsOwnership: jest.fn(),
     getOwnedNFTsForAddress: (address: string) => ownedNFTS
+  }
+}
+
+function createSpecificExtendedOwnedNftsOwnershipCheckerMock(ownedNFTs: string[]) {
+  return {
+    addNFTsForAddress: jest.fn(),
+    checkNFTsOwnership: jest.fn(),
+    getOwnedNFTsForAddress: (address: string) => ownedNFTs.map((urn) => ({ urn, tokenId: '123' }))
   }
 }
