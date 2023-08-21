@@ -314,12 +314,12 @@
   resolved "https://registry.yarnpkg.com/@dcl/catalyst-contracts/-/catalyst-contracts-4.1.0.tgz#8ff60da05aba0205aa0e9f9095455b011e1c1437"
   integrity sha512-WPs1RPKOfo8eVHV9JR5FdgTYNUro8+WdAd/BT/WWynsNBFUs/Togah9+s7EpnXb877md45caSbl8sGacIW4AEQ==
 
-"@dcl/crypto@^3.4.0", "@dcl/crypto@^3.4.3":
-  version "3.4.3"
-  resolved "https://registry.yarnpkg.com/@dcl/crypto/-/crypto-3.4.3.tgz#74f55aed699949bc2566a7b0d6a23de499019afe"
-  integrity sha512-biG8PqImY3jtVM5bPizgAD0P6X9/7VMxKuD2hxiEEeZClfB1Zi76Qk8pHaLpJ5pU3B+NogwZ8xoREhq0Po+gXQ==
+"@dcl/crypto@^3.4.0", "@dcl/crypto@^3.4.4":
+  version "3.4.4"
+  resolved "https://registry.yarnpkg.com/@dcl/crypto/-/crypto-3.4.4.tgz#43a3ab68bce0be2ddcd72440f940b06098ca3f82"
+  integrity sha512-bXYPM+hh/AuNU7S2LgHDHv021mAjguwkjLvwO8XBKQRRIoZMxwH+EXizxeUpCLsf/oArjEp3cM0BnP29xV+IYQ==
   dependencies:
-    "@dcl/schemas" "^8.2.0"
+    "@dcl/schemas" "^9.2.0"
     eth-connect "^6.0.3"
     ethereum-cryptography "^1.0.3"
 
@@ -352,19 +352,10 @@
   dependencies:
     "@dcl/ts-proto" "1.154.0"
 
-"@dcl/schemas@^8.2.0":
-  version "8.2.2"
-  resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-8.2.2.tgz#31b3697ec517d4a5a6958bddf046441a969b8056"
-  integrity sha512-IZqcT1YOKxw5XWs6LW6Uw+7Ue5vHCVERPMwefAdt26jW1OTH818od0rBc1tQzzfBTwsrAvbgFJvpbZedieu00g==
-  dependencies:
-    ajv "^8.11.0"
-    ajv-errors "^3.0.0"
-    ajv-keywords "^5.1.0"
-
-"@dcl/schemas@^9.0.0", "@dcl/schemas@^9.1.1":
-  version "9.1.1"
-  resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-9.1.1.tgz#53823b973d2568c2d37fe1d12d730d3e9d07c688"
-  integrity sha512-1bsFlc8+no75e8hBrAH2vqvNQzpneBxvBt4Q7695EVvthL9BcZM6g0yK6FyQs+IkY45L2LRAe+UctUjROX5TPA==
+"@dcl/schemas@^9.0.0", "@dcl/schemas@^9.1.1", "@dcl/schemas@^9.2.0":
+  version "9.2.0"
+  resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-9.2.0.tgz#ee77e6194d485ae897a2d9c36180935c381182d3"
+  integrity sha512-OGjjfbL+JsTqphvc6Msl4a5kYCGJlq2LmAMBY9WDlYRE+9DZBE2Sin+ebekYWBmSUA75mJHO+qUpg0/FC8z+oQ==
   dependencies:
     ajv "^8.11.0"
     ajv-errors "^3.0.0"
