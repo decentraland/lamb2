@@ -1,5 +1,5 @@
 import { HandlerContextWithPath } from '../../types'
-import { About, StatusContent } from '@dcl/catalyst-api-specs/lib/client'
+import { About, StatusContent, AboutCommsAdapterType } from '@dcl/catalyst-api-specs/lib/client'
 import { l1Contracts, L1Network } from '@dcl/catalyst-contracts'
 
 export type ArchipelagoStatus = {
@@ -81,12 +81,18 @@ export async function aboutHandler(
     const userCount = archipelagoStatus.data?.userCount || 0
     healthy = healthy && archipelagoStatus.healthy
     acceptingUsers = acceptingUsers && healthy && (!maxUsers || userCount < maxUsers)
+    const url = new URL('/archipelago/ws', archipelagoPublicUrl).toString()
+    const wsUrl = url.replace(/^http/, 'ws')
     comms = {
       healthy: archipelagoStatus.healthy,
       protocol: 'v3',
       version: archipelagoStatus.data?.version,
       commitHash: archipelagoStatus.data?.commitHash,
-      usersCount: userCount
+      usersCount: userCount,
+      adapter: {
+        type: AboutCommsAdapterType.archipelago,
+        connectionString: wsUrl
+      }
     }
   }
 
