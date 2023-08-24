@@ -53,7 +53,7 @@ export async function aboutHandler(
     config.getString('INTERNAL_LAMBDAS_URL'),
     config.requireString('CONTENT_URL'),
     config.getString('INTERNAL_CONTENT_URL'),
-    config.requireString('ARCHIPELAGO_URL'),
+    config.getString('ARCHIPELAGO_URL'),
     config.getString('INTERNAL_ARCHIPELAGO_URL'),
     config.getString('COMMIT_HASH'),
     config.getString('CURRENT_VERSION')
@@ -61,10 +61,8 @@ export async function aboutHandler(
 
   const lambdasUrl = getUrl(lambdasPublicUrl, lambdasInternalUrl)
   const contentUrl = getUrl(contentPublicUrl, contentInternalUrl)
-  const archipelagoUrl = getUrl(archipelagoPublicUrl, archipelagoInternalUrl)
 
-  const [archipelagoStatus, contentStatus, lambdasStatus, resourcesOverload, name] = await Promise.all([
-    status.getServiceStatus<ArchipelagoStatus>(archipelagoUrl.statusUrl),
+  const [contentStatus, lambdasStatus, resourcesOverload, name] = await Promise.all([
     status.getServiceStatus<StatusContent>(contentUrl.statusUrl),
     status.getServiceStatus<DefaultStatus>(lambdasUrl.statusUrl),
     resourcesStatusCheck.areResourcesOverloaded(),
@@ -74,11 +72,25 @@ export async function aboutHandler(
   const synchronizationStatus = contentStatus.data?.synchronizationStatus.synchronizationState || 'Unknown'
   contentStatus.healthy = contentStatus.healthy && synchronizationStatus === 'Syncing'
 
-  const healthy = archipelagoStatus.healthy && contentStatus.healthy && lambdasStatus.healthy
-  const userCount = archipelagoStatus.data?.userCount || 0
-  const acceptingUsers = healthy && !resourcesOverload && (!maxUsers || userCount < maxUsers)
+  let healthy = contentStatus.healthy && lambdasStatus.healthy
+  let acceptingUsers = healthy && !resourcesOverload
+  let comms
+  if (archipelagoPublicUrl) {
+    const archipelagoUrl = getUrl(archipelagoPublicUrl, archipelagoInternalUrl)
+    const archipelagoStatus = await status.getServiceStatus<ArchipelagoStatus>(archipelagoUrl.statusUrl)
+    const userCount = archipelagoStatus.data?.userCount || 0
+    healthy = healthy && archipelagoStatus.healthy
+    acceptingUsers = acceptingUsers && healthy && (!maxUsers || userCount < maxUsers)
+    comms = {
+      healthy: archipelagoStatus.healthy,
+      protocol: 'v3',
+      version: archipelagoStatus.data?.version,
+      commitHash: archipelagoStatus.data?.commitHash,
+      usersCount: userCount
+    }
+  }
 
-  const result = {
+  const resultWithoutComms = {
     healthy: healthy,
     content: {
       healthy: contentStatus.healthy,
@@ -99,21 +111,10 @@ export async function aboutHandler(
       scenesUrn: [],
       realmName: name
     },
-    comms: {
-      healthy: archipelagoStatus.healthy,
-      protocol: 'v3',
-      version: archipelagoStatus.data?.version,
-      commitHash: archipelagoStatus.data?.commitHash,
-      usersCount: userCount
-    },
-    bff: {
-      healthy: true,
-      userCount,
-      protocolVersion: '1.0_0',
-      publicUrl: '/bff'
-    },
     acceptingUsers
   }
+
+  const result = comms ? { ...resultWithoutComms, comms } : resultWithoutComms
 
   return {
     status: result.healthy ? 200 : 503,

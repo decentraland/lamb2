@@ -1,32 +1,35 @@
 import { createConfigComponent } from '@well-known-components/env-config-provider'
 import { ServiceStatus } from '../../src/adapters/status'
 import { aboutHandler } from '../../src/controllers/handlers/about-handler'
-import { AboutResponse } from '@dcl/protocol/out-js/decentraland/realm/about.gen'
+import { AboutResponse as ProtocolAboutResponse } from '@dcl/protocol/out-js/decentraland/realm/about.gen'
+
+type AboutResponse = Omit<ProtocolAboutResponse, 'comms'> &
+  Partial<ProtocolAboutResponse['comms']>
+
 
 describe('about-controller-unit', () => {
-  const defaultConfig = {
+  const defaultConfigWithoutComms = {
     LAMBDAS_URL: 'https://peer.decentraland.org/lambdas',
     INTERNAL_LAMBDAS_URL: 'http://lambdas',
     CONTENT_URL: 'https://peer.decentraland.org/content',
     INTERNAL_CONTENT_URL: 'http://content',
-    ARCHIPELAGO_URL: 'https://peer.decentraland.org/archipelago',
     INTERNAL_ARCHIPELAGO_URL: 'http://archipelgo',
     COMMIT_HASH: 'commit_hash',
     CURRENT_VERSION: '1.0.0',
     MAX_USERS: '400'
   }
 
+  const config = createConfigComponent(defaultConfigWithoutComms)
+  const url = new URL('https://github.com/well-known-components')
+
   async function getRealmName(): Promise<string | undefined> {
     return 'testName'
   }
 
   it('content is bootstrapping', async () => {
-    const url = new URL('https://github.com/well-known-components')
-    const config = createConfigComponent(defaultConfig)
-
     async function getServiceStatus(statusUrl: string): Promise<ServiceStatus<any>> {
       switch (statusUrl) {
-        case `${defaultConfig.INTERNAL_CONTENT_URL}/status`:
+        case `${defaultConfigWithoutComms.INTERNAL_CONTENT_URL}/status`:
           return {
             healthy: true,
             data: {
@@ -57,21 +60,22 @@ describe('about-controller-unit', () => {
     const aboutResponse: AboutResponse = response.body
     expect(aboutResponse).toBeTruthy()
 
-    expect(response).toMatchObject({
+    expect(response).toEqual({
       status: 503,
       body: {
         healthy: false,
         content: {
           healthy: false,
-          publicUrl: defaultConfig.CONTENT_URL,
+          publicUrl: defaultConfigWithoutComms.CONTENT_URL,
           version: 'content_1',
-          commitHash: 'content_hash'
+          commitHash: 'content_hash',
+          synchronizationStatus: 'Bootstrapping'
         },
         lambdas: {
           healthy: true,
-          version: defaultConfig.CURRENT_VERSION,
-          commitHash: defaultConfig.COMMIT_HASH,
-          publicUrl: defaultConfig.LAMBDAS_URL
+          version: defaultConfigWithoutComms.CURRENT_VERSION,
+          commitHash: defaultConfigWithoutComms.COMMIT_HASH,
+          publicUrl: defaultConfigWithoutComms.LAMBDAS_URL
         },
         configurations: {
           networkId: 1,
@@ -79,27 +83,12 @@ describe('about-controller-unit', () => {
           scenesUrn: [],
           realmName: 'testName'
         },
-        comms: {
-          healthy: false,
-          protocol: 'v3',
-          commitHash: undefined,
-          usersCount: 0
-        },
-        bff: {
-          healthy: true,
-          protocolVersion: '1.0_0',
-          userCount: 0,
-          publicUrl: '/bff'
-        },
         acceptingUsers: false
       }
     })
   })
 
-  it('sevices are unhealthy', async () => {
-    const url = new URL('https://github.com/well-known-components')
-    const config = createConfigComponent(defaultConfig)
-
+  it('services are unhealthy', async () => {
     async function getServiceStatus<T>(_statusUrl: string): Promise<ServiceStatus<T>> {
       return { healthy: false }
     }
@@ -120,22 +109,22 @@ describe('about-controller-unit', () => {
     // NOTE: this is just a type check against the protocol
     const aboutResponse: AboutResponse = response.body
     expect(aboutResponse).toBeTruthy()
-
-    expect(response).toMatchObject({
+    expect(response).toEqual({
       status: 503,
       body: {
         healthy: false,
         content: {
           healthy: false,
-          publicUrl: defaultConfig.CONTENT_URL,
+          publicUrl: defaultConfigWithoutComms.CONTENT_URL,
           commitHash: undefined,
-          version: undefined
+          version: undefined,
+          synchronizationStatus: 'Unknown'
         },
         lambdas: {
           healthy: true,
-          version: defaultConfig.CURRENT_VERSION,
-          commitHash: defaultConfig.COMMIT_HASH,
-          publicUrl: defaultConfig.LAMBDAS_URL
+          version: defaultConfigWithoutComms.CURRENT_VERSION,
+          commitHash: defaultConfigWithoutComms.COMMIT_HASH,
+          publicUrl: defaultConfigWithoutComms.LAMBDAS_URL
         },
         configurations: {
           networkId: 1,
@@ -143,34 +132,19 @@ describe('about-controller-unit', () => {
           scenesUrn: [],
           realmName: 'testName'
         },
-        comms: {
-          healthy: false,
-          protocol: 'v3',
-          commitHash: undefined,
-          usersCount: 0
-        },
-        bff: {
-          healthy: true,
-          protocolVersion: '1.0_0',
-          userCount: 0,
-          publicUrl: '/bff'
-        },
         acceptingUsers: false
       }
     })
   })
 
-  it('sevices are healthy', async () => {
-    const url = new URL('https://github.com/well-known-components')
-    const config = createConfigComponent(defaultConfig)
-
+  it('services are healthy', async () => {
     async function getServiceStatus(statusUrl: string): Promise<ServiceStatus<any>> {
       switch (statusUrl) {
-        case `${defaultConfig.INTERNAL_LAMBDAS_URL}/status`:
+        case `${defaultConfigWithoutComms.INTERNAL_LAMBDAS_URL}/status`:
           return { healthy: true, data: { version: 'lambdas_1', commitHash: 'lambdas_hash' } }
-        case `${defaultConfig.INTERNAL_ARCHIPELAGO_URL}/status`:
+        case `${defaultConfigWithoutComms.INTERNAL_ARCHIPELAGO_URL}/status`:
           return { healthy: true, data: { version: 'archipelago_1', commitHash: 'archipelago_hash', userCount: 10 } }
-        case `${defaultConfig.INTERNAL_CONTENT_URL}/status`:
+        case `${defaultConfigWithoutComms.INTERNAL_CONTENT_URL}/status`:
           return {
             healthy: true,
             data: {
@@ -201,22 +175,22 @@ describe('about-controller-unit', () => {
     const aboutResponse: AboutResponse = response.body
     expect(aboutResponse).toBeTruthy()
 
-    expect(response).toMatchObject({
+    expect(response).toEqual({
       status: 200,
       body: {
         healthy: true,
         content: {
           healthy: true,
-          publicUrl: defaultConfig.CONTENT_URL,
+          publicUrl: defaultConfigWithoutComms.CONTENT_URL,
           commitHash: 'content_hash',
           version: 'content_1',
           synchronizationStatus: 'Syncing'
         },
         lambdas: {
           healthy: true,
-          version: defaultConfig.CURRENT_VERSION,
-          commitHash: defaultConfig.COMMIT_HASH,
-          publicUrl: defaultConfig.LAMBDAS_URL
+          version: defaultConfigWithoutComms.CURRENT_VERSION,
+          commitHash: defaultConfigWithoutComms.COMMIT_HASH,
+          publicUrl: defaultConfigWithoutComms.LAMBDAS_URL
         },
         configurations: {
           networkId: 1,
@@ -224,35 +198,17 @@ describe('about-controller-unit', () => {
           scenesUrn: [],
           realmName: 'testName'
         },
-        comms: {
-          healthy: true,
-          protocol: 'v3',
-          commitHash: 'archipelago_hash',
-          version: 'archipelago_1',
-          usersCount: 10
-        },
-        bff: {
-          healthy: true,
-          protocolVersion: '1.0_0',
-          userCount: 10,
-          publicUrl: '/bff'
-        },
         acceptingUsers: true
       }
     })
   })
 
-  it('sevices are healthy, but resources are overloaded', async () => {
-    const url = new URL('https://github.com/well-known-components')
-    const config = createConfigComponent(defaultConfig)
-
+  it('services are healthy, but resources are overloaded', async () => {
     async function getServiceStatus(statusUrl: string): Promise<ServiceStatus<any>> {
       switch (statusUrl) {
-        case `${defaultConfig.INTERNAL_LAMBDAS_URL}/status`:
+        case `${defaultConfigWithoutComms.INTERNAL_LAMBDAS_URL}/status`:
           return { healthy: true, data: { version: 'lambdas_1', commitHash: 'lambdas_hash' } }
-        case `${defaultConfig.INTERNAL_ARCHIPELAGO_URL}/status`:
-          return { healthy: true, data: { version: 'archipelago_1', commitHash: 'archipelago_hash', userCount: 10 } }
-        case `${defaultConfig.INTERNAL_CONTENT_URL}/status`:
+        case `${defaultConfigWithoutComms.INTERNAL_CONTENT_URL}/status`:
           return {
             healthy: true,
             data: {
@@ -282,126 +238,185 @@ describe('about-controller-unit', () => {
     // NOTE: this is just a type check against the protocol
     const aboutResponse: AboutResponse = response.body
     expect(aboutResponse).toBeTruthy()
-
-    expect(response).toMatchObject({
+    expect(response).toEqual({
       status: 200,
       body: {
         healthy: true,
         content: {
           healthy: true,
-          publicUrl: defaultConfig.CONTENT_URL,
+          publicUrl: defaultConfigWithoutComms.CONTENT_URL,
           commitHash: 'content_hash',
           version: 'content_1',
           synchronizationStatus: 'Syncing'
         },
         lambdas: {
           healthy: true,
-          version: defaultConfig.CURRENT_VERSION,
-          commitHash: defaultConfig.COMMIT_HASH,
-          publicUrl: defaultConfig.LAMBDAS_URL
+          version: defaultConfigWithoutComms.CURRENT_VERSION,
+          commitHash: defaultConfigWithoutComms.COMMIT_HASH,
+          publicUrl: defaultConfigWithoutComms.LAMBDAS_URL
         },
         configurations: {
           networkId: 1,
           globalScenesUrn: [],
           scenesUrn: [],
           realmName: 'testName'
-        },
-        comms: {
-          healthy: true,
-          protocol: 'v3',
-          commitHash: 'archipelago_hash',
-          version: 'archipelago_1',
-          usersCount: 10
-        },
-        bff: {
-          healthy: true,
-          protocolVersion: '1.0_0',
-          userCount: 10,
-          publicUrl: '/bff'
         },
         acceptingUsers: false
       }
     })
   })
 
-  it('sevices are healthy, but there are too many users', async () => {
-    const url = new URL('https://github.com/well-known-components')
-    const config = createConfigComponent(defaultConfig)
+  describe('when comms is enabled', () => {
 
-    async function getServiceStatus(statusUrl: string): Promise<ServiceStatus<any>> {
-      switch (statusUrl) {
-        case `${defaultConfig.INTERNAL_LAMBDAS_URL}/status`:
-          return { healthy: true, data: { version: 'lambdas_1', commitHash: 'lambdas_hash' } }
-        case `${defaultConfig.INTERNAL_ARCHIPELAGO_URL}/status`:
-          return { healthy: true, data: { version: 'archipelago_1', commitHash: 'archipelago_hash', userCount: 1000 } }
-        case `${defaultConfig.INTERNAL_CONTENT_URL}/status`:
-          return {
-            healthy: true,
-            data: {
-              version: 'content_1',
-              commitHash: 'content_hash',
-              synchronizationStatus: { synchronizationState: 'Syncing' }
+    const configWithComms = {
+      ...defaultConfigWithoutComms,
+      ARCHIPELAGO_URL: 'https://peer.decentraland.org/archipelago',
+    }
+
+    const config = createConfigComponent(configWithComms)
+
+    it('services are healthy', async () => {
+      async function getServiceStatus(statusUrl: string): Promise<ServiceStatus<any>> {
+        switch (statusUrl) {
+          case `${defaultConfigWithoutComms.INTERNAL_LAMBDAS_URL}/status`:
+            return { healthy: true, data: { version: 'lambdas_1', commitHash: 'lambdas_hash' } }
+          case `${defaultConfigWithoutComms.INTERNAL_ARCHIPELAGO_URL}/status`:
+            return { healthy: true, data: { version: 'archipelago_1', commitHash: 'archipelago_hash', userCount: 10 } }
+          case `${defaultConfigWithoutComms.INTERNAL_CONTENT_URL}/status`:
+            return {
+              healthy: true,
+              data: {
+                version: 'content_1',
+                commitHash: 'content_hash',
+                synchronizationStatus: { synchronizationState: 'Syncing' }
+              }
             }
-          }
-        default:
-          return { healthy: false }
+          default:
+            return { healthy: false }
+        }
       }
-    }
 
-    async function areResourcesOverloaded(): Promise<boolean> {
-      return false
-    }
-
-    const components = {
-      config,
-      status: { getServiceStatus },
-      resourcesStatusCheck: { areResourcesOverloaded },
-      realmName: { getRealmName }
-    }
-
-    const response = await aboutHandler({ url, components })
-
-    // NOTE: this is just a type check against the protocol
-    const aboutResponse: AboutResponse = response.body
-    expect(aboutResponse).toBeTruthy()
-
-    expect(response).toMatchObject({
-      status: 200,
-      body: {
-        healthy: true,
-        content: {
-          healthy: true,
-          publicUrl: defaultConfig.CONTENT_URL,
-          commitHash: 'content_hash',
-          version: 'content_1'
-        },
-        lambdas: {
-          healthy: true,
-          version: defaultConfig.CURRENT_VERSION,
-          commitHash: defaultConfig.COMMIT_HASH,
-          publicUrl: defaultConfig.LAMBDAS_URL
-        },
-        configurations: {
-          networkId: 1,
-          globalScenesUrn: [],
-          scenesUrn: [],
-          realmName: 'testName'
-        },
-        comms: {
-          healthy: true,
-          protocol: 'v3',
-          commitHash: 'archipelago_hash',
-          version: 'archipelago_1',
-          usersCount: 1000
-        },
-        bff: {
-          healthy: true,
-          protocolVersion: '1.0_0',
-          userCount: 1000,
-          publicUrl: '/bff'
-        },
-        acceptingUsers: false
+      async function areResourcesOverloaded(): Promise<boolean> {
+        return false
       }
+
+      const components = {
+        config,
+        status: { getServiceStatus },
+        resourcesStatusCheck: { areResourcesOverloaded },
+        realmName: { getRealmName }
+      }
+
+      const response = await aboutHandler({ url, components })
+
+      // NOTE: this is just a type check against the protocol
+      const aboutResponse: AboutResponse = response.body
+      expect(aboutResponse).toBeTruthy()
+
+      expect(response).toEqual({
+        status: 200,
+        body: {
+          healthy: true,
+          content: {
+            healthy: true,
+            publicUrl: defaultConfigWithoutComms.CONTENT_URL,
+            commitHash: 'content_hash',
+            version: 'content_1',
+            synchronizationStatus: 'Syncing'
+          },
+          lambdas: {
+            healthy: true,
+            version: defaultConfigWithoutComms.CURRENT_VERSION,
+            commitHash: defaultConfigWithoutComms.COMMIT_HASH,
+            publicUrl: defaultConfigWithoutComms.LAMBDAS_URL
+          },
+          configurations: {
+            networkId: 1,
+            globalScenesUrn: [],
+            scenesUrn: [],
+            realmName: 'testName'
+          },
+          comms: {
+            commitHash: "archipelago_hash",
+            healthy: true,
+            protocol: "v3",
+            usersCount: 10,
+            version: "archipelago_1",
+          },
+          acceptingUsers: true
+        }
+      })
+    })
+    it('services are healthy, but there are too many users', async () => {
+      async function getServiceStatus(statusUrl: string): Promise<ServiceStatus<any>> {
+        switch (statusUrl) {
+          case `${defaultConfigWithoutComms.INTERNAL_LAMBDAS_URL}/status`:
+            return { healthy: true, data: { version: 'lambdas_1', commitHash: 'lambdas_hash' } }
+          case `${defaultConfigWithoutComms.INTERNAL_ARCHIPELAGO_URL}/status`:
+            return { healthy: true, data: { version: 'archipelago_1', commitHash: 'archipelago_hash', userCount: 1000 } }
+          case `${defaultConfigWithoutComms.INTERNAL_CONTENT_URL}/status`:
+            return {
+              healthy: true,
+              data: {
+                version: 'content_1',
+                commitHash: 'content_hash',
+                synchronizationStatus: { synchronizationState: 'Syncing' }
+              }
+            }
+          default:
+            return { healthy: false }
+        }
+      }
+
+      async function areResourcesOverloaded(): Promise<boolean> {
+        return false
+      }
+
+      const components = {
+        config,
+        status: { getServiceStatus },
+        resourcesStatusCheck: { areResourcesOverloaded },
+        realmName: { getRealmName }
+      }
+
+      const response = await aboutHandler({ url, components })
+
+      // NOTE: this is just a type check against the protocol
+      const aboutResponse: AboutResponse = response.body
+      expect(aboutResponse).toBeTruthy()
+      expect(response).toEqual({
+        status: 200,
+        body: {
+          healthy: true,
+          content: {
+            healthy: true,
+            publicUrl: defaultConfigWithoutComms.CONTENT_URL,
+            commitHash: 'content_hash',
+            version: 'content_1',
+            synchronizationStatus: 'Syncing',
+          },
+          lambdas: {
+            healthy: true,
+            version: defaultConfigWithoutComms.CURRENT_VERSION,
+            commitHash: defaultConfigWithoutComms.COMMIT_HASH,
+            publicUrl: defaultConfigWithoutComms.LAMBDAS_URL
+          },
+          configurations: {
+            networkId: 1,
+            globalScenesUrn: [],
+            scenesUrn: [],
+            realmName: 'testName'
+          },
+          comms: {
+            healthy: true,
+            protocol: 'v3',
+            commitHash: 'archipelago_hash',
+            version: 'archipelago_1',
+            usersCount: 1000
+          },
+          acceptingUsers: false
+        }
+      })
     })
   })
 })
