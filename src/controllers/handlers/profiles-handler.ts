@@ -13,7 +13,9 @@ export async function profilesHandler(
     | 'ownershipCaches'
     | 'thirdPartyProvidersStorage'
     | 'logs'
-    | 'metrics',
+    | 'metrics'
+    | 'wearablesFetcher'
+    | 'emotesFetcher',
     '/profiles'
   >
 ): Promise<{ status: 200; body: Profile[] } | { status: 304 }> {
@@ -54,7 +56,9 @@ export async function profileHandler(
     | 'ownershipCaches'
     | 'thirdPartyProvidersStorage'
     | 'logs'
-    | 'metrics',
+    | 'metrics'
+    | 'wearablesFetcher'
+    | 'emotesFetcher',
     '/profile/:id'
   >
 ): Promise<{ status: 200; body: Profile }> {
