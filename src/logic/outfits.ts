@@ -1,10 +1,12 @@
 import { Outfits } from '@dcl/schemas'
 import { createNamesOwnershipChecker } from '../ports/ownership-checker/names-ownership-checker'
-import { createWearablesOwnershipChecker } from '../ports/ownership-checker/wearables-ownership-checker'
 import { AppComponents, TypedEntity } from '../types'
 
 export async function getOutfits(
-  components: Pick<AppComponents, 'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches'>,
+  components: Pick<
+    AppComponents,
+    'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches' | 'wearablesFetcher'
+  >,
   ethAddress: string
 ): Promise<TypedEntity<Outfits> | undefined> {
   const outfitsEntities: TypedEntity<Outfits>[] = await components.content.fetchEntitiesByPointers([
@@ -26,15 +28,11 @@ export async function getOutfits(
     return undefined
   }
 
-  const wearablesOwnershipChecker = createWearablesOwnershipChecker(components)
-  const outfitsWearables = outfits.outfits.map((outfit) => outfit.outfit.wearables).flat()
-  wearablesOwnershipChecker.addNFTsForAddress(ethAddress, outfitsWearables)
-  wearablesOwnershipChecker.checkNFTsOwnership()
+  const ownedWearables = await components.wearablesFetcher.fetchOwnedElements(ethAddress)
 
-  const ownedWearables = new Set(wearablesOwnershipChecker.getOwnedNFTsForAddress(ethAddress))
   const outfitsWithOwnedWearables = outfits.outfits.filter((outfit) => {
     const outfitWearables = outfit.outfit.wearables
-    return outfitWearables.every((wearable) => ownedWearables.has(wearable))
+    return outfitWearables.every((wearable) => ownedWearables.some((ownedWearable) => ownedWearable.urn === wearable))
   })
 
   const namesOwnershipChecker = createNamesOwnershipChecker(components)

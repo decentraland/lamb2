@@ -2,7 +2,6 @@ import { getOutfits } from '../../../src/logic/outfits'
 import { test } from '../../components'
 import { Entity, EntityType, Outfits } from '@dcl/schemas'
 import * as namesOwnershipChecker from '../../../src/ports/ownership-checker/names-ownership-checker'
-import * as wearablesOwnershipChecker from '../../../src/ports/ownership-checker/wearables-ownership-checker'
 
 test('when all wearables and names are owned, outfits entity is not modified', function ({ components }) {
   it('run test', async () => {
@@ -51,10 +50,17 @@ test('when all wearables and names are owned, outfits entity is not modified', f
     const fetchEntitiesSpy = jest
       .spyOn(components.content, 'fetchEntitiesByPointers')
       .mockResolvedValue([outfitsEntity])
-    const wearablesChecker = createAllOwnedOwnershipCheckerMock()
+
     const namesChecker = createAllOwnedOwnershipCheckerMock()
-    jest.spyOn(wearablesOwnershipChecker, 'createWearablesOwnershipChecker').mockReturnValue(wearablesChecker)
     jest.spyOn(namesOwnershipChecker, 'createNamesOwnershipChecker').mockReturnValue(namesChecker)
+
+    components.wearablesFetcher.fetchOwnedElements = jest
+      .fn()
+      .mockResolvedValue([
+        { urn: 'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0' },
+        { urn: 'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2' },
+        { urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet' }
+      ])
 
     const outfits = await getOutfits(components, 'address')
 
@@ -105,10 +111,9 @@ test('when some wearables are not owned, the outfits with those wearables are re
       content: []
     }
     jest.spyOn(components.content, 'fetchEntitiesByPointers').mockResolvedValue([outfitsEntity])
-    const wearablesChecker = createSpecificOwnedNftsOwnershipCheckerMock([ownedWearable])
     const namesChecker = createAllOwnedOwnershipCheckerMock()
-    jest.spyOn(wearablesOwnershipChecker, 'createWearablesOwnershipChecker').mockReturnValue(wearablesChecker)
     jest.spyOn(namesOwnershipChecker, 'createNamesOwnershipChecker').mockReturnValue(namesChecker)
+    components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([{ urn: ownedWearable }])
 
     const outfits = await getOutfits(components, 'address')
     expect(outfits.metadata.outfits).toEqual([outfitWithOwnedWearables])
@@ -147,10 +152,12 @@ test('when some names are not owned, extra outfits and not owned names are remov
     const address = 'address'
 
     jest.spyOn(components.content, 'fetchEntitiesByPointers').mockResolvedValue([outfitsEntity])
-    const wearablesChecker = createAllOwnedOwnershipCheckerMock()
     const namesChecker = createSpecificOwnedNftsOwnershipCheckerMock(ownedNames)
-    jest.spyOn(wearablesOwnershipChecker, 'createWearablesOwnershipChecker').mockReturnValue(wearablesChecker)
     jest.spyOn(namesOwnershipChecker, 'createNamesOwnershipChecker').mockReturnValue(namesChecker)
+
+    components.wearablesFetcher.fetchOwnedElements = jest
+      .fn()
+      .mockResolvedValue([{ urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet' }])
 
     const outfits = await getOutfits(components, address)
     expect(outfits.metadata.outfits).toEqual([outfitSlot1, outfitExtraSlot5, outfitExtraSlot6])

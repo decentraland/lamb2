@@ -88,9 +88,6 @@ export async function getProfiles(
     // Filter entities
     profileEntities = profileEntities.filter(hasMetadata)
 
-    // const pagination = paginationObject(context.url, Number.MAX_VALUE)
-    // Create the NFTs ownership checkers
-    // const wearablesOwnershipChecker = createWearablesOwnershipChecker(components)
     const namesOwnershipChecker = createNamesOwnershipChecker(components)
     const tpwOwnershipChecker = createTPWOwnershipChecker(components)
 
@@ -179,7 +176,6 @@ async function extendProfiles(
 
     // Get owned nfts from every ownership checker
     const ownedNames = namesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
-    // const ownedWearables = wearablesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
     const thirdPartyWearables = tpwOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
 
     const ownedWearables = await wearablesFetcher.fetchOwnedElements(ethAddress)
@@ -199,28 +195,6 @@ async function extendProfiles(
 
       return { ...avatar, avatar: { ...avatar.avatar, wearables: sanitizedWearables, emotes: sanitizedEmotes } }
     })
-
-    // const sanitizedProfiles = Promise.all(
-    //   profileEntities.map(async (profileEntity) => {
-    //     const ownedWearables = await wearablesFetcher.fetchOwnedElements(profileEntity.pointers[0])
-    //     const ownedEmotes = await emotesFetcher.fetchOwnedElements(profileEntity.pointers[0])
-    //     // validate that owned wearables and owned emotes are present in the profile
-    //     // remove all those wearables and emotes that are not present in ownedWearables and ownedEmotes
-    //     const sanitizedAvatars = profileEntity.metadata.avatars
-    //       .map((avatar: any) =>
-    //         avatar.avatar[0].wearables.filter((wearable: OnChainWearable) => {
-    //           return ownedWearables.includes(wearable)
-    //         })
-    //       )
-    //       .map((avatar: any) =>
-    //         avatar.avatar[0].emotes.filter((emote: OnChainEmote) => {
-    //           return ownedEmotes.includes(emote)
-    //         })
-    //       )
-
-    //     return { ...profileEntity, metadata: { ...profileEntity.metadata, avatars: sanitizedAvatars } }
-    //   })
-    // )
 
     // Fill the avatars field for each profile
     const avatars = metadataWithVerifiedOwnership.map(async (profileData) => ({
