@@ -1,18 +1,10 @@
-import {
-  AppComponents,
-  ProfileMetadata,
-  Filename,
-  Filehash,
-  NFTsOwnershipChecker,
-  OnChainWearable,
-  OnChainEmote
-} from '../types'
-import { Avatar, Entity, Snapshots } from '@dcl/schemas'
+import { AppComponents, ProfileMetadata, Filename, Filehash, NFTsOwnershipChecker } from '../types'
+import { Entity, Snapshots } from '@dcl/schemas'
 import { IConfigComponent } from '@well-known-components/interfaces'
 import { createNamesOwnershipChecker } from '../ports/ownership-checker/names-ownership-checker'
 import { createTPWOwnershipChecker } from '../ports/ownership-checker/tpw-ownership-checker'
 import { parseUrn } from '@dcl/urn-resolver'
-import { ElementsFetcher } from '../adapters/elements-fetcher'
+import { UserItemsFilter } from './user-items-filter'
 
 export async function getValidNonBaseWearables(metadata: ProfileMetadata): Promise<string[]> {
   const wearablesInProfile: string[] = []
@@ -70,8 +62,7 @@ export async function getProfiles(
     | 'ownershipCaches'
     | 'thirdPartyProvidersStorage'
     | 'logs'
-    | 'wearablesFetcher'
-    | 'emotesFetcher'
+    | 'userItemsFilter'
   >,
   ethAddresses: string[],
   ifModifiedSinceTimestamp?: number | undefined
@@ -103,8 +94,7 @@ export async function getProfiles(
       profileEntities,
       namesOwnershipChecker,
       tpwOwnershipChecker,
-      components.wearablesFetcher,
-      components.emotesFetcher
+      components.userItemsFilter
     )
     return {} as any
   } catch (error) {
@@ -166,8 +156,7 @@ async function extendProfiles(
   profileEntities: Entity[],
   namesOwnershipChecker: NFTsOwnershipChecker,
   tpwOwnershipChecker: NFTsOwnershipChecker,
-  wearablesFetcher: ElementsFetcher<OnChainWearable>,
-  emotesFetcher: ElementsFetcher<OnChainEmote>
+  userItemsFilter: UserItemsFilter
 ): Promise<ProfileMetadata[]> {
   const baseUrl = (await config.getString('CONTENT_URL')) ?? ''
   const extendedProfiles = profileEntities.map(async (entity) => {
@@ -178,34 +167,18 @@ async function extendProfiles(
     const ownedNames = namesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
     const thirdPartyWearables = tpwOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
 
-    const ownedWearables = await wearablesFetcher.fetchOwnedElements(ethAddress)
-    const ownedEmotes = await emotesFetcher.fetchOwnedElements(ethAddress)
-
-    // do the same as below but with metadata.avatars
-    const metadataWithVerifiedOwnership = metadata.avatars.map((avatar: Avatar) => {
-      const sanitizedWearables = avatar.avatar.wearables.filter((wearable: string) => {
-        return (
-          ownedWearables.some((ownedWearable) => ownedWearable.urn === wearable) || wearable.includes('base-avatars')
-        )
-      })
-
-      const sanitizedEmotes = avatar.avatar.emotes?.filter((emote: { slot: number; urn: string } | undefined) => {
-        return ownedEmotes.some((ownedEmote) => emote && ownedEmote.urn === emote.urn)
-      })
-
-      return { ...avatar, avatar: { ...avatar.avatar, wearables: sanitizedWearables, emotes: sanitizedEmotes } }
-    })
+    const sanitizedAvatars = await userItemsFilter.filterNotOwnedItemsFromAvatars(metadata.avatars, ethAddress)
 
     // Fill the avatars field for each profile
-    const avatars = metadataWithVerifiedOwnership.map(async (profileData) => ({
-      ...profileData,
-      hasClaimedName: ownedNames.includes(profileData.name),
+    const avatars = sanitizedAvatars.map(async (sanitizedAvatar) => ({
+      ...sanitizedAvatar,
+      hasClaimedName: ownedNames.includes(sanitizedAvatar.name),
       avatar: {
-        ...profileData.avatar,
-        bodyShape: (await translateWearablesIdFormat(profileData.avatar.bodyShape)) ?? '',
-        snapshots: addBaseUrlToSnapshots(baseUrl, profileData.avatar.snapshots, content),
-        wearables: Array.from(new Set(profileData.avatar.wearables.concat(thirdPartyWearables))),
-        emotes: profileData.avatar.emotes
+        ...sanitizedAvatar.avatar,
+        bodyShape: (await translateWearablesIdFormat(sanitizedAvatar.avatar.bodyShape)) ?? '',
+        snapshots: addBaseUrlToSnapshots(baseUrl, sanitizedAvatar.avatar.snapshots, content),
+        wearables: Array.from(new Set(sanitizedAvatar.avatar.wearables.concat(thirdPartyWearables))),
+        emotes: sanitizedAvatar.avatar.emotes
       }
     }))
 

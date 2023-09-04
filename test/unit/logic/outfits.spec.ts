@@ -2,6 +2,7 @@ import { getOutfits } from '../../../src/logic/outfits'
 import { test } from '../../components'
 import { Entity, EntityType, Outfits } from '@dcl/schemas'
 import * as namesOwnershipChecker from '../../../src/ports/ownership-checker/names-ownership-checker'
+import { createUserItemsFilter } from '../../../src/logic/user-items-filter'
 
 test('when all wearables and names are owned, outfits entity is not modified', function ({ components }) {
   it('run test', async () => {
@@ -62,6 +63,14 @@ test('when all wearables and names are owned, outfits entity is not modified', f
         { urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet' }
       ])
 
+    const itemsSanitizerMock = await createUserItemsFilter({
+      config: components.config,
+      wearablesFetcher: components.wearablesFetcher,
+      emotesFetcher: components.emotesFetcher
+    })
+
+    Object.assign(components, { itemsSanitizer: itemsSanitizerMock })
+
     const outfits = await getOutfits(components, 'address')
 
     expect(outfits).toEqual(outfitsEntity)
@@ -115,6 +124,14 @@ test('when some wearables are not owned, the outfits with those wearables are re
     jest.spyOn(namesOwnershipChecker, 'createNamesOwnershipChecker').mockReturnValue(namesChecker)
     components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([{ urn: ownedWearable }])
 
+    const itemsSanitizerMock = await createUserItemsFilter({
+      config: components.config,
+      wearablesFetcher: components.wearablesFetcher,
+      emotesFetcher: components.emotesFetcher
+    })
+
+    Object.assign(components, { itemsSanitizer: itemsSanitizerMock })
+
     const outfits = await getOutfits(components, 'address')
     expect(outfits.metadata.outfits).toEqual([outfitWithOwnedWearables])
   })
@@ -158,6 +175,14 @@ test('when some names are not owned, extra outfits and not owned names are remov
     components.wearablesFetcher.fetchOwnedElements = jest
       .fn()
       .mockResolvedValue([{ urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet' }])
+
+    const itemsSanitizerMock = await createUserItemsFilter({
+      config: components.config,
+      wearablesFetcher: components.wearablesFetcher,
+      emotesFetcher: components.emotesFetcher
+    })
+
+    Object.assign(components, { itemsSanitizer: itemsSanitizerMock })
 
     const outfits = await getOutfits(components, address)
     expect(outfits.metadata.outfits).toEqual([outfitSlot1, outfitExtraSlot5, outfitExtraSlot6])

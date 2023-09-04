@@ -72,8 +72,6 @@ test('integration tests for /profiles', function ({ components, stubComponents }
     const addresses = ['0x1']
 
     content.fetchEntitiesByPointers.withArgs(addresses).resolves(await Promise.all([profileEntityFull]))
-    const wearablesQuery =
-      '{\n        P0x1: nfts(where: { owner: "0x1", searchItemType_in: ["wearable_v1", "wearable_v2", "smart_wearable_v1", "emote_v1"], urn_in: ["urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7","urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1","urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet","urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand","urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f","urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:12341234-1234-3434-3434-f9dfde9f9393"] }, first: 1000) {\n        urn\n        }\n    }'
 
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
       return Promise.resolve({
@@ -1087,5 +1085,87 @@ test('integration tests for /profiles', function ({ components, stubComponents }
     expect(response.status).toEqual(304)
     const responseText = await response.text()
     expect(responseText).toEqual('')
+  })
+
+  it('All owned wearables should be retrieved from TheGraph even if the user holds more than 1000 wearables', async () => {
+    const generateWearables = (amount: number) => {
+      const wearables = []
+      for (let i = 0; i < amount; i++) {
+        wearables.push({
+          urn: `urn:decentraland:ethereum:collections-v1:testcollection:wearable-${i}`,
+          id: `id-${i}`,
+          tokenId: `tokenId-${i}`,
+          category: 'wearable',
+          transferredAt: Date.now(),
+          metadata: {
+            wearable: {
+              name: `name-${i}`,
+              category: WearableCategory.EYEWEAR
+            }
+          },
+          item: {
+            rarity: 'unique',
+            price: 100
+          }
+        })
+      }
+      return wearables
+    }
+    const { localFetch } = components
+    const { theGraph, fetch, content } = stubComponents
+    const addresses = ['0x123']
+
+    content.fetchEntitiesByPointers.withArgs(addresses).resolves(await Promise.all([profileEntityFull]))
+
+    theGraph.ethereumCollectionsSubgraph.query = jest
+      .fn()
+      .mockResolvedValueOnce(
+        Promise.resolve({
+          nfts: [...generateWearables(1000)]
+        })
+      )
+      .mockResolvedValueOnce(
+        Promise.resolve({
+          nfts: [{ id: 'custom-id', urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand' }]
+        })
+      )
+      .mockResolvedValueOnce(Promise.resolve({ nfts: [] }))
+
+    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue(
+      Promise.resolve({
+        nfts: []
+      })
+    )
+
+    theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ P0x1: [{ name: 'cryptonico' }] })
+
+    jest.spyOn(components.thirdPartyProvidersStorage, 'getAll').mockResolvedValue([
+      {
+        id: 'urn:decentraland:matic:collections-thirdparty:ntr1-meta',
+        resolver: 'https://api.swappable.io/api/v1',
+        metadata: {
+          thirdParty: {
+            name: 'test',
+            description: 'test'
+          }
+        }
+      }
+    ])
+    fetch.fetch
+      .withArgs('https://api.swappable.io/api/v1/registry/ntr1-meta/address/0x1/assets')
+      .onCall(0)
+      .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
+      .onCall(1)
+      .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
+
+    const response = await localFetch.fetch('/profiles', { method: 'post', body: JSON.stringify({ ids: addresses }) })
+    sinon.assert.calledOnceWithMatch(content.fetchEntitiesByPointers, addresses)
+
+    expect(response.status).toEqual(200)
+    const responseObj = await response.json()
+    expect(responseObj.length).toEqual(1)
+    expect(responseObj[0].avatars?.[0].avatar.wearables).toContain(
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand'
+    )
   })
 })

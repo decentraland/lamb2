@@ -5,7 +5,7 @@ import { AppComponents, TypedEntity } from '../types'
 export async function getOutfits(
   components: Pick<
     AppComponents,
-    'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches' | 'wearablesFetcher'
+    'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches' | 'userItemsFilter'
   >,
   ethAddress: string
 ): Promise<TypedEntity<Outfits> | undefined> {
@@ -28,20 +28,15 @@ export async function getOutfits(
     return undefined
   }
 
-  const ownedWearables = await components.wearablesFetcher.fetchOwnedElements(ethAddress)
-
-  const outfitsWithOwnedWearables = outfits.outfits.filter((outfit) => {
-    const outfitWearables = outfit.outfit.wearables
-    return outfitWearables.every((wearable) => ownedWearables.some((ownedWearable) => ownedWearable.urn === wearable))
-  })
+  const sanitizedOutfits = await components.userItemsFilter.filterNotOwnedWearablesFromOutfits(outfits, ethAddress)
 
   const namesOwnershipChecker = createNamesOwnershipChecker(components)
   namesOwnershipChecker.addNFTsForAddress(ethAddress, outfits.namesForExtraSlots)
   namesOwnershipChecker.checkNFTsOwnership()
   const ownedNames = new Set(namesOwnershipChecker.getOwnedNFTsForAddress(ethAddress))
 
-  const normalOutfitsWithOwnedWearables = outfitsWithOwnedWearables.filter((outfit) => outfit.slot <= 4)
-  const extraOutfitsWithOwnedWearables = outfitsWithOwnedWearables.filter((outfit) => outfit.slot > 4)
+  const normalOutfitsWithOwnedWearables = sanitizedOutfits.outfits.filter((outfit) => outfit.slot <= 4)
+  const extraOutfitsWithOwnedWearables = sanitizedOutfits.outfits.filter((outfit) => outfit.slot > 4)
   const extraOutfitsWithOwnedWearablesAndNames = extraOutfitsWithOwnedWearables.slice(0, ownedNames.size)
 
   return {
