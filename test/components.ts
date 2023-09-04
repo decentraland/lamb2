@@ -24,6 +24,7 @@ import { createContentClientMock } from './mocks/content-mock'
 import { createTheGraphComponentMock } from './mocks/the-graph-mock'
 import { createStatusComponent } from '../src/adapters/status'
 import { createUserItemsFilter } from './../src/logic/user-items-filter'
+import { IConfigComponent } from '@well-known-components/interfaces'
 
 /**
  * Behaves like Jest "describe" function, used to describe a test for a
@@ -38,30 +39,41 @@ export const test = createRunner<TestComponents>({
 })
 
 export function testWithComponents(
-  preConfigureComponents: () => { fetchComponent?: IFetchComponent; theGraphComponent?: TheGraphComponent }
+  preConfigureComponents: () => {
+    fetchComponent?: IFetchComponent
+    theGraphComponent?: TheGraphComponent
+    config?: IConfigComponent
+  }
 ) {
   const preConfiguredComponents = preConfigureComponents()
   return createRunner<TestComponents>({
     main,
     initComponents: () =>
-      initComponents(preConfiguredComponents.fetchComponent, preConfiguredComponents.theGraphComponent)
+      initComponents(
+        preConfiguredComponents.fetchComponent,
+        preConfiguredComponents.theGraphComponent,
+        preConfiguredComponents.config
+      )
   })
 }
 
 async function initComponents(
   fetchComponent?: IFetchComponent,
-  theGraphComponent?: TheGraphComponent
+  theGraphComponent?: TheGraphComponent,
+  mockConfig?: IConfigComponent
 ): Promise<TestComponents> {
   const defaultFetchConfig = defaultServerConfig()
-  const config = createConfigComponent({
-    ...defaultFetchConfig,
-    CONTENT_URL: 'https://peer.decentraland.org/content',
-    LAMBDAS_URL: 'https://peer.decentraland.org/lambdas',
-    ARCHIPELAGO_URL: 'https://peer.decentraland.org/archipelago',
-    COMMIT_HASH: 'commit_hash',
-    CURRENT_VERSION: 'version',
-    HTTP_SERVER_PORT: '7272'
-  })
+  const config =
+    mockConfig ??
+    createConfigComponent({
+      ...defaultFetchConfig,
+      CONTENT_URL: 'https://peer.decentraland.org/content',
+      LAMBDAS_URL: 'https://peer.decentraland.org/lambdas',
+      ARCHIPELAGO_URL: 'https://peer.decentraland.org/archipelago',
+      COMMIT_HASH: 'commit_hash',
+      CURRENT_VERSION: 'version',
+      HTTP_SERVER_PORT: '7272'
+    })
   const fetch = fetchComponent ? fetchComponent : await createLocalFetchCompoment(config)
   const theGraphMock = theGraphComponent ? theGraphComponent : createTheGraphComponentMock()
   if (!theGraphComponent) {
