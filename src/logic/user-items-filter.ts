@@ -1,4 +1,4 @@
-import { Avatar, Outfits } from '@dcl/schemas'
+import { Avatar, Outfit, Outfits } from '@dcl/schemas'
 import { BaseComponents, OnChainEmote, OnChainWearable } from '../types'
 import { splitUrnAndTokenId } from './utils'
 
@@ -81,10 +81,41 @@ export async function createUserItemsFilter(
   async function filterNotOwnedWearablesFromOutfits(outfits: Outfits, owner: string): Promise<Outfits> {
     const ownedWearables: OnChainWearable[] = await wearablesFetcher.fetchOwnedElements(owner)
 
-    const outfitsWithOwnedWearables = outfits.outfits.filter((outfit) => {
-      const outfitWearables = outfit.outfit.wearables
-      return outfitWearables.every((wearable) => ownedWearables.some((ownedWearable) => ownedWearable.urn === wearable))
-    })
+    const outfitsWithOwnedWearables = outfits.outfits
+      .map((outfit) => {
+        const outfitWearables = outfit.outfit.wearables.map((wearable) => splitUrnAndTokenId(wearable))
+
+        const isValidOutfit = outfitWearables.every((wearable) =>
+          ownedWearables.some(
+            (ownedWearable) =>
+              ownedWearable.urn === wearable.urn &&
+              (!wearable.tokenId ||
+                ownedWearable.individualData.find((itemData) => itemData.tokenId === wearable.tokenId))
+          )
+        )
+
+        if (!isValidOutfit) {
+          return undefined
+        }
+
+        const outfitWearablesWithTokenId = outfitWearables.map((wearable) => {
+          const matchingOwnedWearable = ownedWearables.find(
+            (ownedWearable) =>
+              ownedWearable.urn === wearable.urn &&
+              (!wearable.tokenId ||
+                ownedWearable.individualData.find((itemData) => itemData.tokenId === wearable.tokenId))
+          )
+
+          return ensureERC721
+            ? `${matchingOwnedWearable!.urn}:${
+                wearable.tokenId ? wearable.tokenId : matchingOwnedWearable!.individualData[0].tokenId
+              }`
+            : matchingOwnedWearable!.urn
+        })
+
+        return { ...outfit, outfit: { ...outfit.outfit, wearables: outfitWearablesWithTokenId } }
+      })
+      .filter((outfit) => !!outfit) as { slot: number; outfit: Outfit }[]
 
     return {
       ...outfits,
