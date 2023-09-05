@@ -786,3 +786,238 @@ testWithComponents(() => {
     expect(responseObj.metadata.outfits[0]).toEqual(outfitsMetadata.outfits[0])
   })
 })
+
+testWithComponents(() => {
+  const config = createConfigComponent({
+    ...defaultServerConfig(),
+    CONTENT_URL: 'https://peer.decentraland.org/content',
+    LAMBDAS_URL: 'https://peer.decentraland.org/lambdas',
+    ARCHIPELAGO_URL: 'https://peer.decentraland.org/archipelago',
+    COMMIT_HASH: 'commit_hash',
+    CURRENT_VERSION: 'version',
+    HTTP_SERVER_PORT: '7272',
+    ENSURE_ERC_721: 'false'
+  })
+
+  return {
+    config
+  }
+})('integration tests for /outfits/:id', function ({ components, stubComponents }) {
+  it('return complete outfits when its contain base wearables and an owned wearable', async () => {
+    const { localFetch } = components
+    const { content, theGraph } = stubComponents
+    const address = '0x1'
+
+    const outfitsMetadata: Outfits = {
+      outfits: [
+        {
+          slot: 0,
+          outfit: {
+            bodyShape: 'urn:decentraland:off-chain:base-avatars:BaseFemale',
+            eyes: {
+              color: {
+                r: 0.37254902720451355,
+                g: 0.2235294133424759,
+                b: 0.19607843458652496
+              }
+            },
+            hair: {
+              color: {
+                r: 0.23529411852359772,
+                g: 0.12941177189350128,
+                b: 0.04313725605607033
+              }
+            },
+            skin: {
+              color: {
+                r: 0.4901960790157318,
+                g: 0.364705890417099,
+                b: 0.27843138575553894
+              }
+            },
+            wearables: [
+              'urn:decentraland:off-chain:base-avatars:f_blue_jacket',
+              'urn:decentraland:mumbai:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0',
+              'urn:decentraland:off-chain:base-avatars:ruby_blue_loafer',
+              'urn:decentraland:off-chain:base-avatars:pony_tail',
+              'urn:decentraland:off-chain:base-avatars:pearls_earring',
+              'urn:decentraland:off-chain:base-avatars:f_mouth_05',
+              'urn:decentraland:off-chain:base-avatars:f_eyebrows_02',
+              'urn:decentraland:off-chain:base-avatars:f_eyes_06'
+            ],
+            forceRender: []
+          }
+        },
+        {
+          slot: 1,
+          outfit: {
+            bodyShape: '',
+            eyes: {
+              color: {
+                r: 0,
+                g: 0,
+                b: 0
+              }
+            },
+            hair: {
+              color: {
+                r: 0,
+                g: 0,
+                b: 0
+              }
+            },
+            skin: {
+              color: {
+                r: 0,
+                g: 0,
+                b: 0
+              }
+            },
+            wearables: [],
+            forceRender: []
+          }
+        },
+        {
+          slot: 2,
+          outfit: {
+            bodyShape: '',
+            eyes: {
+              color: {
+                r: 0,
+                g: 0,
+                b: 0
+              }
+            },
+            hair: {
+              color: {
+                r: 0,
+                g: 0,
+                b: 0
+              }
+            },
+            skin: {
+              color: {
+                r: 0,
+                g: 0,
+                b: 0
+              }
+            },
+            wearables: [],
+            forceRender: []
+          }
+        },
+        {
+          slot: 3,
+          outfit: {
+            bodyShape: '',
+            eyes: {
+              color: {
+                r: 0,
+                g: 0,
+                b: 0
+              }
+            },
+            hair: {
+              color: {
+                r: 0,
+                g: 0,
+                b: 0
+              }
+            },
+            skin: {
+              color: {
+                r: 0,
+                g: 0,
+                b: 0
+              }
+            },
+            wearables: [],
+            forceRender: []
+          }
+        },
+        {
+          slot: 4,
+          outfit: {
+            bodyShape: '',
+            eyes: {
+              color: {
+                r: 0,
+                g: 0,
+                b: 0
+              }
+            },
+            hair: {
+              color: {
+                r: 0,
+                g: 0,
+                b: 0
+              }
+            },
+            skin: {
+              color: {
+                r: 0,
+                g: 0,
+                b: 0
+              }
+            },
+            wearables: [],
+            forceRender: []
+          }
+        }
+      ],
+      namesForExtraSlots: []
+    }
+    const outfitsEntity: Entity = {
+      id: 'entityId',
+      version: 'v3',
+      type: EntityType.OUTFITS,
+      pointers: ['address:outfits'],
+      timestamp: 123,
+      metadata: outfitsMetadata,
+      content: []
+    }
+
+    content.fetchEntitiesByPointers.resolves([outfitsEntity])
+    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
+      return Promise.resolve({
+        nfts: []
+      })
+    })
+    theGraph.maticCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
+      if (query.includes(`category: "wearable"`)) {
+        return Promise.resolve({
+          nfts: [
+            {
+              urn: 'urn:decentraland:mumbai:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0',
+              id: 'id-3',
+              tokenId: '3',
+              category: 'wearable',
+              transferredAt: Date.now(),
+              metadata: {
+                wearable: {
+                  name: 'name-3',
+                  category: WearableCategory.EYEWEAR
+                }
+              },
+              item: {
+                rarity: 'unique',
+                price: 100
+              }
+            }
+          ]
+        })
+      } else if (query.includes(`category: "emote"`)) {
+        return Promise.resolve({ nfts: [] })
+      }
+    })
+
+    theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ P0x1: [] })
+
+    const response = await localFetch.fetch(`/outfits/${address}`)
+
+    expect(response.status).toEqual(200)
+    const responseObj = await response.json()
+    console.log({ respose: responseObj.metadata.outfits[0] })
+    expect(responseObj.metadata.outfits[0].outfit.wearables).toEqual(outfitsMetadata.outfits[0].outfit.wearables)
+  })
+})

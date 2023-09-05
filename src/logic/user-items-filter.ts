@@ -102,9 +102,10 @@ export async function createUserItemsFilter(
         const isValidOutfit = outfitWearables.every((wearable) =>
           ownedWearables.some(
             (ownedWearable) =>
-              ownedWearable.urn === wearable.urn &&
-              (!wearable.tokenId ||
-                ownedWearable.individualData.find((itemData) => itemData.tokenId === wearable.tokenId))
+              wearable.urn.includes('off-chain') ||
+              (ownedWearable.urn === wearable.urn &&
+                (!wearable.tokenId ||
+                  ownedWearable.individualData.find((itemData) => itemData.tokenId === wearable.tokenId)))
           )
         )
 
@@ -113,6 +114,10 @@ export async function createUserItemsFilter(
         }
 
         const outfitWearablesWithTokenId = outfitWearables.map((wearable) => {
+          if (wearable.urn.includes('off-chain')) {
+            return wearable.urn
+          }
+
           const matchingOwnedWearable = ownedWearables.find(
             (ownedWearable) =>
               ownedWearable.urn === wearable.urn &&
