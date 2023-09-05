@@ -22,8 +22,7 @@ import { main } from '../src/service'
 import { TestComponents } from '../src/types'
 import { createContentClientMock } from './mocks/content-mock'
 import { createTheGraphComponentMock } from './mocks/the-graph-mock'
-import { createStatusComponent } from '../src/adapters/status'
-import { createUserItemsFilter } from './../src/logic/user-items-filter'
+import { createUserItemsFilter } from '../src/logic/user-items-filter'
 import { IConfigComponent } from '@well-known-components/interfaces'
 
 /**

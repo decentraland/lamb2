@@ -28,7 +28,7 @@ export async function getOutfits(
     return undefined
   }
 
-  const sanitizedOutfits = await components.userItemsFilter.filterNotOwnedWearablesFromOutfits(outfits, ethAddress)
+  const sanitizedOutfits = await components.userItemsFilter.filterOutfitsWithoutCompleteOwnership(outfits, ethAddress)
 
   const namesOwnershipChecker = createNamesOwnershipChecker(components)
   namesOwnershipChecker.addNFTsForAddress(ethAddress, outfits.namesForExtraSlots)

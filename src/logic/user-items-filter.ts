@@ -4,16 +4,23 @@ import { splitUrnAndTokenId } from './utils'
 
 export type UserItemsFilter = {
   filterNotOwnedItemsFromAvatars(avatar: Avatar[], owner: string): Promise<Avatar[]>
-  filterNotOwnedWearablesFromOutfits(outfits: Outfits, owner: string): Promise<Outfits>
+  filterOutfitsWithoutCompleteOwnership(outfits: Outfits, owner: string): Promise<Outfits>
 }
 
 export async function createUserItemsFilter(
   components: Pick<BaseComponents, 'config' | 'wearablesFetcher' | 'emotesFetcher'>
 ): Promise<UserItemsFilter> {
   const { wearablesFetcher, emotesFetcher, config } = components
-  // If ERC-721 Standard is enabled, all items will be extended to contains the tokenId at the end of the urn.
+  // If ERC-721 Standard is enabled, all items will be extended to contain the tokenId at the end of the urn.
   const ensureERC721 = (await config.getString('ENSURE_ERC_721')) === 'true'
 
+  /**
+   * Filter out wearables and emotes that are not owned by the user.
+   *
+   * @param {Avatar[]} avatars
+   * @param {string} owner
+   * @return {*}  {Promise<Avatar[]>}
+   */
   async function filterNotOwnedItemsFromAvatars(avatars: Avatar[], owner: string): Promise<Avatar[]> {
     const ownedWearables: OnChainWearable[] = await wearablesFetcher.fetchOwnedElements(owner)
     const ownedEmotes: OnChainEmote[] = await emotesFetcher.fetchOwnedElements(owner)
@@ -78,7 +85,14 @@ export async function createUserItemsFilter(
     return sanitizedAvatars
   }
 
-  async function filterNotOwnedWearablesFromOutfits(outfits: Outfits, owner: string): Promise<Outfits> {
+  /**
+   * Filter out outfits that contain wearables not owned by the user.
+   *
+   * @param {Outfits} outfits
+   * @param {string} owner
+   * @return {*}  {Promise<Outfits>}
+   */
+  async function filterOutfitsWithoutCompleteOwnership(outfits: Outfits, owner: string): Promise<Outfits> {
     const ownedWearables: OnChainWearable[] = await wearablesFetcher.fetchOwnedElements(owner)
 
     const outfitsWithOwnedWearables = outfits.outfits
@@ -123,5 +137,5 @@ export async function createUserItemsFilter(
     }
   }
 
-  return { filterNotOwnedItemsFromAvatars, filterNotOwnedWearablesFromOutfits }
+  return { filterNotOwnedItemsFromAvatars, filterOutfitsWithoutCompleteOwnership }
 }
