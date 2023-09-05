@@ -7,6 +7,53 @@ export type UserItemsFilter = {
   filterOutfitsWithoutCompleteOwnership(outfits: Outfits, owner: string): Promise<Outfits>
 }
 
+function isValidOutfit(outfit: Outfit, ownedWearables: OnChainWearable[]) {
+  const parsedWearables = outfit.wearables.map((wearable) => splitUrnAndTokenId(wearable))
+  return parsedWearables.every((wearable) => {
+    if (wearable.urn.includes('off-chain')) {
+      return true
+    }
+
+    const matchingOwnedWearable = ownedWearables.find(
+      (ownedWearable) =>
+        ownedWearable.urn === wearable.urn &&
+        (!wearable.tokenId || ownedWearable.individualData.some((itemData) => itemData.tokenId === wearable.tokenId))
+    )
+
+    return !!matchingOwnedWearable
+  })
+}
+
+function parseValidWearablesAndFilterInvalidOnes(
+  wearablesUrn: string[],
+  ownedWearables: OnChainWearable[],
+  shouldExtendWearables: boolean
+) {
+  return wearablesUrn
+    .map((wearable: string) => {
+      if (wearable.includes('base-avatars')) {
+        return wearable
+      }
+
+      const { urn, tokenId } = splitUrnAndTokenId(wearable)
+
+      const matchingOwnedWearable = ownedWearables.find(
+        (ownedWearable) =>
+          ownedWearable.urn === urn &&
+          (!tokenId || ownedWearable.individualData.find((itemData) => itemData.tokenId === tokenId))
+      )
+
+      if (!matchingOwnedWearable) {
+        return undefined
+      }
+
+      return shouldExtendWearables
+        ? `${matchingOwnedWearable.urn}:${tokenId ? tokenId : matchingOwnedWearable.individualData[0].tokenId}`
+        : matchingOwnedWearable.urn
+    })
+    .filter((wearable) => !!wearable) as string[]
+}
+
 export async function createUserItemsFilter(
   components: Pick<BaseComponents, 'config' | 'wearablesFetcher' | 'emotesFetcher'>
 ): Promise<UserItemsFilter> {
@@ -27,29 +74,11 @@ export async function createUserItemsFilter(
 
     // Filter out wearables and emotes that are not owned by the user.
     const sanitizedAvatars: Avatar[] = avatars.map((avatar: Avatar) => {
-      const validatedWearables: string[] = avatar.avatar.wearables
-        .map((wearable: string) => {
-          if (wearable.includes('base-avatars')) {
-            return wearable
-          }
-
-          const { urn, tokenId } = splitUrnAndTokenId(wearable)
-
-          const matchingOwnedWearable = ownedWearables.find(
-            (ownedWearable) =>
-              ownedWearable.urn === urn &&
-              (!tokenId || ownedWearable.individualData.find((itemData) => itemData.tokenId === tokenId))
-          )
-
-          if (!matchingOwnedWearable) {
-            return undefined
-          }
-
-          return ensureERC721
-            ? `${matchingOwnedWearable.urn}:${tokenId ? tokenId : matchingOwnedWearable.individualData[0].tokenId}`
-            : matchingOwnedWearable.urn
-        })
-        .filter((wearable) => !!wearable) as string[]
+      const validatedWearables: string[] = parseValidWearablesAndFilterInvalidOnes(
+        avatar.avatar.wearables,
+        ownedWearables,
+        ensureERC721
+      )
 
       const validatedEmotes = avatar.avatar.emotes
         ?.map((emote: { urn: string; slot: number }) => {
@@ -97,42 +126,17 @@ export async function createUserItemsFilter(
 
     const outfitsWithOwnedWearables = outfits.outfits
       .map((outfit) => {
-        const outfitWearables = outfit.outfit.wearables.map((wearable) => splitUrnAndTokenId(wearable))
-
-        const isValidOutfit = outfitWearables.every((wearable) =>
-          ownedWearables.some(
-            (ownedWearable) =>
-              wearable.urn.includes('off-chain') ||
-              (ownedWearable.urn === wearable.urn &&
-                (!wearable.tokenId ||
-                  ownedWearable.individualData.find((itemData) => itemData.tokenId === wearable.tokenId)))
-          )
-        )
-
-        if (!isValidOutfit) {
+        if (!isValidOutfit(outfit.outfit, ownedWearables)) {
           return undefined
         }
 
-        const outfitWearablesWithTokenId = outfitWearables.map((wearable) => {
-          if (wearable.urn.includes('off-chain')) {
-            return wearable.urn
-          }
+        const parsedOutfitsWearables = parseValidWearablesAndFilterInvalidOnes(
+          outfit.outfit.wearables,
+          ownedWearables,
+          ensureERC721
+        )
 
-          const matchingOwnedWearable = ownedWearables.find(
-            (ownedWearable) =>
-              ownedWearable.urn === wearable.urn &&
-              (!wearable.tokenId ||
-                ownedWearable.individualData.find((itemData) => itemData.tokenId === wearable.tokenId))
-          )
-
-          return ensureERC721
-            ? `${matchingOwnedWearable!.urn}:${
-                wearable.tokenId ? wearable.tokenId : matchingOwnedWearable!.individualData[0].tokenId
-              }`
-            : matchingOwnedWearable!.urn
-        })
-
-        return { ...outfit, outfit: { ...outfit.outfit, wearables: outfitWearablesWithTokenId } }
+        return { ...outfit, outfit: { ...outfit.outfit, wearables: parsedOutfitsWearables } }
       })
       .filter((outfit) => !!outfit) as { slot: number; outfit: Outfit }[]
 
