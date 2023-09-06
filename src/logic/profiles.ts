@@ -1,10 +1,17 @@
-import { AppComponents, ProfileMetadata, Filename, Filehash, NFTsOwnershipChecker } from '../types'
-import { Entity, Snapshots } from '@dcl/schemas'
-import { IConfigComponent } from '@well-known-components/interfaces'
+import {
+  AppComponents,
+  ProfileMetadata,
+  Filename,
+  Filehash,
+  NFTsOwnershipChecker,
+  OnChainWearable,
+  OnChainEmote
+} from '../types'
+import { Avatar, Entity, Snapshots } from '@dcl/schemas'
 import { createNamesOwnershipChecker } from '../ports/ownership-checker/names-ownership-checker'
 import { createTPWOwnershipChecker } from '../ports/ownership-checker/tpw-ownership-checker'
 import { parseUrn } from '@dcl/urn-resolver'
-import { UserItemsFilter } from './user-items-filter'
+import { splitUrnAndTokenId } from './utils'
 
 export async function getValidNonBaseWearables(metadata: ProfileMetadata): Promise<string[]> {
   const wearablesInProfile: string[] = []
@@ -62,7 +69,8 @@ export async function getProfiles(
     | 'ownershipCaches'
     | 'thirdPartyProvidersStorage'
     | 'logs'
-    | 'userItemsFilter'
+    | 'wearablesFetcher'
+    | 'emotesFetcher'
   >,
   ethAddresses: string[],
   ifModifiedSinceTimestamp?: number | undefined
@@ -89,14 +97,7 @@ export async function getProfiles(
     await Promise.all([namesOwnershipChecker.checkNFTsOwnership(), tpwOwnershipChecker.checkNFTsOwnership()])
 
     // Add name data and snapshot urls to profiles
-    return await extendProfiles(
-      components.config,
-      profileEntities,
-      namesOwnershipChecker,
-      tpwOwnershipChecker,
-      components.userItemsFilter
-    )
-    return {} as any
+    return await extendProfiles(components, profileEntities, namesOwnershipChecker, tpwOwnershipChecker)
   } catch (error) {
     // TODO: logger
     console.log(error)
@@ -152,12 +153,12 @@ async function extractDataFromEntity(entity: Entity): Promise<{
 }
 
 async function extendProfiles(
-  config: IConfigComponent,
+  components: Pick<AppComponents, 'config' | 'emotesFetcher' | 'wearablesFetcher'>,
   profileEntities: Entity[],
   namesOwnershipChecker: NFTsOwnershipChecker,
-  tpwOwnershipChecker: NFTsOwnershipChecker,
-  userItemsFilter: UserItemsFilter
+  tpwOwnershipChecker: NFTsOwnershipChecker
 ): Promise<ProfileMetadata[]> {
+  const { config } = components
   const baseUrl = (await config.getString('CONTENT_URL')) ?? ''
   const extendedProfiles = profileEntities.map(async (entity) => {
     // Extract data from each entity, which is used to fill the final response
@@ -167,7 +168,7 @@ async function extendProfiles(
     const ownedNames = namesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
     const thirdPartyWearables = tpwOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
 
-    const sanitizedAvatars = await userItemsFilter.filterNotOwnedItemsFromAvatars(metadata.avatars, ethAddress)
+    const sanitizedAvatars = await removeNotOwnedItemsFromAvatars(components, metadata.avatars, ethAddress)
 
     // Fill the avatars field for each profile
     const avatars = sanitizedAvatars.map(async (sanitizedAvatar) => ({
@@ -228,4 +229,105 @@ function addBaseUrlToSnapshot(baseUrl: string, snapshot: string, content: Map<st
     // Snapshot is directly a hash
     return cleanedBaseUrl + `contents/${snapshot}`
   }
+}
+
+function parseValidWearablesAndFilterInvalidOnes(
+  wearablesUrn: string[],
+  ownedWearables: OnChainWearable[],
+  shouldExtendWearables: boolean
+): string[] {
+  const wearablesUrnToReturn: string[] = []
+
+  for (let i = 0; i < wearablesUrn.length; i++) {
+    const wearable = wearablesUrn[i]
+
+    if (isBaseWearable(wearable)) {
+      wearablesUrnToReturn.push(wearable)
+      continue
+    }
+
+    const { urn, tokenId } = splitUrnAndTokenId(wearable)
+
+    const matchingOwnedWearable = ownedWearables.find(
+      (ownedWearable) =>
+        ownedWearable.urn === urn &&
+        (!tokenId || ownedWearable.individualData.find((itemData) => itemData.tokenId === tokenId))
+    )
+
+    if (!matchingOwnedWearable) {
+      continue
+    }
+
+    wearablesUrnToReturn.push(
+      shouldExtendWearables
+        ? `${matchingOwnedWearable.urn}:${tokenId ? tokenId : matchingOwnedWearable.individualData[0].tokenId}`
+        : matchingOwnedWearable.urn
+    )
+  }
+
+  return wearablesUrnToReturn
+}
+
+async function removeNotOwnedItemsFromAvatars(
+  components: Pick<AppComponents, 'wearablesFetcher' | 'emotesFetcher' | 'config'>,
+  avatars: Avatar[],
+  owner: string
+): Promise<Avatar[]> {
+  const { wearablesFetcher, emotesFetcher, config } = components
+  const ensureERC721 = (await config.getString('ENSURE_ERC_721')) === 'true'
+  const avatarsToReturn: Avatar[] = []
+
+  const ownedWearables: OnChainWearable[] = await wearablesFetcher.fetchOwnedElements(owner)
+  const ownedEmotes: OnChainEmote[] = await emotesFetcher.fetchOwnedElements(owner)
+
+  for (let avatarIndex = 0; avatarIndex < avatars.length; avatarIndex++) {
+    const avatar = avatars[avatarIndex]
+    const validatedWearables: string[] = parseValidWearablesAndFilterInvalidOnes(
+      avatar.avatar.wearables,
+      ownedWearables,
+      ensureERC721
+    )
+
+    const emotesFromAvatar: {
+      slot: number
+      urn: string
+    }[] = avatar.avatar.emotes ?? []
+    const validatedEmotes: { slot: number; urn: string }[] = []
+
+    for (let emoteIndex = 0; emoteIndex < emotesFromAvatar.length; emoteIndex++) {
+      const emote = emotesFromAvatar[emoteIndex]
+
+      if (!emote.urn.includes(':')) {
+        validatedEmotes.push(emote)
+        continue
+      }
+
+      let urnToReturn: string = emote.urn
+
+      const { urn, tokenId } = splitUrnAndTokenId(emote.urn)
+
+      const matchingOwnedEmote = ownedEmotes.find(
+        (ownedEmote) =>
+          ownedEmote.urn === urn &&
+          (!tokenId || ownedEmote.individualData.find((itemData) => itemData.tokenId === tokenId))
+      )
+
+      if (!matchingOwnedEmote) {
+        continue
+      }
+
+      urnToReturn = ensureERC721
+        ? `${matchingOwnedEmote.urn}:${tokenId ? tokenId : matchingOwnedEmote.individualData[0].tokenId}`
+        : matchingOwnedEmote.urn
+
+      validatedEmotes.push({ urn: urnToReturn, slot: emote.slot })
+    }
+
+    avatarsToReturn.push({
+      ...avatar,
+      avatar: { ...avatar.avatar, wearables: validatedWearables, emotes: validatedEmotes }
+    })
+  }
+
+  return avatarsToReturn
 }

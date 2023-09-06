@@ -31,7 +31,6 @@ import { AppComponents, BaseWearable, GlobalContext } from './types'
 import { createThirdPartyProvidersGraphFetcherComponent } from './adapters/third-party-providers-graph-fetcher'
 import { createThirdPartyProvidersServiceFetcherComponent } from './adapters/third-party-providers-service-fetcher'
 import { createThirdPartyProvidersStorage } from './logic/third-party-providers-storage'
-import { createUserItemsFilter } from './logic/user-items-filter'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -88,8 +87,6 @@ export async function initComponents(
   )
   const namesFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllNames({ theGraph }, address))
   const landsFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllLANDs({ theGraph }, address))
-
-  const userItemsFilter = await createUserItemsFilter({ config, wearablesFetcher, emotesFetcher })
 
   const resourcesStatusCheck = createResourcesStatusComponent({ logs })
   const status = await createStatusComponent({ logs, fetch })
@@ -155,7 +152,6 @@ export async function initComponents(
     l2Provider,
     catalystsFetcher,
     poisFetcher,
-    nameDenylistFetcher,
-    userItemsFilter
+    nameDenylistFetcher
   }
 }

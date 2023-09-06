@@ -22,7 +22,6 @@ import { main } from '../src/service'
 import { TestComponents } from '../src/types'
 import { createContentClientMock } from './mocks/content-mock'
 import { createTheGraphComponentMock } from './mocks/the-graph-mock'
-import { createUserItemsFilter } from '../src/logic/user-items-filter'
 import { IConfigComponent } from '@well-known-components/interfaces'
 
 /**
@@ -137,8 +136,6 @@ async function initComponents(
     )
   )
 
-  const userItemsFilter = await createUserItemsFilter({ config, emotesFetcher, wearablesFetcher })
-
   return {
     ...components,
     config,
@@ -152,7 +149,6 @@ async function initComponents(
     emotesFetcher,
     wearableDefinitionsFetcher,
     emoteDefinitionsFetcher,
-    thirdPartyWearablesFetcher,
-    userItemsFilter
+    thirdPartyWearablesFetcher
   }
 }
