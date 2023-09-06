@@ -238,9 +238,7 @@ function parseValidWearablesAndFilterInvalidOnes(
 ): string[] {
   const wearablesUrnToReturn: string[] = []
 
-  for (let i = 0; i < wearablesUrn.length; i++) {
-    const wearable = wearablesUrn[i]
-
+  for (const wearable of wearablesUrn) {
     if (isBaseWearable(wearable)) {
       wearablesUrnToReturn.push(wearable)
       continue

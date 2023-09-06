@@ -74,9 +74,7 @@ function parseValidWearablesAndFilterInvalidOnes(
 ): string[] {
   const wearablesUrnToReturn: string[] = []
 
-  for (let i = 0; i < wearablesUrn.length; i++) {
-    const wearable = wearablesUrn[i]
-
+  for (const wearable of wearablesUrn) {
     if (wearable.includes('base-avatars')) {
       wearablesUrnToReturn.push(wearable)
       continue
@@ -115,9 +113,7 @@ async function filterOutfitsWithoutCompleteOwnership(
 
   const outfitsToReturn: { slot: number; outfit: Outfit }[] = []
 
-  for (let i = 0; i < outfits.outfits.length; i++) {
-    const outfit = outfits.outfits[i]
-
+  for (const outfit of outfits.outfits) {
     if (!isOwnedOutfit(outfit.outfit, ownedWearables)) {
       continue
     }
