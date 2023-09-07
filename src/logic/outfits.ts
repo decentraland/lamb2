@@ -36,11 +36,12 @@ export async function getOutfits(
     let allWearablesOwned = true
 
     for (const wearable of outfit.outfit.wearables) {
-      const { urn, tokenId } = splitUrnAndTokenId(wearable)
-      if (urn.includes('off-chain') || wearable.includes('base-avatars')) {
-        wearables.push(urn)
+      if (wearable.includes('off-chain') || wearable.includes('base-avatars')) {
+        wearables.push(wearable)
         continue
       }
+
+      const { urn, tokenId } = splitUrnAndTokenId(wearable)
 
       const matchingOwnedWearable = ownedWearables.find(
         (ownedWearable) =>
