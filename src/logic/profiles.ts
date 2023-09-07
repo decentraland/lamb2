@@ -36,7 +36,6 @@ export async function getProfiles(
   ifModifiedSinceTimestamp?: number | undefined
 ): Promise<ProfileMetadata[] | undefined> {
   try {
-    // Fetch entities by pointers
     let profileEntities: Entity[] = await components.content.fetchEntitiesByPointers(ethAddresses)
 
     // Avoid querying profiles if there wasn't any new deployment
@@ -47,7 +46,6 @@ export async function getProfiles(
       return
     }
 
-    // Filter entities
     profileEntities = profileEntities.filter((entity) => !!entity.metadata)
 
     const namesOwnershipChecker = createNamesOwnershipChecker(components)
@@ -63,7 +61,6 @@ export async function getProfiles(
           .map(({ name }) => name)
           .filter((name) => name && name.trim().length > 0)
 
-        // Add timestamp to the metadata
         metadata.timestamp = entity.timestamp
 
         // Get non-base wearables which urn are valid
@@ -118,7 +115,6 @@ export async function getProfiles(
           }
         }))
 
-        // Build each profile with timestamp and avatars
         return {
           timestamp: metadata.timestamp,
           avatars: await Promise.all(avatars)
