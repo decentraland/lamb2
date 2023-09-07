@@ -1,4 +1,4 @@
-import { AppComponents, ProfileMetadata, OnChainWearable, OnChainEmote } from '../types'
+import { AppComponents, ProfileMetadata } from '../types'
 import { Avatar, Entity, Snapshots } from '@dcl/schemas'
 import { createNamesOwnershipChecker } from '../ports/ownership-checker/names-ownership-checker'
 import { createTPWOwnershipChecker } from '../ports/ownership-checker/tpw-ownership-checker'
@@ -36,7 +36,8 @@ export async function getProfiles(
   ifModifiedSinceTimestamp?: number | undefined
 ): Promise<ProfileMetadata[] | undefined> {
   try {
-    let profileEntities: Entity[] = await components.content.fetchEntitiesByPointers(ethAddresses)
+    const { content, wearablesFetcher, emotesFetcher, config } = components
+    let profileEntities: Entity[] = await content.fetchEntitiesByPointers(ethAddresses)
 
     // Avoid querying profiles if there wasn't any new deployment
     if (
@@ -51,41 +52,8 @@ export async function getProfiles(
     const namesOwnershipChecker = createNamesOwnershipChecker(components)
     const tpwOwnershipChecker = createTPWOwnershipChecker(components)
 
-    // Get data from entities and add them to the ownership checkers
-    await Promise.all(
-      profileEntities.map(async (entity) => {
-        const ethAddress = entity.pointers[0]
-        const metadata: ProfileMetadata = entity.metadata
-        const names = metadata.avatars
-          .filter((avatar) => avatar.hasClaimedName)
-          .map(({ name }) => name)
-          .filter((name) => name && name.trim().length > 0)
-
-        metadata.timestamp = entity.timestamp
-
-        // Get non-base wearables which urn are valid
-        const wearables: string[] = []
-        for (const avatar of metadata.avatars) {
-          for (const wearableId of avatar.avatar.wearables) {
-            if (!isBaseWearable(wearableId)) {
-              const translatedWearableId = await translateWearablesIdFormat(wearableId)
-              if (translatedWearableId) {
-                wearables.push(translatedWearableId)
-              }
-            }
-          }
-        }
-
-        namesOwnershipChecker.addNFTsForAddress(ethAddress, names)
-        tpwOwnershipChecker.addNFTsForAddress(ethAddress, wearables)
-      })
-    )
-
-    // Check ownership for every nft in parallel
-    await Promise.all([namesOwnershipChecker.checkNFTsOwnership(), tpwOwnershipChecker.checkNFTsOwnership()])
-
     // Add name data and snapshot urls to profiles
-    const { config } = components
+    const ensureERC721 = (await config.getString('ENSURE_ERC_721')) === 'true'
     const baseUrl = (await config.getString('CONTENT_URL')) ?? ''
     return await Promise.all(
       profileEntities.map(async (entity) => {
@@ -96,28 +64,104 @@ export async function getProfiles(
         // Add timestamp to the metadata
         metadata.timestamp = entity.timestamp
 
+        const names: string[] = []
+        const wearables: string[] = []
+        for (const { hasClaimedName, avatar, name } of metadata.avatars) {
+          if (hasClaimedName && name && name.trim().length > 0) {
+            names.push(name)
+          }
+
+          for (const wearableId of avatar.wearables) {
+            if (!isBaseWearable(wearableId)) {
+              const translatedWearableId = await translateWearablesIdFormat(wearableId)
+              if (translatedWearableId) {
+                wearables.push(translatedWearableId)
+              }
+            }
+          }
+        }
+        namesOwnershipChecker.addNFTsForAddress(ethAddress, names)
+        tpwOwnershipChecker.addNFTsForAddress(ethAddress, wearables)
+
+        const [ownedWearables, ownedEmotes] = await Promise.all([
+          wearablesFetcher.fetchOwnedElements(ethAddress),
+          emotesFetcher.fetchOwnedElements(ethAddress),
+          namesOwnershipChecker.checkNFTsOwnership(),
+          tpwOwnershipChecker.checkNFTsOwnership()
+        ])
+
         // Get owned nfts from every ownership checker
         const ownedNames = namesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
         const thirdPartyWearables = tpwOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
 
-        const sanitizedAvatars = await removeNotOwnedItemsFromAvatars(components, metadata.avatars, ethAddress)
+        const avatars: Avatar[] = []
+        for (const avatar of metadata.avatars) {
+          const validatedWearables: string[] = []
+          for (const wearable of avatar.avatar.wearables) {
+            if (isBaseWearable(wearable)) {
+              validatedWearables.push(wearable)
+              continue
+            }
 
-        // Fill the avatars field for each profile
-        const avatars = sanitizedAvatars.map(async (sanitizedAvatar) => ({
-          ...sanitizedAvatar,
-          hasClaimedName: ownedNames.includes(sanitizedAvatar.name),
-          avatar: {
-            ...sanitizedAvatar.avatar,
-            bodyShape: (await translateWearablesIdFormat(sanitizedAvatar.avatar.bodyShape)) ?? '',
-            snapshots: addBaseUrlToSnapshots(baseUrl, sanitizedAvatar.avatar.snapshots, content),
-            wearables: Array.from(new Set(sanitizedAvatar.avatar.wearables.concat(thirdPartyWearables))),
-            emotes: sanitizedAvatar.avatar.emotes
+            const { urn, tokenId } = splitUrnAndTokenId(wearable)
+
+            const matchingOwnedWearable = ownedWearables.find(
+              (ownedWearable) =>
+                ownedWearable.urn === urn &&
+                (!tokenId || ownedWearable.individualData.find((itemData) => itemData.tokenId === tokenId))
+            )
+
+            if (matchingOwnedWearable) {
+              validatedWearables.push(
+                ensureERC721
+                  ? `${matchingOwnedWearable.urn}:${
+                      tokenId ? tokenId : matchingOwnedWearable.individualData[0].tokenId
+                    }`
+                  : matchingOwnedWearable.urn
+              )
+            }
           }
-        }))
+
+          const validatedEmotes: { slot: number; urn: string }[] = []
+          for (const emote of avatar.avatar.emotes ?? []) {
+            if (!emote.urn.includes(':')) {
+              validatedEmotes.push(emote)
+              continue
+            }
+
+            const { urn, tokenId } = splitUrnAndTokenId(emote.urn)
+
+            const matchingOwnedEmote = ownedEmotes.find(
+              (ownedEmote) =>
+                ownedEmote.urn === urn &&
+                (!tokenId || ownedEmote.individualData.find((itemData) => itemData.tokenId === tokenId))
+            )
+
+            if (matchingOwnedEmote) {
+              const urnToReturn = ensureERC721
+                ? `${matchingOwnedEmote.urn}:${tokenId ? tokenId : matchingOwnedEmote.individualData[0].tokenId}`
+                : matchingOwnedEmote.urn
+
+              validatedEmotes.push({ urn: urnToReturn, slot: emote.slot })
+            }
+          }
+
+          avatars.push({
+            ...avatar,
+            hasClaimedName: ownedNames.includes(avatar.name),
+            avatar: {
+              ...avatar.avatar,
+              emotes: validatedEmotes,
+              bodyShape: (await translateWearablesIdFormat(avatar.avatar.bodyShape)) ?? '',
+              snapshots: addBaseUrlToSnapshots(baseUrl, avatar.avatar.snapshots, content),
+              wearables: Array.from(new Set(validatedWearables.concat(thirdPartyWearables)))
+            }
+          })
+        }
 
         return {
           timestamp: metadata.timestamp,
-          avatars: await Promise.all(avatars)
+          avatars
         }
       })
     )
@@ -153,78 +197,4 @@ function addBaseUrlToSnapshot(baseUrl: string, snapshot: string, content: Map<st
     // Snapshot is directly a hash
     return cleanedBaseUrl + `contents/${snapshot}`
   }
-}
-
-async function removeNotOwnedItemsFromAvatars(
-  components: Pick<AppComponents, 'wearablesFetcher' | 'emotesFetcher' | 'config'>,
-  avatars: Avatar[],
-  owner: string
-): Promise<Avatar[]> {
-  const { wearablesFetcher, emotesFetcher, config } = components
-  const ensureERC721 = (await config.getString('ENSURE_ERC_721')) === 'true'
-  const avatarsToReturn: Avatar[] = []
-
-  const ownedWearables: OnChainWearable[] = await wearablesFetcher.fetchOwnedElements(owner)
-  const ownedEmotes: OnChainEmote[] = await emotesFetcher.fetchOwnedElements(owner)
-
-  for (const avatar of avatars) {
-    const validatedWearables: string[] = []
-    for (const wearable of avatar.avatar.wearables) {
-      if (isBaseWearable(wearable)) {
-        validatedWearables.push(wearable)
-        continue
-      }
-
-      const { urn, tokenId } = splitUrnAndTokenId(wearable)
-
-      const matchingOwnedWearable = ownedWearables.find(
-        (ownedWearable) =>
-          ownedWearable.urn === urn &&
-          (!tokenId || ownedWearable.individualData.find((itemData) => itemData.tokenId === tokenId))
-      )
-
-      if (!matchingOwnedWearable) {
-        continue
-      }
-
-      validatedWearables.push(
-        ensureERC721
-          ? `${matchingOwnedWearable.urn}:${tokenId ? tokenId : matchingOwnedWearable.individualData[0].tokenId}`
-          : matchingOwnedWearable.urn
-      )
-    }
-
-    const validatedEmotes: { slot: number; urn: string }[] = []
-    for (const emote of avatar.avatar.emotes ?? []) {
-      if (!emote.urn.includes(':')) {
-        validatedEmotes.push(emote)
-        continue
-      }
-
-      const { urn, tokenId } = splitUrnAndTokenId(emote.urn)
-
-      const matchingOwnedEmote = ownedEmotes.find(
-        (ownedEmote) =>
-          ownedEmote.urn === urn &&
-          (!tokenId || ownedEmote.individualData.find((itemData) => itemData.tokenId === tokenId))
-      )
-
-      if (!matchingOwnedEmote) {
-        continue
-      }
-
-      const urnToReturn = ensureERC721
-        ? `${matchingOwnedEmote.urn}:${tokenId ? tokenId : matchingOwnedEmote.individualData[0].tokenId}`
-        : matchingOwnedEmote.urn
-
-      validatedEmotes.push({ urn: urnToReturn, slot: emote.slot })
-    }
-
-    avatarsToReturn.push({
-      ...avatar,
-      avatar: { ...avatar.avatar, wearables: validatedWearables, emotes: validatedEmotes }
-    })
-  }
-
-  return avatarsToReturn
 }
