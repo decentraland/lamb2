@@ -37,8 +37,8 @@ export async function getOutfits(
   namesOwnershipChecker.checkNFTsOwnership()
   const ownedNames = new Set(namesOwnershipChecker.getOwnedNFTsForAddress(ethAddress))
 
-  const normalOutfitsWithOwnedWearables = fullyOwnedOutfits.outfits.filter((outfit) => outfit.slot <= 4)
-  const extraOutfitsWithOwnedWearables = fullyOwnedOutfits.outfits.filter((outfit) => outfit.slot > 4)
+  const normalOutfitsWithOwnedWearables = fullyOwnedOutfits.filter((outfit) => outfit.slot <= 4)
+  const extraOutfitsWithOwnedWearables = fullyOwnedOutfits.filter((outfit) => outfit.slot > 4)
   const extraOutfitsWithOwnedWearablesAndNames = extraOutfitsWithOwnedWearables.slice(0, ownedNames.size)
 
   return {
@@ -106,7 +106,12 @@ async function filterOutfitsWithoutCompleteOwnership(
   components: Pick<AppComponents, 'wearablesFetcher' | 'config'>,
   outfits: Outfits,
   owner: string
-): Promise<Outfits> {
+): Promise<
+  {
+    slot: number
+    outfit: Outfit
+  }[]
+> {
   const { config, wearablesFetcher } = components
   const ensureERC721 = (await config.getString('ENSURE_ERC_721')) === 'true'
   const ownedWearables: OnChainWearable[] = await wearablesFetcher.fetchOwnedElements(owner)
@@ -127,8 +132,5 @@ async function filterOutfitsWithoutCompleteOwnership(
     outfitsToReturn.push({ ...outfit, outfit: { ...outfit.outfit, wearables: parsedOutfitsWearables } })
   }
 
-  return {
-    ...outfits,
-    outfits: outfitsToReturn
-  }
+  return outfitsToReturn
 }
