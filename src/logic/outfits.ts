@@ -10,9 +10,10 @@ export async function getOutfits(
   >,
   ethAddress: string
 ): Promise<TypedEntity<Outfits> | undefined> {
-  const outfitsEntities: TypedEntity<Outfits>[] = await components.content.fetchEntitiesByPointers([
-    `${ethAddress}:outfits`
-  ])
+  const { config, wearablesFetcher, content } = components
+  const ensureERC721 = (await config.getString('ENSURE_ERC_721')) === 'true'
+
+  const outfitsEntities: TypedEntity<Outfits>[] = await content.fetchEntitiesByPointers([`${ethAddress}:outfits`])
 
   if (!outfitsEntities || outfitsEntities.length === 0) {
     return undefined
@@ -23,17 +24,50 @@ export async function getOutfits(
     return outfitsEntities[0]
   }
 
-  const outfits = outfitsEntities[0].metadata
-
-  if (!outfits) {
-    return undefined
-  }
+  const { metadata } = outfitsEntity
 
   // Outfits containing all wearables owned
-  const fullyOwnedOutfits = await filterOutfitsWithoutCompleteOwnership(components, outfits, ethAddress)
+  const ownedWearables: OnChainWearable[] = await wearablesFetcher.fetchOwnedElements(ethAddress)
+
+  const fullyOwnedOutfits: { slot: number; outfit: Outfit }[] = []
+
+  for (const outfit of metadata.outfits) {
+    const wearables: string[] = []
+    let allWearablesOwned = true
+
+    for (const wearable of outfit.outfit.wearables) {
+      if (wearable.includes('off-chain') || wearable.includes('base-avatars')) {
+        wearables.push(wearable)
+        continue
+      }
+
+      const { urn, tokenId } = splitUrnAndTokenId(wearable)
+
+      const matchingOwnedWearable = ownedWearables.find(
+        (ownedWearable) =>
+          ownedWearable.urn === urn &&
+          (!tokenId || ownedWearable.individualData.some((itemData) => itemData.tokenId === tokenId))
+      )
+
+      if (matchingOwnedWearable) {
+        wearables.push(
+          ensureERC721
+            ? `${matchingOwnedWearable.urn}:${tokenId ? tokenId : matchingOwnedWearable.individualData[0].tokenId}`
+            : matchingOwnedWearable.urn
+        )
+      } else {
+        allWearablesOwned = false
+        break
+      }
+    }
+
+    if (allWearablesOwned) {
+      fullyOwnedOutfits.push({ ...outfit, outfit: { ...outfit.outfit, wearables } })
+    }
+  }
 
   const namesOwnershipChecker = createNamesOwnershipChecker(components)
-  namesOwnershipChecker.addNFTsForAddress(ethAddress, outfits.namesForExtraSlots)
+  namesOwnershipChecker.addNFTsForAddress(ethAddress, metadata.namesForExtraSlots)
   namesOwnershipChecker.checkNFTsOwnership()
   const ownedNames = new Set(namesOwnershipChecker.getOwnedNFTsForAddress(ethAddress))
 
@@ -48,89 +82,4 @@ export async function getOutfits(
       namesForExtraSlots: Array.from(ownedNames)
     }
   }
-}
-
-function isOwnedOutfit(outfit: Outfit, ownedWearables: OnChainWearable[]) {
-  const parsedWearables = outfit.wearables.map((wearable) => splitUrnAndTokenId(wearable))
-  return parsedWearables.every((wearable) => {
-    if (wearable.urn.includes('off-chain')) {
-      return true
-    }
-
-    const matchingOwnedWearable = ownedWearables.find(
-      (ownedWearable) =>
-        ownedWearable.urn === wearable.urn &&
-        (!wearable.tokenId || ownedWearable.individualData.some((itemData) => itemData.tokenId === wearable.tokenId))
-    )
-
-    return !!matchingOwnedWearable
-  })
-}
-
-function parseValidWearablesAndFilterInvalidOnes(
-  wearablesUrn: string[],
-  ownedWearables: OnChainWearable[],
-  shouldExtendWearables: boolean
-): string[] {
-  const wearablesUrnToReturn: string[] = []
-
-  for (const wearable of wearablesUrn) {
-    if (wearable.includes('base-avatars')) {
-      wearablesUrnToReturn.push(wearable)
-      continue
-    }
-
-    const { urn, tokenId } = splitUrnAndTokenId(wearable)
-
-    const matchingOwnedWearable = ownedWearables.find(
-      (ownedWearable) =>
-        ownedWearable.urn === urn &&
-        (!tokenId || ownedWearable.individualData.find((itemData) => itemData.tokenId === tokenId))
-    )
-
-    if (!matchingOwnedWearable) {
-      continue
-    }
-
-    wearablesUrnToReturn.push(
-      shouldExtendWearables
-        ? `${matchingOwnedWearable.urn}:${tokenId ? tokenId : matchingOwnedWearable.individualData[0].tokenId}`
-        : matchingOwnedWearable.urn
-    )
-  }
-
-  return wearablesUrnToReturn
-}
-
-async function filterOutfitsWithoutCompleteOwnership(
-  components: Pick<AppComponents, 'wearablesFetcher' | 'config'>,
-  outfits: Outfits,
-  owner: string
-): Promise<
-  {
-    slot: number
-    outfit: Outfit
-  }[]
-> {
-  const { config, wearablesFetcher } = components
-  const ensureERC721 = (await config.getString('ENSURE_ERC_721')) === 'true'
-  const ownedWearables: OnChainWearable[] = await wearablesFetcher.fetchOwnedElements(owner)
-
-  const outfitsToReturn: { slot: number; outfit: Outfit }[] = []
-
-  for (const outfit of outfits.outfits) {
-    if (!isOwnedOutfit(outfit.outfit, ownedWearables)) {
-      continue
-    }
-
-    const parsedOutfitsWearables = parseValidWearablesAndFilterInvalidOnes(
-      outfit.outfit.wearables,
-      ownedWearables,
-      ensureERC721
-    )
-
-    outfitsToReturn.push({ ...outfit, outfit: { ...outfit.outfit, wearables: parsedOutfitsWearables } })
-  }
-
-  return outfitsToReturn
 }
