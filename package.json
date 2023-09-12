@@ -10,7 +10,7 @@
   },
   "license": "Apache-2.0",
   "devDependencies": {
-    "@dcl/eslint-config": "^1.1.11",
+    "@dcl/eslint-config": "^1.1.12",
     "@dcl/protocol": "^1.0.0-5824184720.commit-b3b5ebf",
     "@types/lodash": "^4.14.191",
     "@types/node": "^18.11.18",
