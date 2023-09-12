@@ -12,7 +12,6 @@
   "devDependencies": {
     "@dcl/eslint-config": "^1.1.12",
     "@dcl/protocol": "^1.0.0-5824184720.commit-b3b5ebf",
-    "@types/lodash": "^4.14.191",
     "@types/node": "^18.11.18",
     "@well-known-components/test-helpers": "^1.5.3",
     "ethereumjs-wallet": "^1.0.2",
@@ -39,7 +38,6 @@
     "@well-known-components/thegraph-component": "^1.6.0",
     "dcl-catalyst-client": "^21.5.5",
     "eth-connect": "^6.1.0",
-    "lodash": "^4.17.21",
     "lru-cache": "^8.0.4"
   },
   "resolutions": {
