@@ -11,7 +11,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@dcl/eslint-config": "^1.1.11",
-    "@dcl/protocol": "^1.0.0-5824184720.commit-b3b5ebf",
+    "@dcl/protocol": "https://sdk-team-cdn.decentraland.org/@dcl/protocol/branch//dcl-protocol-1.0.0-5968212016.commit-5326e3d.tgz",
     "@types/lodash": "^4.14.191",
     "@types/node": "^18.11.18",
     "@well-known-components/test-helpers": "^1.5.3",
@@ -26,7 +26,7 @@
     "tabWidth": 2
   },
   "dependencies": {
-    "@dcl/catalyst-api-specs": "https://sdk-team-cdn.decentraland.org/@dcl/catalyst-api-specs/branch/feat/default-realm/dcl-catalyst-api-specs-3.2.4-5963243994.commit-c2928aa.tgz",
+    "@dcl/catalyst-api-specs": "https://sdk-team-cdn.decentraland.org/@dcl/catalyst-api-specs/branch/feat/default-realm/dcl-catalyst-api-specs-3.2.4-5968106950.commit-a418885.tgz",
     "@dcl/catalyst-contracts": "^4.1.0",
     "@dcl/crypto": "^3.4.5",
     "@dcl/schemas": "^9.4.1",

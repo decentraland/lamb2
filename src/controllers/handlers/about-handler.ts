@@ -1,5 +1,5 @@
 import { HandlerContextWithPath } from '../../types'
-import { About, StatusContent, AboutCommsAdapterType } from '@dcl/catalyst-api-specs/lib/client'
+import { About, StatusContent } from '@dcl/catalyst-api-specs/lib/client'
 import { l1Contracts, L1Network } from '@dcl/catalyst-contracts'
 
 export type ArchipelagoStatus = {
@@ -59,6 +59,17 @@ export async function aboutHandler(
     config.getString('CURRENT_VERSION')
   ])
 
+  console.log(
+    lambdasPublicUrl,
+    lambdasInternalUrl,
+    contentPublicUrl,
+    contentInternalUrl,
+    archipelagoPublicUrl,
+    archipelagoInternalUrl,
+    commitHash,
+    currentVersion
+  )
+
   const lambdasUrl = getUrl(lambdasPublicUrl, lambdasInternalUrl)
   const contentUrl = getUrl(contentPublicUrl, contentInternalUrl)
 
@@ -82,17 +93,14 @@ export async function aboutHandler(
     healthy = healthy && archipelagoStatus.healthy
     acceptingUsers = acceptingUsers && healthy && (!maxUsers || userCount < maxUsers)
     const url = new URL('/archipelago/ws', archipelagoPublicUrl).toString()
-    const wsUrl = url.replace(/^http/, 'ws')
+    const archipelagoWSUrl = `archipelago:${url.replace(/^http/, 'ws')}`
     comms = {
       healthy: archipelagoStatus.healthy,
       protocol: 'v3',
       version: archipelagoStatus.data?.version,
       commitHash: archipelagoStatus.data?.commitHash,
       usersCount: userCount,
-      adapter: {
-        type: AboutCommsAdapterType.archipelago,
-        connectionString: wsUrl
-      }
+      adapter: archipelagoWSUrl
     }
   }
 

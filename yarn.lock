@@ -302,15 +302,9 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@dcl/catalyst-api-specs@https://sdk-team-cdn.decentraland.org/@dcl/catalyst-api-specs/branch/feat/default-realm/dcl-catalyst-api-specs-3.2.4-5963155894.commit-7aa077c.tgz":
-  version "3.2.4-5963155894.commit-7aa077c"
-  resolved "https://sdk-team-cdn.decentraland.org/@dcl/catalyst-api-specs/branch/feat/default-realm/dcl-catalyst-api-specs-3.2.4-5963155894.commit-7aa077c.tgz#ac8ce2c555a07abc8cff0f55a2b468b648503f0f"
-  dependencies:
-    yaml "^2.3.1"
-
-"@dcl/catalyst-api-specs@https://sdk-team-cdn.decentraland.org/@dcl/catalyst-api-specs/branch/feat/default-realm/dcl-catalyst-api-specs-3.2.4-5963243994.commit-c2928aa.tgz":
-  version "3.2.4-5963243994.commit-c2928aa"
-  resolved "https://sdk-team-cdn.decentraland.org/@dcl/catalyst-api-specs/branch/feat/default-realm/dcl-catalyst-api-specs-3.2.4-5963243994.commit-c2928aa.tgz#8f14e52dc37744bdb91f09fc6ec08879fe72d60e"
+"@dcl/catalyst-api-specs@https://sdk-team-cdn.decentraland.org/@dcl/catalyst-api-specs/branch/feat/default-realm/dcl-catalyst-api-specs-3.2.4-5968106950.commit-a418885.tgz":
+  version "3.2.4-5968106950.commit-a418885"
+  resolved "https://sdk-team-cdn.decentraland.org/@dcl/catalyst-api-specs/branch/feat/default-realm/dcl-catalyst-api-specs-3.2.4-5968106950.commit-a418885.tgz#f610119411db807e9f8ffcbd3ca8fe8e69a20fce"
   dependencies:
     yaml "^2.3.1"
 
@@ -350,17 +344,25 @@
   resolved "https://registry.yarnpkg.com/@dcl/hashing/-/hashing-3.0.4.tgz#4df2a4cb3a8114765aed34cb57b91c93bf33bfb3"
   integrity sha512-Cg+MoIOn+BYmQV2q8zSFnNYY+GldlnUazwBnfgrq3i66ZxOaZ65h01btd8OUtSAlfWG4VTNIOHDjtKqmuwJNBg==
 
-"@dcl/protocol@^1.0.0-5824184720.commit-b3b5ebf":
-  version "1.0.0-5824184720.commit-b3b5ebf"
-  resolved "https://registry.yarnpkg.com/@dcl/protocol/-/protocol-1.0.0-5824184720.commit-b3b5ebf.tgz#7d19f5440bca74bd2c5791606ca88e190fbdeb5c"
-  integrity sha512-k2p0SpJIDMiGTB+B0B2VLdgdd1ERiKVxmwQbgFrkG6jYJpjlD1DsJynoWXsk6hbvmnc1spW9uMo+DUBTpO3dcA==
+"@dcl/protocol@https://sdk-team-cdn.decentraland.org/@dcl/protocol/branch//dcl-protocol-1.0.0-5968212016.commit-5326e3d.tgz":
+  version "1.0.0-5968212016.commit-5326e3d"
+  resolved "https://sdk-team-cdn.decentraland.org/@dcl/protocol/branch//dcl-protocol-1.0.0-5968212016.commit-5326e3d.tgz#f2e8d634725d11d090c2be8e2250001a489d2228"
   dependencies:
     "@dcl/ts-proto" "1.154.0"
 
-"@dcl/schemas@^9.0.0", "@dcl/schemas@^9.2.0", "@dcl/schemas@^9.4.1":
-  version "9.4.1"
-  resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-9.4.1.tgz#f342100171916a36025008dff3228764292fb8c3"
-  integrity sha512-oM9y5CuKKMH6kjJLXpD9JC1L1JTCkJDshUk5TUNkkvWaP2ljXaxnU99a1LoI7jfKnTkBAASK685bf0totbXdcQ==
+"@dcl/schemas@^9.0.0":
+  version "9.1.1"
+  resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-9.1.1.tgz#53823b973d2568c2d37fe1d12d730d3e9d07c688"
+  integrity sha512-1bsFlc8+no75e8hBrAH2vqvNQzpneBxvBt4Q7695EVvthL9BcZM6g0yK6FyQs+IkY45L2LRAe+UctUjROX5TPA==
+  dependencies:
+    ajv "^8.11.0"
+    ajv-errors "^3.0.0"
+    ajv-keywords "^5.1.0"
+
+"@dcl/schemas@^9.2.0", "@dcl/schemas@^9.4.1":
+  version "9.5.0"
+  resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-9.5.0.tgz#ff9bab44ea98ab7df98b183006b360319bf8d963"
+  integrity sha512-OIPRbItAF+qMAmUlVxoa/esO83LZ96oDTim/Fxfwj6LAmPfwtZsAPH22iAiYIP6i5XuLMS7PS13NLioHT8lQJg==
   dependencies:
     ajv "^8.11.0"
     ajv-errors "^3.0.0"

@@ -1,11 +1,7 @@
 import { createConfigComponent } from '@well-known-components/env-config-provider'
 import { ServiceStatus } from '../../src/adapters/status'
 import { aboutHandler } from '../../src/controllers/handlers/about-handler'
-import { AboutResponse as ProtocolAboutResponse } from '@dcl/protocol/out-js/decentraland/realm/about.gen'
-
-type AboutResponse = Omit<ProtocolAboutResponse, 'comms'> &
-  Partial<ProtocolAboutResponse['comms']>
-
+import { AboutResponse } from '@dcl/protocol/out-js/decentraland/realm/about.gen'
 
 describe('about-controller-unit', () => {
   const defaultConfigWithoutComms = {
@@ -342,10 +338,7 @@ describe('about-controller-unit', () => {
             protocol: "v3",
             usersCount: 10,
             version: "archipelago_1",
-            adapter: {
-              type: "archipelago",
-              connectionString: "wss://peer.decentraland.org/archipelago/ws"
-            }
+            adapter: "archipelago:wss://peer.decentraland.org/archipelago/ws"
           },
           acceptingUsers: true
         }
@@ -417,10 +410,7 @@ describe('about-controller-unit', () => {
             commitHash: 'archipelago_hash',
             version: 'archipelago_1',
             usersCount: 1000,
-            adapter: {
-              type: "archipelago",
-              connectionString: "wss://peer.decentraland.org/archipelago/ws"
-            }
+            adapter: "archipelago:wss://peer.decentraland.org/archipelago/ws"
           },
           acceptingUsers: false
         }
