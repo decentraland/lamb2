@@ -35,6 +35,7 @@ import { TheGraphComponent } from './ports/the-graph'
 import { ThirdPartyProvidersServiceFetcher } from './adapters/third-party-providers-service-fetcher'
 import { ThirdPartyProvidersGraphFetcher } from './adapters/third-party-providers-graph-fetcher'
 import { ThirdPartyProvidersStorage } from './logic/third-party-providers-storage'
+import { IdentityComponent } from './adapters/identity'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -71,6 +72,7 @@ export type BaseComponents = {
   catalystsFetcher: CatalystsFetcher
   poisFetcher: POIsFetcher
   nameDenylistFetcher: NameDenylistFetcher
+  identity: IdentityComponent
 }
 
 // components used in runtime
