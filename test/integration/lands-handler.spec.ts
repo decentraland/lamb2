@@ -1,17 +1,17 @@
-import Wallet from 'ethereumjs-wallet'
 import { LANDFromQuery } from '../../src/logic/fetch-elements/fetch-lands'
 import { LAND } from '../../src/types'
 import { test } from '../components'
 import { generateLANDs } from '../data/lands'
+import { generateRandomAddress } from '../helpers'
 
-// NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
+// NOTE: each test generates a new wallet to avoid matches on cache
 test('lands-handler: GET /users/:address/lands should', function ({ components }) {
   it('return empty when no lands are found', async () => {
     const { localFetch, theGraph } = components
 
     theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/lands`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/lands`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -29,7 +29,7 @@ test('lands-handler: GET /users/:address/lands should', function ({ components }
 
     theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: lands })
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/lands`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/lands`)
 
     expect(r.status).toBe(200)
     const response = await r.json()
@@ -47,7 +47,7 @@ test('lands-handler: GET /users/:address/lands should', function ({ components }
 
     theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: lands })
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/lands?pageSize=2&pageNum=1`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/lands?pageSize=2&pageNum=1`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -64,7 +64,7 @@ test('lands-handler: GET /users/:address/lands should', function ({ components }
 
     theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: lands })
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/lands?pageSize=2&pageNum=2`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/lands?pageSize=2&pageNum=2`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -81,7 +81,7 @@ test('lands-handler: GET /users/:address/lands should', function ({ components }
 
     theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: lands })
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/lands?pageSize=2&pageNum=3`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/lands?pageSize=2&pageNum=3`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -95,7 +95,7 @@ test('lands-handler: GET /users/:address/lands should', function ({ components }
   it('return lands from cache on second call for the same address', async () => {
     const { localFetch, theGraph } = components
     const lands = generateLANDs(7)
-    const wallet = Wallet.generate().getAddressString()
+    const wallet = generateRandomAddress()
 
     theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: lands })
 
@@ -121,7 +121,7 @@ test('lands-handler: GET /users/:address/lands should', function ({ components }
 
     theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce(undefined)
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/lands`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/lands`)
     const data = await r.json()
     expect(r.status).toBe(502)
     expect(data.error).toEqual('The requested items cannot be fetched right now')
