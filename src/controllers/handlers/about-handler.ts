@@ -93,7 +93,7 @@ export async function aboutHandler(
     healthy = healthy && archipelagoStatus.healthy
     acceptingUsers = acceptingUsers && healthy && (!maxUsers || userCount < maxUsers)
     const url = new URL('/archipelago/ws', archipelagoPublicUrl).toString()
-    const archipelagoWSUrl = `archipelago:${url.replace(/^http/, 'ws')}`
+    const archipelagoWSUrl = `archipelago:archipelago-v1:${url.replace(/^http/, 'ws')}`
     comms = {
       healthy: archipelagoStatus.healthy,
       protocol: 'v3',

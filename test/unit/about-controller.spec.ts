@@ -338,7 +338,7 @@ describe('about-controller-unit', () => {
             protocol: "v3",
             usersCount: 10,
             version: "archipelago_1",
-            adapter: "archipelago:wss://peer.decentraland.org/archipelago/ws"
+            adapter: "archipelago:archipelago-v1:wss://peer.decentraland.org/archipelago/ws"
           },
           acceptingUsers: true
         }
@@ -410,7 +410,7 @@ describe('about-controller-unit', () => {
             commitHash: 'archipelago_hash',
             version: 'archipelago_1',
             usersCount: 1000,
-            adapter: "archipelago:wss://peer.decentraland.org/archipelago/ws"
+            adapter: "archipelago:archipelago-v1:wss://peer.decentraland.org/archipelago/ws"
           },
           acceptingUsers: false
         }
