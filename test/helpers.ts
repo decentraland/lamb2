@@ -1,5 +1,6 @@
-import Wallet from 'ethereumjs-wallet'
+import { createIdentity } from 'eth-crypto'
 
 export function generateRandomAddress(): string {
-  return Wallet.generate().getAddressString()
+  const identity = createIdentity()
+  return identity.address
 }
