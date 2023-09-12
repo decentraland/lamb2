@@ -113,7 +113,9 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: [...convertToDataModel(wearables, { entities, contentServerUrl, includeDefinition: true })].sort(rarest),
+      elements: [...convertToDataModel(wearables, { entities, contentServerUrl, includeDefinition: true })].sort(
+        rarest
+      ),
       pageNum: 1,
       pageSize: 100,
       totalAmount: 2
@@ -156,7 +158,9 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
-      elements: [...convertToDataModel(wearables, { entities, contentServerUrl, includeDefinition: true })].sort(rarest),
+      elements: [...convertToDataModel(wearables, { entities, contentServerUrl, includeDefinition: true })].sort(
+        rarest
+      ),
       pageNum: 1,
       pageSize: 100,
       totalAmount: 2
@@ -628,7 +632,7 @@ type ContentInfo = {
 function convertToDataModel(wearables: WearableFromQuery[], contentInfo?: ContentInfo): OnChainWearableResponse[] {
   return wearables.map((wearable): OnChainWearableResponse => {
     const individualData = {
-      id: wearable.id,
+      id: `${wearable.urn}:${wearable.tokenId}`,
       tokenId: wearable.tokenId,
       transferredAt: wearable.transferredAt,
       price: wearable.item.price
@@ -644,7 +648,9 @@ function convertToDataModel(wearables: WearableFromQuery[], contentInfo?: Conten
       category: wearable.metadata.wearable.category,
       name: wearable.metadata.wearable.name,
       definition:
-        contentInfo?.includeDefinition && entity ? extractWearableDefinitionFromEntity({ contentServerUrl }, entity) : undefined,
+        contentInfo?.includeDefinition && entity
+          ? extractWearableDefinitionFromEntity({ contentServerUrl }, entity)
+          : undefined,
       entity: contentInfo?.includeEntity && entity ? entity : undefined
     }
   })

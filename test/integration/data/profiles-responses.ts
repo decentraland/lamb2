@@ -1,5 +1,80 @@
 import { EntityType } from '@dcl/schemas'
 
+export const profileEntityFullWithExtendedItems = {
+  version: 'v3',
+  id: 'bafkreid2ltr77sewkzr4xz37pzyvcgzeljubecqworvsdbw7t5333h6q3a',
+  type: EntityType.PROFILE,
+  timestamp: 1662137617154,
+  pointers: ['0x1'],
+  content: [
+    {
+      file: 'body.png',
+      hash: 'bafkreicilawwtbjyf6ahyzv64ssoamdm73rif75qncee5lv6j3a3352lua'
+    },
+    {
+      file: 'face256.png',
+      hash: 'bafkreigi3yrgdhvjr2cqzxvfztnsubnll2cfdioo4vfzu6o6vibwoag2ma'
+    }
+  ],
+  metadata: {
+    avatars: [
+      {
+        hasClaimedName: true,
+        name: 'cryptonico',
+        description: '',
+        tutorialStep: 256,
+        userId: '0x1',
+        email: '',
+        ethAddress: '0x1',
+        version: 30,
+        avatar: {
+          bodyShape: 'urn:decentraland:off-chain:base-avatars:BaseMale',
+          wearables: [
+            'urn:decentraland:off-chain:base-avatars:eyebrows_00',
+            'urn:decentraland:off-chain:base-avatars:short_hair',
+            'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7:1',
+            'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1:1',
+            'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:1',
+            'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand:1',
+            'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f',
+            'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:12341234-1234-3434-3434-f9dfde9f9393'
+          ],
+          snapshots: {
+            body: 'bafkreicilawwtbjyf6ahyzv64ssoamdm73rif75qncee5lv6j3a3352lua',
+            face256: 'bafkreigi3yrgdhvjr2cqzxvfztnsubnll2cfdioo4vfzu6o6vibwoag2ma'
+          },
+          eyes: {
+            color: {
+              r: 0.37109375,
+              g: 0.22265625,
+              b: 0.1953125,
+              a: 1
+            }
+          },
+          hair: {
+            color: {
+              r: 0.234375,
+              g: 0.12890625,
+              b: 0.04296875,
+              a: 1
+            }
+          },
+          skin: {
+            color: {
+              r: 0.94921875,
+              g: 0.76171875,
+              b: 0.6484375,
+              a: 1
+            }
+          }
+        },
+        interests: [],
+        hasConnectedWeb3: true
+      }
+    ]
+  }
+}
+
 export const profileEntityFull = {
   version: 'v3',
   id: 'bafkreid2ltr77sewkzr4xz37pzyvcgzeljubecqworvsdbw7t5333h6q3a',

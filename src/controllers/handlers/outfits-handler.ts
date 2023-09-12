@@ -4,7 +4,7 @@ import { Entity } from '@dcl/schemas'
 
 export async function outfitsHandler(
   context: HandlerContextWithPath<
-    'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches',
+    'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches' | 'wearablesFetcher',
     '/outfits/:id'
   >
 ): Promise<{ status: 200; body: Entity }> {

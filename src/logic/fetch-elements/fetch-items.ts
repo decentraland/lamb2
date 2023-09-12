@@ -11,7 +11,7 @@ function groupItemsByURN<
 
   items.forEach((itemFromQuery) => {
     const individualData = {
-      id: itemFromQuery.id,
+      id: itemFromQuery.urn + ':' + itemFromQuery.tokenId,
       tokenId: itemFromQuery.tokenId,
       transferredAt: itemFromQuery.transferredAt,
       price: itemFromQuery.item.price

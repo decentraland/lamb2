@@ -120,7 +120,10 @@ testWithComponents(() => {
       }
     })
 
-    const convertedMixedBaseWearables = convertToMixedBaseWearableResponse(baseWearables, { entities, contentServerUrl })
+    const convertedMixedBaseWearables = convertToMixedBaseWearableResponse(baseWearables, {
+      entities,
+      contentServerUrl
+    })
     const convertedMixedOnChainWearables = convertToMixedOnChainWearableResponse(onChainWearables, {
       entities,
       contentServerUrl
@@ -132,6 +135,7 @@ testWithComponents(() => {
 
     const wallet = Wallet.generate().getAddressString()
     const r = await localFetch.fetch(`/explorer/${wallet}/wearables`)
+
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
       elements: [
@@ -299,7 +303,7 @@ function convertToMixedOnChainWearableResponse(
 ): MixedWearableResponse[] {
   return wearables.map((wearable): MixedWearableResponse => {
     const individualData = {
-      id: wearable.id,
+      id: `${wearable.urn}:${wearable.tokenId}`,
       tokenId: wearable.tokenId,
       transferredAt: wearable.transferredAt,
       price: wearable.item.price
