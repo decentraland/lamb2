@@ -1,8 +1,10 @@
 import { HandlerContextWithPath } from '../../types'
 
-export async function statusHandler(context: Pick<HandlerContextWithPath<'config', '/status'>, 'url' | 'components'>) {
+export async function statusHandler(
+  context: Pick<HandlerContextWithPath<'config' | 'identity', '/status'>, 'url' | 'components'>
+) {
   const {
-    components: { config }
+    components: { config, identity }
   } = context
 
   const [commitHash, version] = await Promise.all([
@@ -14,7 +16,9 @@ export async function statusHandler(context: Pick<HandlerContextWithPath<'config
     body: {
       version: version ?? '',
       currentTime: Date.now(),
-      commitHash: commitHash ?? ''
+      commitHash: commitHash ?? '',
+      publicKey: identity.getPublicKey(),
+      address: identity.getAddress()
     }
   }
 }

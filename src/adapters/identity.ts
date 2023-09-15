@@ -3,11 +3,16 @@ import { IBaseComponent } from '@well-known-components/interfaces'
 
 export type IdentityComponent = IBaseComponent & {
   getPublicKey(): string
+  getAddress(): string
   sign(message: string): string
 }
 
 export function createIdentityComponent(): IdentityComponent {
   const identity = EthCrypto.createIdentity()
+
+  function getAddress(): string {
+    return identity.address
+  }
 
   function getPublicKey(): string {
     return identity.publicKey
@@ -18,6 +23,7 @@ export function createIdentityComponent(): IdentityComponent {
   }
 
   return {
+    getAddress,
     getPublicKey,
     sign
   }
