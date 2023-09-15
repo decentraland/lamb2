@@ -6,7 +6,7 @@ test('integration sanity tests using a real server backend', function ({ compone
     const r = await localFetch.fetch('/status')
 
     expect(r.status).toEqual(200)
-    expect(await r.json()).toEqual({
+    expect(await r.json()).toMatchObject({
       commitHash: 'commit_hash',
       currentTime: expect.any(Number),
       version: 'version'

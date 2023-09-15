@@ -2,7 +2,7 @@ import { testWithComponents } from '../../components'
 import { getThirdPartyProviders } from '../../data/wearables'
 import { createTheGraphComponentMock } from '../../mocks/the-graph-mock'
 
-// NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
+// NOTE: each test generates a new wallet to avoid matches on cache
 testWithComponents(() => {
   const theGraphMock = createTheGraphComponentMock()
   const resolverResponse = {

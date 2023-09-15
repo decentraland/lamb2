@@ -31,6 +31,7 @@ import { AppComponents, BaseWearable, GlobalContext } from './types'
 import { createThirdPartyProvidersGraphFetcherComponent } from './adapters/third-party-providers-graph-fetcher'
 import { createThirdPartyProvidersServiceFetcherComponent } from './adapters/third-party-providers-service-fetcher'
 import { createThirdPartyProvidersStorage } from './logic/third-party-providers-storage'
+import { createIdentityComponent } from './adapters/identity'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -122,6 +123,7 @@ export async function initComponents(
     fetchAllThirdPartyWearables({ thirdPartyProvidersStorage, fetch, logs, entitiesFetcher, metrics }, address)
   )
 
+  const identity = createIdentityComponent()
   return {
     config,
     logs,
@@ -152,6 +154,7 @@ export async function initComponents(
     l2Provider,
     catalystsFetcher,
     poisFetcher,
-    nameDenylistFetcher
+    nameDenylistFetcher,
+    identity
   }
 }

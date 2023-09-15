@@ -1,5 +1,4 @@
 import { Entity, WearableCategory } from '@dcl/schemas'
-import Wallet from 'ethereumjs-wallet'
 import { extractWearableDefinitionFromEntity } from '../../src/adapters/definitions'
 import { WearableFromQuery } from '../../src/logic/fetch-elements/fetch-items'
 import { RARITIES } from '../../src/logic/utils'
@@ -8,8 +7,9 @@ import { test } from '../components'
 import { generateWearableEntities, generateWearables } from '../data/wearables'
 
 import { leastRare, nameAZ, nameZA, rarest } from '../../src/logic/sorting'
+import { generateRandomAddress } from '../helpers'
 
-// NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
+// NOTE: each test generates a new wallet to avoid matches on cache
 test('wearables-handler: GET /users/:address/wearables should', function ({ components }) {
   it('return empty when no wearables are found', async () => {
     const { localFetch, theGraph } = components
@@ -17,7 +17,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/wearables`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -35,7 +35,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce([])
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?includeDefinitions`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/wearables?includeDefinitions`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -53,7 +53,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: wearables })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/wearables`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -71,7 +71,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: wearables })
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/wearables`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -89,7 +89,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[0]] })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[1]] })
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/wearables`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -109,7 +109,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[1]] })
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(entities)
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?includeDefinitions`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/wearables?includeDefinitions`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -131,7 +131,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[1]] })
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(entities)
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?includeEntities`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/wearables?includeEntities`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -154,7 +154,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[1]] })
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(entities)
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?includeDefinitions`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/wearables?includeDefinitions`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -174,7 +174,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[0], wearables[1]] })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[2], wearables[3]] })
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?pageSize=2&pageNum=1`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/wearables?pageSize=2&pageNum=1`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -192,7 +192,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[0], wearables[1]] })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[2], wearables[3]] })
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?pageSize=2&pageNum=2`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/wearables?pageSize=2&pageNum=2`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -212,7 +212,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
       .mockResolvedValueOnce({ nfts: [wearables[0], wearables[1], wearables[2]] })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[3]] })
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?pageSize=2&pageNum=1`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/wearables?pageSize=2&pageNum=1`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -232,7 +232,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
       .mockResolvedValueOnce({ nfts: [wearables[0], wearables[1], wearables[2]] })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[3]] })
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?pageSize=2&pageNum=2`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/wearables?pageSize=2&pageNum=2`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -254,7 +254,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
       .fn()
       .mockResolvedValueOnce({ nfts: [wearables[4], wearables[5], wearables[6]] })
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?pageSize=3&pageNum=1`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/wearables?pageSize=3&pageNum=1`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -276,7 +276,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
       .fn()
       .mockResolvedValueOnce({ nfts: [wearables[4], wearables[5], wearables[6]] })
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?pageSize=3&pageNum=2`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/wearables?pageSize=3&pageNum=2`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -298,7 +298,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
       .fn()
       .mockResolvedValueOnce({ nfts: [wearables[4], wearables[5], wearables[6]] })
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?pageSize=3&pageNum=3`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/wearables?pageSize=3&pageNum=3`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -312,7 +312,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
   it('return wearables from cache on second call for the same address', async () => {
     const { localFetch, theGraph } = components
     const wearables = generateWearables(7)
-    const wallet = Wallet.generate().getAddressString()
+    const wallet = generateRandomAddress()
 
     theGraph.ethereumCollectionsSubgraph.query = jest
       .fn()
@@ -342,7 +342,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
   it('return wearables filtering by name', async () => {
     const { localFetch, theGraph } = components
     const wearables = generateWearables(17)
-    const wallet = Wallet.generate().getAddressString()
+    const wallet = generateRandomAddress()
 
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: wearables })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
@@ -371,7 +371,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
       }
     }))
 
-    const wallet = Wallet.generate().getAddressString()
+    const wallet = generateRandomAddress()
 
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: wearables })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
@@ -428,7 +428,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
         rarity: i % 2 === 0 ? 'rare' : 'mythic'
       }
     }))
-    const wallet = Wallet.generate().getAddressString()
+    const wallet = generateRandomAddress()
 
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: wearables })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
@@ -468,7 +468,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
       transferredAt: w.transferredAt + i
     }))
 
-    const wallet = Wallet.generate().getAddressString()
+    const wallet = generateRandomAddress()
 
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: wearables })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
@@ -506,7 +506,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
       }
     }))
 
-    const wallet = Wallet.generate().getAddressString()
+    const wallet = generateRandomAddress()
 
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: wearables })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
@@ -538,7 +538,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     const { localFetch, theGraph } = components
     const wearables = generateWearables(17)
 
-    const wallet = Wallet.generate().getAddressString()
+    const wallet = generateRandomAddress()
 
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: wearables })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
@@ -574,7 +574,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
       .mockRejectedValueOnce(new Error(`GraphQL Error: Invalid response. Errors:\n- some error. Provider: ethereum`))
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
 
-    const wallet = Wallet.generate().getAddressString()
+    const wallet = generateRandomAddress()
     const r = await localFetch.fetch(`/users/${wallet}/wearables`)
 
     expect(r.status).toBe(502)
@@ -592,7 +592,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
       .fn()
       .mockRejectedValueOnce(new Error(`GraphQL Error: Invalid response. Errors:\n- some error. Provider: matic`))
 
-    const wallet = Wallet.generate().getAddressString()
+    const wallet = generateRandomAddress()
     const r = await localFetch.fetch(`/users/${wallet}/wearables`)
 
     expect(r.status).toBe(502)
@@ -613,7 +613,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [wearables[1]] })
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(undefined)
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/wearables?includeDefinitions`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/wearables?includeDefinitions`)
 
     expect(r.status).toBe(500)
     expect(await r.json()).toEqual({

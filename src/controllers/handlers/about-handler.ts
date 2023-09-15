@@ -26,11 +26,11 @@ function getUrl(publicURL: string, healthCheckURL?: string) {
 // handlers arguments only type what they need, to make unit testing easier
 export async function aboutHandler(
   context: Pick<
-    HandlerContextWithPath<'status' | 'resourcesStatusCheck' | 'config' | 'realmName', '/about'>,
+    HandlerContextWithPath<'status' | 'resourcesStatusCheck' | 'config' | 'realmName' | 'identity', '/about'>,
     'url' | 'components'
   >
 ): Promise<{ status: 200 | 503; body: About }> {
-  const { config, status, resourcesStatusCheck, realmName } = context.components
+  const { config, status, resourcesStatusCheck, realmName, identity } = context.components
 
   const ethNetwork = (await config.getString('ETH_NETWORK')) ?? 'mainnet'
   const contracts = l1Contracts[ethNetwork as L1Network]
@@ -91,7 +91,9 @@ export async function aboutHandler(
       healthy: true,
       version: currentVersion,
       commitHash: commitHash,
-      publicUrl: lambdasUrl.publicUrl
+      publicUrl: lambdasUrl.publicUrl,
+      publicKey: identity.getPublicKey(),
+      address: identity.getAddress()
     },
     configurations: {
       networkId: contracts.chainId,

@@ -12,10 +12,8 @@
   "devDependencies": {
     "@dcl/eslint-config": "^1.1.12",
     "@dcl/protocol": "^1.0.0-5824184720.commit-b3b5ebf",
-    "@types/lodash": "^4.14.191",
     "@types/node": "^18.11.18",
     "@well-known-components/test-helpers": "^1.5.3",
-    "ethereumjs-wallet": "^1.0.2",
     "typescript": "^4.9.5"
   },
   "prettier": {
@@ -29,6 +27,7 @@
     "@dcl/catalyst-api-specs": "^3.2.3",
     "@dcl/catalyst-contracts": "^4.1.0",
     "@dcl/crypto": "^3.4.5",
+    "@dcl/hashing": "^3.0.4",
     "@dcl/schemas": "^9.5.0",
     "@dcl/urn-resolver": "^3.1.0",
     "@well-known-components/env-config-provider": "^1.2.0",
@@ -39,7 +38,7 @@
     "@well-known-components/thegraph-component": "^1.6.0",
     "dcl-catalyst-client": "^21.5.5",
     "eth-connect": "^6.1.0",
-    "lodash": "^4.17.21",
+    "eth-crypto": "^2.6.0",
     "lru-cache": "^8.0.4"
   },
   "resolutions": {
