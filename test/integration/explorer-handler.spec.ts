@@ -64,7 +64,7 @@ testWithComponents(() => {
   })
 
   it('return only base wearables when no on-chain or third-party found', async () => {
-    const { baseWearablesFetcher, content, fetch, localFetch, theGraph, contentServerUrl } = components
+    const { baseWearablesFetcher, content, fetch, localFetch, theGraph } = components
 
     const baseWearables = generateBaseWearables(278)
     baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(baseWearables)
