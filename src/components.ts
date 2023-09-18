@@ -136,7 +136,8 @@ export async function initComponents(
     thirdPartyProvidersStorage,
     logs,
     wearablesFetcher,
-    emotesFetcher
+    emotesFetcher,
+    namesFetcher
   })
 
   const hasher = createHasherComponent()

@@ -174,7 +174,7 @@ testWithComponents(() => {
       }
     })
 
-    theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ P0x1: [] })
+    theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
 
     const response = await localFetch.fetch(`/outfits/${address}`)
 
@@ -368,7 +368,7 @@ testWithComponents(() => {
       }
     })
 
-    theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ P0x1: [] })
+    theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
 
     const response = await localFetch.fetch(`/outfits/${address}`)
 
@@ -594,7 +594,7 @@ testWithComponents(() => {
       }
     })
 
-    theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ P0x1: [] })
+    theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
 
     const response = await localFetch.fetch(`/outfits/${address}`)
 
@@ -775,7 +775,7 @@ testWithComponents(() => {
       }
     })
 
-    theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ P0x1: [] })
+    theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
 
     const response = await localFetch.fetch(`/outfits/${address}`)
 
@@ -1011,13 +1011,12 @@ testWithComponents(() => {
       }
     })
 
-    theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ P0x1: [] })
+    theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
 
     const response = await localFetch.fetch(`/outfits/${address}`)
 
     expect(response.status).toEqual(200)
     const responseObj = await response.json()
-    console.log({ respose: responseObj.metadata.outfits[0] })
     expect(responseObj.metadata.outfits[0].outfit.wearables).toEqual(outfitsMetadata.outfits[0].outfit.wearables)
   })
 })
@@ -1246,13 +1245,12 @@ testWithComponents(() => {
       }
     })
 
-    theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ P0x1: [] })
+    theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
 
     const response = await localFetch.fetch(`/outfits/${address}`)
 
     expect(response.status).toEqual(200)
     const responseObj = await response.json()
-    console.log({ respose: responseObj.metadata.outfits[0] })
     expect(responseObj.metadata.outfits[0].outfit.wearables).toEqual([
       'urn:decentraland:off-chain:base-avatars:f_blue_jacket',
       'urn:decentraland:mumbai:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0',
@@ -1490,13 +1488,12 @@ testWithComponents(() => {
       }
     })
 
-    theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ P0x1: [] })
+    theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
 
     const response = await localFetch.fetch(`/outfits/${address}`)
 
     expect(response.status).toEqual(200)
     const responseObj = await response.json()
-    console.log({ respose: responseObj.metadata.outfits[0] })
     expect(responseObj.metadata.outfits[0].outfit.wearables).toEqual([
       'urn:decentraland:off-chain:base-avatars:f_blue_jacket',
       'urn:decentraland:mumbai:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0:3',

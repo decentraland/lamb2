@@ -1,16 +1,15 @@
 import { Outfit, Outfits } from '@dcl/schemas'
-import { createNamesOwnershipChecker } from '../ports/ownership-checker/names-ownership-checker'
 import { AppComponents, OnChainWearable, TypedEntity } from '../types'
 import { splitUrnAndTokenId } from './utils'
 
 export async function getOutfits(
   components: Pick<
     AppComponents,
-    'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches' | 'wearablesFetcher'
+    'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches' | 'wearablesFetcher' | 'namesFetcher'
   >,
   ethAddress: string
 ): Promise<TypedEntity<Outfits> | undefined> {
-  const { config, wearablesFetcher, content } = components
+  const { config, wearablesFetcher, namesFetcher, content } = components
   const ensureERC721 = (await config.getString('ENSURE_ERC_721')) === 'true'
 
   const outfitsEntities: TypedEntity<Outfits>[] = await content.fetchEntitiesByPointers([`${ethAddress}:outfits`])
@@ -66,20 +65,17 @@ export async function getOutfits(
     }
   }
 
-  const namesOwnershipChecker = createNamesOwnershipChecker(components)
-  namesOwnershipChecker.addNFTsForAddress(ethAddress, metadata.namesForExtraSlots)
-  namesOwnershipChecker.checkNFTsOwnership()
-  const ownedNames = new Set(namesOwnershipChecker.getOwnedNFTsForAddress(ethAddress))
+  const names = await namesFetcher.fetchOwnedElements(ethAddress)
 
   const normalOutfitsWithOwnedWearables = fullyOwnedOutfits.filter((outfit) => outfit.slot <= 4)
   const extraOutfitsWithOwnedWearables = fullyOwnedOutfits.filter((outfit) => outfit.slot > 4)
-  const extraOutfitsWithOwnedWearablesAndNames = extraOutfitsWithOwnedWearables.slice(0, ownedNames.size)
+  const extraOutfitsWithOwnedWearablesAndNames = extraOutfitsWithOwnedWearables.slice(0, names.length)
 
   return {
     ...outfitsEntity,
     metadata: {
       outfits: [...normalOutfitsWithOwnedWearables, ...extraOutfitsWithOwnedWearablesAndNames],
-      namesForExtraSlots: Array.from(ownedNames)
+      namesForExtraSlots: names.map((name) => name.name)
     }
   }
 }
