@@ -352,17 +352,17 @@
   resolved "https://registry.yarnpkg.com/@dcl/hashing/-/hashing-3.0.4.tgz#4df2a4cb3a8114765aed34cb57b91c93bf33bfb3"
   integrity sha512-Cg+MoIOn+BYmQV2q8zSFnNYY+GldlnUazwBnfgrq3i66ZxOaZ65h01btd8OUtSAlfWG4VTNIOHDjtKqmuwJNBg==
 
-"@dcl/protocol@^1.0.0-5824184720.commit-b3b5ebf":
-  version "1.0.0-5824184720.commit-b3b5ebf"
-  resolved "https://registry.yarnpkg.com/@dcl/protocol/-/protocol-1.0.0-5824184720.commit-b3b5ebf.tgz#7d19f5440bca74bd2c5791606ca88e190fbdeb5c"
-  integrity sha512-k2p0SpJIDMiGTB+B0B2VLdgdd1ERiKVxmwQbgFrkG6jYJpjlD1DsJynoWXsk6hbvmnc1spW9uMo+DUBTpO3dcA==
+"@dcl/protocol@^1.0.0-6200210039.commit-75f18e8":
+  version "1.0.0-6200210039.commit-75f18e8"
+  resolved "https://registry.yarnpkg.com/@dcl/protocol/-/protocol-1.0.0-6200210039.commit-75f18e8.tgz#5d6579e9ae74a5f92e981ff1741e58918545e4af"
+  integrity sha512-713H4P0TfuamhxvcQd0ck4tBYap+k/JKMUL9xYT0XJ3Fuog2tLhqYORW43c4n9dVoU4ljciNvfUqhqLE8NIweA==
   dependencies:
     "@dcl/ts-proto" "1.154.0"
 
-"@dcl/schemas@^9.0.0", "@dcl/schemas@^9.2.0", "@dcl/schemas@^9.5.0":
-  version "9.5.0"
-  resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-9.5.0.tgz#ff9bab44ea98ab7df98b183006b360319bf8d963"
-  integrity sha512-OIPRbItAF+qMAmUlVxoa/esO83LZ96oDTim/Fxfwj6LAmPfwtZsAPH22iAiYIP6i5XuLMS7PS13NLioHT8lQJg==
+"@dcl/schemas@^9.0.0", "@dcl/schemas@^9.2.0", "@dcl/schemas@^9.6.0":
+  version "9.6.0"
+  resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-9.6.0.tgz#e5e02166e182063577d997019d4a1dad237fc8d2"
+  integrity sha512-k2qfX00Zs7FMT1Ou2dZYZwayK4Ru11IoC8/iSq9Xn81HLcrwzM/LEIBAjDu2fE8bz7U84osBnPgJYs1DG+OV2Q==
   dependencies:
     ajv "^8.11.0"
     ajv-errors "^3.0.0"
