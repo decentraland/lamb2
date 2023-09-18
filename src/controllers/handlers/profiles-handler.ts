@@ -1,35 +1,31 @@
-import { Request } from 'node-fetch'
-import { getProfiles } from '../../logic/profiles'
 import { HandlerContextWithPath, InvalidRequestError, NotFoundError } from '../../types'
 import { Profile } from '@dcl/catalyst-api-specs/lib/client'
 
 export async function profilesHandler(
-  context: HandlerContextWithPath<
-    | 'metrics'
-    | 'content'
-    | 'theGraph'
-    | 'config'
-    | 'fetch'
-    | 'ownershipCaches'
-    | 'thirdPartyProvidersStorage'
-    | 'logs'
-    | 'metrics'
-    | 'wearablesFetcher'
-    | 'emotesFetcher',
-    '/profiles'
-  >
+  context: Pick<HandlerContextWithPath<'profiles', '/profiles'>, 'components' | 'request'>
 ): Promise<{ status: 200; body: Profile[] } | { status: 304 }> {
-  // Get the profile ids
-  const body = await context.request.json()
-  const ids = body.ids
+  const { components, request } = context
 
-  // Return 400 if there are no ids in the payload
-  if (!ids) {
+  const body = await request.json()
+
+  if (!body.ids) {
     throw new InvalidRequestError('No profile ids were specified. Expected ids:string[] in body')
   }
 
-  // Get profiles depending on their addresses
-  const profiles = await getProfiles(context.components, ids, getIfModifiedSinceTimestamp(context.request))
+  let modifiedSince: number | undefined = undefined
+  {
+    // This is a standard HTTP header. See the link below for more information
+    // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-Modified-Since
+    const value = request.headers.get('if-modified-since')
+    if (value) {
+      try {
+        const timestamp = Date.parse(value)
+        modifiedSince = isNaN(timestamp) ? undefined : timestamp
+      } catch (e) {}
+    }
+  }
+
+  const profiles = await components.profiles.getProfiles(body.ids, modifiedSince)
 
   // The only case in which we receive undefined profiles is when no profile was updated after de If-Modified-Since specified moment.
   // In this case, as per spec, we return 304 (not modified) and empty body
@@ -47,44 +43,36 @@ export async function profilesHandler(
 }
 
 export async function profileHandler(
-  context: HandlerContextWithPath<
-    | 'metrics'
-    | 'content'
-    | 'theGraph'
-    | 'config'
-    | 'fetch'
-    | 'ownershipCaches'
-    | 'thirdPartyProvidersStorage'
-    | 'logs'
-    | 'metrics'
-    | 'emotesFetcher'
-    | 'wearablesFetcher',
-    '/profile/:id'
-  >
+  context: Pick<HandlerContextWithPath<'profiles', '/profiles/:id'>, 'components' | 'params'>
 ): Promise<{ status: 200; body: Profile }> {
-  const profiles = await getProfiles(context.components, [context.params.id])
-  if (!profiles || profiles.length === 0) {
+  const profile = await context.components.profiles.getProfile(context.params.id)
+  if (!profile) {
     throw new NotFoundError('Profile not found')
   }
 
   return {
     status: 200,
-    body: profiles[0]
+    body: profile
   }
 }
 
-function getIfModifiedSinceTimestamp(req: Request): number | undefined {
-  // This is a standard HTTP header. See the link below for more information
-  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-Modified-Since
-  const headerValue = req.headers.get('if-modified-since')
-  if (!headerValue) {
-    return
+export async function explorerProfileHandler(
+  context: Pick<HandlerContextWithPath<'profiles' | 'identity' | 'hasher', '/profiles/:id'>, 'components' | 'params'>
+): Promise<{ status: 200; body: any }> {
+  const { components, params } = context
+  const profile = await components.profiles.getProfile(params.id)
+  if (!profile) {
+    throw new NotFoundError('Profile not found')
   }
-  try {
-    const timestamp = Date.parse(headerValue)
-    return isNaN(timestamp) ? undefined : timestamp
-  } catch (e) {
-    // LOGGER.warn('Received an invalid header for If-Modified-Since ', headerValue)
-    return
+
+  const avatar = profile.avatars[0]
+
+  const payload = JSON.stringify([avatar.name, avatar.hasClaimedName, ...avatar.avatar.wearables])
+  const hash = await components.hasher.hash(payload)
+  const signedHash = components.identity.sign(hash)
+
+  return {
+    status: 200,
+    body: { profile, hash, signedHash }
   }
 }

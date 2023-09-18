@@ -1,6 +1,5 @@
 import { createConfigComponent } from '@well-known-components/env-config-provider'
 import { createThirdPartyProvidersServiceFetcherComponent } from '../../../src/adapters/third-party-providers-service-fetcher'
-import { ThirdPartyProvider } from '../../../src/types'
 
 describe('third-party-providers-service-fetcher', () => {
   it('should call service when DISABLE_THIRD_PARTY_PROVIDERS_RESOLVER_SERVICE_USAGE is not set', async () => {

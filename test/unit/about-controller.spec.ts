@@ -2,8 +2,10 @@ import { createConfigComponent } from '@well-known-components/env-config-provide
 import { ServiceStatus } from '../../src/adapters/status'
 import { aboutHandler } from '../../src/controllers/handlers/about-handler'
 import { AboutResponse } from '@dcl/protocol/out-js/decentraland/realm/about.gen'
+import { createIdentityComponent } from '../../src/adapters/identity'
 
 describe('about-controller-unit', () => {
+  const identity = createIdentityComponent()
   const defaultConfigWithoutComms = {
     LAMBDAS_URL: 'https://peer.decentraland.org/lambdas',
     INTERNAL_LAMBDAS_URL: 'http://lambdas',
@@ -45,6 +47,7 @@ describe('about-controller-unit', () => {
 
     const components = {
       config,
+      identity,
       status: { getServiceStatus },
       resourcesStatusCheck: { areResourcesOverloaded },
       realmName: { getRealmName }
@@ -97,7 +100,8 @@ describe('about-controller-unit', () => {
       config,
       status: { getServiceStatus },
       resourcesStatusCheck: { areResourcesOverloaded },
-      realmName: { getRealmName }
+      realmName: { getRealmName },
+      identity
     }
 
     const response = await aboutHandler({ url, components })
@@ -162,7 +166,8 @@ describe('about-controller-unit', () => {
       config,
       status: { getServiceStatus },
       resourcesStatusCheck: { areResourcesOverloaded },
-      realmName: { getRealmName }
+      realmName: { getRealmName },
+      identity
     }
 
     const response = await aboutHandler({ url, components })
@@ -226,7 +231,8 @@ describe('about-controller-unit', () => {
       config,
       status: { getServiceStatus },
       resourcesStatusCheck: { areResourcesOverloaded },
-      realmName: { getRealmName }
+      realmName: { getRealmName },
+      identity
     }
 
     const response = await aboutHandler({ url, components })
@@ -296,12 +302,13 @@ describe('about-controller-unit', () => {
         return false
       }
 
-      const components = {
-        config,
-        status: { getServiceStatus },
-        resourcesStatusCheck: { areResourcesOverloaded },
-        realmName: { getRealmName }
-      }
+    const components = {
+      config,
+      status: { getServiceStatus },
+      resourcesStatusCheck: { areResourcesOverloaded },
+      realmName: { getRealmName },
+      identity
+    }
 
       const response = await aboutHandler({ url, components })
 

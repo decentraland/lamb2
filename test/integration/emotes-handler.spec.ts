@@ -1,5 +1,4 @@
 import { EmoteCategory, Entity } from '@dcl/schemas'
-import Wallet from 'ethereumjs-wallet'
 import { extractEmoteDefinitionFromEntity } from '../../src/adapters/definitions'
 import { EmoteFromQuery } from '../../src/logic/fetch-elements/fetch-items'
 import { leastRare, nameAZ, nameZA, rarest } from '../../src/logic/sorting'
@@ -7,15 +6,16 @@ import { RARITIES } from '../../src/logic/utils'
 import { OnChainEmoteResponse } from '../../src/types'
 import { test } from '../components'
 import { generateEmoteContentDefinitions, generateEmotes } from '../data/emotes'
+import { generateRandomAddress } from '../helpers'
 
-// NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
+// NOTE: each test generates a new wallet to avoid matches on cache
 test('emotes-handler: GET /users/:address/emotes should', function ({ components }) {
   it('return empty when no emotes are found', async () => {
     const { localFetch, theGraph } = components
 
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/emotes`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/emotes`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -32,7 +32,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce([])
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/emotes?includeDefinitions`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/emotes?includeDefinitions`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -49,7 +49,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
 
     jest.spyOn(theGraph.maticCollectionsSubgraph, 'query').mockResolvedValueOnce({ nfts: emotes })
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/emotes`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/emotes`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -68,7 +68,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/emotes?includeDefinitions`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/emotes?includeDefinitions`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -87,7 +87,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/emotes?includeEntities`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/emotes?includeEntities`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -108,7 +108,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/emotes?includeDefinitions`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/emotes?includeDefinitions`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -125,7 +125,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
 
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/emotes?pageSize=2&pageNum=1`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/emotes?pageSize=2&pageNum=1`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -142,7 +142,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
 
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/emotes?pageSize=2&pageNum=2`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/emotes?pageSize=2&pageNum=2`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -159,7 +159,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
 
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/emotes?pageSize=2&pageNum=3`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/emotes?pageSize=2&pageNum=3`)
 
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
@@ -173,7 +173,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
   it('return emotes from cache on second call for the same address (case insensitive)', async () => {
     const { localFetch, theGraph } = components
     const emotes = generateEmotes(7)
-    const wallet = Wallet.generate().getAddressString()
+    const wallet = generateRandomAddress()
 
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
 
@@ -197,7 +197,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
   it('return emotes filtering by name', async () => {
     const { localFetch, theGraph } = components
     const emotes = generateEmotes(17)
-    const wallet = Wallet.generate().getAddressString()
+    const wallet = generateRandomAddress()
 
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
 
@@ -225,7 +225,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
       }
     }))
 
-    const wallet = Wallet.generate().getAddressString()
+    const wallet = generateRandomAddress()
 
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
 
@@ -278,7 +278,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
       }
     }))
 
-    const wallet = Wallet.generate().getAddressString()
+    const wallet = generateRandomAddress()
 
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
 
@@ -317,7 +317,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
       transferredAt: w.transferredAt + i
     }))
 
-    const wallet = Wallet.generate().getAddressString()
+    const wallet = generateRandomAddress()
 
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
 
@@ -350,7 +350,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
       }
     }))
 
-    const wallet = Wallet.generate().getAddressString()
+    const wallet = generateRandomAddress()
 
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
 
@@ -377,7 +377,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     const { localFetch, theGraph } = components
     const emotes = generateEmotes(17)
 
-    const wallet = Wallet.generate().getAddressString()
+    const wallet = generateRandomAddress()
 
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
 
@@ -403,7 +403,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
   it('return an error when invalid sorting spec requested', async () => {
     const { localFetch, theGraph } = components
 
-    const addressString = Wallet.generate().getAddressString()
+    const addressString = generateRandomAddress()
     const r = await localFetch.fetch(`/users/${addressString}/emotes?orderBy=saraza`)
 
     expect(r.status).toBe(400)
@@ -428,7 +428,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
       .fn()
       .mockRejectedValueOnce(new Error(`GraphQL Error: Invalid response. Errors:\n- some error. Provider: matic`))
 
-    const wallet = Wallet.generate().getAddressString()
+    const wallet = generateRandomAddress()
     const r = await localFetch.fetch(`/users/${wallet}/emotes`)
 
     expect(r.status).toBe(502)
@@ -448,7 +448,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
     content.fetchEntitiesByPointers = jest.fn().mockRejectedValueOnce(new Error(`Cannot fetch definitions`))
 
-    const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/emotes?includeDefinitions`)
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/emotes?includeDefinitions`)
 
     expect(r.status).toBe(500)
     expect(await r.json()).toEqual({

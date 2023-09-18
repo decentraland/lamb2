@@ -1,5 +1,4 @@
 import { Entity } from '@dcl/schemas'
-import Wallet from 'ethereumjs-wallet'
 import { WearableFromQuery } from '../../src/logic/fetch-elements/fetch-items'
 import { testWithComponents } from '../components'
 import {
@@ -14,6 +13,7 @@ import { MixedWearableResponse } from '../../src/controllers/handlers/explorer-h
 import { leastRareOptional, nameAZ, nameZA, rarestOptional } from '../../src/logic/sorting'
 import { BaseWearable, ThirdPartyAsset } from '../../src/types'
 import { createTheGraphComponentMock } from '../mocks/the-graph-mock'
+import { generateRandomAddress } from '../helpers'
 
 type ContentInfo = {
   entities: Entity[]
@@ -32,7 +32,7 @@ testWithComponents(() => {
   it('return descriptive errors for bad requests', async () => {
     const { localFetch } = components
 
-    const wallet = Wallet.generate().getAddressString()
+    const wallet = generateRandomAddress()
 
     const r = await localFetch.fetch(`/explorer/${wallet}/wearables?collectionType=fourth-party`)
     expect(r.status).toBe(400)
@@ -64,7 +64,7 @@ testWithComponents(() => {
   })
 
   it('return only base wearables when no on-chain or third-party found', async () => {
-    const { baseWearablesFetcher, content, fetch, localFetch, theGraph, contentServerUrl } = components
+    const { baseWearablesFetcher, content, fetch, localFetch, theGraph } = components
 
     const baseWearables = generateBaseWearables(278)
     baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(baseWearables)
@@ -79,7 +79,7 @@ testWithComponents(() => {
       return { ok: true, json: () => ({ assets: [] }) }
     })
 
-    const wallet = Wallet.generate().getAddressString()
+    const wallet = generateRandomAddress()
     const r = await localFetch.fetch(`/explorer/${wallet}/wearables`)
 
     expect(r.status).toBe(200)
@@ -133,7 +133,7 @@ testWithComponents(() => {
       contentServerUrl
     })
 
-    const wallet = Wallet.generate().getAddressString()
+    const wallet = generateRandomAddress()
     const r = await localFetch.fetch(`/explorer/${wallet}/wearables`)
 
     expect(r.status).toBe(200)

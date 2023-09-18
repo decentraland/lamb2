@@ -1,11 +1,11 @@
-import Wallet from 'ethereumjs-wallet'
 import { nameZA } from '../../../src/logic/sorting'
 import { testWithComponents } from '../../components'
 import { generateThirdPartyWearables, generateWearableEntities } from '../../data/wearables'
+import { generateRandomAddress } from '../../helpers'
 import { createTheGraphComponentMock } from '../../mocks/the-graph-mock'
 import { convertToThirdPartyWearableResponse } from './convert-to-model-third-party'
 
-// NOTE: each test generates a new wallet using ethereumjs-wallet to avoid matches on cache
+// NOTE: each test generates a new wallet to avoid matches on cache
 testWithComponents(() => {
   const theGraphMock = createTheGraphComponentMock()
   const resolverResponse = {
@@ -29,7 +29,7 @@ testWithComponents(() => {
 
       fetch.fetch = jest.fn().mockResolvedValue({ ok: true, json: () => ({ assets: [] }) })
 
-      const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/third-party-wearables`)
+      const r = await localFetch.fetch(`/users/${generateRandomAddress()}/third-party-wearables`)
 
       expect(r.status).toBe(200)
       expect(await r.json()).toEqual({
@@ -46,9 +46,7 @@ testWithComponents(() => {
 
       fetch.fetch = jest.fn().mockResolvedValue({ ok: true, json: () => ({ assets: [] }) })
 
-      const r = await localFetch.fetch(
-        `/users/${Wallet.generate().getAddressString()}/third-party-wearables?includeDefinitions`
-      )
+      const r = await localFetch.fetch(`/users/${generateRandomAddress()}/third-party-wearables?includeDefinitions`)
 
       expect(r.status).toBe(200)
       expect(await r.json()).toEqual({
@@ -72,7 +70,7 @@ testWithComponents(() => {
         })
       })
 
-      const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/third-party-wearables`)
+      const r = await localFetch.fetch(`/users/${generateRandomAddress()}/third-party-wearables`)
 
       expect(r.status).toBe(200)
       expect(await r.json()).toEqual({
@@ -97,9 +95,7 @@ testWithComponents(() => {
         })
       })
 
-      const r = await localFetch.fetch(
-        `/users/${Wallet.generate().getAddressString()}/third-party-wearables?includeDefinitions`
-      )
+      const r = await localFetch.fetch(`/users/${generateRandomAddress()}/third-party-wearables?includeDefinitions`)
 
       expect(r.status).toBe(200)
       expect(await r.json()).toEqual({
@@ -123,9 +119,7 @@ testWithComponents(() => {
         })
       })
 
-      const r = await localFetch.fetch(
-        `/users/${Wallet.generate().getAddressString()}/third-party-wearables?includeDefinitions`
-      )
+      const r = await localFetch.fetch(`/users/${generateRandomAddress()}/third-party-wearables?includeDefinitions`)
 
       expect(r.status).toBe(200)
       expect(await r.json()).toEqual({
@@ -150,10 +144,10 @@ testWithComponents(() => {
       })
 
       const firstResponse = await localFetch.fetch(
-        `/users/${Wallet.generate().getAddressString()}/third-party-wearables?includeDefinitions`
+        `/users/${generateRandomAddress()}/third-party-wearables?includeDefinitions`
       )
       const secondResponse = await localFetch.fetch(
-        `/users/${Wallet.generate().getAddressString()}/third-party-wearables?includeDefinitions`
+        `/users/${generateRandomAddress()}/third-party-wearables?includeDefinitions`
       )
       const firstResponseAsJson = await firstResponse.json()
 
@@ -181,9 +175,7 @@ testWithComponents(() => {
         })
       })
 
-      const r = await localFetch.fetch(
-        `/users/${Wallet.generate().getAddressString()}/third-party-wearables?pageSize=3`
-      )
+      const r = await localFetch.fetch(`/users/${generateRandomAddress()}/third-party-wearables?pageSize=3`)
 
       expect(r.status).toBe(200)
       expect(await r.json()).toEqual({
@@ -207,9 +199,7 @@ testWithComponents(() => {
         })
       })
 
-      const r = await localFetch.fetch(
-        `/users/${Wallet.generate().getAddressString()}/third-party-wearables?pageNum=2&pageSize=3`
-      )
+      const r = await localFetch.fetch(`/users/${generateRandomAddress()}/third-party-wearables?pageNum=2&pageSize=3`)
 
       expect(r.status).toBe(200)
       expect(await r.json()).toEqual({
@@ -233,9 +223,7 @@ testWithComponents(() => {
         })
       })
 
-      const r = await localFetch.fetch(
-        `/users/${Wallet.generate().getAddressString()}/third-party-wearables?pageNum=3&pageSize=3`
-      )
+      const r = await localFetch.fetch(`/users/${generateRandomAddress()}/third-party-wearables?pageNum=3&pageSize=3`)
 
       expect(r.status).toBe(200)
       expect(await r.json()).toEqual({
@@ -251,7 +239,7 @@ testWithComponents(() => {
 
       fetch.fetch = jest.fn().mockResolvedValueOnce({ ok: false })
 
-      const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/third-party-wearables`)
+      const r = await localFetch.fetch(`/users/${generateRandomAddress()}/third-party-wearables`)
 
       expect(r.status).toBe(200)
       expect(await r.json()).toEqual({
@@ -275,7 +263,7 @@ testWithComponents(() => {
       })
 
       const r = await localFetch.fetch(
-        `/users/${Wallet.generate().getAddressString()}/third-party-wearables?sort=name&direction=ASC`
+        `/users/${generateRandomAddress()}/third-party-wearables?sort=name&direction=ASC`
       )
 
       expect(r.status).toBe(200)
@@ -287,7 +275,7 @@ testWithComponents(() => {
       })
 
       const r2 = await localFetch.fetch(
-        `/users/${Wallet.generate().getAddressString()}/third-party-wearables?sort=name&direction=DESC`
+        `/users/${generateRandomAddress()}/third-party-wearables?sort=name&direction=DESC`
       )
 
       expect(r2.status).toBe(200)
@@ -299,7 +287,7 @@ testWithComponents(() => {
       })
 
       const r3 = await localFetch.fetch(
-        `/users/${Wallet.generate().getAddressString()}/third-party-wearables?sort=name&direction=WHATEVER`
+        `/users/${generateRandomAddress()}/third-party-wearables?sort=name&direction=WHATEVER`
       )
 
       expect(r3.status).toBe(400)

@@ -1,7 +1,7 @@
-import Wallet from 'ethereumjs-wallet'
 import { ThirdPartyAsset } from '../../../src/types'
 import { testWithComponents } from '../../components'
 import { generateThirdPartyWearables, generateWearableEntities, getThirdPartyProviders } from '../../data/wearables'
+import { generateRandomAddress } from '../../helpers'
 import { createTheGraphComponentMock } from '../../mocks/the-graph-mock'
 import { convertToThirdPartyWearableResponse } from './convert-to-model-third-party'
 
@@ -35,7 +35,7 @@ testWithComponents(() => {
         }
       })
 
-      const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/third-party-wearables`)
+      const r = await localFetch.fetch(`/users/${generateRandomAddress()}/third-party-wearables`)
 
       expect(r.status).toBe(200)
       expect(await r.json()).toEqual({
@@ -81,7 +81,7 @@ testWithComponents(() => {
         }
       })
 
-      const r = await localFetch.fetch(`/users/${Wallet.generate().getAddressString()}/third-party-wearables`)
+      const r = await localFetch.fetch(`/users/${generateRandomAddress()}/third-party-wearables`)
 
       expect(r.status).toBe(200)
       expect(await r.json()).toEqual({
@@ -163,7 +163,7 @@ testWithComponents(() => {
       })
 
       const r = await localFetch.fetch(
-        `/users/${Wallet.generate().getAddressString()}/third-party-wearables/urn:decentraland:matic:collections-thirdparty:cryptoavatars`
+        `/users/${generateRandomAddress()}/third-party-wearables/urn:decentraland:matic:collections-thirdparty:cryptoavatars`
       )
 
       expect(r.status).toBe(200)
