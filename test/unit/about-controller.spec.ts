@@ -74,7 +74,9 @@ describe('about-controller-unit', () => {
           healthy: true,
           version: defaultConfigWithoutComms.CURRENT_VERSION,
           commitHash: defaultConfigWithoutComms.COMMIT_HASH,
-          publicUrl: defaultConfigWithoutComms.LAMBDAS_URL
+          publicUrl: defaultConfigWithoutComms.LAMBDAS_URL,
+          address: identity.getAddress(),
+          publicKey: identity.getPublicKey()
         },
         configurations: {
           networkId: 1,
@@ -124,7 +126,9 @@ describe('about-controller-unit', () => {
           healthy: true,
           version: defaultConfigWithoutComms.CURRENT_VERSION,
           commitHash: defaultConfigWithoutComms.COMMIT_HASH,
-          publicUrl: defaultConfigWithoutComms.LAMBDAS_URL
+          publicUrl: defaultConfigWithoutComms.LAMBDAS_URL,
+          address: identity.getAddress(),
+          publicKey: identity.getPublicKey()
         },
         configurations: {
           networkId: 1,
@@ -191,7 +195,9 @@ describe('about-controller-unit', () => {
           healthy: true,
           version: defaultConfigWithoutComms.CURRENT_VERSION,
           commitHash: defaultConfigWithoutComms.COMMIT_HASH,
-          publicUrl: defaultConfigWithoutComms.LAMBDAS_URL
+          publicUrl: defaultConfigWithoutComms.LAMBDAS_URL,
+          address: identity.getAddress(),
+          publicKey: identity.getPublicKey()
         },
         configurations: {
           networkId: 1,
@@ -255,7 +261,9 @@ describe('about-controller-unit', () => {
           healthy: true,
           version: defaultConfigWithoutComms.CURRENT_VERSION,
           commitHash: defaultConfigWithoutComms.COMMIT_HASH,
-          publicUrl: defaultConfigWithoutComms.LAMBDAS_URL
+          publicUrl: defaultConfigWithoutComms.LAMBDAS_URL,
+          address: identity.getAddress(),
+          publicKey: identity.getPublicKey()
         },
         configurations: {
           networkId: 1,
@@ -302,13 +310,13 @@ describe('about-controller-unit', () => {
         return false
       }
 
-    const components = {
-      config,
-      status: { getServiceStatus },
-      resourcesStatusCheck: { areResourcesOverloaded },
-      realmName: { getRealmName },
-      identity
-    }
+      const components = {
+        config,
+        status: { getServiceStatus },
+        resourcesStatusCheck: { areResourcesOverloaded },
+        realmName: { getRealmName },
+        identity
+      }
 
       const response = await aboutHandler({ url, components })
 
@@ -331,7 +339,9 @@ describe('about-controller-unit', () => {
             healthy: true,
             version: defaultConfigWithoutComms.CURRENT_VERSION,
             commitHash: defaultConfigWithoutComms.COMMIT_HASH,
-            publicUrl: defaultConfigWithoutComms.LAMBDAS_URL
+            publicUrl: defaultConfigWithoutComms.LAMBDAS_URL,
+            address: identity.getAddress(),
+            publicKey: identity.getPublicKey()
           },
           configurations: {
             networkId: 1,
@@ -380,7 +390,8 @@ describe('about-controller-unit', () => {
         config,
         status: { getServiceStatus },
         resourcesStatusCheck: { areResourcesOverloaded },
-        realmName: { getRealmName }
+        realmName: { getRealmName },
+        identity
       }
 
       const response = await aboutHandler({ url, components })
@@ -403,7 +414,9 @@ describe('about-controller-unit', () => {
             healthy: true,
             version: defaultConfigWithoutComms.CURRENT_VERSION,
             commitHash: defaultConfigWithoutComms.COMMIT_HASH,
-            publicUrl: defaultConfigWithoutComms.LAMBDAS_URL
+            publicUrl: defaultConfigWithoutComms.LAMBDAS_URL,
+            address: identity.getAddress(),
+            publicKey: identity.getPublicKey()
           },
           configurations: {
             networkId: 1,
