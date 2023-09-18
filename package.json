@@ -37,7 +37,7 @@
     "@well-known-components/metrics": "^2.0.1",
     "@well-known-components/thegraph-component": "^1.6.0",
     "dcl-catalyst-client": "^21.5.5",
-    "eth-connect": "^6.1.0",
+    "eth-connect": "^6.2.1",
     "eth-crypto": "^2.6.0",
     "lru-cache": "^8.0.4"
   },
