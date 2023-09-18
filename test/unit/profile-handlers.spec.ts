@@ -8,6 +8,9 @@ import { generateRandomAddress } from '../helpers'
 import { profileEntityFullWithExtendedItems } from '../integration/data/profiles-responses'
 import { Request } from 'node-fetch'
 import { createIdentityComponent } from '../../src/adapters/identity'
+import { createHasherComponent } from '../../src/adapters/hasher'
+import EthCrypto from 'eth-crypto'
+import { hashV1 } from '@dcl/hashing'
 
 const profile = { timestamp: Date.now(), ...profileEntityFullWithExtendedItems.metadata }
 
@@ -187,7 +190,36 @@ describe('GET /explorer/profiles/{id} handler unit test', () => {
 
     expect(status).toEqual(200)
     expect(body.profile).toEqual(profile)
-    expect(body.hash).toBeTruthy()
+    expect(body.hash).toEqual('hash')
     expect(body.signedHash).toEqual('signed')
+  })
+
+  it('profile should be returned with hash and signedHash (using real hash and identity), and validation should be ok', async () => {
+    const components = {
+      profiles: {
+        getProfiles: jest.fn().mockImplementation(async () => undefined),
+        getProfile: jest.fn().mockImplementation(async () => profile)
+      },
+      hasher: createHasherComponent(),
+      identity: createIdentityComponent()
+    }
+    const { status, body } = await explorerProfileHandler({ components, params: { id: address } })
+
+    const avatar = profile.avatars[0]
+    expect(components.profiles.getProfiles).not.toHaveBeenCalled()
+    expect(components.profiles.getProfile).toHaveBeenCalledWith(address)
+
+    expect(status).toEqual(200)
+    expect(body.profile).toEqual(profile)
+    expect(body.hash).toBeTruthy()
+    expect(body.signedHash).toBeTruthy()
+
+    const encoder = new TextEncoder()
+
+    const payload = JSON.stringify([avatar.name, avatar.hasClaimedName, ...avatar.avatar.wearables])
+    expect(await hashV1(encoder.encode(payload))).toEqual(body.hash)
+    expect(EthCrypto.recover(body.signedHash, EthCrypto.hash.keccak256(body.hash))).toEqual(
+      components.identity.getAddress()
+    )
   })
 })
