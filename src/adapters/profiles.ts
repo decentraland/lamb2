@@ -1,6 +1,5 @@
 import { AppComponents, ProfileMetadata } from '../types'
 import { Avatar, Entity, Snapshots } from '@dcl/schemas'
-import { createNamesOwnershipChecker } from '../ports/ownership-checker/names-ownership-checker'
 import { createTPWOwnershipChecker } from '../ports/ownership-checker/tpw-ownership-checker'
 import { parseUrn } from '@dcl/urn-resolver'
 import { splitUrnAndTokenId } from '../logic/utils'
@@ -67,9 +66,10 @@ export async function createProfilesComponent(
     | 'logs'
     | 'wearablesFetcher'
     | 'emotesFetcher'
+    | 'namesFetcher'
   >
 ): Promise<IProfilesComponent> {
-  const { content, wearablesFetcher, emotesFetcher, config, logs } = components
+  const { content, wearablesFetcher, emotesFetcher, namesFetcher, config, logs } = components
   const logger = logs.getLogger('profiles')
 
   const ensureERC721 = (await config.getString('ENSURE_ERC_721')) === 'true'
@@ -92,7 +92,6 @@ export async function createProfilesComponent(
 
       profileEntities = profileEntities.filter((entity) => !!entity.metadata)
 
-      const namesOwnershipChecker = createNamesOwnershipChecker(components)
       const tpwOwnershipChecker = createTPWOwnershipChecker(components)
 
       return await Promise.all(
@@ -119,17 +118,15 @@ export async function createProfilesComponent(
               }
             }
           }
-          namesOwnershipChecker.addNFTsForAddress(ethAddress, names)
           tpwOwnershipChecker.addNFTsForAddress(ethAddress, wearables)
 
-          const [ownedWearables, ownedEmotes] = await Promise.all([
+          const [ownedWearables, ownedEmotes, ownedNames] = await Promise.all([
             wearablesFetcher.fetchOwnedElements(ethAddress),
             emotesFetcher.fetchOwnedElements(ethAddress),
-            namesOwnershipChecker.checkNFTsOwnership(),
+            namesFetcher.fetchOwnedElements(ethAddress),
             tpwOwnershipChecker.checkNFTsOwnership()
           ])
 
-          const ownedNames = namesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
           const thirdPartyWearables = tpwOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
 
           const avatars: Avatar[] = []
@@ -186,7 +183,7 @@ export async function createProfilesComponent(
 
             avatars.push({
               ...avatar,
-              hasClaimedName: ownedNames.includes(avatar.name),
+              hasClaimedName: ownedNames.findIndex((name) => name.name === avatar.name) !== -1,
               avatar: {
                 ...avatar.avatar,
                 emotes: validatedEmotes,

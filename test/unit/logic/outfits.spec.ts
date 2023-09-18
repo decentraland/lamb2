@@ -1,7 +1,6 @@
 import { getOutfits } from '../../../src/logic/outfits'
 import { test } from '../../components'
 import { Entity, EntityType, Outfits } from '@dcl/schemas'
-import * as namesOwnershipChecker from '../../../src/ports/ownership-checker/names-ownership-checker'
 
 test('when all wearables and names are owned, outfits entity is not modified', function ({ components }) {
   it('run test', async () => {
@@ -51,8 +50,7 @@ test('when all wearables and names are owned, outfits entity is not modified', f
       .spyOn(components.content, 'fetchEntitiesByPointers')
       .mockResolvedValue([outfitsEntity])
 
-    const namesChecker = createAllOwnedOwnershipCheckerMock()
-    jest.spyOn(namesOwnershipChecker, 'createNamesOwnershipChecker').mockReturnValue(namesChecker)
+    components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([{ name: 'perro' }])
 
     components.wearablesFetcher.fetchOwnedElements = jest
       .fn()
@@ -111,8 +109,7 @@ test('when some wearables are not owned, the outfits with those wearables are re
       content: []
     }
     jest.spyOn(components.content, 'fetchEntitiesByPointers').mockResolvedValue([outfitsEntity])
-    const namesChecker = createAllOwnedOwnershipCheckerMock()
-    jest.spyOn(namesOwnershipChecker, 'createNamesOwnershipChecker').mockReturnValue(namesChecker)
+    components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([])
     components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([{ urn: ownedWearable }])
 
     const outfits = await getOutfits(components, 'address')
@@ -152,8 +149,7 @@ test('when some names are not owned, extra outfits and not owned names are remov
     const address = 'address'
 
     jest.spyOn(components.content, 'fetchEntitiesByPointers').mockResolvedValue([outfitsEntity])
-    const namesChecker = createSpecificOwnedNftsOwnershipCheckerMock(ownedNames)
-    jest.spyOn(namesOwnershipChecker, 'createNamesOwnershipChecker').mockReturnValue(namesChecker)
+    components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(ownedNames.map((name) => ({ name })))
 
     components.wearablesFetcher.fetchOwnedElements = jest
       .fn()
@@ -164,22 +160,3 @@ test('when some names are not owned, extra outfits and not owned names are remov
     expect(outfits.metadata.namesForExtraSlots).toEqual(ownedNames)
   })
 })
-
-function createAllOwnedOwnershipCheckerMock() {
-  const ownedNFTS = []
-  return {
-    addNFTsForAddress: (address: string, nfts: string[]) => {
-      ownedNFTS.push(...nfts)
-    },
-    checkNFTsOwnership: jest.fn(),
-    getOwnedNFTsForAddress: (address: string) => ownedNFTS
-  }
-}
-
-function createSpecificOwnedNftsOwnershipCheckerMock(ownedNFTS: string[]) {
-  return {
-    addNFTsForAddress: jest.fn(),
-    checkNFTsOwnership: jest.fn(),
-    getOwnedNFTsForAddress: (address: string) => ownedNFTS
-  }
-}

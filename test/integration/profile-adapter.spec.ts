@@ -14,8 +14,16 @@ import { createConfigComponent } from '@well-known-components/env-config-provide
 
 test('integration tests for profile adapter', function ({ components, stubComponents }) {
   it('calling with a single profile address, owning everything claimed', async () => {
-    const { metrics, config, ownershipCaches, thirdPartyProvidersStorage, logs, wearablesFetcher, emotesFetcher } =
-      components
+    const {
+      metrics,
+      config,
+      ownershipCaches,
+      thirdPartyProvidersStorage,
+      logs,
+      wearablesFetcher,
+      emotesFetcher,
+      namesFetcher
+    } = components
     const { theGraph, fetch, content } = stubComponents
     const address = '0x1'
 
@@ -106,7 +114,7 @@ test('integration tests for profile adapter', function ({ components, stubCompon
       }
     })
 
-    theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ P0x1: [{ name: 'cryptonico' }] })
+    theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ nfts: [{ id: 'id1', name: 'cryptonico' }] })
 
     jest.spyOn(components.thirdPartyProvidersStorage, 'getAll').mockResolvedValue([
       {
@@ -137,7 +145,8 @@ test('integration tests for profile adapter', function ({ components, stubCompon
       thirdPartyProvidersStorage,
       logs,
       wearablesFetcher,
-      emotesFetcher
+      emotesFetcher,
+      namesFetcher
     })
     const profiles = await profilesComponent.getProfiles([address])
     expect(profiles).toHaveLength(1)
@@ -156,27 +165,16 @@ test('integration tests for profile adapter', function ({ components, stubCompon
     expect(profile.avatars?.[0].avatar.snapshots.face256).toEqual(
       'https://peer.decentraland.org/content/contents/bafkreigi3yrgdhvjr2cqzxvfztnsubnll2cfdioo4vfzu6o6vibwoag2ma'
     )
-    expect(profile.avatars?.[0].avatar.wearables.length).toEqual(8)
-    expect(profile.avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:eyebrows_00')
-    expect(profile.avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:short_hair')
-    expect(profile.avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7'
-    )
-    expect(profile.avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1'
-    )
-    expect(profile.avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet'
-    )
-    expect(profile.avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand'
-    )
-    expect(profile.avatars?.[0].avatar.wearables).toContain(
-      'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f'
-    )
-    expect(profile.avatars?.[0].avatar.wearables).toContain(
+    expect(profile.avatars?.[0].avatar.wearables).toEqual([
+      'urn:decentraland:off-chain:base-avatars:eyebrows_00',
+      'urn:decentraland:off-chain:base-avatars:short_hair',
+      'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7',
+      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1',
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet',
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand',
+      'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f',
       'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:12341234-1234-3434-3434-f9dfde9f9393'
-    )
+    ])
   })
 })
 
@@ -199,8 +197,16 @@ testWithComponents(() => {
   'integration tests for profile adapter: calling with a single profile address, ensuring ERC-721 and owning everything claimed',
   function ({ components, stubComponents }) {
     it('should work', async () => {
-      const { metrics, config, ownershipCaches, thirdPartyProvidersStorage, logs, wearablesFetcher, emotesFetcher } =
-        components
+      const {
+        metrics,
+        config,
+        ownershipCaches,
+        thirdPartyProvidersStorage,
+        logs,
+        wearablesFetcher,
+        emotesFetcher,
+        namesFetcher
+      } = components
       const { theGraph, fetch, content } = stubComponents
       const address = '0x1'
 
@@ -308,7 +314,7 @@ testWithComponents(() => {
         }
       })
 
-      theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ P0x1: [{ name: 'cryptonico' }] })
+      theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ nfts: [{ id: 'id1', name: 'cryptonico' }] })
 
       jest.spyOn(components.thirdPartyProvidersStorage, 'getAll').mockResolvedValue([
         {
@@ -339,7 +345,8 @@ testWithComponents(() => {
         thirdPartyProvidersStorage,
         logs,
         wearablesFetcher,
-        emotesFetcher
+        emotesFetcher,
+        namesFetcher
       })
       const profiles = await profilesComponent.getProfiles([address])
 
@@ -348,27 +355,16 @@ testWithComponents(() => {
 
       sinon.assert.calledOnceWithMatch(content.fetchEntitiesByPointers, [address])
 
-      expect(profile.avatars?.[0].avatar.wearables.length).toEqual(8)
-      expect(profile.avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:eyebrows_00')
-      expect(profile.avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:short_hair')
-      expect(profile.avatars?.[0].avatar.wearables).toContain(
-        'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7:3'
-      )
-      expect(profile.avatars?.[0].avatar.wearables).toContain(
-        'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1:3'
-      )
-      expect(profile.avatars?.[0].avatar.wearables).toContain(
-        'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:1'
-      )
-      expect(profile.avatars?.[0].avatar.wearables).toContain(
-        'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand:2'
-      )
-      expect(profile.avatars?.[0].avatar.wearables).toContain(
-        'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f'
-      )
-      expect(profile.avatars?.[0].avatar.wearables).toContain(
+      expect(profile.avatars?.[0].avatar.wearables).toEqual([
+        'urn:decentraland:off-chain:base-avatars:eyebrows_00',
+        'urn:decentraland:off-chain:base-avatars:short_hair',
+        'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7:3',
+        'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1:3',
+        'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:1',
+        'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand:2',
+        'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f',
         'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:12341234-1234-3434-3434-f9dfde9f9393'
-      )
+      ])
     })
   }
 )
@@ -392,8 +388,16 @@ testWithComponents(() => {
   'integration tests for profile adapter: calling with a single profile address with extended items, ensuring ERC-721 and owning everything claimed',
   function ({ components, stubComponents }) {
     it('should work', async () => {
-      const { metrics, config, ownershipCaches, thirdPartyProvidersStorage, logs, wearablesFetcher, emotesFetcher } =
-        components
+      const {
+        metrics,
+        config,
+        ownershipCaches,
+        thirdPartyProvidersStorage,
+        logs,
+        wearablesFetcher,
+        emotesFetcher,
+        namesFetcher
+      } = components
       const { theGraph, fetch, content } = stubComponents
       const address = '0x1'
 
@@ -520,7 +524,7 @@ testWithComponents(() => {
         }
       })
 
-      theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ P0x1: [{ name: 'cryptonico' }] })
+      theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ nfts: [{ id: 'id1', name: 'cryptonico' }] })
 
       jest.spyOn(components.thirdPartyProvidersStorage, 'getAll').mockResolvedValue([
         {
@@ -551,7 +555,8 @@ testWithComponents(() => {
         thirdPartyProvidersStorage,
         logs,
         wearablesFetcher,
-        emotesFetcher
+        emotesFetcher,
+        namesFetcher
       })
       const profiles = await profilesComponent.getProfiles([address])
       expect(profiles).toHaveLength(1)
@@ -562,35 +567,32 @@ testWithComponents(() => {
 
       expect(profile.avatars.length).toEqual(1)
 
-      expect(profile.avatars?.[0].avatar.wearables.length).toEqual(8)
-      expect(profile.avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:eyebrows_00')
-      expect(profile.avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:short_hair')
-      expect(profile.avatars?.[0].avatar.wearables).toContain(
-        'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7:1'
-      )
-      expect(profile.avatars?.[0].avatar.wearables).toContain(
-        'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1:1'
-      )
-      expect(profile.avatars?.[0].avatar.wearables).toContain(
-        'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:1'
-      )
-      expect(profile.avatars?.[0].avatar.wearables).toContain(
-        'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand:1'
-      )
-      expect(profile.avatars?.[0].avatar.wearables).toContain(
-        'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f'
-      )
-      expect(profile.avatars?.[0].avatar.wearables).toContain(
+      expect(profile.avatars?.[0].avatar.wearables).toEqual([
+        'urn:decentraland:off-chain:base-avatars:eyebrows_00',
+        'urn:decentraland:off-chain:base-avatars:short_hair',
+        'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7:1',
+        'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1:1',
+        'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:1',
+        'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand:1',
+        'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f',
         'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:12341234-1234-3434-3434-f9dfde9f9393'
-      )
+      ])
     })
   }
 )
 
 test('integration tests for profile adapter', function ({ components, stubComponents }) {
   it('calling with a single profile address, two eth wearables, one of them not owned', async () => {
-    const { metrics, config, ownershipCaches, thirdPartyProvidersStorage, logs, wearablesFetcher, emotesFetcher } =
-      components
+    const {
+      metrics,
+      config,
+      ownershipCaches,
+      thirdPartyProvidersStorage,
+      logs,
+      wearablesFetcher,
+      emotesFetcher,
+      namesFetcher
+    } = components
     const { theGraph, content, fetch } = stubComponents
     const addresses = ['0x3']
 
@@ -620,7 +622,7 @@ test('integration tests for profile adapter', function ({ components, stubCompon
 
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
 
-    theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ P0x3: [] })
+    theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
 
     const profilesComponent = await createProfilesComponent({
       metrics,
@@ -632,7 +634,8 @@ test('integration tests for profile adapter', function ({ components, stubCompon
       thirdPartyProvidersStorage,
       logs,
       wearablesFetcher,
-      emotesFetcher
+      emotesFetcher,
+      namesFetcher
     })
     const profiles = await profilesComponent.getProfiles(addresses)
     expect(profiles.length).toEqual(1)
@@ -647,11 +650,10 @@ test('integration tests for profile adapter', function ({ components, stubCompon
     expect(profiles[0].avatars?.[0].avatar.snapshots.face256).toEqual(
       'https://peer.decentraland.org/content/contents/bafkreigi3yrgdhvjr2cqzxvfztnsubnll2cfdioo4vfzu6o6vibwoag2ma'
     )
-    expect(profiles[0].avatars?.[0].avatar.wearables.length).toEqual(3)
-    expect(profiles[0].avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:eyebrows_00')
-    expect(profiles[0].avatars?.[0].avatar.wearables).toContain('urn:decentraland:off-chain:base-avatars:short_hair')
-    expect(profiles[0].avatars?.[0].avatar.wearables).toContain(
+    expect(profiles[0].avatars?.[0].avatar.wearables).toEqual([
+      'urn:decentraland:off-chain:base-avatars:eyebrows_00',
+      'urn:decentraland:off-chain:base-avatars:short_hair',
       'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet'
-    )
+    ])
   })
 })
