@@ -78,6 +78,12 @@ describe('about-controller-unit', () => {
           address: identity.getAddress(),
           publicKey: identity.getPublicKey()
         },
+        bff: {
+          healthy: true,
+          protocolVersion: '1.0_0',
+          userCount: 0,
+          publicUrl: '/bff'
+        },
         configurations: {
           networkId: 1,
           globalScenesUrn: [],
@@ -129,6 +135,12 @@ describe('about-controller-unit', () => {
           publicUrl: defaultConfigWithoutComms.LAMBDAS_URL,
           address: identity.getAddress(),
           publicKey: identity.getPublicKey()
+        },
+        bff: {
+          healthy: true,
+          protocolVersion: '1.0_0',
+          userCount: 0,
+          publicUrl: '/bff'
         },
         configurations: {
           networkId: 1,
@@ -199,6 +211,12 @@ describe('about-controller-unit', () => {
           address: identity.getAddress(),
           publicKey: identity.getPublicKey()
         },
+        bff: {
+          healthy: true,
+          protocolVersion: '1.0_0',
+          userCount: 0,
+          publicUrl: '/bff'
+        },
         configurations: {
           networkId: 1,
           globalScenesUrn: [],
@@ -264,6 +282,12 @@ describe('about-controller-unit', () => {
           publicUrl: defaultConfigWithoutComms.LAMBDAS_URL,
           address: identity.getAddress(),
           publicKey: identity.getPublicKey()
+        },
+        bff: {
+          healthy: true,
+          protocolVersion: '1.0_0',
+          userCount: 0,
+          publicUrl: '/bff'
         },
         configurations: {
           networkId: 1,
@@ -343,6 +367,12 @@ describe('about-controller-unit', () => {
             address: identity.getAddress(),
             publicKey: identity.getPublicKey()
           },
+          bff: {
+            healthy: true,
+            protocolVersion: '1.0_0',
+            userCount: 0,
+            publicUrl: '/bff'
+          },
           configurations: {
             networkId: 1,
             globalScenesUrn: [],
@@ -417,6 +447,12 @@ describe('about-controller-unit', () => {
             publicUrl: defaultConfigWithoutComms.LAMBDAS_URL,
             address: identity.getAddress(),
             publicKey: identity.getPublicKey()
+          },
+          bff: {
+            healthy: true,
+            protocolVersion: '1.0_0',
+            userCount: 0,
+            publicUrl: '/bff'
           },
           configurations: {
             networkId: 1,

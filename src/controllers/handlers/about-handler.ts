@@ -127,6 +127,12 @@ export async function aboutHandler(
       scenesUrn: [],
       realmName: name
     },
+    bff: {
+      healthy: true,
+      protocolVersion: '1.0_0',
+      userCount: 0,
+      publicUrl: '/bff'
+    },
     acceptingUsers
   }
 
