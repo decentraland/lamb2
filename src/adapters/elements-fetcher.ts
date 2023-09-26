@@ -2,11 +2,6 @@ import { AppComponents } from '../types'
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { createLowerCaseKeysCache } from './lowercase-keys-cache'
 
-export type ElementsResult<T> = {
-  elements: T[]
-  totalAmount: number
-}
-
 export type ElementsFetcher<T> = IBaseComponent & {
   fetchOwnedElements(address: string): Promise<T[]>
 }

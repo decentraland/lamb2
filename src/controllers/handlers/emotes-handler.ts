@@ -22,12 +22,17 @@ function mapItemToItemResponse(
   }
 }
 
+export let test = true
+
 export async function emotesHandler(
   context: HandlerContextWithPath<
     'emotesFetcher' | 'entitiesFetcher' | 'emoteDefinitionsFetcher',
     '/users/:address/emotes'
   >
 ): Promise<{ status: 200; body: GetEmotes200 }> {
+  if (test) {
+    process.exit(0)
+  }
   const { emoteDefinitionsFetcher, emotesFetcher, entitiesFetcher } = context.components
   const { address } = context.params
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
