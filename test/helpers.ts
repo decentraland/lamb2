@@ -1,6 +1,7 @@
-import { createIdentity } from 'eth-crypto'
+import { computeAddress } from '@dcl/crypto/dist/crypto'
+import { createIdentityComponent } from '../src/adapters/identity'
 
 export function generateRandomAddress(): string {
-  const identity = createIdentity()
-  return identity.address
+  const pubKey = createIdentityComponent().getPublicKey()
+  return computeAddress(Buffer.from(pubKey, 'hex'))
 }

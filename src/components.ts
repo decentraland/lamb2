@@ -33,7 +33,6 @@ import { createThirdPartyProvidersServiceFetcherComponent } from './adapters/thi
 import { createThirdPartyProvidersStorage } from './logic/third-party-providers-storage'
 import { createIdentityComponent } from './adapters/identity'
 import { createProfilesComponent } from './adapters/profiles'
-import { createHasherComponent } from './adapters/hasher'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -140,7 +139,6 @@ export async function initComponents(
     namesFetcher
   })
 
-  const hasher = createHasherComponent()
   return {
     config,
     logs,
@@ -173,7 +171,6 @@ export async function initComponents(
     poisFetcher,
     nameDenylistFetcher,
     identity,
-    profiles,
-    hasher
+    profiles
   }
 }

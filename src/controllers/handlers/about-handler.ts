@@ -92,8 +92,7 @@ export async function aboutHandler(
       version: currentVersion,
       commitHash: commitHash,
       publicUrl: lambdasUrl.publicUrl,
-      publicKey: identity.getPublicKey(),
-      address: identity.getAddress()
+      publicKey: identity.getPublicKey()
     },
     configurations: {
       networkId: contracts.chainId,

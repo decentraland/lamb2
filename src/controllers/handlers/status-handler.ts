@@ -17,8 +17,7 @@ export async function statusHandler(
       version: version ?? '',
       currentTime: Date.now(),
       commitHash: commitHash ?? '',
-      publicKey: identity.getPublicKey(),
-      address: identity.getAddress()
+      publicKey: identity.getPublicKey()
     }
   }
 }
