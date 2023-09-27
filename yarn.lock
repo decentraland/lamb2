@@ -359,10 +359,10 @@
   dependencies:
     "@dcl/ts-proto" "1.154.0"
 
-"@dcl/schemas@^9.0.0", "@dcl/schemas@^9.2.0", "@dcl/schemas@^9.6.0":
-  version "9.6.0"
-  resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-9.6.0.tgz#e5e02166e182063577d997019d4a1dad237fc8d2"
-  integrity sha512-k2qfX00Zs7FMT1Ou2dZYZwayK4Ru11IoC8/iSq9Xn81HLcrwzM/LEIBAjDu2fE8bz7U84osBnPgJYs1DG+OV2Q==
+"@dcl/schemas@^9.0.0", "@dcl/schemas@^9.2.0", "@dcl/schemas@^9.7.0":
+  version "9.7.0"
+  resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-9.7.0.tgz#03d3abc786d0b2105cbea04529400e2c14655940"
+  integrity sha512-biebiK72leOhSBCSTPywnHl0vNpWmJX7dYSnk6UKzq08Ri15bs1S7s2Mxuxo6r15DnEvYgcqrfXeCwufJTFeqA==
   dependencies:
     ajv "^8.11.0"
     ajv-errors "^3.0.0"
