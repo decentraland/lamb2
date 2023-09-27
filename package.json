@@ -13,6 +13,7 @@
     "@dcl/eslint-config": "^1.1.12",
     "@dcl/protocol": "^1.0.0-6200210039.commit-75f18e8",
     "@types/node": "^18.11.18",
+    "@types/secp256k1": "^4.0.4",
     "@well-known-components/test-helpers": "^1.5.3",
     "typescript": "^4.9.5"
   },
@@ -27,7 +28,6 @@
     "@dcl/catalyst-api-specs": "^3.2.3",
     "@dcl/catalyst-contracts": "^4.2.0",
     "@dcl/crypto": "^3.4.5",
-    "@dcl/hashing": "^3.0.4",
     "@dcl/schemas": "^9.7.0",
     "@dcl/urn-resolver": "^3.1.0",
     "@well-known-components/env-config-provider": "^1.2.0",
@@ -38,8 +38,8 @@
     "@well-known-components/thegraph-component": "^1.6.0",
     "dcl-catalyst-client": "^21.5.5",
     "eth-connect": "^6.2.1",
-    "eth-crypto": "^2.6.0",
-    "lru-cache": "^8.0.4"
+    "lru-cache": "^8.0.4",
+    "secp256k1": "^5.0.0"
   },
   "resolutions": {
     "**/make-dir/semver": "^6.3.1"
