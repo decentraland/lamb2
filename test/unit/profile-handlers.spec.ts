@@ -8,9 +8,8 @@ import { generateRandomAddress } from '../helpers'
 import { profileEntityFullWithExtendedItems } from '../integration/data/profiles-responses'
 import { Request } from 'node-fetch'
 import { createIdentityComponent } from '../../src/adapters/identity'
-import { createHasherComponent } from '../../src/adapters/hasher'
-import EthCrypto from 'eth-crypto'
-import { hashV1 } from '@dcl/hashing'
+import secp256k1 from 'secp256k1'
+import { sha3 } from 'eth-connect'
 
 const profile = { timestamp: Date.now(), ...profileEntityFullWithExtendedItems.metadata }
 
@@ -159,11 +158,7 @@ describe('GET /explorer/profiles/{id} handler unit test', () => {
       },
       identity: {
         getPublicKey: () => 'public_key',
-        getAddress: () => 'address',
-        sign: jest.fn().mockImplementation(() => 'signed')
-      },
-      hasher: {
-        hash: jest.fn().mockImplementation(() => 'hash')
+        hashAndSign: jest.fn().mockImplementation(() => ({ hash: 'hash', signedHash: 'signed' }))
       }
     }
   }
@@ -183,10 +178,9 @@ describe('GET /explorer/profiles/{id} handler unit test', () => {
     const avatar = profile.avatars[0]
     expect(components.profiles.getProfiles).not.toHaveBeenCalled()
     expect(components.profiles.getProfile).toHaveBeenCalledWith(address)
-    expect(components.hasher.hash).toHaveBeenCalledWith(
+    expect(components.identity.hashAndSign).toHaveBeenCalledWith(
       JSON.stringify([avatar.name, avatar.hasClaimedName, ...avatar.avatar.wearables])
     )
-    expect(components.identity.sign).toHaveBeenCalledWith('hash')
 
     expect(status).toEqual(200)
     expect(body.profile).toEqual(profile)
@@ -200,7 +194,6 @@ describe('GET /explorer/profiles/{id} handler unit test', () => {
         getProfiles: jest.fn().mockImplementation(async () => undefined),
         getProfile: jest.fn().mockImplementation(async () => profile)
       },
-      hasher: createHasherComponent(),
       identity: createIdentityComponent()
     }
     const { status, body } = await explorerProfileHandler({ components, params: { id: address } })
@@ -214,12 +207,14 @@ describe('GET /explorer/profiles/{id} handler unit test', () => {
     expect(body.hash).toBeTruthy()
     expect(body.signedHash).toBeTruthy()
 
-    const encoder = new TextEncoder()
-
     const payload = JSON.stringify([avatar.name, avatar.hasClaimedName, ...avatar.avatar.wearables])
-    expect(await hashV1(encoder.encode(payload))).toEqual(body.hash)
-    expect(EthCrypto.recover(body.signedHash, EthCrypto.hash.keccak256(body.hash))).toEqual(
-      components.identity.getAddress()
-    )
+    expect(sha3(payload)).toEqual(body.hash)
+    expect(
+      secp256k1.ecdsaVerify(
+        Buffer.from(body.signedHash, 'hex'),
+        Buffer.from(body.hash, 'hex'),
+        Buffer.from(components.identity.getPublicKey(), 'hex')
+      )
+    ).toBeTruthy()
   })
 })

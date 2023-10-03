@@ -57,7 +57,7 @@ export async function profileHandler(
 }
 
 export async function explorerProfileHandler(
-  context: Pick<HandlerContextWithPath<'profiles' | 'identity' | 'hasher', '/profiles/:id'>, 'components' | 'params'>
+  context: Pick<HandlerContextWithPath<'profiles' | 'identity', '/profiles/:id'>, 'components' | 'params'>
 ): Promise<{ status: 200; body: any }> {
   const { components, params } = context
   const profile = await components.profiles.getProfile(params.id)
@@ -68,8 +68,8 @@ export async function explorerProfileHandler(
   const avatar = profile.avatars[0]
 
   const payload = JSON.stringify([avatar.name, avatar.hasClaimedName, ...avatar.avatar.wearables])
-  const hash = await components.hasher.hash(payload)
-  const signedHash = components.identity.sign(hash)
+
+  const { hash, signedHash } = components.identity.hashAndSign(payload)
 
   return {
     status: 200,

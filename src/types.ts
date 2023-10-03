@@ -37,7 +37,6 @@ import { ThirdPartyProvidersGraphFetcher } from './adapters/third-party-provider
 import { ThirdPartyProvidersStorage } from './logic/third-party-providers-storage'
 import { IdentityComponent } from './adapters/identity'
 import { IProfilesComponent } from './adapters/profiles'
-import { HasherComponent } from './adapters/hasher'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -76,7 +75,6 @@ export type BaseComponents = {
   nameDenylistFetcher: NameDenylistFetcher
   identity: IdentityComponent
   profiles: IProfilesComponent
-  hasher: HasherComponent
 }
 
 // components used in runtime
