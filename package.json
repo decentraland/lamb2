@@ -11,7 +11,6 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@dcl/eslint-config": "^1.1.12",
-    "@dcl/protocol": "^1.0.0-6200210039.commit-75f18e8",
     "@types/node": "^18.11.18",
     "@types/secp256k1": "^4.0.4",
     "@well-known-components/test-helpers": "^1.5.3",
@@ -25,7 +24,7 @@
     "tabWidth": 2
   },
   "dependencies": {
-    "@dcl/catalyst-api-specs": "^3.2.3",
+    "@dcl/catalyst-api-specs": "^3.2.4",
     "@dcl/catalyst-contracts": "^4.2.0",
     "@dcl/crypto": "^3.4.5",
     "@dcl/schemas": "^9.7.0",

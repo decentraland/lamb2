@@ -1,7 +1,6 @@
 import { createConfigComponent } from '@well-known-components/env-config-provider'
 import { ServiceStatus } from '../../src/adapters/status'
 import { aboutHandler } from '../../src/controllers/handlers/about-handler'
-import { AboutResponse } from '@dcl/protocol/out-js/decentraland/realm/about.gen'
 
 describe('about-controller-unit', () => {
   const defaultConfig = {
@@ -52,10 +51,6 @@ describe('about-controller-unit', () => {
     }
 
     const response = await aboutHandler({ url, components })
-
-    // NOTE: this is just a type check against the protocol
-    const aboutResponse: AboutResponse = response.body
-    expect(aboutResponse).toBeTruthy()
 
     expect(response).toMatchObject({
       status: 503,
@@ -116,10 +111,6 @@ describe('about-controller-unit', () => {
     }
 
     const response = await aboutHandler({ url, components })
-
-    // NOTE: this is just a type check against the protocol
-    const aboutResponse: AboutResponse = response.body
-    expect(aboutResponse).toBeTruthy()
 
     expect(response).toMatchObject({
       status: 503,
@@ -196,10 +187,6 @@ describe('about-controller-unit', () => {
     }
 
     const response = await aboutHandler({ url, components })
-
-    // NOTE: this is just a type check against the protocol
-    const aboutResponse: AboutResponse = response.body
-    expect(aboutResponse).toBeTruthy()
 
     expect(response).toMatchObject({
       status: 200,
@@ -279,10 +266,6 @@ describe('about-controller-unit', () => {
 
     const response = await aboutHandler({ url, components })
 
-    // NOTE: this is just a type check against the protocol
-    const aboutResponse: AboutResponse = response.body
-    expect(aboutResponse).toBeTruthy()
-
     expect(response).toMatchObject({
       status: 200,
       body: {
@@ -360,10 +343,6 @@ describe('about-controller-unit', () => {
     }
 
     const response = await aboutHandler({ url, components })
-
-    // NOTE: this is just a type check against the protocol
-    const aboutResponse: AboutResponse = response.body
-    expect(aboutResponse).toBeTruthy()
 
     expect(response).toMatchObject({
       status: 200,
