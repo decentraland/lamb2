@@ -4,7 +4,7 @@ import { allCollectionsHandler } from './handlers/all-collections-handler'
 import { emotesHandler } from './handlers/emotes-handler'
 import { landsHandler } from './handlers/lands-handler'
 import { namesHandler } from './handlers/names-handler'
-import { explorerProfileHandler, profileHandler, profilesHandler } from './handlers/profiles-handler'
+import { profileHandler, profilesHandler } from './handlers/profiles-handler'
 import { statusHandler } from './handlers/status-handler'
 import {
   thirdPartyCollectionWearablesHandler,
@@ -44,7 +44,6 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
 
   /* internal */
   router.get('/explorer/:address/wearables', explorerHandler)
-  router.get('/explorer/profiles/:id', explorerProfileHandler)
   /* end internal */
 
   return router
