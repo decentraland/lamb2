@@ -1,7 +1,13 @@
 import { computeAddress } from '@dcl/crypto/dist/crypto'
-import { createIdentityComponent } from '../src/adapters/identity'
+import { randomBytes } from 'crypto'
+import secp256k1 from 'secp256k1'
 
 export function generateRandomAddress(): string {
-  const pubKey = createIdentityComponent().getPublicKey()
-  return computeAddress(Buffer.from(pubKey, 'hex'))
+  let privKey: Uint8Array
+  do {
+    privKey = randomBytes(32)
+  } while (!secp256k1.privateKeyVerify(privKey))
+
+  const pubKey = secp256k1.publicKeyCreate(privKey)
+  return computeAddress(pubKey)
 }
