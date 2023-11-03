@@ -73,7 +73,7 @@ export async function createProfilesComponent(
   const logger = logs.getLogger('profiles')
 
   const ensureERC721 = (await config.getString('ENSURE_ERC_721')) !== 'false'
-  const baseUrl = (await config.getString('CONTENT_URL')) ?? ''
+  const baseUrl = (await config.getString('PROFILE_CDN_BASE_URL')) ?? ''
 
   async function getProfiles(
     ethAddresses: string[],
