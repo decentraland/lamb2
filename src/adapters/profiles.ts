@@ -27,20 +27,20 @@ function roundToSeconds(timestamp: number) {
  * method, we replace the hashes by urls that would trigger the snapshot download.
  */
 function addBaseUrlToSnapshots(baseUrl: string, snapshots: Snapshots, content: Map<string, string>): Snapshots {
-  snapshots.body = addBaseUrlToSnapshot(baseUrl, snapshots.body, content)
-  snapshots.face256 = addBaseUrlToSnapshot(baseUrl, snapshots.face256, content)
+  snapshots.body = addBaseUrlToSnapshot(baseUrl, snapshots.body, content, 'body')
+  snapshots.face256 = addBaseUrlToSnapshot(baseUrl, snapshots.face256, content, 'face')
   return snapshots
 }
 
-function addBaseUrlToSnapshot(baseUrl: string, snapshot: string, content: Map<string, string>): string {
+function addBaseUrlToSnapshot(baseUrl: string, snapshot: string, content: Map<string, string>, which: string): string {
   const cleanedBaseUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/'
   if (content.has(snapshot)) {
     // Snapshot references a content file
     const hash = content.get(snapshot)!
-    return cleanedBaseUrl + `contents/${hash}`
+    return cleanedBaseUrl + `entities/${hash}/${which}.png`
   } else {
     // Snapshot is directly a hash
-    return cleanedBaseUrl + `contents/${snapshot}`
+    return cleanedBaseUrl + `entities/${snapshot}/${which}.png`
   }
 }
 
