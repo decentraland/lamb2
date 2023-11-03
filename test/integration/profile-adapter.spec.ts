@@ -160,10 +160,10 @@ test('integration tests for profile adapter', function ({ components, stubCompon
     expect(profile.avatars?.[0].name).toEqual('cryptonico')
     expect(profile.avatars?.[0].avatar.bodyShape).toEqual('urn:decentraland:off-chain:base-avatars:BaseMale')
     expect(profile.avatars?.[0].avatar.snapshots.body).toEqual(
-      'https://peer.decentraland.org/content/entities/bafkreicilawwtbjyf6ahyzv64ssoamdm73rif75qncee5lv6j3a3352lua/body.png'
+      `https://peer.decentraland.org/content/entities/${profileEntityFull.id}/body.png`
     )
     expect(profile.avatars?.[0].avatar.snapshots.face256).toEqual(
-      'https://peer.decentraland.org/content/entities/bafkreigi3yrgdhvjr2cqzxvfztnsubnll2cfdioo4vfzu6o6vibwoag2ma/face.png'
+      `https://peer.decentraland.org/content/entities/${profileEntityFull.id}/face.png`
     )
     expect(profile.avatars?.[0].avatar.wearables).toEqual([
       'urn:decentraland:off-chain:base-avatars:eyebrows_00',
@@ -645,10 +645,10 @@ test('integration tests for profile adapter', function ({ components, stubCompon
     expect(profiles[0].avatars?.[0].name).toEqual('cryptonico#e602')
     expect(profiles[0].avatars?.[0].avatar.bodyShape).toEqual('urn:decentraland:off-chain:base-avatars:BaseMale')
     expect(profiles[0].avatars?.[0].avatar.snapshots.body).toEqual(
-      'https://peer.decentraland.org/content/entities/bafkreicilawwtbjyf6ahyzv64ssoamdm73rif75qncee5lv6j3a3352lua/body.png'
+      `https://peer.decentraland.org/content/entities/${profileEntityTwoEthWearables.id}/body.png`
     )
     expect(profiles[0].avatars?.[0].avatar.snapshots.face256).toEqual(
-      'https://peer.decentraland.org/content/entities/bafkreigi3yrgdhvjr2cqzxvfztnsubnll2cfdioo4vfzu6o6vibwoag2ma/face.png'
+      `https://peer.decentraland.org/content/entities/${profileEntityTwoEthWearables.id}/face.png`
     )
     expect(profiles[0].avatars?.[0].avatar.wearables).toEqual([
       'urn:decentraland:off-chain:base-avatars:eyebrows_00',

@@ -26,22 +26,15 @@ function roundToSeconds(timestamp: number) {
  * The content server provides the snapshots' hashes, but clients expect a full url. So in this
  * method, we replace the hashes by urls that would trigger the snapshot download.
  */
-function addBaseUrlToSnapshots(baseUrl: string, snapshots: Snapshots, content: Map<string, string>): Snapshots {
-  snapshots.body = addBaseUrlToSnapshot(baseUrl, snapshots.body, content, 'body')
-  snapshots.face256 = addBaseUrlToSnapshot(baseUrl, snapshots.face256, content, 'face')
+function addBaseUrlToSnapshots(entityId: string, baseUrl: string, snapshots: Snapshots): Snapshots {
+  snapshots.body = addBaseUrlToSnapshot(entityId, baseUrl, 'body')
+  snapshots.face256 = addBaseUrlToSnapshot(entityId, baseUrl, 'face')
   return snapshots
 }
 
-function addBaseUrlToSnapshot(baseUrl: string, snapshot: string, content: Map<string, string>, which: string): string {
+function addBaseUrlToSnapshot(entityId: string, baseUrl: string, which: string): string {
   const cleanedBaseUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/'
-  if (content.has(snapshot)) {
-    // Snapshot references a content file
-    const hash = content.get(snapshot)!
-    return cleanedBaseUrl + `entities/${hash}/${which}.png`
-  } else {
-    // Snapshot is directly a hash
-    return cleanedBaseUrl + `entities/${snapshot}/${which}.png`
-  }
+  return cleanedBaseUrl + `entities/${entityId}/${which}.png`
 }
 
 export type IProfilesComponent = {
@@ -98,7 +91,6 @@ export async function createProfilesComponent(
         profileEntities.map(async (entity) => {
           const ethAddress = entity.pointers[0]
           const metadata: ProfileMetadata = entity.metadata
-          const content = new Map((entity.content ?? []).map(({ file, hash }) => [file, hash]))
 
           metadata.timestamp = entity.timestamp
 
@@ -188,7 +180,7 @@ export async function createProfilesComponent(
                 ...avatar.avatar,
                 emotes: validatedEmotes,
                 bodyShape: (await translateWearablesIdFormat(avatar.avatar.bodyShape)) ?? '',
-                snapshots: addBaseUrlToSnapshots(baseUrl, avatar.avatar.snapshots, content),
+                snapshots: addBaseUrlToSnapshots(entity.id, baseUrl, avatar.avatar.snapshots),
                 wearables: Array.from(new Set(validatedWearables.concat(thirdPartyWearables)))
               }
             })
