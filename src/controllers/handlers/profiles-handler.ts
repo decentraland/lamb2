@@ -55,24 +55,3 @@ export async function profileHandler(
     body: profile
   }
 }
-
-export async function explorerProfileHandler(
-  context: Pick<HandlerContextWithPath<'profiles' | 'identity' | 'hasher', '/profiles/:id'>, 'components' | 'params'>
-): Promise<{ status: 200; body: any }> {
-  const { components, params } = context
-  const profile = await components.profiles.getProfile(params.id)
-  if (!profile) {
-    throw new NotFoundError('Profile not found')
-  }
-
-  const avatar = profile.avatars[0]
-
-  const payload = JSON.stringify([avatar.name, avatar.hasClaimedName, ...avatar.avatar.wearables])
-  const hash = await components.hasher.hash(payload)
-  const signedHash = components.identity.sign(hash)
-
-  return {
-    status: 200,
-    body: { profile, hash, signedHash }
-  }
-}
