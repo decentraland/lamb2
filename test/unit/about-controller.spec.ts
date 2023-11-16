@@ -118,7 +118,7 @@ describe('about-controller-unit', () => {
           healthy: true,
           version: defaultConfigWithoutComms.CURRENT_VERSION,
           commitHash: defaultConfigWithoutComms.COMMIT_HASH,
-          publicUrl: defaultConfigWithoutComms.LAMBDAS_URL,
+          publicUrl: defaultConfigWithoutComms.LAMBDAS_URL
         },
         bff: {
           healthy: true,
@@ -186,9 +186,7 @@ describe('about-controller-unit', () => {
           healthy: true,
           version: defaultConfigWithoutComms.CURRENT_VERSION,
           commitHash: defaultConfigWithoutComms.COMMIT_HASH,
-          publicUrl: defaultConfigWithoutComms.LAMBDAS_URL,
-          address: identity.getAddress(),
-          publicKey: identity.getPublicKey()
+          publicUrl: defaultConfigWithoutComms.LAMBDAS_URL
         },
         bff: {
           healthy: true,
@@ -254,9 +252,7 @@ describe('about-controller-unit', () => {
           healthy: true,
           version: defaultConfigWithoutComms.CURRENT_VERSION,
           commitHash: defaultConfigWithoutComms.COMMIT_HASH,
-          publicUrl: defaultConfigWithoutComms.LAMBDAS_URL,
-          address: identity.getAddress(),
-          publicKey: identity.getPublicKey()
+          publicUrl: defaultConfigWithoutComms.LAMBDAS_URL
         },
         bff: {
           healthy: true,
@@ -276,10 +272,9 @@ describe('about-controller-unit', () => {
   })
 
   describe('when comms is enabled', () => {
-
     const configWithComms = {
       ...defaultConfigWithoutComms,
-      ARCHIPELAGO_URL: 'https://peer.decentraland.org/archipelago',
+      ARCHIPELAGO_URL: 'https://peer.decentraland.org/archipelago'
     }
 
     const config = createConfigComponent(configWithComms)
@@ -305,70 +300,18 @@ describe('about-controller-unit', () => {
         }
       }
 
-    async function areResourcesOverloaded(): Promise<boolean> {
-      return false
-    }
-
-    const components = {
-      config,
-      status: { getServiceStatus },
-      resourcesStatusCheck: { areResourcesOverloaded },
-      realmName: { getRealmName }
-    }
-
-    const response = await aboutHandler({ url, components })
-
-    expect(response).toMatchObject({
-      status: 200,
-      body: {
-        healthy: true,
-        content: {
-          healthy: true,
-          publicUrl: defaultConfig.CONTENT_URL,
-          commitHash: 'content_hash',
-          version: 'content_1'
-        },
-        lambdas: {
-          healthy: true,
-          version: defaultConfig.CURRENT_VERSION,
-          commitHash: defaultConfig.COMMIT_HASH,
-          publicUrl: defaultConfig.LAMBDAS_URL
-        },
-        configurations: {
-          networkId: 1,
-          globalScenesUrn: [],
-          scenesUrn: [],
-          realmName: 'testName'
-        },
-        comms: {
-          healthy: true,
-          protocol: 'v3',
-          commitHash: 'archipelago_hash',
-          version: 'archipelago_1',
-          usersCount: 1000
-        },
-        bff: {
-          healthy: true,
-          protocolVersion: '1.0_0',
-          userCount: 1000,
-          publicUrl: '/bff'
-        },
-        acceptingUsers: false
+      async function areResourcesOverloaded(): Promise<boolean> {
+        return false
       }
 
       const components = {
         config,
         status: { getServiceStatus },
         resourcesStatusCheck: { areResourcesOverloaded },
-        realmName: { getRealmName },
-        identity
+        realmName: { getRealmName }
       }
 
       const response = await aboutHandler({ url, components })
-
-      // NOTE: this is just a type check against the protocol
-      const aboutResponse: AboutResponse = response.body
-      expect(aboutResponse).toBeTruthy()
 
       expect(response).toEqual({
         status: 200,
@@ -385,9 +328,7 @@ describe('about-controller-unit', () => {
             healthy: true,
             version: defaultConfigWithoutComms.CURRENT_VERSION,
             commitHash: defaultConfigWithoutComms.COMMIT_HASH,
-            publicUrl: defaultConfigWithoutComms.LAMBDAS_URL,
-            address: identity.getAddress(),
-            publicKey: identity.getPublicKey()
+            publicUrl: defaultConfigWithoutComms.LAMBDAS_URL
           },
           bff: {
             healthy: true,
@@ -402,12 +343,12 @@ describe('about-controller-unit', () => {
             realmName: 'testName'
           },
           comms: {
-            commitHash: "archipelago_hash",
+            commitHash: 'archipelago_hash',
             healthy: true,
-            protocol: "v3",
+            protocol: 'v3',
             usersCount: 10,
-            version: "archipelago_1",
-            adapter: "archipelago:archipelago-v1:wss://peer.decentraland.org/archipelago/ws"
+            version: 'archipelago_1',
+            adapter: 'archipelago:archipelago:wss://peer.decentraland.org/archipelago/ws'
           },
           acceptingUsers: true
         }
@@ -419,7 +360,10 @@ describe('about-controller-unit', () => {
           case `${defaultConfigWithoutComms.INTERNAL_LAMBDAS_URL}/status`:
             return { healthy: true, data: { version: 'lambdas_1', commitHash: 'lambdas_hash' } }
           case `${defaultConfigWithoutComms.INTERNAL_ARCHIPELAGO_URL}/status`:
-            return { healthy: true, data: { version: 'archipelago_1', commitHash: 'archipelago_hash', userCount: 1000 } }
+            return {
+              healthy: true,
+              data: { version: 'archipelago_1', commitHash: 'archipelago_hash', userCount: 1000 }
+            }
           case `${defaultConfigWithoutComms.INTERNAL_CONTENT_URL}/status`:
             return {
               healthy: true,
@@ -442,15 +386,11 @@ describe('about-controller-unit', () => {
         config,
         status: { getServiceStatus },
         resourcesStatusCheck: { areResourcesOverloaded },
-        realmName: { getRealmName },
-        identity
+        realmName: { getRealmName }
       }
 
       const response = await aboutHandler({ url, components })
 
-      // NOTE: this is just a type check against the protocol
-      const aboutResponse: AboutResponse = response.body
-      expect(aboutResponse).toBeTruthy()
       expect(response).toEqual({
         status: 200,
         body: {
@@ -460,15 +400,13 @@ describe('about-controller-unit', () => {
             publicUrl: defaultConfigWithoutComms.CONTENT_URL,
             commitHash: 'content_hash',
             version: 'content_1',
-            synchronizationStatus: 'Syncing',
+            synchronizationStatus: 'Syncing'
           },
           lambdas: {
             healthy: true,
             version: defaultConfigWithoutComms.CURRENT_VERSION,
             commitHash: defaultConfigWithoutComms.COMMIT_HASH,
-            publicUrl: defaultConfigWithoutComms.LAMBDAS_URL,
-            address: identity.getAddress(),
-            publicKey: identity.getPublicKey()
+            publicUrl: defaultConfigWithoutComms.LAMBDAS_URL
           },
           bff: {
             healthy: true,
@@ -488,7 +426,7 @@ describe('about-controller-unit', () => {
             commitHash: 'archipelago_hash',
             version: 'archipelago_1',
             usersCount: 1000,
-            adapter: "archipelago:archipelago-v1:wss://peer.decentraland.org/archipelago/ws"
+            adapter: 'archipelago:archipelago:wss://peer.decentraland.org/archipelago/ws'
           },
           acceptingUsers: false
         }
