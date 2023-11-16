@@ -23,6 +23,7 @@ export async function createStatusComponent(
     ttl: 1000 * 60, // 1min
     fetchMethod: async function (url: string): Promise<any> {
       try {
+        console.log(url)
         const response = await fetch.fetch(url, {
           method: 'GET',
           headers: {

@@ -59,17 +59,6 @@ export async function aboutHandler(
     config.getString('CURRENT_VERSION')
   ])
 
-  console.log(
-    lambdasPublicUrl,
-    lambdasInternalUrl,
-    contentPublicUrl,
-    contentInternalUrl,
-    archipelagoPublicUrl,
-    archipelagoInternalUrl,
-    commitHash,
-    currentVersion
-  )
-
   const lambdasUrl = getUrl(lambdasPublicUrl, lambdasInternalUrl)
   const contentUrl = getUrl(contentPublicUrl, contentInternalUrl)
 
@@ -85,15 +74,16 @@ export async function aboutHandler(
 
   let healthy = contentStatus.healthy && lambdasStatus.healthy
   let acceptingUsers = healthy && !resourcesOverload
-  let comms
+  let comms = undefined
+
   if (archipelagoPublicUrl) {
     const archipelagoUrl = getUrl(archipelagoPublicUrl, archipelagoInternalUrl)
     const archipelagoStatus = await status.getServiceStatus<ArchipelagoStatus>(archipelagoUrl.statusUrl)
     const userCount = archipelagoStatus.data?.userCount || 0
     healthy = healthy && archipelagoStatus.healthy
-    acceptingUsers = acceptingUsers && healthy && (!maxUsers || userCount < maxUsers)
+    acceptingUsers = acceptingUsers && (!maxUsers || userCount < maxUsers)
     const url = new URL('/archipelago/ws', archipelagoPublicUrl).toString()
-    const archipelagoWSUrl = `archipelago:archipelago-v1:${url.replace(/^http/, 'ws')}`
+    const archipelagoWSUrl = `archipelago:archipelago:${url.replace(/^http/, 'ws')}`
     comms = {
       healthy: archipelagoStatus.healthy,
       protocol: 'v3',
@@ -104,7 +94,7 @@ export async function aboutHandler(
     }
   }
 
-  const resultWithoutComms = {
+  const result = {
     healthy: healthy,
     content: {
       healthy: contentStatus.healthy,
@@ -127,6 +117,7 @@ export async function aboutHandler(
       scenesUrn: [],
       realmName: name
     },
+    comms,
     bff: {
       healthy: true,
       protocolVersion: '1.0_0',
@@ -135,8 +126,6 @@ export async function aboutHandler(
     },
     acceptingUsers
   }
-
-  const result = comms ? { ...resultWithoutComms, comms } : resultWithoutComms
 
   return {
     status: result.healthy ? 200 : 503,
