@@ -302,12 +302,12 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@dcl/catalyst-api-specs@^3.2.4":
-  version "3.2.4"
-  resolved "https://registry.yarnpkg.com/@dcl/catalyst-api-specs/-/catalyst-api-specs-3.2.4.tgz#f703b4f002262587e3de373f6fefc16f02623a0c"
-  integrity sha512-lIkF7XNmY11i2/Z0wnlV4Kc6TAkQb6Kk8Yq0Z6WybNHOYfU7YaCaeS4mMYtRPuSkQ62Cde2cEIviAI8suolBrw==
+"@dcl/catalyst-api-specs@^3.2.5":
+  version "3.2.5"
+  resolved "https://registry.yarnpkg.com/@dcl/catalyst-api-specs/-/catalyst-api-specs-3.2.5.tgz#ce5cdc0c90d38108d64d9b8ea147cb3a02b29124"
+  integrity sha512-x6zFbYLOpcwxm+LI20aa9EB+IuLF8QYxOx5D86XgZVVGvIjHlyUVpZrkE+C/VAtQsOK3Ry80jGu7G1n0BHXw9w==
   dependencies:
-    yaml "^2.3.2"
+    yaml "^2.3.4"
 
 "@dcl/catalyst-contracts@^4.0.2", "@dcl/catalyst-contracts@^4.3.1":
   version "4.3.1"
@@ -3539,10 +3539,10 @@ yallist@^4.0.0:
   resolved "https://registry.yarnpkg.com/yallist/-/yallist-4.0.0.tgz#9bb92790d9c0effec63be73519e11a35019a3a72"
   integrity sha512-3wdGidZyq5PB084XLES5TpOSRA3wjXAlIWMhum2kRcv/41Sn2emQ0dycQW4uZXLejwKvg6EsvbdlVL+FYEct7A==
 
-yaml@^2.3.2:
-  version "2.3.2"
-  resolved "https://registry.yarnpkg.com/yaml/-/yaml-2.3.2.tgz#f522db4313c671a0ca963a75670f1c12ea909144"
-  integrity sha512-N/lyzTPaJasoDmfV7YTrYCI0G/3ivm/9wdG0aHuheKowWQwGTsK0Eoiw6utmzAnI6pkJa0DUVygvp3spqqEKXg==
+yaml@^2.3.4:
+  version "2.3.4"
+  resolved "https://registry.yarnpkg.com/yaml/-/yaml-2.3.4.tgz#53fc1d514be80aabf386dc6001eb29bf3b7523b2"
+  integrity sha512-8aAvwVUSHpfEqTQ4w/KMlf3HcRdt50E5ODIQJBw1fQ5RL34xabzxtUlzTXVqc4rkZsPbvrXKWnABCD7kWSmocA==
 
 yargs-parser@^21.0.1, yargs-parser@^21.1.1:
   version "21.1.1"
