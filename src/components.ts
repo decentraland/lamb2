@@ -15,7 +15,6 @@ import { createElementsFetcherComponent } from './adapters/elements-fetcher'
 import { createEntitiesFetcherComponent } from './adapters/entities-fetcher'
 import { createNameDenylistFetcher } from './adapters/name-denylist-fetcher'
 import { createPOIsFetcher } from './adapters/pois-fetcher'
-import { createRealmNameComponent } from './adapters/realm-name-validator'
 import { createResourcesStatusComponent } from './adapters/resource-status'
 import { createStatusComponent } from './adapters/status'
 import { fetchAllBaseWearables } from './logic/fetch-elements/fetch-base-items'
@@ -107,7 +106,6 @@ export async function initComponents(
   const catalystsFetcher = await createCatalystsFetcher({ l1Provider }, l1Network)
   const poisFetcher = await createPOIsFetcher({ l2Provider }, l2Network)
   const nameDenylistFetcher = await createNameDenylistFetcher({ l1Provider }, l1Network)
-  const realmName = await createRealmNameComponent({ config, catalystsFetcher, fetch, logs })
 
   const thirdPartyProvidersGraphFetcher = createThirdPartyProvidersGraphFetcherComponent({ theGraph })
   const thirdPartyProvidersServiceFetcher = await createThirdPartyProvidersServiceFetcherComponent(
@@ -162,7 +160,6 @@ export async function initComponents(
     contentServerUrl,
     resourcesStatusCheck,
     status,
-    realmName,
     l1Provider,
     l2Provider,
     catalystsFetcher,

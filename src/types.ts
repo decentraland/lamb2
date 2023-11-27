@@ -26,7 +26,6 @@ import { ElementsFetcher } from './adapters/elements-fetcher'
 import { EntitiesFetcher } from './adapters/entities-fetcher'
 import { NameDenylistFetcher } from './adapters/name-denylist-fetcher'
 import { POIsFetcher } from './adapters/pois-fetcher'
-import { IRealmNameComponent } from './adapters/realm-name-validator'
 import { IResourcesStatusComponent } from './adapters/resource-status'
 import { IStatusComponent } from './adapters/status'
 import { metricDeclarations } from './metrics'
@@ -66,7 +65,6 @@ export type BaseComponents = {
   landsFetcher: ElementsFetcher<LAND>
   resourcesStatusCheck: IResourcesStatusComponent
   status: IStatusComponent
-  realmName: IRealmNameComponent
   l1Provider: HTTPProvider
   l2Provider: HTTPProvider
   catalystsFetcher: CatalystsFetcher
