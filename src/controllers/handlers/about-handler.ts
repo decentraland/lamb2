@@ -25,14 +25,11 @@ function getUrl(publicURL: string, healthCheckURL?: string) {
 
 // handlers arguments only type what they need, to make unit testing easier
 export async function aboutHandler(
-  context: Pick<
-    HandlerContextWithPath<'status' | 'resourcesStatusCheck' | 'config' | 'realmName', '/about'>,
-    'url' | 'components'
-  >
+  context: Pick<HandlerContextWithPath<'status' | 'resourcesStatusCheck' | 'config', '/about'>, 'url' | 'components'>
 ): Promise<{ status: 200 | 503; body: About }> {
-  const { config, status, resourcesStatusCheck, realmName } = context.components
-
+  const { config, status, resourcesStatusCheck } = context.components
   const ethNetwork = (await config.getString('ETH_NETWORK')) ?? 'mainnet'
+
   const contracts = l1Contracts[ethNetwork as L1Network]
   if (!contracts) {
     throw new Error(`Invalid ETH_NETWORK: ${ethNetwork}`)
@@ -47,7 +44,8 @@ export async function aboutHandler(
     archipelagoPublicUrl,
     archipelagoInternalUrl,
     commitHash,
-    currentVersion
+    currentVersion,
+    realmName
   ] = await Promise.all([
     config.requireString('LAMBDAS_URL'),
     config.getString('INTERNAL_LAMBDAS_URL'),
@@ -56,17 +54,17 @@ export async function aboutHandler(
     config.getString('ARCHIPELAGO_URL'),
     config.getString('INTERNAL_ARCHIPELAGO_URL'),
     config.getString('COMMIT_HASH'),
-    config.getString('CURRENT_VERSION')
+    config.getString('CURRENT_VERSION'),
+    config.getString('REALM_NAME')
   ])
 
   const lambdasUrl = getUrl(lambdasPublicUrl, lambdasInternalUrl)
   const contentUrl = getUrl(contentPublicUrl, contentInternalUrl)
 
-  const [contentStatus, lambdasStatus, resourcesOverload, name] = await Promise.all([
+  const [contentStatus, lambdasStatus, resourcesOverload] = await Promise.all([
     status.getServiceStatus<StatusContent>(contentUrl.statusUrl),
     status.getServiceStatus<DefaultStatus>(lambdasUrl.statusUrl),
-    resourcesStatusCheck.areResourcesOverloaded(),
-    realmName.getRealmName()
+    resourcesStatusCheck.areResourcesOverloaded()
   ])
 
   const synchronizationStatus = contentStatus.data?.synchronizationStatus.synchronizationState || 'Unknown'
@@ -113,7 +111,7 @@ export async function aboutHandler(
       networkId: contracts.chainId,
       globalScenesUrn: [],
       scenesUrn: [],
-      realmName: name
+      realmName
     },
     comms,
     bff: {

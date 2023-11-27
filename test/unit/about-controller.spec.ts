@@ -11,15 +11,12 @@ describe('about-controller-unit', () => {
     INTERNAL_ARCHIPELAGO_URL: 'http://archipelgo',
     COMMIT_HASH: 'commit_hash',
     CURRENT_VERSION: '1.0.0',
-    MAX_USERS: '400'
+    MAX_USERS: '400',
+    REALM_NAME: 'testName'
   }
 
   const config = createConfigComponent(defaultConfigWithoutComms)
   const url = new URL('https://github.com/well-known-components')
-
-  async function getRealmName(): Promise<string | undefined> {
-    return 'testName'
-  }
 
   it('content is bootstrapping', async () => {
     async function getServiceStatus(statusUrl: string): Promise<ServiceStatus<any>> {
@@ -45,8 +42,7 @@ describe('about-controller-unit', () => {
     const components = {
       config,
       status: { getServiceStatus },
-      resourcesStatusCheck: { areResourcesOverloaded },
-      realmName: { getRealmName }
+      resourcesStatusCheck: { areResourcesOverloaded }
     }
 
     const response = await aboutHandler({ url, components })
@@ -97,8 +93,7 @@ describe('about-controller-unit', () => {
     const components = {
       config,
       status: { getServiceStatus },
-      resourcesStatusCheck: { areResourcesOverloaded },
-      realmName: { getRealmName }
+      resourcesStatusCheck: { areResourcesOverloaded }
     }
 
     const response = await aboutHandler({ url, components })
@@ -165,8 +160,7 @@ describe('about-controller-unit', () => {
     const components = {
       config,
       status: { getServiceStatus },
-      resourcesStatusCheck: { areResourcesOverloaded },
-      realmName: { getRealmName }
+      resourcesStatusCheck: { areResourcesOverloaded }
     }
 
     const response = await aboutHandler({ url, components })
@@ -231,8 +225,7 @@ describe('about-controller-unit', () => {
     const components = {
       config,
       status: { getServiceStatus },
-      resourcesStatusCheck: { areResourcesOverloaded },
-      realmName: { getRealmName }
+      resourcesStatusCheck: { areResourcesOverloaded }
     }
 
     const response = await aboutHandler({ url, components })
@@ -307,8 +300,7 @@ describe('about-controller-unit', () => {
       const components = {
         config,
         status: { getServiceStatus },
-        resourcesStatusCheck: { areResourcesOverloaded },
-        realmName: { getRealmName }
+        resourcesStatusCheck: { areResourcesOverloaded }
       }
 
       const response = await aboutHandler({ url, components })
@@ -385,8 +377,7 @@ describe('about-controller-unit', () => {
       const components = {
         config,
         status: { getServiceStatus },
-        resourcesStatusCheck: { areResourcesOverloaded },
-        realmName: { getRealmName }
+        resourcesStatusCheck: { areResourcesOverloaded }
       }
 
       const response = await aboutHandler({ url, components })
