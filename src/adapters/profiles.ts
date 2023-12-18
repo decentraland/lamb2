@@ -72,7 +72,7 @@ export async function createProfilesComponent(
   const { content, wearablesFetcher, emotesFetcher, namesFetcher, config, logs } = components
   const logger = logs.getLogger('profiles')
 
-  const ensureERC721 = (await config.getString('ENSURE_ERC_721')) === 'true'
+  const ensureERC721 = (await config.getString('ENSURE_ERC_721')) !== 'false'
   const baseUrl = (await config.getString('CONTENT_URL')) ?? ''
 
   async function getProfiles(

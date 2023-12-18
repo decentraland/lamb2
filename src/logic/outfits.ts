@@ -10,7 +10,7 @@ export async function getOutfits(
   ethAddress: string
 ): Promise<TypedEntity<Outfits> | undefined> {
   const { config, wearablesFetcher, namesFetcher, content } = components
-  const ensureERC721 = (await config.getString('ENSURE_ERC_721')) === 'true'
+  const ensureERC721 = (await config.getString('ENSURE_ERC_721')) !== 'false'
 
   const outfitsEntities: TypedEntity<Outfits>[] = await content.fetchEntitiesByPointers([`${ethAddress}:outfits`])
 
