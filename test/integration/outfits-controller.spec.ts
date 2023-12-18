@@ -21,9 +21,9 @@ testWithComponents(() => {
             hair: { color: { r: 0.35546875, g: 0.19140625, b: 0.05859375 } },
             skin: { color: { r: 0.94921875, g: 0.76171875, b: 0.6484375 } },
             wearables: [
-              'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
-              'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2',
-              'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet'
+              'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0:3',
+              'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2:1',
+              'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet:5'
             ]
           }
         },
@@ -35,9 +35,9 @@ testWithComponents(() => {
             hair: { color: { r: 0.35546875, g: 0.19140625, b: 0.05859375 } },
             skin: { color: { r: 0.94921875, g: 0.76171875, b: 0.6484375 } },
             wearables: [
-              'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
-              'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2',
-              'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet'
+              'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0:3',
+              'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2:1',
+              'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet:5'
             ]
           }
         }
@@ -193,14 +193,14 @@ testWithComponents(() => {
     COMMIT_HASH: 'commit_hash',
     CURRENT_VERSION: 'version',
     HTTP_SERVER_PORT: '7272',
-    ENSURE_ERC_721: 'true'
+    ENSURE_ERC_721: 'false'
   })
 
   return {
     config
   }
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
-  it('return and extends outfits when all wearables are owned and ERC-721 is ensured', async () => {
+  it('return and extends outfits when all wearables are owned and ERC-721 is disabled', async () => {
     const { localFetch } = components
     const { content, theGraph } = stubComponents
     const address = '0x1'
@@ -384,9 +384,9 @@ testWithComponents(() => {
             hair: { color: { r: 0.35546875, g: 0.19140625, b: 0.05859375 } },
             skin: { color: { r: 0.94921875, g: 0.76171875, b: 0.6484375 } },
             wearables: [
-              'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0:3',
-              'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2:1',
-              'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet:5'
+              'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
+              'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2',
+              'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet'
             ]
           }
         },
@@ -398,9 +398,9 @@ testWithComponents(() => {
             hair: { color: { r: 0.35546875, g: 0.19140625, b: 0.05859375 } },
             skin: { color: { r: 0.94921875, g: 0.76171875, b: 0.6484375 } },
             wearables: [
-              'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0:3',
-              'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2:1',
-              'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet:5'
+              'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
+              'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2',
+              'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet'
             ]
           }
         }
@@ -426,7 +426,7 @@ testWithComponents(() => {
     config
   }
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
-  it('return extended outfits when all extended wearables are owned and ERC-721 is ensured', async () => {
+  it('return extended outfits when all extended wearables are owned', async () => {
     const { localFetch } = components
     const { content, theGraph } = stubComponents
     const address = '0x1'
@@ -622,9 +622,9 @@ testWithComponents(() => {
             hair: { color: { r: 0.35546875, g: 0.19140625, b: 0.05859375 } },
             skin: { color: { r: 0.94921875, g: 0.76171875, b: 0.6484375 } },
             wearables: [
-              'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
-              'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2',
-              'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet'
+              'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0:3',
+              'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2:1',
+              'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet:5'
             ]
           }
         },
@@ -1272,15 +1272,14 @@ testWithComponents(() => {
     ARCHIPELAGO_URL: 'https://peer.decentraland.org/archipelago',
     COMMIT_HASH: 'commit_hash',
     CURRENT_VERSION: 'version',
-    HTTP_SERVER_PORT: '7272',
-    ENSURE_ERC_721: 'true'
+    HTTP_SERVER_PORT: '7272'
   })
 
   return {
     config
   }
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
-  it('return complete extended outfit when outfit comes extended from content-server and ERC-721 standard is enabled', async () => {
+  it('return complete extended outfit when outfit comes extended from content-server', async () => {
     const { localFetch } = components
     const { content, theGraph } = stubComponents
     const address = '0x1'

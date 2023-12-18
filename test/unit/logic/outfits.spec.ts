@@ -14,9 +14,9 @@ test('when all wearables and names are owned, outfits entity is not modified', f
             hair: { color: { r: 0.35546875, g: 0.19140625, b: 0.05859375 } },
             skin: { color: { r: 0.94921875, g: 0.76171875, b: 0.6484375 } },
             wearables: [
-              'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
-              'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2',
-              'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet'
+              'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0:123',
+              'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2:123',
+              'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet:123'
             ]
           }
         },
@@ -28,9 +28,9 @@ test('when all wearables and names are owned, outfits entity is not modified', f
             hair: { color: { r: 0.35546875, g: 0.19140625, b: 0.05859375 } },
             skin: { color: { r: 0.94921875, g: 0.76171875, b: 0.6484375 } },
             wearables: [
-              'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
-              'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2',
-              'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet'
+              'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0:123',
+              'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2:123',
+              'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet:123'
             ]
           }
         }
@@ -52,13 +52,20 @@ test('when all wearables and names are owned, outfits entity is not modified', f
 
     components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([{ name: 'perro' }])
 
-    components.wearablesFetcher.fetchOwnedElements = jest
-      .fn()
-      .mockResolvedValue([
-        { urn: 'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0' },
-        { urn: 'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2' },
-        { urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet' }
-      ])
+    components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([
+      {
+        urn: 'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
+        individualData: [{ tokenId: '123' }]
+      },
+      {
+        urn: 'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2',
+        individualData: [{ tokenId: '123' }]
+      },
+      {
+        urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet',
+        individualData: [{ tokenId: '123' }]
+      }
+    ])
 
     const outfits = await getOutfits(components, 'address')
 
@@ -80,9 +87,9 @@ test('when some wearables are not owned, the outfits with those wearables are re
         hair: { color: { r: 0.35546875, g: 0.19140625, b: 0.05859375 } },
         skin: { color: { r: 0.94921875, g: 0.76171875, b: 0.6484375 } },
         wearables: [
-          'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
-          'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2',
-          ownedWearable
+          'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0:11',
+          'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2:12',
+          ownedWearable + ':123'
         ]
       }
     }
@@ -93,7 +100,7 @@ test('when some wearables are not owned, the outfits with those wearables are re
         eyes: { color: { r: 0.23046875, g: 0.625, b: 0.3125 } },
         hair: { color: { r: 0.35546875, g: 0.19140625, b: 0.05859375 } },
         skin: { color: { r: 0.94921875, g: 0.76171875, b: 0.6484375 } },
-        wearables: [ownedWearable]
+        wearables: [ownedWearable + ':123']
       }
     }
     const outfitsEntity: Entity = {
@@ -110,7 +117,9 @@ test('when some wearables are not owned, the outfits with those wearables are re
     }
     jest.spyOn(components.content, 'fetchEntitiesByPointers').mockResolvedValue([outfitsEntity])
     components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([])
-    components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([{ urn: ownedWearable }])
+    components.wearablesFetcher.fetchOwnedElements = jest
+      .fn()
+      .mockResolvedValue([{ urn: ownedWearable, individualData: [{ tokenId: '123' }] }])
 
     const outfits = await getOutfits(components, 'address')
     expect(outfits.metadata.outfits).toEqual([outfitWithOwnedWearables])
@@ -126,7 +135,7 @@ test('when some names are not owned, extra outfits and not owned names are remov
       eyes: { color: { r: 0.23046875, g: 0.625, b: 0.3125 } },
       hair: { color: { r: 0.35546875, g: 0.19140625, b: 0.05859375 } },
       skin: { color: { r: 0.94921875, g: 0.76171875, b: 0.6484375 } },
-      wearables: ['urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet']
+      wearables: ['urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet:123']
     }
     const ownedNames = ['iamowned', 'owned2']
     const outfitSlot1 = { slot: 1, outfit: { ...anOutfit } }
@@ -151,9 +160,12 @@ test('when some names are not owned, extra outfits and not owned names are remov
     jest.spyOn(components.content, 'fetchEntitiesByPointers').mockResolvedValue([outfitsEntity])
     components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(ownedNames.map((name) => ({ name })))
 
-    components.wearablesFetcher.fetchOwnedElements = jest
-      .fn()
-      .mockResolvedValue([{ urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet' }])
+    components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([
+      {
+        urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet',
+        individualData: [{ tokenId: '123' }]
+      }
+    ])
 
     const outfits = await getOutfits(components, address)
     expect(outfits.metadata.outfits).toEqual([outfitSlot1, outfitExtraSlot5, outfitExtraSlot6])
