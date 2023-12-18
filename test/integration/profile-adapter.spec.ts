@@ -168,10 +168,10 @@ test('integration tests for profile adapter', function ({ components, stubCompon
     expect(profile.avatars?.[0].avatar.wearables).toEqual([
       'urn:decentraland:off-chain:base-avatars:eyebrows_00',
       'urn:decentraland:off-chain:base-avatars:short_hair',
-      'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7',
-      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1',
-      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet',
-      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand',
+      'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7:tokenId-3',
+      'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1:tokenId-3',
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:tokenId-1',
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand:tokenId-2',
       'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f',
       'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:12341234-1234-3434-3434-f9dfde9f9393'
     ])
@@ -653,7 +653,7 @@ test('integration tests for profile adapter', function ({ components, stubCompon
     expect(profiles[0].avatars?.[0].avatar.wearables).toEqual([
       'urn:decentraland:off-chain:base-avatars:eyebrows_00',
       'urn:decentraland:off-chain:base-avatars:short_hair',
-      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet'
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:tokenId-1'
     ])
   })
 })
