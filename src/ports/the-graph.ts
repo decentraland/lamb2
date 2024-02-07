@@ -39,8 +39,8 @@ export async function createTheGraphComponent(
     (ethNetwork === 'mainnet'
       ? DEFAULT_COLLECTIONS_SUBGRAPH_MAINNET
       : ethNetwork === 'sepolia'
-      ? DEFAULT_COLLECTIONS_SUBGRAPH_SEPOLIA
-      : DEFAULT_COLLECTIONS_SUBGRAPH_GOERLI)
+        ? DEFAULT_COLLECTIONS_SUBGRAPH_SEPOLIA
+        : DEFAULT_COLLECTIONS_SUBGRAPH_GOERLI)
   const maticCollectionsSubgraphURL: string =
     (await config.getString('COLLECTIONS_L2_SUBGRAPH_URL')) ??
     (process.env.ETH_NETWORK === 'mainnet'
@@ -51,8 +51,8 @@ export async function createTheGraphComponent(
     (ethNetwork === 'mainnet'
       ? DEFAULT_ENS_OWNER_PROVIDER_URL_MAINNET
       : ethNetwork === 'sepolia'
-      ? DEFAULT_ENS_OWNER_PROVIDER_URL_SEPOLIA
-      : DEFAULT_ENS_OWNER_PROVIDER_URL_GOERLI)
+        ? DEFAULT_ENS_OWNER_PROVIDER_URL_SEPOLIA
+        : DEFAULT_ENS_OWNER_PROVIDER_URL_GOERLI)
   const thirdPartyRegistrySubgraphURL: string =
     (await config.getString('THIRD_PARTY_REGISTRY_SUBGRAPH_URL')) ??
     (ethNetwork === 'mainnet'
