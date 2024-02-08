@@ -88,8 +88,8 @@ function sortDirectionParams(url: URL) {
   const direction = url.searchParams.has('direction')
     ? url.searchParams.get('direction')!.toUpperCase()
     : sort === 'name'
-    ? 'ASC'
-    : 'DESC'
+      ? 'ASC'
+      : 'DESC'
   return { sort, direction }
 }
 
@@ -118,8 +118,8 @@ export function createBaseSorting<T extends HasName>(url: URL): SortingFunction<
   const direction = url.searchParams.has('direction')
     ? url.searchParams.get('direction')!.toUpperCase()
     : sort === 'name'
-    ? 'ASC'
-    : 'DESC'
+      ? 'ASC'
+      : 'DESC'
 
   if (sort === 'name' && direction === 'ASC') {
     return nameAZ
