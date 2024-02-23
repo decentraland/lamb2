@@ -11,6 +11,9 @@ describe('GET /profiles/{id} handler unit test', () => {
 
   function mockComponents(profileResponse: ProfileMetadata | undefined) {
     return {
+      defaultProfiles: {
+        getProfile: jest.fn().mockImplementation(() => undefined)
+      },
       profiles: {
         getProfiles: jest.fn().mockImplementation(async () => undefined),
         getProfile: jest.fn().mockImplementation(async () => profileResponse)

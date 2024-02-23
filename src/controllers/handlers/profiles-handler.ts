@@ -43,9 +43,13 @@ export async function profilesHandler(
 }
 
 export async function profileHandler(
-  context: Pick<HandlerContextWithPath<'profiles', '/profiles/:id'>, 'components' | 'params'>
+  context: Pick<HandlerContextWithPath<'profiles' | 'defaultProfiles', '/profiles/:id'>, 'components' | 'params'>
 ): Promise<{ status: 200; body: Profile }> {
-  const profile = await context.components.profiles.getProfile(context.params.id)
+  const { id } = context.params
+  let profile = context.components.defaultProfiles.getProfile(id)
+  if (!profile) {
+    profile = await context.components.profiles.getProfile(id)
+  }
   if (!profile) {
     throw new NotFoundError('Profile not found')
   }
