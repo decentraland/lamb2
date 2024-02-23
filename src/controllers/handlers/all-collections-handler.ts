@@ -2,6 +2,7 @@ import { HandlerContextWithPath } from '../../types'
 import { GetCollections200 } from '@dcl/catalyst-api-specs/lib/client'
 
 export const BASE_AVATARS_COLLECTION_ID = 'urn:decentraland:off-chain:base-avatars'
+export const BASE_EMOTES_COLLECTION_ID = 'urn:decentraland:off-chain:base-emotes'
 
 const QUERY_COLLECTIONS = `
   {
@@ -38,6 +39,10 @@ export async function allCollectionsHandler(
     {
       id: BASE_AVATARS_COLLECTION_ID,
       name: 'Base Wearables'
+    },
+    {
+      id: BASE_EMOTES_COLLECTION_ID,
+      name: 'Base Emotes'
     },
     ...onChainCollections
   ]

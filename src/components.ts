@@ -31,6 +31,7 @@ import { createThirdPartyProvidersGraphFetcherComponent } from './adapters/third
 import { createThirdPartyProvidersServiceFetcherComponent } from './adapters/third-party-providers-service-fetcher'
 import { createThirdPartyProvidersStorage } from './logic/third-party-providers-storage'
 import { createProfilesComponent } from './adapters/profiles'
+import { createDefaultProfilesComponent } from './adapters/default-profiles'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -135,6 +136,8 @@ export async function initComponents(
     namesFetcher
   })
 
+  const defaultProfiles = await createDefaultProfilesComponent()
+
   return {
     config,
     logs,
@@ -165,6 +168,7 @@ export async function initComponents(
     catalystsFetcher,
     poisFetcher,
     nameDenylistFetcher,
-    profiles
+    profiles,
+    defaultProfiles
   }
 }
