@@ -97,7 +97,7 @@ export async function initComponents(
   if (!contracts) {
     throw new Error(`Invalid ETH_NETWORK ${l1Network}`)
   }
-  const l2Network: L2Network = l1Network === 'mainnet' ? 'polygon' : 'mumbai'
+  const l2Network: L2Network = l1Network === 'mainnet' ? 'polygon' : 'amoy'
   const l1Provider = new HTTPProvider(`https://rpc.decentraland.org/${encodeURIComponent(l1Network)}?project=lamb2`, {
     fetch: fetch.fetch
   })
