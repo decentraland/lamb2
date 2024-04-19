@@ -15,16 +15,14 @@ const DEFAULT_COLLECTIONS_SUBGRAPH_SEPOLIA =
   'https://api.studio.thegraph.com/query/49472/collections-ethereum-sepolia/version/latest'
 const DEFAULT_COLLECTIONS_SUBGRAPH_MAINNET =
   'https://api.thegraph.com/subgraphs/name/decentraland/collections-ethereum-mainnet'
-const DEFAULT_COLLECTIONS_SUBGRAPH_MATIC_MUMBAI =
-  'https://api.thegraph.com/subgraphs/name/decentraland/collections-matic-mumbai'
+const DEFAULT_COLLECTIONS_SUBGRAPH_MATIC_AMOY = 'https://subgraph.decentraland.org/collections-matic-amoy'
 const DEFAULT_COLLECTIONS_SUBGRAPH_MATIC_MAINNET =
   'https://api.thegraph.com/subgraphs/name/decentraland/collections-matic-mainnet'
 const DEFAULT_ENS_OWNER_PROVIDER_URL_GOERLI = 'https://api.thegraph.com/subgraphs/name/decentraland/marketplace-goerli'
 const DEFAULT_ENS_OWNER_PROVIDER_URL_SEPOLIA =
   'https://api.studio.thegraph.com/query/49472/marketplace-sepolia/version/latest'
 const DEFAULT_ENS_OWNER_PROVIDER_URL_MAINNET = 'https://api.thegraph.com/subgraphs/name/decentraland/marketplace'
-const DEFAULT_THIRD_PARTY_REGISTRY_SUBGRAPH_MATIC_MUMBAI =
-  'https://api.thegraph.com/subgraphs/name/decentraland/tpr-matic-mumbai'
+const DEFAULT_THIRD_PARTY_REGISTRY_SUBGRAPH_MATIC_AMOY = 'https://subgraph.decentraland.org/tpr-matic-amoy'
 const DEFAULT_THIRD_PARTY_REGISTRY_SUBGRAPH_MATIC_MAINNET =
   'https://api.thegraph.com/subgraphs/name/decentraland/tpr-matic-mainnet'
 
@@ -45,7 +43,7 @@ export async function createTheGraphComponent(
     (await config.getString('COLLECTIONS_L2_SUBGRAPH_URL')) ??
     (process.env.ETH_NETWORK === 'mainnet'
       ? DEFAULT_COLLECTIONS_SUBGRAPH_MATIC_MAINNET
-      : DEFAULT_COLLECTIONS_SUBGRAPH_MATIC_MUMBAI)
+      : DEFAULT_COLLECTIONS_SUBGRAPH_MATIC_AMOY)
   const ensSubgraphURL: string =
     (await config.getString('ENS_OWNER_PROVIDER_URL')) ??
     (ethNetwork === 'mainnet'
@@ -57,7 +55,7 @@ export async function createTheGraphComponent(
     (await config.getString('THIRD_PARTY_REGISTRY_SUBGRAPH_URL')) ??
     (ethNetwork === 'mainnet'
       ? DEFAULT_THIRD_PARTY_REGISTRY_SUBGRAPH_MATIC_MAINNET
-      : DEFAULT_THIRD_PARTY_REGISTRY_SUBGRAPH_MATIC_MUMBAI)
+      : DEFAULT_THIRD_PARTY_REGISTRY_SUBGRAPH_MATIC_AMOY)
 
   const ethereumCollectionsSubgraph = await createSubgraphComponent(components, ethereumCollectionsSubgraphURL)
   const maticCollectionsSubgraph = await createSubgraphComponent(components, maticCollectionsSubgraphURL)

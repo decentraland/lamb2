@@ -11,7 +11,8 @@ type ThirdPartyProvidersServiceResponse = {
 
 const SERVICE_URL_DICTIONARY = {
   polygon: 'https://third-party-providers-resolver.decentraland.org',
-  mumbai: 'https://third-party-providers-resolver.decentraland.zone'
+  mumbai: 'https://third-party-providers-resolver.decentraland.zone',
+  amoy: 'https://third-party-providers-resolver.decentraland.zone'
 }
 
 export async function createThirdPartyProvidersServiceFetcherComponent(
