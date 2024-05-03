@@ -35,7 +35,6 @@ import { ThirdPartyProvidersServiceFetcher } from './adapters/third-party-provid
 import { ThirdPartyProvidersGraphFetcher } from './adapters/third-party-providers-graph-fetcher'
 import { ThirdPartyProvidersStorage } from './logic/third-party-providers-storage'
 import { IProfilesComponent } from './adapters/profiles'
-import { DefaultProfilesComponent } from './adapters/default-profiles'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -72,7 +71,6 @@ export type BaseComponents = {
   poisFetcher: POIsFetcher
   nameDenylistFetcher: NameDenylistFetcher
   profiles: IProfilesComponent
-  defaultProfiles: DefaultProfilesComponent
 }
 
 // components used in runtime
