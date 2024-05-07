@@ -1,8 +1,12 @@
 import { l1Contracts, L1Network, L2Network } from '@dcl/catalyst-contracts'
 import { createDotEnvConfigComponent } from '@well-known-components/env-config-provider'
-import { createServerComponent, createStatusCheckComponent, IFetchComponent } from '@well-known-components/http-server'
+import {
+  createServerComponent,
+  createStatusCheckComponent,
+  instrumentHttpServerWithPromClientRegistry
+} from '@well-known-components/http-server'
 import { createLogComponent } from '@well-known-components/logger'
-import { createMetricsComponent, instrumentHttpServerWithMetrics } from '@well-known-components/metrics'
+import { createMetricsComponent } from '@well-known-components/metrics'
 import { createContentClient } from 'dcl-catalyst-client'
 import { HTTPProvider } from 'eth-connect'
 import { createCatalystsFetcher } from './adapters/catalysts-fetcher'
@@ -31,6 +35,7 @@ import { createThirdPartyProvidersGraphFetcherComponent } from './adapters/third
 import { createThirdPartyProvidersServiceFetcherComponent } from './adapters/third-party-providers-service-fetcher'
 import { createThirdPartyProvidersStorage } from './logic/third-party-providers-storage'
 import { createProfilesComponent } from './adapters/profiles'
+import { IFetchComponent } from '@well-known-components/interfaces'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -50,7 +55,7 @@ export async function initComponents(
   const statusChecks = await createStatusCheckComponent({ server, config })
   const fetch = fetchComponent ? fetchComponent : await createFetchComponent()
   const metrics = await createMetricsComponent(metricDeclarations, { config })
-  await instrumentHttpServerWithMetrics({ server, metrics, config })
+  await instrumentHttpServerWithPromClientRegistry({ server, metrics, config, registry: metrics.registry! })
 
   const contentServerUrl = await createContentServerUrl({ config })
   const content = createContentClient({ url: contentServerUrl, fetcher: fetch })

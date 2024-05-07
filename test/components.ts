@@ -4,7 +4,7 @@
 import { createLocalFetchCompoment, createRunner, defaultServerConfig } from '@well-known-components/test-helpers'
 
 import { createConfigComponent } from '@well-known-components/env-config-provider'
-import { IFetchComponent } from '@well-known-components/http-server'
+import { IConfigComponent, IFetchComponent } from '@well-known-components/interfaces'
 import { createLogComponent } from '@well-known-components/logger'
 import { createTestMetricsComponent } from '@well-known-components/metrics'
 import {
@@ -22,7 +22,6 @@ import { main } from '../src/service'
 import { TestComponents } from '../src/types'
 import { createContentClientMock } from './mocks/content-mock'
 import { createTheGraphComponentMock } from './mocks/the-graph-mock'
-import { IConfigComponent } from '@well-known-components/interfaces'
 
 /**
  * Behaves like Jest "describe" function, used to describe a test for a
