@@ -64,14 +64,14 @@ function groupThirdPartyWearablesByURN(assets: (ThirdPartyAsset & { entity: Enti
     const metadata: Wearable = asset.entity.metadata
     if (wearablesByURN.has(asset.urn.decentraland)) {
       const wearableFromMap = wearablesByURN.get(asset.urn.decentraland)!
-      wearableFromMap.individualData.push({ id: asset.id })
+      wearableFromMap.individualData.push({ id: asset.urn.decentraland })
       wearableFromMap.amount = wearableFromMap.amount + 1
     } else {
       wearablesByURN.set(asset.urn.decentraland, {
         urn: asset.urn.decentraland,
         individualData: [
           {
-            id: asset.id
+            id: asset.urn.decentraland
           }
         ],
         amount: 1,
