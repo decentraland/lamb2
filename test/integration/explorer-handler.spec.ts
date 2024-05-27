@@ -336,7 +336,7 @@ function convertToMixedThirdPartyWearableResponse(
       amount: 1,
       individualData: [
         {
-          id: wearable.id
+          id: wearable.urn.decentraland
         }
       ],
       category: entity.metadata.data.category,
