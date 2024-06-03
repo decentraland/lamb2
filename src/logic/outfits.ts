@@ -50,7 +50,7 @@ export async function getOutfits(
 
       if (matchingOwnedWearable) {
         wearables.push(
-          ensureERC721
+          ensureERC721 && !urn.includes('collections-thirdparty')
             ? `${matchingOwnedWearable.urn}:${tokenId ? tokenId : matchingOwnedWearable.individualData[0].tokenId}`
             : matchingOwnedWearable.urn
         )

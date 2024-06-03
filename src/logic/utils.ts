@@ -13,7 +13,7 @@ export async function parseUrn(urn: string) {
 export function splitUrnAndTokenId(urnReceived: string) {
   const urnLength = urnReceived.split(':').length
 
-  if (urnLength === 7) {
+  if (urnLength === 7 && !urnReceived.includes('collections-thirdparty')) {
     const lastColonIndex = urnReceived.lastIndexOf(':')
     const urnValue = urnReceived.slice(0, lastColonIndex)
     return { urn: urnValue, tokenId: urnReceived.slice(lastColonIndex + 1) }
