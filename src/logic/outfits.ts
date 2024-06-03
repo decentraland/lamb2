@@ -48,6 +48,7 @@ export async function getOutfits(
         wearables.push(wearable)
         continue
       } else if (wearable.includes('collections-thirdparty')) {
+        wearables.push(wearable)
         thirdPartyWearables.push(wearable)
         continue
       }
@@ -62,7 +63,7 @@ export async function getOutfits(
 
       if (matchingOwnedWearable) {
         wearables.push(
-          ensureERC721 && !urn.includes('collections-thirdparty')
+          ensureERC721
             ? `${matchingOwnedWearable.urn}:${tokenId ? tokenId : matchingOwnedWearable.individualData[0].tokenId}`
             : matchingOwnedWearable.urn
         )
@@ -75,6 +76,11 @@ export async function getOutfits(
     if (thirdPartyWearables.length > 0) {
       thirdPartyWearablesOwnershipChecker.addNFTsForAddress(ethAddress, thirdPartyWearables)
       await thirdPartyWearablesOwnershipChecker.checkNFTsOwnership()
+      const thirdPartyWearablesOwned = thirdPartyWearablesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
+
+      allWearablesOwned = thirdPartyWearables.every((tpWearable: string) =>
+        thirdPartyWearablesOwned.includes(tpWearable)
+      )
     }
 
     if (allWearablesOwned) {
