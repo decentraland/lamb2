@@ -22,6 +22,7 @@ import { main } from '../src/service'
 import { TestComponents } from '../src/types'
 import { createContentClientMock } from './mocks/content-mock'
 import { createTheGraphComponentMock } from './mocks/the-graph-mock'
+import { createTPWOwnershipChecker } from '../src/ports/ownership-checker/tpw-ownership-checker'
 
 /**
  * Behaves like Jest "describe" function, used to describe a test for a
@@ -135,6 +136,14 @@ async function initComponents(
     )
   )
 
+  const thirdPartyWearablesOwnershipChecker = createTPWOwnershipChecker({
+    thirdPartyProvidersStorage: components.thirdPartyProvidersStorage,
+    fetch,
+    ownershipCaches: components.ownershipCaches,
+    logs,
+    metrics
+  })
+
   return {
     ...components,
     config,
@@ -148,6 +157,7 @@ async function initComponents(
     emotesFetcher,
     wearableDefinitionsFetcher,
     emoteDefinitionsFetcher,
-    thirdPartyWearablesFetcher
+    thirdPartyWearablesFetcher,
+    thirdPartyWearablesOwnershipChecker
   }
 }

@@ -71,6 +71,7 @@ export type BaseComponents = {
   poisFetcher: POIsFetcher
   nameDenylistFetcher: NameDenylistFetcher
   profiles: IProfilesComponent
+  thirdPartyWearablesOwnershipChecker: NFTsOwnershipChecker
 }
 
 // components used in runtime
@@ -108,7 +109,7 @@ export type ProfileMetadata = Profile & {
 
 export interface NFTsOwnershipChecker {
   addNFTsForAddress: (address: string, nfts: string[]) => void
-  checkNFTsOwnership: () => void
+  checkNFTsOwnership: () => Promise<void>
   getOwnedNFTsForAddress: (address: string) => string[]
 }
 

@@ -5,11 +5,19 @@ import { splitUrnAndTokenId } from './utils'
 export async function getOutfits(
   components: Pick<
     AppComponents,
-    'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches' | 'wearablesFetcher' | 'namesFetcher'
+    | 'metrics'
+    | 'content'
+    | 'theGraph'
+    | 'config'
+    | 'fetch'
+    | 'ownershipCaches'
+    | 'wearablesFetcher'
+    | 'namesFetcher'
+    | 'thirdPartyWearablesOwnershipChecker'
   >,
   ethAddress: string
 ): Promise<TypedEntity<Outfits> | undefined> {
-  const { config, wearablesFetcher, namesFetcher, content } = components
+  const { config, wearablesFetcher, namesFetcher, thirdPartyWearablesOwnershipChecker, content } = components
   const ensureERC721 = (await config.getString('ENSURE_ERC_721')) !== 'false'
 
   const outfitsEntities: TypedEntity<Outfits>[] = await content.fetchEntitiesByPointers([`${ethAddress}:outfits`])
@@ -32,11 +40,15 @@ export async function getOutfits(
 
   for (const outfit of metadata.outfits) {
     const wearables: string[] = []
+    const thirdPartyWearables: string[] = []
     let allWearablesOwned = true
 
     for (const wearable of outfit.outfit.wearables) {
       if (wearable.includes('off-chain') || wearable.includes('base-avatars')) {
         wearables.push(wearable)
+        continue
+      } else if (wearable.includes('collections-thirdparty')) {
+        thirdPartyWearables.push(wearable)
         continue
       }
 
@@ -58,6 +70,11 @@ export async function getOutfits(
         allWearablesOwned = false
         break
       }
+    }
+
+    if (thirdPartyWearables.length > 0) {
+      thirdPartyWearablesOwnershipChecker.addNFTsForAddress(ethAddress, thirdPartyWearables)
+      await thirdPartyWearablesOwnershipChecker.checkNFTsOwnership()
     }
 
     if (allWearablesOwned) {

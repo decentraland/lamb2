@@ -22,7 +22,8 @@ test('integration tests for profile adapter', function ({ components, stubCompon
       logs,
       wearablesFetcher,
       emotesFetcher,
-      namesFetcher
+      namesFetcher,
+      thirdPartyWearablesOwnershipChecker
     } = components
     const { theGraph, fetch, content } = stubComponents
     const address = '0x1'
@@ -146,6 +147,7 @@ test('integration tests for profile adapter', function ({ components, stubCompon
       logs,
       wearablesFetcher,
       emotesFetcher,
+      thirdPartyWearablesOwnershipChecker,
       namesFetcher
     })
     const profiles = await profilesComponent.getProfiles([address])
@@ -205,7 +207,8 @@ testWithComponents(() => {
         logs,
         wearablesFetcher,
         emotesFetcher,
-        namesFetcher
+        namesFetcher,
+        thirdPartyWearablesOwnershipChecker
       } = components
       const { theGraph, fetch, content } = stubComponents
       const address = '0x1'
@@ -346,7 +349,8 @@ testWithComponents(() => {
         logs,
         wearablesFetcher,
         emotesFetcher,
-        namesFetcher
+        namesFetcher,
+        thirdPartyWearablesOwnershipChecker
       })
       const profiles = await profilesComponent.getProfiles([address])
 
@@ -396,7 +400,8 @@ testWithComponents(() => {
         logs,
         wearablesFetcher,
         emotesFetcher,
-        namesFetcher
+        namesFetcher,
+        thirdPartyWearablesOwnershipChecker
       } = components
       const { theGraph, fetch, content } = stubComponents
       const address = '0x1'
@@ -556,7 +561,8 @@ testWithComponents(() => {
         logs,
         wearablesFetcher,
         emotesFetcher,
-        namesFetcher
+        namesFetcher,
+        thirdPartyWearablesOwnershipChecker
       })
       const profiles = await profilesComponent.getProfiles([address])
       expect(profiles).toHaveLength(1)
@@ -591,7 +597,8 @@ test('integration tests for profile adapter', function ({ components, stubCompon
       logs,
       wearablesFetcher,
       emotesFetcher,
-      namesFetcher
+      namesFetcher,
+      thirdPartyWearablesOwnershipChecker
     } = components
     const { theGraph, content, fetch } = stubComponents
     const addresses = ['0x3']
@@ -635,7 +642,8 @@ test('integration tests for profile adapter', function ({ components, stubCompon
       logs,
       wearablesFetcher,
       emotesFetcher,
-      namesFetcher
+      namesFetcher,
+      thirdPartyWearablesOwnershipChecker
     })
     const profiles = await profilesComponent.getProfiles(addresses)
     expect(profiles.length).toEqual(1)

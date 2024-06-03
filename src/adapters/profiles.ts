@@ -1,6 +1,5 @@
 import { AppComponents, ProfileMetadata } from '../types'
 import { Avatar, Entity, Snapshots } from '@dcl/schemas'
-import { createTPWOwnershipChecker } from '../ports/ownership-checker/tpw-ownership-checker'
 import { parseUrn } from '@dcl/urn-resolver'
 import { splitUrnAndTokenId } from '../logic/utils'
 
@@ -67,9 +66,11 @@ export async function createProfilesComponent(
     | 'wearablesFetcher'
     | 'emotesFetcher'
     | 'namesFetcher'
+    | 'thirdPartyWearablesOwnershipChecker'
   >
 ): Promise<IProfilesComponent> {
-  const { content, wearablesFetcher, emotesFetcher, namesFetcher, config, logs } = components
+  const { content, wearablesFetcher, emotesFetcher, namesFetcher, thirdPartyWearablesOwnershipChecker, config, logs } =
+    components
   const logger = logs.getLogger('profiles')
 
   const ensureERC721 = (await config.getString('ENSURE_ERC_721')) !== 'false'
@@ -91,8 +92,6 @@ export async function createProfilesComponent(
       }
 
       profileEntities = profileEntities.filter((entity) => !!entity.metadata)
-
-      const tpwOwnershipChecker = createTPWOwnershipChecker(components)
 
       return await Promise.all(
         profileEntities.map(async (entity) => {
@@ -118,16 +117,16 @@ export async function createProfilesComponent(
               }
             }
           }
-          tpwOwnershipChecker.addNFTsForAddress(ethAddress, wearables)
+          thirdPartyWearablesOwnershipChecker.addNFTsForAddress(ethAddress, wearables)
 
           const [ownedWearables, ownedEmotes, ownedNames] = await Promise.all([
             wearablesFetcher.fetchOwnedElements(ethAddress),
             emotesFetcher.fetchOwnedElements(ethAddress),
             namesFetcher.fetchOwnedElements(ethAddress),
-            tpwOwnershipChecker.checkNFTsOwnership()
+            thirdPartyWearablesOwnershipChecker.checkNFTsOwnership()
           ])
 
-          const thirdPartyWearables = tpwOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
+          const thirdPartyWearables = thirdPartyWearablesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
 
           const avatars: Avatar[] = []
           for (const avatar of metadata.avatars) {

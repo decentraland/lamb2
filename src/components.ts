@@ -36,6 +36,7 @@ import { createThirdPartyProvidersServiceFetcherComponent } from './adapters/thi
 import { createThirdPartyProvidersStorage } from './logic/third-party-providers-storage'
 import { createProfilesComponent } from './adapters/profiles'
 import { IFetchComponent } from '@well-known-components/interfaces'
+import { createTPWOwnershipChecker } from './ports/ownership-checker/tpw-ownership-checker'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -126,6 +127,14 @@ export async function initComponents(
     fetchAllThirdPartyWearables({ thirdPartyProvidersStorage, fetch, logs, entitiesFetcher, metrics }, address)
   )
 
+  const thirdPartyWearablesOwnershipChecker = createTPWOwnershipChecker({
+    thirdPartyProvidersStorage,
+    fetch,
+    ownershipCaches,
+    logs,
+    metrics
+  })
+
   const profiles = await createProfilesComponent({
     metrics,
     content,
@@ -137,7 +146,8 @@ export async function initComponents(
     logs,
     wearablesFetcher,
     emotesFetcher,
-    namesFetcher
+    namesFetcher,
+    thirdPartyWearablesOwnershipChecker
   })
 
   return {
@@ -170,6 +180,7 @@ export async function initComponents(
     catalystsFetcher,
     poisFetcher,
     nameDenylistFetcher,
-    profiles
+    profiles,
+    thirdPartyWearablesOwnershipChecker
   }
 }
