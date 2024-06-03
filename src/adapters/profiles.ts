@@ -183,7 +183,7 @@ export async function createProfilesComponent(
 
             avatars.push({
               ...avatar,
-              hasClaimedName: ownedNames.findIndex((name) => name.name === avatar.name) !== -1,
+              hasClaimedName: avatar.hasClaimedName && ownedNames.findIndex((name) => name.name === avatar.name) !== -1,
               avatar: {
                 ...avatar.avatar,
                 emotes: validatedEmotes,
