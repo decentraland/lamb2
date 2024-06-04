@@ -1,6 +1,7 @@
 import { Outfit, Outfits } from '@dcl/schemas'
 import { AppComponents, OnChainWearable, TypedEntity } from '../types'
 import { splitUrnAndTokenId } from './utils'
+import { createTPWOwnershipChecker } from '../ports/ownership-checker/tpw-ownership-checker'
 
 export async function getOutfits(
   components: Pick<
@@ -13,12 +14,14 @@ export async function getOutfits(
     | 'ownershipCaches'
     | 'wearablesFetcher'
     | 'namesFetcher'
-    | 'thirdPartyWearablesOwnershipChecker'
+    | 'thirdPartyProvidersStorage'
+    | 'logs'
   >,
   ethAddress: string
 ): Promise<TypedEntity<Outfits> | undefined> {
-  const { config, wearablesFetcher, namesFetcher, thirdPartyWearablesOwnershipChecker, content } = components
+  const { config, wearablesFetcher, namesFetcher, content } = components
   const ensureERC721 = (await config.getString('ENSURE_ERC_721')) !== 'false'
+  const thirdPartyWearablesOwnershipChecker = createTPWOwnershipChecker(components)
 
   const outfitsEntities: TypedEntity<Outfits>[] = await content.fetchEntitiesByPointers([`${ethAddress}:outfits`])
 

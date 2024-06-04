@@ -12,7 +12,8 @@ export async function outfitsHandler(
     | 'ownershipCaches'
     | 'wearablesFetcher'
     | 'namesFetcher'
-    | 'thirdPartyWearablesOwnershipChecker',
+    | 'thirdPartyProvidersStorage'
+    | 'logs',
     '/outfits/:id'
   >
 ): Promise<{ status: 200; body: Entity }> {

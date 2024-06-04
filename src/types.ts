@@ -71,7 +71,6 @@ export type BaseComponents = {
   poisFetcher: POIsFetcher
   nameDenylistFetcher: NameDenylistFetcher
   profiles: IProfilesComponent
-  thirdPartyWearablesOwnershipChecker: NFTsOwnershipChecker
 }
 
 // components used in runtime
