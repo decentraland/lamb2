@@ -108,7 +108,7 @@ export type ProfileMetadata = Profile & {
 
 export interface NFTsOwnershipChecker {
   addNFTsForAddress: (address: string, nfts: string[]) => void
-  checkNFTsOwnership: () => void
+  checkNFTsOwnership: () => Promise<void>
   getOwnedNFTsForAddress: (address: string) => string[]
 }
 
