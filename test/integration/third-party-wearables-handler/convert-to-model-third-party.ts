@@ -21,7 +21,7 @@ export function convertToThirdPartyWearableResponse(
       amount: wearable.amount,
       individualData: [
         {
-          id: wearable.id
+          id: wearable.urn.decentraland
         }
       ],
       urn: wearable.urn.decentraland,

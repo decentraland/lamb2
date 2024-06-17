@@ -72,11 +72,11 @@ describe('fetchAllThirdPartyWearables', () => {
         expect.objectContaining({
           urn: 'urn1',
           amount: 1,
-          individualData: [{ id: 'id1' }],
+          individualData: [{ id: 'urn1' }],
           name: 'nameForurn1',
           entity: expect.anything()
         }),
-        expect.objectContaining({ urn: 'urn2', amount: 1, individualData: [{ id: 'id2' }], name: 'nameForurn2' })
+        expect.objectContaining({ urn: 'urn2', amount: 1, individualData: [{ id: 'urn2' }], name: 'nameForurn2' })
       ] as ThirdPartyWearable[])
     })
   })
@@ -110,13 +110,13 @@ describe('fetchAllThirdPartyWearables', () => {
         {
           urn: 'urn1',
           amount: 2,
-          individualData: [{ id: 'id1' }, { id: 'id3' }],
+          individualData: [{ id: 'urn1' }, { id: 'urn1' }],
           name: entities[0].metadata.name
         },
         {
           urn: 'urn2',
           amount: 1,
-          individualData: [{ id: 'id2' }],
+          individualData: [{ id: 'urn2' }],
           name: entities[1].metadata.name
         }
       ] as ThirdPartyWearable[])

@@ -9,22 +9,18 @@ export type TheGraphComponent = IBaseComponent & {
   thirdPartyRegistrySubgraph: ISubgraphComponent
 }
 
-const DEFAULT_COLLECTIONS_SUBGRAPH_GOERLI =
-  'https://api.thegraph.com/subgraphs/name/decentraland/collections-ethereum-goerli'
+const DEFAULT_COLLECTIONS_SUBGRAPH_GOERLI = 'https://subgraph.decentraland.org/collections-ethereum-goerli'
 const DEFAULT_COLLECTIONS_SUBGRAPH_SEPOLIA =
   'https://api.studio.thegraph.com/query/49472/collections-ethereum-sepolia/version/latest'
-const DEFAULT_COLLECTIONS_SUBGRAPH_MAINNET =
-  'https://api.thegraph.com/subgraphs/name/decentraland/collections-ethereum-mainnet'
+const DEFAULT_COLLECTIONS_SUBGRAPH_MAINNET = 'https://subgraph.decentraland.org/collections-ethereum-mainnet'
 const DEFAULT_COLLECTIONS_SUBGRAPH_MATIC_AMOY = 'https://subgraph.decentraland.org/collections-matic-amoy'
-const DEFAULT_COLLECTIONS_SUBGRAPH_MATIC_MAINNET =
-  'https://api.thegraph.com/subgraphs/name/decentraland/collections-matic-mainnet'
-const DEFAULT_ENS_OWNER_PROVIDER_URL_GOERLI = 'https://api.thegraph.com/subgraphs/name/decentraland/marketplace-goerli'
+const DEFAULT_COLLECTIONS_SUBGRAPH_MATIC_MAINNET = 'https://subgraph.decentraland.org/collections-matic-mainnet'
+const DEFAULT_ENS_OWNER_PROVIDER_URL_GOERLI = 'https://subgraph.decentraland.org/marketplace-goerli'
 const DEFAULT_ENS_OWNER_PROVIDER_URL_SEPOLIA =
   'https://api.studio.thegraph.com/query/49472/marketplace-sepolia/version/latest'
-const DEFAULT_ENS_OWNER_PROVIDER_URL_MAINNET = 'https://api.thegraph.com/subgraphs/name/decentraland/marketplace'
+const DEFAULT_ENS_OWNER_PROVIDER_URL_MAINNET = 'https://subgraph.decentraland.org/marketplace'
 const DEFAULT_THIRD_PARTY_REGISTRY_SUBGRAPH_MATIC_AMOY = 'https://subgraph.decentraland.org/tpr-matic-amoy'
-const DEFAULT_THIRD_PARTY_REGISTRY_SUBGRAPH_MATIC_MAINNET =
-  'https://api.thegraph.com/subgraphs/name/decentraland/tpr-matic-mainnet'
+const DEFAULT_THIRD_PARTY_REGISTRY_SUBGRAPH_MATIC_MAINNET = 'https://subgraph.decentraland.org/tpr-matic-mainnet'
 
 export async function createTheGraphComponent(
   components: Pick<AppComponents, 'config' | 'logs' | 'fetch' | 'metrics'>

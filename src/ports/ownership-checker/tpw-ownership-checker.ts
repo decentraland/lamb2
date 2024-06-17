@@ -76,7 +76,7 @@ async function ownedThirdPartyWearables(
           address,
           collectionId
         )) {
-          ownedTPW.add(asset.urn.decentraland)
+          ownedTPW.add(asset.urn.decentraland.toLowerCase())
         }
       })
     )
@@ -84,7 +84,7 @@ async function ownedThirdPartyWearables(
     const wearablesIds = wearableIdsByAddress.get(address)
     response.set(
       address,
-      wearablesIds!.filter((tpw) => ownedTPW.has(tpw))
+      wearablesIds!.filter((tpw) => ownedTPW.has(tpw.toLowerCase()))
     )
   }
 

@@ -1,16 +1,27 @@
 import { Outfit, Outfits } from '@dcl/schemas'
 import { AppComponents, OnChainWearable, TypedEntity } from '../types'
 import { splitUrnAndTokenId } from './utils'
+import { createTPWOwnershipChecker } from '../ports/ownership-checker/tpw-ownership-checker'
 
 export async function getOutfits(
   components: Pick<
     AppComponents,
-    'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches' | 'wearablesFetcher' | 'namesFetcher'
+    | 'metrics'
+    | 'content'
+    | 'theGraph'
+    | 'config'
+    | 'fetch'
+    | 'ownershipCaches'
+    | 'wearablesFetcher'
+    | 'namesFetcher'
+    | 'thirdPartyProvidersStorage'
+    | 'logs'
   >,
   ethAddress: string
 ): Promise<TypedEntity<Outfits> | undefined> {
   const { config, wearablesFetcher, namesFetcher, content } = components
   const ensureERC721 = (await config.getString('ENSURE_ERC_721')) !== 'false'
+  const thirdPartyWearablesOwnershipChecker = createTPWOwnershipChecker(components)
 
   const outfitsEntities: TypedEntity<Outfits>[] = await content.fetchEntitiesByPointers([`${ethAddress}:outfits`])
 
@@ -32,11 +43,16 @@ export async function getOutfits(
 
   for (const outfit of metadata.outfits) {
     const wearables: string[] = []
+    const thirdPartyWearables: string[] = []
     let allWearablesOwned = true
 
     for (const wearable of outfit.outfit.wearables) {
       if (wearable.includes('off-chain') || wearable.includes('base-avatars')) {
         wearables.push(wearable)
+        continue
+      } else if (wearable.includes('collections-thirdparty')) {
+        wearables.push(wearable)
+        thirdPartyWearables.push(wearable)
         continue
       }
 
@@ -60,6 +76,16 @@ export async function getOutfits(
       }
     }
 
+    if (thirdPartyWearables.length > 0) {
+      thirdPartyWearablesOwnershipChecker.addNFTsForAddress(ethAddress, thirdPartyWearables)
+      await thirdPartyWearablesOwnershipChecker.checkNFTsOwnership()
+      const thirdPartyWearablesOwned = thirdPartyWearablesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
+
+      allWearablesOwned = thirdPartyWearables.every((tpWearable: string) =>
+        thirdPartyWearablesOwned.includes(tpWearable)
+      )
+    }
+
     if (allWearablesOwned) {
       fullyOwnedOutfits.push({ ...outfit, outfit: { ...outfit.outfit, wearables } })
     }
@@ -71,10 +97,21 @@ export async function getOutfits(
   const extraOutfitsWithOwnedWearables = fullyOwnedOutfits.filter((outfit) => outfit.slot > 4)
   const extraOutfitsWithOwnedWearablesAndNames = extraOutfitsWithOwnedWearables.slice(0, names.length)
 
+  const outfitsWithWearablesInLowerCase = [
+    ...normalOutfitsWithOwnedWearables,
+    ...extraOutfitsWithOwnedWearablesAndNames
+  ].map((outfit) => ({
+    ...outfit,
+    outfit: {
+      ...outfit.outfit,
+      wearables: outfit.outfit.wearables.map((wearable) => wearable.toLowerCase())
+    }
+  }))
+
   return {
     ...outfitsEntity,
     metadata: {
-      outfits: [...normalOutfitsWithOwnedWearables, ...extraOutfitsWithOwnedWearablesAndNames],
+      outfits: outfitsWithWearablesInLowerCase,
       namesForExtraSlots: names.map((name) => name.name)
     }
   }
