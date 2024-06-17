@@ -10,7 +10,7 @@
   },
   "license": "Apache-2.0",
   "devDependencies": {
-    "@dcl/eslint-config": "^2.0.0",
+    "@dcl/eslint-config": "^2.1.0",
     "@types/node": "^18.11.18",
     "@types/secp256k1": "^4.0.4",
     "@well-known-components/test-helpers": "^1.5.6",
