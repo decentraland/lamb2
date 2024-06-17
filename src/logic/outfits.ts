@@ -97,10 +97,21 @@ export async function getOutfits(
   const extraOutfitsWithOwnedWearables = fullyOwnedOutfits.filter((outfit) => outfit.slot > 4)
   const extraOutfitsWithOwnedWearablesAndNames = extraOutfitsWithOwnedWearables.slice(0, names.length)
 
+  const outfitsWithWearablesInLowerCase = [
+    ...normalOutfitsWithOwnedWearables,
+    ...extraOutfitsWithOwnedWearablesAndNames
+  ].map((outfit) => ({
+    ...outfit,
+    outfit: {
+      ...outfit.outfit,
+      wearables: outfit.outfit.wearables.map((wearable) => wearable.toLowerCase())
+    }
+  }))
+
   return {
     ...outfitsEntity,
     metadata: {
-      outfits: [...normalOutfitsWithOwnedWearables, ...extraOutfitsWithOwnedWearablesAndNames],
+      outfits: outfitsWithWearablesInLowerCase,
       namesForExtraSlots: names.map((name) => name.name)
     }
   }
