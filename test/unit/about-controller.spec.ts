@@ -332,7 +332,25 @@ describe('about-controller-unit', () => {
             networkId: 1,
             globalScenesUrn: [],
             scenesUrn: [],
-            realmName: 'testName'
+            realmName: 'testName',
+            map: {
+              minimapEnabled: true,
+              sizes: [
+                { left: -150, top: 150, right: 150, bottom: -150 },
+                { left: 62, top: 158, right: 162, bottom: 151 },
+                { left: 151, top: 150, right: 163, bottom: 59 }
+              ],
+              satelliteView: {
+                version: 'v1',
+                baseUrl: 'https://genesis.city/map/latest',
+                suffixUrl: '.jpg',
+                topLeftOffset: { x: -2, y: -6 }
+              },
+              parcelView: {
+                version: 'v1',
+                imageUrl: 'https://api.decentraland.org/v1/minimap.png'
+              }
+            }
           },
           comms: {
             commitHash: 'archipelago_hash',
@@ -409,7 +427,25 @@ describe('about-controller-unit', () => {
             networkId: 1,
             globalScenesUrn: [],
             scenesUrn: [],
-            realmName: 'testName'
+            realmName: 'testName',
+            map: {
+              minimapEnabled: true,
+              sizes: [
+                { left: -150, top: 150, right: 150, bottom: -150 },
+                { left: 62, top: 158, right: 162, bottom: 151 },
+                { left: 151, top: 150, right: 163, bottom: 59 }
+              ],
+              satelliteView: {
+                version: 'v1',
+                baseUrl: 'https://genesis.city/map/latest',
+                suffixUrl: '.jpg',
+                topLeftOffset: { x: -2, y: -6 }
+              },
+              parcelView: {
+                version: 'v1',
+                imageUrl: 'https://api.decentraland.org/v1/minimap.png'
+              }
+            }
           },
           comms: {
             healthy: true,
