@@ -837,7 +837,7 @@ testWithComponents(() => {
             },
             wearables: [
               'urn:decentraland:off-chain:base-avatars:f_blue_jacket',
-              'urn:decentraland:mumbai:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0',
+              'urn:decentraland:amoy:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0',
               'urn:decentraland:off-chain:base-avatars:ruby_blue_loafer',
               'urn:decentraland:off-chain:base-avatars:pony_tail',
               'urn:decentraland:off-chain:base-avatars:pearls_earring',
@@ -988,7 +988,7 @@ testWithComponents(() => {
         return Promise.resolve({
           nfts: [
             {
-              urn: 'urn:decentraland:mumbai:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0',
+              urn: 'urn:decentraland:amoy:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0',
               id: 'id-3',
               tokenId: '3',
               category: 'wearable',
@@ -1071,7 +1071,7 @@ testWithComponents(() => {
             },
             wearables: [
               'urn:decentraland:off-chain:base-avatars:f_blue_jacket',
-              'urn:decentraland:mumbai:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0:3',
+              'urn:decentraland:amoy:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0:3',
               'urn:decentraland:off-chain:base-avatars:ruby_blue_loafer',
               'urn:decentraland:off-chain:base-avatars:pony_tail',
               'urn:decentraland:off-chain:base-avatars:pearls_earring',
@@ -1222,7 +1222,7 @@ testWithComponents(() => {
         return Promise.resolve({
           nfts: [
             {
-              urn: 'urn:decentraland:mumbai:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0',
+              urn: 'urn:decentraland:amoy:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0',
               id: 'id-3',
               tokenId: '3',
               category: 'wearable',
@@ -1253,7 +1253,7 @@ testWithComponents(() => {
     const responseObj = await response.json()
     expect(responseObj.metadata.outfits[0].outfit.wearables).toEqual([
       'urn:decentraland:off-chain:base-avatars:f_blue_jacket',
-      'urn:decentraland:mumbai:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0',
+      'urn:decentraland:amoy:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0',
       'urn:decentraland:off-chain:base-avatars:ruby_blue_loafer',
       'urn:decentraland:off-chain:base-avatars:pony_tail',
       'urn:decentraland:off-chain:base-avatars:pearls_earring',
@@ -1313,7 +1313,7 @@ testWithComponents(() => {
             },
             wearables: [
               'urn:decentraland:off-chain:base-avatars:f_blue_jacket',
-              'urn:decentraland:mumbai:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0:3',
+              'urn:decentraland:amoy:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0:3',
               'urn:decentraland:off-chain:base-avatars:ruby_blue_loafer',
               'urn:decentraland:off-chain:base-avatars:pony_tail',
               'urn:decentraland:off-chain:base-avatars:pearls_earring',
@@ -1464,7 +1464,7 @@ testWithComponents(() => {
         return Promise.resolve({
           nfts: [
             {
-              urn: 'urn:decentraland:mumbai:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0',
+              urn: 'urn:decentraland:amoy:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0',
               id: 'id-3',
               tokenId: '3',
               category: 'wearable',
@@ -1495,7 +1495,7 @@ testWithComponents(() => {
     const responseObj = await response.json()
     expect(responseObj.metadata.outfits[0].outfit.wearables).toEqual([
       'urn:decentraland:off-chain:base-avatars:f_blue_jacket',
-      'urn:decentraland:mumbai:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0:3',
+      'urn:decentraland:amoy:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0:3',
       'urn:decentraland:off-chain:base-avatars:ruby_blue_loafer',
       'urn:decentraland:off-chain:base-avatars:pony_tail',
       'urn:decentraland:off-chain:base-avatars:pearls_earring',
