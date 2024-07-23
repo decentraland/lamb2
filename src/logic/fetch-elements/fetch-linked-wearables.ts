@@ -128,7 +128,7 @@ export async function fetchAllLinkedWearables(
     | 'alchemyNftFetcher'
     | 'contentServerUrl'
     | 'logs'
-    | 'linkedWearableProvidersStorage'
+    | 'thirdPartyProvidersStorage'
     | 'fetch'
     | 'entitiesFetcher'
     | 'metrics'

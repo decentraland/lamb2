@@ -234,8 +234,6 @@ export type ThirdPartyAsset = {
   }
 }
 
-export type LinkedWearableAsset = ThirdPartyAsset
-
 export type OnChainWearableResponse = Omit<OnChainWearable, 'minTransferredAt' | 'maxTransferredAt'> & {
   definition?: WearableDefinition
   entity?: Entity
