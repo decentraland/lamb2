@@ -28,14 +28,12 @@ export function createThirdPartyProvidersGraphFetcherComponent({
 }: Pick<AppComponents, 'theGraph'>): ThirdPartyProvidersGraphFetcher {
   return {
     async get(): Promise<ThirdPartyProvider[]> {
-      const thirdPartyProviders = (
+      return (
         await theGraph.thirdPartyRegistrySubgraph.query<ThirdPartyResolversQueryResults>(
           QUERY_ALL_THIRD_PARTY_RESOLVERS,
           {}
         )
-      ).thirdParties
-
-      return thirdPartyProviders
+      ).thirdParties.filter((thirdParty) => thirdParty.id.includes('collections-thirdparty'))
     }
   }
 }
