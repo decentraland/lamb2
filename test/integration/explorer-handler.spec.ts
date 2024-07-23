@@ -38,7 +38,7 @@ testWithComponents(() => {
     expect(r.status).toBe(400)
     expect(await r.json()).toEqual({
       error: 'Bad request',
-      message: 'Invalid collection type. Valid types are: base-wearable, on-chain, third-party.'
+      message: 'Invalid collection type. Valid types are: base-wearable, on-chain, third-party, linked-wearable.'
     })
 
     const r2 = await localFetch.fetch(`/explorer/${wallet}/wearables?orderBy=owner`)

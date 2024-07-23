@@ -62,23 +62,22 @@ export async function createThirdPartyProvidersStorage({
     throw new FetcherError(`Cannot fetch third party providers`)
   }
 
+  async function get(thirdPartyProviderNameUrn: BlockchainCollectionThirdPartyName) {
+    return await findAsync(await getAll(), async (thirdParty: ThirdPartyProvider): Promise<boolean> => {
+      const urn = await parseUrn(thirdParty.id)
+      return (
+        !!urn &&
+        urn.type === 'blockchain-collection-third-party-name' &&
+        urn.thirdPartyName === thirdPartyProviderNameUrn.thirdPartyName
+      )
+    })
+  }
+
   return {
     getAll,
     async start() {
       await getAll()
     },
-    async get(thirdPartyProviderNameUrn: BlockchainCollectionThirdPartyName) {
-      const URN_THIRD_PARTY_NAME_TYPE = 'blockchain-collection-third-party-name'
-      const thirdParty = await findAsync(await getAll(), async (thirdParty: ThirdPartyProvider): Promise<boolean> => {
-        const urn = await parseUrn(thirdParty.id)
-        return (
-          !!urn &&
-          urn.type === URN_THIRD_PARTY_NAME_TYPE &&
-          urn.thirdPartyName === thirdPartyProviderNameUrn.thirdPartyName
-        )
-      })
-
-      return thirdParty
-    }
+    get
   }
 }

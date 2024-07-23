@@ -35,6 +35,7 @@ import { ThirdPartyProvidersServiceFetcher } from './adapters/third-party-provid
 import { ThirdPartyProvidersGraphFetcher } from './adapters/third-party-providers-graph-fetcher'
 import { ThirdPartyProvidersStorage } from './logic/third-party-providers-storage'
 import { IProfilesComponent } from './adapters/profiles'
+import { AlchemyNftFetcher } from './adapters/alchemy-nft-fetcher'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -57,6 +58,7 @@ export type BaseComponents = {
   thirdPartyProvidersServiceFetcher: ThirdPartyProvidersServiceFetcher
   thirdPartyProvidersStorage: ThirdPartyProvidersStorage
   thirdPartyWearablesFetcher: ElementsFetcher<ThirdPartyWearable>
+  linkedWearablesFetcher: ElementsFetcher<ThirdPartyWearable>
   emotesFetcher: ElementsFetcher<OnChainEmote>
   emoteDefinitionsFetcher: DefinitionsFetcher<EmoteDefinition>
   wearableDefinitionsFetcher: DefinitionsFetcher<WearableDefinition>
@@ -71,6 +73,7 @@ export type BaseComponents = {
   poisFetcher: POIsFetcher
   nameDenylistFetcher: NameDenylistFetcher
   profiles: IProfilesComponent
+  alchemyNftFetcher: AlchemyNftFetcher
 }
 
 // components used in runtime
@@ -218,6 +221,7 @@ export type ThirdPartyProvider = {
     thirdParty: {
       name: string
       description: string
+      contracts?: { network: string; address: string }[]
     }
   }
 }
@@ -229,6 +233,8 @@ export type ThirdPartyAsset = {
     decentraland: string
   }
 }
+
+export type LinkedWearableAsset = ThirdPartyAsset
 
 export type OnChainWearableResponse = Omit<OnChainWearable, 'minTransferredAt' | 'maxTransferredAt'> & {
   definition?: WearableDefinition

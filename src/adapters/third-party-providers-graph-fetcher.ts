@@ -17,6 +17,10 @@ const QUERY_ALL_THIRD_PARTY_RESOLVERS = `
       thirdParty {
         name
         description
+        contracts {
+          network
+          address
+        }
       }
     }
   }
@@ -33,7 +37,7 @@ export function createThirdPartyProvidersGraphFetcherComponent({
           QUERY_ALL_THIRD_PARTY_RESOLVERS,
           {}
         )
-      ).thirdParties.filter((thirdParty) => thirdParty.id.includes('collections-thirdparty'))
+      ).thirdParties
     }
   }
 }

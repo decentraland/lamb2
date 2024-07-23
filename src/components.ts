@@ -36,6 +36,8 @@ import { createThirdPartyProvidersServiceFetcherComponent } from './adapters/thi
 import { createThirdPartyProvidersStorage } from './logic/third-party-providers-storage'
 import { createProfilesComponent } from './adapters/profiles'
 import { IFetchComponent } from '@well-known-components/interfaces'
+import { fetchAllLinkedWearables } from './logic/fetch-elements/fetch-linked-wearables'
+import { createAlchemyNftFetcher } from './adapters/alchemy-nft-fetcher'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -126,6 +128,23 @@ export async function initComponents(
     fetchAllThirdPartyWearables({ thirdPartyProvidersStorage, fetch, logs, entitiesFetcher, metrics }, address)
   )
 
+  const linkedWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
+    fetchAllLinkedWearables(
+      {
+        alchemyNftFetcher,
+        contentServerUrl,
+        thirdPartyProvidersStorage,
+        fetch,
+        logs,
+        entitiesFetcher,
+        metrics
+      },
+      address
+    )
+  )
+
+  const alchemyNftFetcher = await createAlchemyNftFetcher({ config, logs, fetch })
+
   const profiles = await createProfilesComponent({
     metrics,
     content,
@@ -170,6 +189,8 @@ export async function initComponents(
     catalystsFetcher,
     poisFetcher,
     nameDenylistFetcher,
-    profiles
+    profiles,
+    linkedWearablesFetcher,
+    alchemyNftFetcher
   }
 }

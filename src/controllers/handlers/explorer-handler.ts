@@ -8,13 +8,15 @@ import {
   BaseWearable,
   HandlerContextWithPath,
   InvalidRequestError,
+  LinkedWearable,
   OnChainWearable,
   PaginatedResponse,
   ThirdPartyWearable
 } from '../../types'
 import { createFilters } from './items-commons'
+import { fetchLinkedWearablesFromProvider } from '../../logic/fetch-elements/fetch-linked-wearables'
 
-const VALID_COLLECTION_TYPES = ['base-wearable', 'on-chain', 'third-party']
+const VALID_COLLECTION_TYPES = ['base-wearable', 'on-chain', 'third-party', 'linked-wearable']
 
 type MixedBaseWearable = BaseWearable & {
   type: 'base-wearable'
@@ -30,7 +32,11 @@ type MixedThirdPartyWearable = ThirdPartyWearable & {
   type: 'third-party'
 }
 
-export type MixedWearable = (MixedBaseWearable | MixedOnChainWearable | MixedThirdPartyWearable) &
+type MixedLinkedWearable = BaseWearable & {
+  type: 'linked-wearable'
+}
+
+export type MixedWearable = (MixedBaseWearable | MixedOnChainWearable | MixedThirdPartyWearable | MixedLinkedWearable) &
   Partial<Pick<OnChainWearable, 'rarity'>>
 
 export type MixedWearableResponse = Omit<MixedWearable, 'minTransferredAt' | 'maxTransferredAt'>
@@ -44,9 +50,12 @@ async function fetchCombinedElements(
     | 'entitiesFetcher'
     | 'thirdPartyWearablesFetcher'
     | 'thirdPartyProvidersStorage'
+    | 'linkedWearablesFetcher'
+    | 'linkedWearableProvidersStorage'
   >,
   collectionTypes: string[],
-  thirdPartyCollectionId: string[],
+  thirdPartyCollectionIds: string[],
+  linkedWearableCollectionIds: string[],
   address: string
 ): Promise<MixedWearable[]> {
   async function fetchBaseWearables() {
@@ -122,13 +131,48 @@ async function fetchCombinedElements(
     }
   }
 
-  const [baseItems, nftItems, thirdPartyItems] = await Promise.all([
+  async function fetchLinkedWearables(linkedWearablesCollectionIds: string[]): Promise<MixedLinkedWearable[]> {
+    if (linkedWearablesCollectionIds.length === 0) {
+      const elements = await components.linkedWearablesFetcher.fetchOwnedElements(address)
+      return elements.map(
+        (wearable: LinkedWearable): MixedLinkedWearable => ({
+          type: 'linked-wearable',
+          ...wearable
+        })
+      )
+    }
+
+    const elements = await Promise.all(
+      linkedWearablesCollectionIds.map(async (linkedWearablesCollectionId) => {
+        // Strip the last part (the 6th part) if a collection contract id is specified
+        const collectionIdCleaned = linkedWearablesCollectionId.split(':').slice(0, 5).join(':')
+        const urn = await parseUrn(collectionIdCleaned)
+        if (!urn || urn.type !== 'blockchain-collection-linked-wearables-provider') {
+          return []
+        }
+
+        return (await fetchLinkedWearablesFromProvider(components, address, urn)).map(
+          (wearable: LinkedWearable): MixedLinkedWearable => {
+            return {
+              type: 'linked-wearable',
+              ...wearable
+            }
+          }
+        )
+      })
+    )
+
+    return elements.flat(1)
+  }
+
+  const [baseItems, nftItems, thirdPartyItems, linkedItems] = await Promise.all([
     collectionTypes.includes('base-wearable') ? fetchBaseWearables() : [],
     collectionTypes.includes('on-chain') ? fetchOnChainWearables() : [],
-    collectionTypes.includes('third-party') ? fetchThirdPartyWearables(thirdPartyCollectionId) : []
+    collectionTypes.includes('third-party') ? fetchThirdPartyWearables(thirdPartyCollectionIds) : [],
+    collectionTypes.includes('linked-wearable') ? fetchLinkedWearables(linkedWearableCollectionIds) : []
   ])
 
-  return [...baseItems, ...nftItems, ...thirdPartyItems]
+  return [...baseItems, ...nftItems, ...thirdPartyItems, ...linkedItems]
 }
 
 export async function explorerHandler(
@@ -138,7 +182,9 @@ export async function explorerHandler(
     | 'wearablesFetcher'
     | 'thirdPartyWearablesFetcher'
     | 'entitiesFetcher'
-    | 'thirdPartyProvidersStorage',
+    | 'thirdPartyProvidersStorage'
+    | 'linkedWearablesFetcher'
+    | 'linkedWearableProvidersStorage',
     '/explorer/:address/wearables'
   >
 ): Promise<PaginatedResponse<MixedWearableResponse>> {
@@ -152,13 +198,23 @@ export async function explorerHandler(
   const thirdPartyCollectionIds = context.url.searchParams.has('thirdPartyCollectionId')
     ? context.url.searchParams.getAll('thirdPartyCollectionId')
     : []
+  const linkedWearableCollectionIds = context.url.searchParams.has('linkedWearableCollectionIds')
+    ? context.url.searchParams.getAll('linkedWearableCollectionId')
+    : []
 
   if (collectionTypes.some((type) => !VALID_COLLECTION_TYPES.includes(type))) {
     throw new InvalidRequestError(`Invalid collection type. Valid types are: ${VALID_COLLECTION_TYPES.join(', ')}.`)
   }
 
   const page = await fetchAndPaginate<MixedWearable>(
-    () => fetchCombinedElements(context.components, collectionTypes, thirdPartyCollectionIds, address),
+    () =>
+      fetchCombinedElements(
+        context.components,
+        collectionTypes,
+        thirdPartyCollectionIds,
+        linkedWearableCollectionIds,
+        address
+      ),
     pagination,
     filter,
     sorting
