@@ -23,15 +23,27 @@ export async function createThirdPartyProvidersServiceFetcherComponent(
   const isThirdPartyProvidersResolverServiceDisabled: boolean =
     (await config.getString('DISABLE_THIRD_PARTY_PROVIDERS_RESOLVER_SERVICE_USAGE')) === 'true'
 
-  return {
-    async get(): Promise<ThirdPartyProvider[]> {
-      if (isThirdPartyProvidersResolverServiceDisabled) {
-        throw new Error(
-          'Third Party Providers resolver service will not be used since DISABLE_THIRD_PARTY_PROVIDERS_RESOLVER_SERVICE_USAGE is set'
-        )
-      }
-      const response: ThirdPartyProvidersServiceResponse = await (await fetch.fetch(`${serviceUrl}/providers`)).json()
-      return response.thirdPartyProviders
+  async function get(): Promise<ThirdPartyProvider[]> {
+    if (isThirdPartyProvidersResolverServiceDisabled) {
+      throw new Error(
+        'Third Party Providers resolver service will not be used since DISABLE_THIRD_PARTY_PROVIDERS_RESOLVER_SERVICE_USAGE is set'
+      )
     }
+    const response: ThirdPartyProvidersServiceResponse = await (await fetch.fetch(`${serviceUrl}/providers`)).json()
+
+    for (const thirdParty of response.thirdPartyProviders) {
+      if (thirdParty.metadata.thirdParty.contracts) {
+        thirdParty.metadata.thirdParty.contracts = thirdParty.metadata.thirdParty.contracts.map((c) => ({
+          network: c.network.toLowerCase(),
+          address: c.address.toLowerCase()
+        }))
+      }
+    }
+
+    return response.thirdPartyProviders
+  }
+
+  return {
+    get
   }
 }

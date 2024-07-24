@@ -42,7 +42,6 @@ export async function createThirdPartyProvidersStorage({
       let response = await wrapCall(async (): Promise<ThirdPartyProvider[]> => {
         return thirdPartyProvidersServiceFetcher.get()
       })
-
       if (!response.ok) {
         logger.info('Retry fetching Third Party Providers from TheGraph')
         response = await wrapCall(async (): Promise<ThirdPartyProvider[]> => {
@@ -73,11 +72,13 @@ export async function createThirdPartyProvidersStorage({
     })
   }
 
+  async function start() {
+    await getAll()
+  }
+
   return {
+    get,
     getAll,
-    async start() {
-      await getAll()
-    },
-    get
+    start
   }
 }

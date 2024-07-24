@@ -58,7 +58,6 @@ export type BaseComponents = {
   thirdPartyProvidersServiceFetcher: ThirdPartyProvidersServiceFetcher
   thirdPartyProvidersStorage: ThirdPartyProvidersStorage
   thirdPartyWearablesFetcher: ElementsFetcher<ThirdPartyWearable>
-  linkedWearablesFetcher: ElementsFetcher<ThirdPartyWearable>
   emotesFetcher: ElementsFetcher<OnChainEmote>
   emoteDefinitionsFetcher: DefinitionsFetcher<EmoteDefinition>
   wearableDefinitionsFetcher: DefinitionsFetcher<WearableDefinition>

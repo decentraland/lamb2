@@ -8,6 +8,7 @@ export async function getOutfits(
     AppComponents,
     | 'metrics'
     | 'content'
+    | 'contentServerUrl'
     | 'theGraph'
     | 'config'
     | 'fetch'

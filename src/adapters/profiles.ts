@@ -58,6 +58,7 @@ export async function createProfilesComponent(
     AppComponents,
     | 'metrics'
     | 'content'
+    | 'contentServerUrl'
     | 'theGraph'
     | 'config'
     | 'fetch'

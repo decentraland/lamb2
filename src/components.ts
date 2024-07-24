@@ -36,7 +36,6 @@ import { createThirdPartyProvidersServiceFetcherComponent } from './adapters/thi
 import { createThirdPartyProvidersStorage } from './logic/third-party-providers-storage'
 import { createProfilesComponent } from './adapters/profiles'
 import { IFetchComponent } from '@well-known-components/interfaces'
-import { fetchAllLinkedWearables } from './logic/fetch-elements/fetch-linked-wearables'
 import { createAlchemyNftFetcher } from './adapters/alchemy-nft-fetcher'
 
 // Initialize all the components of the app
@@ -125,20 +124,8 @@ export async function initComponents(
     thirdPartyProvidersServiceFetcher
   })
   const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllThirdPartyWearables({ thirdPartyProvidersStorage, fetch, logs, entitiesFetcher, metrics }, address)
-  )
-
-  const linkedWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllLinkedWearables(
-      {
-        alchemyNftFetcher,
-        contentServerUrl,
-        thirdPartyProvidersStorage,
-        fetch,
-        logs,
-        entitiesFetcher,
-        metrics
-      },
+    fetchAllThirdPartyWearables(
+      { alchemyNftFetcher, contentServerUrl, thirdPartyProvidersStorage, fetch, logs, entitiesFetcher, metrics },
       address
     )
   )
@@ -148,6 +135,7 @@ export async function initComponents(
   const profiles = await createProfilesComponent({
     metrics,
     content,
+    contentServerUrl,
     theGraph,
     config,
     fetch,
@@ -190,7 +178,6 @@ export async function initComponents(
     poisFetcher,
     nameDenylistFetcher,
     profiles,
-    linkedWearablesFetcher,
     alchemyNftFetcher
   }
 }

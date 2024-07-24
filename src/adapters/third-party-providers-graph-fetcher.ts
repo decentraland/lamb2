@@ -32,12 +32,23 @@ export function createThirdPartyProvidersGraphFetcherComponent({
 }: Pick<AppComponents, 'theGraph'>): ThirdPartyProvidersGraphFetcher {
   return {
     async get(): Promise<ThirdPartyProvider[]> {
-      return (
+      const thirdPartyProviders = (
         await theGraph.thirdPartyRegistrySubgraph.query<ThirdPartyResolversQueryResults>(
           QUERY_ALL_THIRD_PARTY_RESOLVERS,
           {}
         )
       ).thirdParties
+
+      for (const thirdParty of thirdPartyProviders) {
+        if (thirdParty.metadata.thirdParty.contracts) {
+          thirdParty.metadata.thirdParty.contracts = thirdParty.metadata.thirdParty.contracts.map((c) => ({
+            network: c.network.toLowerCase(),
+            address: c.address.toLowerCase()
+          }))
+        }
+      }
+
+      return thirdPartyProviders
     }
   }
 }

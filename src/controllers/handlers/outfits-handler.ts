@@ -6,6 +6,7 @@ export async function outfitsHandler(
   context: HandlerContextWithPath<
     | 'metrics'
     | 'content'
+    | 'contentServerUrl'
     | 'theGraph'
     | 'config'
     | 'fetch'
