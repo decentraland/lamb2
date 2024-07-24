@@ -3,7 +3,7 @@ import { FetcherError } from './elements-fetcher'
 import { chunks } from '../logic/chunking'
 
 export type AlchemyNftFetcher = {
-  getNFTsForOwner(owner: string, validPrefixes: string[]): Promise<string[]>
+  getNFTsForOwner(owner: string, contractsByNetwork: Record<string, Set<string>>): Promise<string[]>
 }
 
 // Max number of contracts that can be queried at once in Alchemy API
@@ -89,27 +89,9 @@ export async function createAlchemyNftFetcher({
     return allNfts
   }
 
-  async function getNFTsForOwner(owner: string, validPrefixes: string[]): Promise<string[]> {
-    const contractAddresses = validPrefixes
-      .map((prefix) => {
-        const split = prefix.split(':')
-        return { network: split[5], address: split[6] }
-      })
-      .flat(1)
-      .reduce(
-        (carry, contract) => {
-          if (!carry[contract.network]) {
-            carry[contract.network] = new Set<string>()
-          }
-          carry[contract.network].add(contract.address)
-          return carry
-        },
-        {} as Record<string, Set<string>>
-      )
-    console.log('contractAddresses', contractAddresses)
-
+  async function getNFTsForOwner(owner: string, contractsByNetwork: Record<string, Set<string>>): Promise<string[]> {
     const all = await Promise.all(
-      Object.entries(contractAddresses).map(([network, contractAddresses]) => {
+      Object.entries(contractsByNetwork).map(([network, contractAddresses]) => {
         return getNFTsForOwnerForNetwork(owner, network, contractAddresses)
       })
     )
