@@ -79,15 +79,18 @@ async function initComponents(
       thirdParties: [
         {
           id: 'urn:decentraland:matic:collections-thirdparty:baby-doge-coin',
-          resolver: 'https://decentraland-api.babydoge.com/v1'
+          resolver: 'https://decentraland-api.babydoge.com/v1',
+          metadata: {}
         },
         {
           id: 'urn:decentraland:matic:collections-thirdparty:cryptoavatars',
-          resolver: 'https://api.cryptoavatars.io/'
+          resolver: 'https://api.cryptoavatars.io/',
+          metadata: {}
         },
         {
           id: 'urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip',
-          resolver: 'https://wearables-api.unxd.com'
+          resolver: 'https://wearables-api.unxd.com',
+          metadata: {}
         }
       ]
     })
