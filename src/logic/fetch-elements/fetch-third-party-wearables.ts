@@ -81,18 +81,16 @@ function groupThirdPartyWearablesByURN(assets: (ThirdPartyAsset & { entity: Enti
 
   for (const asset of assets) {
     const metadata: Wearable = asset.entity.metadata
+    const individualData = { id: asset.urn.decentraland }
+
     if (wearablesByURN.has(asset.urn.decentraland)) {
       const wearableFromMap = wearablesByURN.get(asset.urn.decentraland)!
-      wearableFromMap.individualData.push({ id: asset.urn.decentraland })
+      wearableFromMap.individualData.push(individualData)
       wearableFromMap.amount = wearableFromMap.amount + 1
     } else {
       wearablesByURN.set(asset.urn.decentraland, {
         urn: asset.urn.decentraland,
-        individualData: [
-          {
-            id: asset.urn.decentraland
-          }
-        ],
+        individualData: [individualData],
         amount: 1,
         name: metadata.name,
         category: metadata.data.category,
@@ -119,7 +117,8 @@ function groupLinkedWearablesByURN(
     wearablesByURN.set(assetId, {
       urn: assetId,
       individualData: data.individualData.map((indi) => ({
-        id: indi
+        id: `${assetId}:${indi}`,
+        tokenId: indi
       })),
       amount: data.individualData.length,
       name: data.entity.metadata.name,
@@ -260,9 +259,9 @@ export async function fetchAllThirdPartyWearables(
         const [network, contract, tokenId] = nft.split(':')
         if (mappingsHelper.includesNft(network as ContractNetwork, contract, tokenId)) {
           if (assignedLinkedWearables[urn]) {
-            assignedLinkedWearables[urn].individualData.push(tokenId)
+            assignedLinkedWearables[urn].individualData.push(nft)
           } else {
-            assignedLinkedWearables[urn] = { individualData: [tokenId], entity }
+            assignedLinkedWearables[urn] = { individualData: [nft], entity }
           }
         }
       }
