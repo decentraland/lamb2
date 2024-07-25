@@ -17,6 +17,7 @@ test('integration tests for profile adapter', function ({ components, stubCompon
     const {
       metrics,
       config,
+      contentServerUrl,
       ownershipCaches,
       thirdPartyProvidersStorage,
       logs,
@@ -138,6 +139,7 @@ test('integration tests for profile adapter', function ({ components, stubCompon
     const profilesComponent = await createProfilesComponent({
       metrics,
       content,
+      contentServerUrl,
       theGraph,
       config,
       fetch,
@@ -200,6 +202,7 @@ testWithComponents(() => {
       const {
         metrics,
         config,
+        contentServerUrl,
         ownershipCaches,
         thirdPartyProvidersStorage,
         logs,
@@ -338,6 +341,7 @@ testWithComponents(() => {
       const profilesComponent = await createProfilesComponent({
         metrics,
         content,
+        contentServerUrl,
         theGraph,
         config,
         fetch,
@@ -391,6 +395,7 @@ testWithComponents(() => {
       const {
         metrics,
         config,
+        contentServerUrl,
         ownershipCaches,
         thirdPartyProvidersStorage,
         logs,
@@ -548,6 +553,7 @@ testWithComponents(() => {
       const profilesComponent = await createProfilesComponent({
         metrics,
         content,
+        contentServerUrl,
         theGraph,
         config,
         fetch,
@@ -586,6 +592,7 @@ test('integration tests for profile adapter', function ({ components, stubCompon
     const {
       metrics,
       config,
+      contentServerUrl,
       ownershipCaches,
       thirdPartyProvidersStorage,
       logs,
@@ -627,6 +634,7 @@ test('integration tests for profile adapter', function ({ components, stubCompon
     const profilesComponent = await createProfilesComponent({
       metrics,
       content,
+      contentServerUrl,
       theGraph,
       config,
       fetch,

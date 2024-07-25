@@ -39,12 +39,14 @@ export function createThirdPartyProvidersGraphFetcherComponent({
         )
       ).thirdParties
 
-      for (const thirdParty of thirdPartyProviders) {
-        if (thirdParty.metadata.thirdParty.contracts) {
-          thirdParty.metadata.thirdParty.contracts = thirdParty.metadata.thirdParty.contracts.map((c) => ({
-            network: c.network.toLowerCase(),
-            address: c.address.toLowerCase()
-          }))
+      if (thirdPartyProviders) {
+        for (const thirdParty of thirdPartyProviders) {
+          if (thirdParty.metadata.thirdParty?.contracts) {
+            thirdParty.metadata.thirdParty.contracts = thirdParty.metadata.thirdParty.contracts.map((c) => ({
+              network: c.network.toLowerCase(),
+              address: c.address.toLowerCase()
+            }))
+          }
         }
       }
 

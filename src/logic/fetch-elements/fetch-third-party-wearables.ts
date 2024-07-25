@@ -182,6 +182,9 @@ export async function fetchAllThirdPartyWearables(
 ): Promise<ThirdPartyWearable[]> {
   async function fetchThirdPartyV1(thirdParties: ThirdPartyProvider[]) {
     console.log('fetchThirdPartyV1', 'thirdParties', thirdParties)
+    if (thirdParties.length === 0) {
+      return []
+    }
 
     // TODO: test if stateValue is kept in case of an exception
     const thirdPartyAssets = (
@@ -207,6 +210,9 @@ export async function fetchAllThirdPartyWearables(
 
   async function fetchThirdPartyV2(linkedWearableProviders: ThirdPartyProvider[]) {
     console.log('fetchThirdPartyV2', 'linkedWearableProviders', linkedWearableProviders)
+    if (linkedWearableProviders.length === 0) {
+      return []
+    }
 
     const contractAddresses = linkedWearableProviders.reduce(
       (carry, provider) => {

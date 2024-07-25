@@ -22,6 +22,7 @@ import { main } from '../src/service'
 import { TestComponents } from '../src/types'
 import { createContentClientMock } from './mocks/content-mock'
 import { createTheGraphComponentMock } from './mocks/the-graph-mock'
+import { createAlchemyNftFetcherMock } from './mocks/alchemy-mock'
 
 /**
  * Behaves like Jest "describe" function, used to describe a test for a
@@ -121,11 +122,14 @@ async function initComponents(
     contentServerUrl
   })
 
+  const alchemyNftFetcher = createAlchemyNftFetcherMock()
   const metrics = createTestMetricsComponent(metricDeclarations)
   const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllThirdPartyWearables(
       {
         metrics,
+        contentServerUrl,
+        alchemyNftFetcher,
         thirdPartyProvidersStorage: components.thirdPartyProvidersStorage,
         fetch,
         logs,
@@ -137,6 +141,7 @@ async function initComponents(
 
   return {
     ...components,
+    alchemyNftFetcher,
     config,
     metrics,
     localFetch: await createLocalFetchCompoment(config),

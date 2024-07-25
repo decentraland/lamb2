@@ -31,12 +31,14 @@ export async function createThirdPartyProvidersServiceFetcherComponent(
     }
     const response: ThirdPartyProvidersServiceResponse = await (await fetch.fetch(`${serviceUrl}/providers`)).json()
 
-    for (const thirdParty of response.thirdPartyProviders) {
-      if (thirdParty.metadata.thirdParty.contracts) {
-        thirdParty.metadata.thirdParty.contracts = thirdParty.metadata.thirdParty.contracts.map((c) => ({
-          network: c.network.toLowerCase(),
-          address: c.address.toLowerCase()
-        }))
+    if (response.thirdPartyProviders) {
+      for (const thirdParty of response.thirdPartyProviders) {
+        if (thirdParty.metadata.thirdParty?.contracts) {
+          thirdParty.metadata.thirdParty.contracts = thirdParty.metadata.thirdParty.contracts.map((c) => ({
+            network: c.network.toLowerCase(),
+            address: c.address.toLowerCase()
+          }))
+        }
       }
     }
 
