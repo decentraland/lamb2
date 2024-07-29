@@ -52,3 +52,24 @@ The layer that communicates with the outside world, such as http, kafka, and the
 We use the components abstraction to organize our ports (e.g. HTTP client, database client, redis client) and any other logic that needs to track mutable state or encode dependencies between stateful components. For every environment (e.g. test, e2e, prod, staging...) we have a different version of our component systems, enabling us to easily inject mocks or different implementations for different contexts.
 
 We make components available to incoming http and kafka handlers. For instance, the http-server handlers have access to things like the database or HTTP components, and pass them down to the controller level for general use.
+
+
+### Diagram
+```mermaid
+sequenceDiagram
+   actor User
+   participant Catalyst
+   participant TPA1 Crypto Kitties API
+   participant TPA2 3D Punks API
+   participant TPA3 CryptoAvatars API
+   User ->> Catalyst: Get all wearables I own
+   activate Catalyst
+   Catalyst ->> TPA1: Get owned wearables for 0x123
+   Catalyst ->> TPA2: Get owned wearables for 0x123
+   Catalyst ->> TPA3: Get owned wearables for 0x123
+   Catalyst ->> TPA4: Get owned wearables for 0x123
+   Catalyst ->> TPA5: Get owned wearables for 0x123
+   Catalyst ->> TPA6: Get owned wearables for 0x123
+   deactivate Catalyst
+   Catalyst ->> User: Ok (HTTP 200) with the wearables
+```
