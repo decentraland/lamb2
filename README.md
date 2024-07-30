@@ -96,3 +96,37 @@ sequenceDiagram
    deactivate Catalyst
    Catalyst ->> User: Ok (HTTP 200) with the wearables
 ```
+
+### Diagram with problem
+```mermaid
+sequenceDiagram
+   actor User
+   participant Catalyst
+   participant Graph as Third Party Resolvers
+   participant TPA1 as Crypto Kitties API
+   participant TPA2 as 3D Punks API
+   User ->> Catalyst: Get my profile
+   Catalyst ->> Graph: Get all active Third Party Providers
+   Graph -->> Catalyst: Ok (HTTP 200) with the list of TPAs
+   activate Catalyst
+   Catalyst ->> TPA1: Does 0x123 own this red shirt?
+   Catalyst ->> TPA2: Does 0x123 own this blue hat and the yellow shoes?
+   Catalyst ->> Catalyst: Remove all non-owned wearables
+   deactivate Catalyst
+   Catalyst ->> User: Ok (HTTP 200) with the profile
+```
+
+### Diagram with solution
+```mermaid
+sequenceDiagram
+   actor User
+   participant Catalyst
+   participant Blockchain
+   User ->> Catalyst: Get my profile
+   activate Catalyst
+   Catalyst ->> Blockchain: Does 0x123 own this red shirt, this blue hat and the yellow shoes?
+   Blockchain->> Catalyst: Ok: yes, no, yes
+   Catalyst ->> Catalyst: Remove all non-owned wearables
+   deactivate Catalyst
+   Catalyst ->> User: Ok (HTTP 200) with the profile
+```
