@@ -1,4 +1,4 @@
-/*
+/**
  * Merge map1 into map2. They must be { string -> [string] } maps
  */
 export function mergeMapIntoMap(map1: Map<string, string[]>, map2: Map<string, string[]>) {

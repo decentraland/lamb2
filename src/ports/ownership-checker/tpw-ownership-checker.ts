@@ -47,8 +47,8 @@ export function createTPWOwnershipChecker(
 
 /*
  * It could happen that a user had a third-party wearable in its profile which it was
- * selled through the blockchain without being reflected on the content server, so we
- * need to make sure that every third-party wearable it is still owned by the user.
+ * sold through the blockchain without being reflected on the content server, so we
+ * need to make sure that the user still owns every third-party wearable.
  * This method gets the collection ids from a wearableIdsByAddress map, for each of them
  * gets its API resolver, gets the owned third party wearables for that collection, and
  * finally sanitize wearableIdsByAddress with the owned wearables.

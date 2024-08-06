@@ -29,6 +29,10 @@ async function fetchAssets(
   if (!urn || urn.type !== URN_THIRD_PARTY_NAME_TYPE) {
     throw new Error(`Couldn't parse third party id: ${thirdParty.id}`)
   }
+  if (!thirdParty.resolver) {
+    logger.warn(`Third party ${thirdParty.id} doesn't have a resolver`)
+    return []
+  }
 
   const baseUrl = new URL(thirdParty.resolver).href.replace(/\/$/, '')
   let url: string | undefined = `${baseUrl}/registry/${urn.thirdPartyName}/address/${owner}/assets`
