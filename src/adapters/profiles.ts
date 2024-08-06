@@ -56,9 +56,11 @@ export type IProfilesComponent = {
 export async function createProfilesComponent(
   components: Pick<
     AppComponents,
+    | 'alchemyNftFetcher'
     | 'metrics'
     | 'content'
     | 'contentServerUrl'
+    | 'entitiesFetcher'
     | 'theGraph'
     | 'config'
     | 'fetch'

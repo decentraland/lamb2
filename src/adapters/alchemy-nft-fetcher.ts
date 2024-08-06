@@ -40,6 +40,25 @@ export async function createAlchemyNftFetcher({
 
     let nextPageToken: string | null = null
     do {
+      // https://nfts-provider.decentraland.org/wallets/:address/networks/:network/nfts
+
+      // const response2 = await fetch.fetch(
+      //   `https://nfts-provider.decentraland.org/wallets/${owner}/networks/${network}`,
+      //   {
+      //     method: 'POST',
+      //     headers: {
+      //       accept: 'application/json'
+      //     },
+      //     body: JSON.stringify(contractAddresses)
+      //   }
+      // )
+      //
+      // if (!response2.ok) {
+      //   throw new FetcherError(`Error fetching NFTs from Alchemy: ${response2.status} - ${response2.statusText}`)
+      // }
+      //
+      // const json2 = (await response2.json()) as AlchemyNftResponse
+
       const u = new URL(`https://${mapping}.g.alchemy.com/nft/v3/${apiKey}/getNFTsForOwner`)
       u.searchParams.append('owner', owner)
       u.searchParams.append('pageSize', '100')

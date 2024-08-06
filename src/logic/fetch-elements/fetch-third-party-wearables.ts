@@ -134,7 +134,16 @@ function groupLinkedWearablesByURN(
 }
 
 export async function fetchUserThirdPartyAssets(
-  components: Pick<AppComponents, 'thirdPartyProvidersStorage' | 'contentServerUrl' | 'fetch' | 'logs' | 'metrics'>,
+  components: Pick<
+    AppComponents,
+    | 'alchemyNftFetcher'
+    | 'contentServerUrl'
+    | 'thirdPartyProvidersStorage'
+    | 'fetch'
+    | 'logs'
+    | 'entitiesFetcher'
+    | 'metrics'
+  >,
   owner: string,
   collectionId: string
 ): Promise<ThirdPartyAsset[]> {
@@ -149,26 +158,31 @@ export async function fetchUserThirdPartyAssets(
 
   const thirdPartyId = parts.slice(0, 5).join(':')
 
-  let thirdPartyProvider: ThirdPartyProvider | undefined = undefined
-
   const thirdPartyProviders = await components.thirdPartyProvidersStorage.getAll()
-  for (const provider of thirdPartyProviders) {
-    if (provider.id === thirdPartyId) {
-      thirdPartyProvider = provider
-      break
-    }
-  }
+  const thirdPartyProvider: ThirdPartyProvider | undefined = thirdPartyProviders.find(
+    (provider) => provider.id === thirdPartyId
+  )
 
   if (!thirdPartyProvider) {
     return []
   }
 
-  const assetsByOwner = await fetchAssets(components, owner, thirdPartyProvider)
-  if (!assetsByOwner) {
-    throw new Error(`Could not fetch assets for owner: ${owner}`)
-  }
+  const thirdPartyWearables = await doTheWork(components, owner, [thirdPartyProvider])
 
-  return assetsByOwner.filter((asset) => asset.urn.decentraland.startsWith(thirdPartyId)) ?? []
+  return thirdPartyWearables.map((tpw) => ({
+    id: tpw.urn,
+    amount: tpw.amount,
+    urn: {
+      decentraland: tpw.urn
+    }
+  }))
+
+  // const assetsByOwner = await fetchAssets(components, owner, thirdPartyProvider)
+  // if (!assetsByOwner) {
+  //   throw new Error(`Could not fetch assets for owner: ${owner}`)
+  // }
+  //
+  // return assetsByOwner.filter((asset) => asset.urn.decentraland.startsWith(thirdPartyId)) ?? []
 }
 
 export async function fetchAllThirdPartyWearables(
@@ -183,6 +197,25 @@ export async function fetchAllThirdPartyWearables(
     | 'metrics'
   >,
   owner: string
+): Promise<ThirdPartyWearable[]> {
+  const thirdParties = await components.thirdPartyProvidersStorage.getAll()
+
+  return await doTheWork(components, owner, thirdParties)
+}
+
+async function doTheWork(
+  components: Pick<
+    AppComponents,
+    | 'alchemyNftFetcher'
+    | 'contentServerUrl'
+    | 'thirdPartyProvidersStorage'
+    | 'fetch'
+    | 'logs'
+    | 'entitiesFetcher'
+    | 'metrics'
+  >,
+  owner: string,
+  thirdParties: ThirdPartyProvider[]
 ): Promise<ThirdPartyWearable[]> {
   async function fetchThirdPartyV1(thirdParties: ThirdPartyProvider[]) {
     console.log('fetchThirdPartyV1', 'thirdParties', thirdParties)
@@ -283,8 +316,6 @@ export async function fetchAllThirdPartyWearables(
 
     return grouped
   }
-
-  const thirdParties = await components.thirdPartyProvidersStorage.getAll()
 
   const [providersV1, providersV2] = thirdParties.reduce(
     (acc, provider) => {

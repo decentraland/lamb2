@@ -7,7 +7,14 @@ import { AppComponents, NFTsOwnershipChecker } from '../../types'
 export function createTPWOwnershipChecker(
   components: Pick<
     AppComponents,
-    'contentServerUrl' | 'thirdPartyProvidersStorage' | 'fetch' | 'ownershipCaches' | 'logs' | 'metrics'
+    | 'alchemyNftFetcher'
+    | 'entitiesFetcher'
+    | 'contentServerUrl'
+    | 'thirdPartyProvidersStorage'
+    | 'fetch'
+    | 'ownershipCaches'
+    | 'logs'
+    | 'metrics'
   >
 ): NFTsOwnershipChecker {
   let ownedTPWByAddress: Map<string, string[]> = new Map()
@@ -27,10 +34,11 @@ export function createTPWOwnershipChecker(
     // Check ownership for the non-cached nfts
     ownedTPWByAddress = await ownedThirdPartyWearables(components, nftsToCheckByAddress)
 
-    // Traverse the checked nfts to set the cache depending on its ownership
+    // Traverse the checked NFTs to set the cache depending on its ownership
     fillCacheWithRecentlyCheckedWearables(nftsToCheckByAddress, ownedTPWByAddress, cache)
 
-    // Merge cachedOwnedNFTsByAddress (contains the nfts which ownershipwas cached) into ownedWearablesByAddress (recently checked ownnership map)
+    // Merge cachedOwnedNFTsByAddress (contains the NFTs for which ownership was cached) into ownedWearablesByAddress
+    // (recently checked ownership map)
     mergeMapIntoMap(cachedOwnedNFTsByAddress, ownedTPWByAddress)
   }
 
@@ -55,12 +63,23 @@ export function createTPWOwnershipChecker(
  */
 async function ownedThirdPartyWearables(
   {
+    alchemyNftFetcher,
     contentServerUrl,
     metrics,
     thirdPartyProvidersStorage,
     fetch,
-    logs
-  }: Pick<AppComponents, 'contentServerUrl' | 'thirdPartyProvidersStorage' | 'fetch' | 'logs' | 'metrics'>,
+    logs,
+    entitiesFetcher
+  }: Pick<
+    AppComponents,
+    | 'alchemyNftFetcher'
+    | 'contentServerUrl'
+    | 'thirdPartyProvidersStorage'
+    | 'fetch'
+    | 'logs'
+    | 'entitiesFetcher'
+    | 'metrics'
+  >,
   wearableIdsByAddress: Map<string, string[]>
 ): Promise<Map<string, string[]>> {
   const response = new Map<string, string[]>()
@@ -76,7 +95,7 @@ async function ownedThirdPartyWearables(
     await Promise.all(
       collectionIds.map(async (collectionId) => {
         for (const asset of await fetchUserThirdPartyAssets(
-          { contentServerUrl, thirdPartyProvidersStorage, fetch, logs, metrics },
+          { alchemyNftFetcher, contentServerUrl, thirdPartyProvidersStorage, fetch, logs, entitiesFetcher, metrics },
           address,
           collectionId
         )) {

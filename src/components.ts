@@ -133,9 +133,11 @@ export async function initComponents(
   const alchemyNftFetcher = await createAlchemyNftFetcher({ config, logs, fetch })
 
   const profiles = await createProfilesComponent({
+    alchemyNftFetcher,
     metrics,
     content,
     contentServerUrl,
+    entitiesFetcher,
     theGraph,
     config,
     fetch,
