@@ -24,7 +24,9 @@ test('integration tests for profile adapter', function ({ components, stubCompon
       logs,
       wearablesFetcher,
       emotesFetcher,
-      namesFetcher
+      namesFetcher,
+      l1ThirdPartyItemChecker,
+      l2ThirdPartyItemChecker
     } = components
     const { alchemyNftFetcher, entitiesFetcher, theGraph, fetch, content } = stubComponents
     const address = '0x1'
@@ -150,6 +152,8 @@ test('integration tests for profile adapter', function ({ components, stubCompon
       config,
       fetch,
       ownershipCaches,
+      l1ThirdPartyItemChecker,
+      l2ThirdPartyItemChecker,
       thirdPartyProvidersStorage,
       logs,
       wearablesFetcher,
@@ -214,7 +218,9 @@ testWithComponents(() => {
         logs,
         wearablesFetcher,
         emotesFetcher,
-        namesFetcher
+        namesFetcher,
+        l1ThirdPartyItemChecker,
+        l2ThirdPartyItemChecker
       } = components
       const { alchemyNftFetcher, entitiesFetcher, theGraph, fetch, content } = stubComponents
       const address = '0x1'
@@ -357,6 +363,8 @@ testWithComponents(() => {
         config,
         fetch,
         ownershipCaches,
+        l1ThirdPartyItemChecker,
+        l2ThirdPartyItemChecker,
         thirdPartyProvidersStorage,
         logs,
         wearablesFetcher,
@@ -412,7 +420,9 @@ testWithComponents(() => {
         logs,
         wearablesFetcher,
         emotesFetcher,
-        namesFetcher
+        namesFetcher,
+        l1ThirdPartyItemChecker,
+        l2ThirdPartyItemChecker
       } = components
       const { alchemyNftFetcher, entitiesFetcher, theGraph, fetch, content } = stubComponents
       const address = '0x1'
@@ -574,6 +584,8 @@ testWithComponents(() => {
         config,
         fetch,
         ownershipCaches,
+        l1ThirdPartyItemChecker,
+        l2ThirdPartyItemChecker,
         thirdPartyProvidersStorage,
         logs,
         wearablesFetcher,
@@ -616,7 +628,9 @@ test('integration tests for profile adapter', function ({ components, stubCompon
       logs,
       wearablesFetcher,
       emotesFetcher,
-      namesFetcher
+      namesFetcher,
+      l1ThirdPartyItemChecker,
+      l2ThirdPartyItemChecker
     } = components
     const { theGraph, content, fetch } = stubComponents
     const addresses = ['0x3']
@@ -659,6 +673,8 @@ test('integration tests for profile adapter', function ({ components, stubCompon
       config,
       fetch,
       ownershipCaches,
+      l1ThirdPartyItemChecker,
+      l2ThirdPartyItemChecker,
       thirdPartyProvidersStorage,
       logs,
       wearablesFetcher,

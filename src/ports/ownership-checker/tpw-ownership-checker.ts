@@ -32,7 +32,8 @@ export function createTPWOwnershipChecker(
       cache
     )
 
-    // Check ownership for the non-cached nfts
+    // Check ownership for the non-cached NFTs
+    console.log('nftsToCheckByAddress', nftsToCheckByAddress, 'cachedOwnedNFTsByAddress', cachedOwnedNFTsByAddress)
     ownedTPWByAddress = await ownedThirdPartyWearables(components, nftsToCheckByAddress)
 
     // Traverse the checked NFTs to set the cache depending on its ownership
