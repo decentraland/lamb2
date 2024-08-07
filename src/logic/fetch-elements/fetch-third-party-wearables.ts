@@ -1,7 +1,7 @@
 import { ContractNetwork, createMappingsHelper, Entity, Wearable } from '@dcl/schemas'
 import { BlockchainCollectionThirdPartyName, parseUrn } from '@dcl/urn-resolver'
 import { FetcherError } from '../../adapters/elements-fetcher'
-import { AppComponents, ThirdPartyProvider, ThirdPartyAsset, ThirdPartyWearable } from '../../types'
+import { AppComponents, ThirdPartyAsset, ThirdPartyProvider, ThirdPartyWearable } from '../../types'
 
 const URN_THIRD_PARTY_NAME_TYPE = 'blockchain-collection-third-party-name'
 const URN_THIRD_PARTY_ASSET_TYPE = 'blockchain-collection-third-party'

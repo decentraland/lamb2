@@ -11,12 +11,11 @@ import {
 import { WearableCategory } from '@dcl/schemas'
 import { createProfilesComponent } from '../../src/adapters/profiles'
 import { createConfigComponent } from '@well-known-components/env-config-provider'
+import { generateWearableEntity } from '../data/wearables'
 
 test('integration tests for profile adapter', function ({ components, stubComponents }) {
   it('calling with a single profile address, owning everything claimed', async () => {
     const {
-      alchemyNftFetcher,
-      entitiesFetcher,
       metrics,
       config,
       contentServerUrl,
@@ -27,7 +26,7 @@ test('integration tests for profile adapter', function ({ components, stubCompon
       emotesFetcher,
       namesFetcher
     } = components
-    const { theGraph, fetch, content } = stubComponents
+    const { alchemyNftFetcher, entitiesFetcher, theGraph, fetch, content } = stubComponents
     const address = '0x1'
 
     content.fetchEntitiesByPointers.withArgs([address]).resolves(await Promise.all([profileEntityFull]))
@@ -137,6 +136,9 @@ test('integration tests for profile adapter', function ({ components, stubCompon
       .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
       .onCall(1)
       .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
+    entitiesFetcher.fetchEntities
+      .withArgs(tpwResolverResponseFull.assets.map((a) => a.urn.decentraland))
+      .resolves(tpwResolverResponseFull.assets.map((a) => generateWearableEntity(a.urn.decentraland)))
 
     const profilesComponent = await createProfilesComponent({
       alchemyNftFetcher,
@@ -204,7 +206,6 @@ testWithComponents(() => {
   function ({ components, stubComponents }) {
     it('should work', async () => {
       const {
-        entitiesFetcher,
         metrics,
         config,
         contentServerUrl,
@@ -215,7 +216,7 @@ testWithComponents(() => {
         emotesFetcher,
         namesFetcher
       } = components
-      const { alchemyNftFetcher, theGraph, fetch, content } = stubComponents
+      const { alchemyNftFetcher, entitiesFetcher, theGraph, fetch, content } = stubComponents
       const address = '0x1'
 
       content.fetchEntitiesByPointers.withArgs([address]).resolves(await Promise.all([profileEntityFull]))
@@ -342,6 +343,9 @@ testWithComponents(() => {
         .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
         .onCall(1)
         .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
+      entitiesFetcher.fetchEntities
+        .withArgs(tpwResolverResponseFull.assets.map((a) => a.urn.decentraland))
+        .resolves(tpwResolverResponseFull.assets.map((a) => generateWearableEntity(a.urn.decentraland)))
 
       const profilesComponent = await createProfilesComponent({
         alchemyNftFetcher,
@@ -400,8 +404,6 @@ testWithComponents(() => {
   function ({ components, stubComponents }) {
     it('should work', async () => {
       const {
-        alchemyNftFetcher,
-        entitiesFetcher,
         metrics,
         config,
         contentServerUrl,
@@ -412,7 +414,7 @@ testWithComponents(() => {
         emotesFetcher,
         namesFetcher
       } = components
-      const { theGraph, fetch, content } = stubComponents
+      const { alchemyNftFetcher, entitiesFetcher, theGraph, fetch, content } = stubComponents
       const address = '0x1'
 
       content.fetchEntitiesByPointers
@@ -558,6 +560,9 @@ testWithComponents(() => {
         .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
         .onCall(1)
         .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
+      entitiesFetcher.fetchEntities
+        .withArgs(tpwResolverResponseFull.assets.map((a) => a.urn.decentraland))
+        .resolves(tpwResolverResponseFull.assets.map((a) => generateWearableEntity(a.urn.decentraland)))
 
       const profilesComponent = await createProfilesComponent({
         alchemyNftFetcher,
