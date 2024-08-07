@@ -42,7 +42,6 @@ export async function createThirdPartyProvidersStorage({
       let response = await wrapCall(async (): Promise<ThirdPartyProvider[]> => {
         return thirdPartyProvidersServiceFetcher.get()
       })
-
       if (!response.ok) {
         logger.info('Retry fetching Third Party Providers from TheGraph')
         response = await wrapCall(async (): Promise<ThirdPartyProvider[]> => {
@@ -62,23 +61,24 @@ export async function createThirdPartyProvidersStorage({
     throw new FetcherError(`Cannot fetch third party providers`)
   }
 
-  return {
-    getAll,
-    async start() {
-      await getAll()
-    },
-    async get(thirdPartyProviderNameUrn: BlockchainCollectionThirdPartyName) {
-      const URN_THIRD_PARTY_NAME_TYPE = 'blockchain-collection-third-party-name'
-      const thirdParty = await findAsync(await getAll(), async (thirdParty: ThirdPartyProvider): Promise<boolean> => {
-        const urn = await parseUrn(thirdParty.id)
-        return (
-          !!urn &&
-          urn.type === URN_THIRD_PARTY_NAME_TYPE &&
-          urn.thirdPartyName === thirdPartyProviderNameUrn.thirdPartyName
-        )
-      })
+  async function get(thirdPartyProviderNameUrn: BlockchainCollectionThirdPartyName) {
+    return await findAsync(await getAll(), async (thirdParty: ThirdPartyProvider): Promise<boolean> => {
+      const urn = await parseUrn(thirdParty.id)
+      return (
+        !!urn &&
+        urn.type === 'blockchain-collection-third-party-name' &&
+        urn.thirdPartyName === thirdPartyProviderNameUrn.thirdPartyName
+      )
+    })
+  }
 
-      return thirdParty
-    }
+  async function start() {
+    await getAll()
+  }
+
+  return {
+    get,
+    getAll,
+    start
   }
 }
