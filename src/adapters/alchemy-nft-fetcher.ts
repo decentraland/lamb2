@@ -18,7 +18,7 @@ export async function createAlchemyNftFetcher({
   fetch
 }: Pick<AppComponents, 'config' | 'logs' | 'fetch'>): Promise<AlchemyNftFetcher> {
   const logger = logs.getLogger('alchemy-nft-fetcher')
-  const nftWorkerBaseUrl = await config.requireString('NFT_WORKER_BASE_URL')
+  const nftWorkerBaseUrl = (await config.getString('NFT_WORKER_BASE_URL')) || 'https://nfts.decentraland.zone'
 
   async function getNFTsForOwnerForNetwork(
     owner: string,
