@@ -1,15 +1,9 @@
 import { AppComponents } from '../types'
 import { FetcherError } from './elements-fetcher'
+import { ContractNetwork } from '@dcl/schemas'
 
 export type AlchemyNftFetcher = {
   getNFTsForOwner(owner: string, contractsByNetwork: Record<string, Set<string>>): Promise<string[]>
-}
-
-const networkMappings: Record<string, string> = {
-  mainnet: 'eth-mainnet',
-  sepolia: 'eth-sepolia',
-  matic: 'polygon-mainnet',
-  amoy: 'polygon-amoy'
 }
 
 export async function createAlchemyNftFetcher({
@@ -25,8 +19,7 @@ export async function createAlchemyNftFetcher({
     network: string,
     contractAddresses: Set<string>
   ): Promise<string[]> {
-    const mapping = networkMappings[network]
-    if (!mapping) {
+    if (!Object.values(ContractNetwork).includes(network as ContractNetwork)) {
       logger.warn(`Network ${network} not supported for LinkedWearables`)
       return []
     }
