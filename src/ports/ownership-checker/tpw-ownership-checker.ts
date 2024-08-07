@@ -94,11 +94,13 @@ async function ownedThirdPartyWearables(
     const ownedTPW: Set<string> = new Set()
     await Promise.all(
       collectionIds.map(async (collectionId) => {
+        console.log('fetching', collectionId)
         for (const asset of await fetchUserThirdPartyAssets(
           { alchemyNftFetcher, contentServerUrl, thirdPartyProvidersStorage, fetch, logs, entitiesFetcher, metrics },
           address,
           collectionId
         )) {
+          console.log('fetched', collectionId, asset)
           ownedTPW.add(asset.urn.decentraland.toLowerCase())
         }
       })
@@ -115,6 +117,7 @@ async function ownedThirdPartyWearables(
 }
 
 async function filterCollectionIdsFromWearables(wearableIds: string[]): Promise<string[]> {
+  console.log('wearableIds', wearableIds)
   const collectionIds: string[] = []
   const parsedUrns = await Promise.allSettled(wearableIds.map(parseUrn))
   for (const result of parsedUrns) {
@@ -123,9 +126,13 @@ async function filterCollectionIdsFromWearables(wearableIds: string[]): Promise<
       if (parsedUrn?.type === 'blockchain-collection-third-party') {
         const collectionId = parsedUrn.uri.toString().split(':').slice(0, -1).join(':')
         collectionIds.push(collectionId)
+      } else if (parsedUrn?.type === 'blockchain-collection-third-party-item') {
+        const collectionId = parsedUrn.uri.toString().split(':').slice(0, -4).join(':')
+        collectionIds.push(collectionId)
       }
     }
   }
 
+  console.log('collectionIds', collectionIds)
   return collectionIds
 }
