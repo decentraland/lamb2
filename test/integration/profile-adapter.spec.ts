@@ -15,6 +15,8 @@ import { createConfigComponent } from '@well-known-components/env-config-provide
 test('integration tests for profile adapter', function ({ components, stubComponents }) {
   it('calling with a single profile address, owning everything claimed', async () => {
     const {
+      alchemyNftFetcher,
+      entitiesFetcher,
       metrics,
       config,
       contentServerUrl,
@@ -137,6 +139,8 @@ test('integration tests for profile adapter', function ({ components, stubCompon
       .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
 
     const profilesComponent = await createProfilesComponent({
+      alchemyNftFetcher,
+      entitiesFetcher,
       metrics,
       content,
       contentServerUrl,
@@ -200,6 +204,7 @@ testWithComponents(() => {
   function ({ components, stubComponents }) {
     it('should work', async () => {
       const {
+        entitiesFetcher,
         metrics,
         config,
         contentServerUrl,
@@ -210,7 +215,7 @@ testWithComponents(() => {
         emotesFetcher,
         namesFetcher
       } = components
-      const { theGraph, fetch, content } = stubComponents
+      const { alchemyNftFetcher, theGraph, fetch, content } = stubComponents
       const address = '0x1'
 
       content.fetchEntitiesByPointers.withArgs([address]).resolves(await Promise.all([profileEntityFull]))
@@ -339,6 +344,8 @@ testWithComponents(() => {
         .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
 
       const profilesComponent = await createProfilesComponent({
+        alchemyNftFetcher,
+        entitiesFetcher,
         metrics,
         content,
         contentServerUrl,
@@ -393,6 +400,8 @@ testWithComponents(() => {
   function ({ components, stubComponents }) {
     it('should work', async () => {
       const {
+        alchemyNftFetcher,
+        entitiesFetcher,
         metrics,
         config,
         contentServerUrl,
@@ -551,6 +560,8 @@ testWithComponents(() => {
         .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
 
       const profilesComponent = await createProfilesComponent({
+        alchemyNftFetcher,
+        entitiesFetcher,
         metrics,
         content,
         contentServerUrl,
@@ -590,6 +601,8 @@ testWithComponents(() => {
 test('integration tests for profile adapter', function ({ components, stubComponents }) {
   it('calling with a single profile address, two eth wearables, one of them not owned', async () => {
     const {
+      alchemyNftFetcher,
+      entitiesFetcher,
       metrics,
       config,
       contentServerUrl,
@@ -632,6 +645,8 @@ test('integration tests for profile adapter', function ({ components, stubCompon
     theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
 
     const profilesComponent = await createProfilesComponent({
+      alchemyNftFetcher,
+      entitiesFetcher,
       metrics,
       content,
       contentServerUrl,

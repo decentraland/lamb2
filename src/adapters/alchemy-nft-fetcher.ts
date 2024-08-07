@@ -1,23 +1,8 @@
 import { AppComponents } from '../types'
 import { FetcherError } from './elements-fetcher'
-import { chunks } from '../logic/chunking'
 
 export type AlchemyNftFetcher = {
   getNFTsForOwner(owner: string, contractsByNetwork: Record<string, Set<string>>): Promise<string[]>
-}
-
-// Max number of contracts that can be queried at once in Alchemy API
-const MAX_CONTRACTS = 45
-
-type AlchemyNft = {
-  contractAddress: string
-  tokenId: string
-}
-
-type AlchemyNftResponse = {
-  ownedNfts: AlchemyNft[]
-  totalNfts: number
-  pageKey: string | null
 }
 
 const networkMappings: Record<string, string> = {
@@ -33,61 +18,7 @@ export async function createAlchemyNftFetcher({
   fetch
 }: Pick<AppComponents, 'config' | 'logs' | 'fetch'>): Promise<AlchemyNftFetcher> {
   const logger = logs.getLogger('alchemy-nft-fetcher')
-  const apiKey = await config.requireString('ALCHEMY_API_KEY')
-
-  async function fetchAllPages(mapping: string, owner: string, contractAddresses: string[], network: string) {
-    const allNfts: string[] = []
-
-    let nextPageToken: string | null = null
-    do {
-      // https://nfts-provider.decentraland.org/wallets/:address/networks/:network/nfts
-
-      // const response2 = await fetch.fetch(
-      //   `https://nfts-provider.decentraland.org/wallets/${owner}/networks/${network}`,
-      //   {
-      //     method: 'POST',
-      //     headers: {
-      //       accept: 'application/json'
-      //     },
-      //     body: JSON.stringify(contractAddresses)
-      //   }
-      // )
-      //
-      // if (!response2.ok) {
-      //   throw new FetcherError(`Error fetching NFTs from Alchemy: ${response2.status} - ${response2.statusText}`)
-      // }
-      //
-      // const json2 = (await response2.json()) as AlchemyNftResponse
-
-      const u = new URL(`https://${mapping}.g.alchemy.com/nft/v3/${apiKey}/getNFTsForOwner`)
-      u.searchParams.append('owner', owner)
-      u.searchParams.append('pageSize', '100')
-      u.searchParams.append('withMetadata', 'false')
-      for (const contract of contractAddresses) {
-        u.searchParams.append('contractAddresses[]', contract)
-      }
-      if (nextPageToken) {
-        u.searchParams.append('pageKey', nextPageToken)
-      }
-      const response = await fetch.fetch(u, {
-        headers: {
-          accept: 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        throw new FetcherError(`Error fetching NFTs from Alchemy: ${response.status} - ${response.statusText}`)
-      }
-
-      const json = (await response.json()) as AlchemyNftResponse
-      nextPageToken = json.pageKey
-      allNfts.push(
-        ...json.ownedNfts.map((nft: AlchemyNft) => `${network}:${nft.contractAddress.toLowerCase()}:${nft.tokenId}`)
-      )
-    } while (nextPageToken)
-
-    return allNfts
-  }
+  const nftWorkerBaseUrl = await config.requireString('NFT_WORKER_BASE_URL')
 
   async function getNFTsForOwnerForNetwork(
     owner: string,
@@ -100,12 +31,22 @@ export async function createAlchemyNftFetcher({
       return []
     }
 
-    const allNfts: string[] = []
-    for (const contracts of chunks(Array.from(contractAddresses), MAX_CONTRACTS)) {
-      allNfts.push(...(await fetchAllPages(mapping, owner, contracts, network)))
+    const response = await fetch.fetch(`${nftWorkerBaseUrl}/wallets/${owner}/networks/${network}/nfts`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json'
+      },
+      body: JSON.stringify(Array.from(contractAddresses))
+    })
+
+    if (!response.ok) {
+      throw new FetcherError(`Error fetching NFTs from Alchemy: ${response.status} - ${response.statusText}`)
     }
 
-    return allNfts
+    const nfts = await response.json()
+
+    return nfts.data as string[]
   }
 
   async function getNFTsForOwner(owner: string, contractsByNetwork: Record<string, Set<string>>): Promise<string[]> {
