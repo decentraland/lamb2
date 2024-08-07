@@ -65,6 +65,8 @@ export async function createProfilesComponent(
     | 'config'
     | 'fetch'
     | 'ownershipCaches'
+    | 'l1ThirdPartyItemChecker'
+    | 'l2ThirdPartyItemChecker'
     | 'thirdPartyProvidersStorage'
     | 'logs'
     | 'wearablesFetcher'

@@ -37,6 +37,8 @@ import { createThirdPartyProvidersStorage } from './logic/third-party-providers-
 import { createProfilesComponent } from './adapters/profiles'
 import { IFetchComponent } from '@well-known-components/interfaces'
 import { createAlchemyNftFetcher } from './adapters/alchemy-nft-fetcher'
+import { createThirdPartyContractRegistry } from './ports/ownership-checker/third-party-contract-registry'
+import { createThirdPartyItemChecker } from './ports/ownership-checker/third-party-item-checker'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -113,6 +115,11 @@ export async function initComponents(
   const poisFetcher = await createPOIsFetcher({ l2Provider }, l2Network)
   const nameDenylistFetcher = await createNameDenylistFetcher({ l1Provider }, l1Network)
 
+  const l1ThirdPartyContractRegistry = await createThirdPartyContractRegistry(logs, l1Provider, l1Network as any, '.')
+  const l2ThirdPartyContractRegistry = await createThirdPartyContractRegistry(logs, l2Provider, l2Network as any, '.')
+  const l1ThirdPartyItemChecker = await createThirdPartyItemChecker(logs, l1Provider, l1ThirdPartyContractRegistry)
+  const l2ThirdPartyItemChecker = await createThirdPartyItemChecker(logs, l2Provider, l2ThirdPartyContractRegistry)
+
   const thirdPartyProvidersGraphFetcher = createThirdPartyProvidersGraphFetcherComponent({ theGraph })
   const thirdPartyProvidersServiceFetcher = await createThirdPartyProvidersServiceFetcherComponent(
     { config, fetch },
@@ -146,7 +153,9 @@ export async function initComponents(
     logs,
     wearablesFetcher,
     emotesFetcher,
-    namesFetcher
+    namesFetcher,
+    l1ThirdPartyItemChecker,
+    l2ThirdPartyItemChecker
   })
 
   return {
@@ -180,6 +189,8 @@ export async function initComponents(
     poisFetcher,
     nameDenylistFetcher,
     profiles,
-    alchemyNftFetcher
+    alchemyNftFetcher,
+    l1ThirdPartyItemChecker,
+    l2ThirdPartyItemChecker
   }
 }

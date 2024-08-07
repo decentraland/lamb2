@@ -17,6 +17,8 @@ export async function getOutfits(
     | 'ownershipCaches'
     | 'wearablesFetcher'
     | 'namesFetcher'
+    | 'l1ThirdPartyItemChecker'
+    | 'l2ThirdPartyItemChecker'
     | 'thirdPartyProvidersStorage'
     | 'logs'
   >,

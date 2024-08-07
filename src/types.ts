@@ -36,6 +36,7 @@ import { ThirdPartyProvidersGraphFetcher } from './adapters/third-party-provider
 import { ThirdPartyProvidersStorage } from './logic/third-party-providers-storage'
 import { IProfilesComponent } from './adapters/profiles'
 import { AlchemyNftFetcher } from './adapters/alchemy-nft-fetcher'
+import { ThirdPartyItemChecker } from './ports/ownership-checker/third-party-item-checker'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -73,6 +74,8 @@ export type BaseComponents = {
   nameDenylistFetcher: NameDenylistFetcher
   profiles: IProfilesComponent
   alchemyNftFetcher: AlchemyNftFetcher
+  l1ThirdPartyItemChecker: ThirdPartyItemChecker
+  l2ThirdPartyItemChecker: ThirdPartyItemChecker
 }
 
 // components used in runtime

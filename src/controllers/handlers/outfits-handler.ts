@@ -15,6 +15,8 @@ export async function outfitsHandler(
     | 'ownershipCaches'
     | 'wearablesFetcher'
     | 'namesFetcher'
+    | 'l1ThirdPartyItemChecker'
+    | 'l2ThirdPartyItemChecker'
     | 'thirdPartyProvidersStorage'
     | 'logs',
     '/outfits/:id'
