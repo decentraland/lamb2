@@ -170,19 +170,12 @@ export async function fetchUserThirdPartyAssets(
   const thirdPartyWearables = await doTheWork(components, owner, [thirdPartyProvider])
 
   return thirdPartyWearables.map((tpw) => ({
-    id: tpw.urn,
+    id: tpw.urn, // TODO check this, not sure id refers to full urn, it might be provider + collection id + item id
     amount: tpw.amount,
     urn: {
       decentraland: tpw.urn
     }
   }))
-
-  // const assetsByOwner = await fetchAssets(components, owner, thirdPartyProvider)
-  // if (!assetsByOwner) {
-  //   throw new Error(`Could not fetch assets for owner: ${owner}`)
-  // }
-  //
-  // return assetsByOwner.filter((asset) => asset.urn.decentraland.startsWith(thirdPartyId)) ?? []
 }
 
 export async function fetchAllThirdPartyWearables(
