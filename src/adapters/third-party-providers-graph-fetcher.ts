@@ -1,4 +1,5 @@
 import { AppComponents, ThirdPartyProvider } from '../types'
+import { sanitizeContractList } from '../logic/utils'
 
 export type ThirdPartyProvidersGraphFetcher = {
   get(): Promise<ThirdPartyProvider[]>
@@ -40,14 +41,7 @@ export function createThirdPartyProvidersGraphFetcherComponent({
       ).thirdParties
 
       if (thirdPartyProviders) {
-        for (const thirdParty of thirdPartyProviders) {
-          if (thirdParty.metadata.thirdParty?.contracts) {
-            thirdParty.metadata.thirdParty.contracts = thirdParty.metadata.thirdParty.contracts.map((c) => ({
-              network: c.network.toLowerCase(),
-              address: c.address.toLowerCase()
-            }))
-          }
-        }
+        sanitizeContractList(thirdPartyProviders)
       }
 
       return thirdPartyProviders

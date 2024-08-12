@@ -167,7 +167,7 @@ export async function fetchUserThirdPartyAssets(
     return []
   }
 
-  const thirdPartyWearables = await doTheWork(components, owner, [thirdPartyProvider])
+  const thirdPartyWearables = await _fetchThirdPartyWearables(components, owner, [thirdPartyProvider])
 
   return thirdPartyWearables.map((tpw) => ({
     id: tpw.urn, // TODO check this, not sure id refers to full urn, it might be provider + collection id + item id
@@ -193,10 +193,10 @@ export async function fetchAllThirdPartyWearables(
 ): Promise<ThirdPartyWearable[]> {
   const thirdParties = await components.thirdPartyProvidersStorage.getAll()
 
-  return await doTheWork(components, owner, thirdParties)
+  return await _fetchThirdPartyWearables(components, owner, thirdParties)
 }
 
-async function doTheWork(
+async function _fetchThirdPartyWearables(
   components: Pick<
     AppComponents,
     | 'alchemyNftFetcher'

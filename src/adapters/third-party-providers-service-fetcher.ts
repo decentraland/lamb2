@@ -1,5 +1,6 @@
 import { L2Network } from '@dcl/catalyst-contracts'
 import { AppComponents, ThirdPartyProvider } from '../types'
+import { sanitizeContractList } from '../logic/utils'
 
 export type ThirdPartyProvidersServiceFetcher = {
   get(): Promise<ThirdPartyProvider[]>
@@ -32,14 +33,7 @@ export async function createThirdPartyProvidersServiceFetcherComponent(
     const response: ThirdPartyProvidersServiceResponse = await (await fetch.fetch(`${serviceUrl}/providers`)).json()
 
     if (response.thirdPartyProviders) {
-      for (const thirdParty of response.thirdPartyProviders) {
-        if (thirdParty.metadata.thirdParty?.contracts) {
-          thirdParty.metadata.thirdParty.contracts = thirdParty.metadata.thirdParty.contracts.map((c) => ({
-            network: c.network.toLowerCase(),
-            address: c.address.toLowerCase()
-          }))
-        }
-      }
+      sanitizeContractList(response.thirdPartyProviders)
     }
 
     return response.thirdPartyProviders
