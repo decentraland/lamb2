@@ -9,11 +9,14 @@ import {
 import { ThirdPartyContractRegistry } from '../../../src/ports/ownership-checker/third-party-contract-registry'
 import { createHttpProviderMock } from '../../mocks/http-provider-mock'
 import { createThirdPartyContractRegistryMock } from '../../mocks/third-party-registry-mock'
+import { EntitiesFetcher } from '../../../src/adapters/entities-fetcher'
+import { generateThirdPartyWearableEntities } from '../../data/wearables'
 
 describe('third party item checker', () => {
   let logs: ILoggerComponent
   let thirdPartyItemChecker: ThirdPartyItemChecker
   let httpProvider: HTTPProvider
+  let entitiesFetcher: EntitiesFetcher
   let registry: ThirdPartyContractRegistry
 
   beforeEach(async () => {
@@ -29,12 +32,16 @@ describe('third party item checker', () => {
             data: '0x7e2732890000000000000000000000000000000000000000000000000000000000000046',
             message: 'execution reverted'
           }
-        },
-        { jsonrpc: '2.0', id: 3, result: '0x' }
+        }
       ]
     ])
+    entitiesFetcher = {
+      fetchEntities: async (urns: string[]) => {
+        return generateThirdPartyWearableEntities(urns)
+      }
+    }
     registry = createThirdPartyContractRegistryMock()
-    thirdPartyItemChecker = await createThirdPartyItemChecker(logs, httpProvider, registry)
+    thirdPartyItemChecker = await createThirdPartyItemChecker({ entitiesFetcher, logs }, httpProvider, registry)
   })
 
   it('correct validation of nfts', async () => {

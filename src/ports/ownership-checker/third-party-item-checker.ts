@@ -45,7 +45,7 @@ export async function createThirdPartyItemChecker(
       },
       {} as Record<string, TempData>
     )
-    console.log('allUrn', allUrns)
+    // console.log('allUrn', allUrns)
 
     // Mark as false all urns that cannot be parsed
     for (const urn of itemUrns) {
@@ -61,7 +61,7 @@ export async function createThirdPartyItemChecker(
       }
     }
 
-    // Fetch wearables from the content server for check the mappings are valid.
+    // Fetch wearables from the content server for checking that the mappings are valid.
     const entitiesToFetch = new Set<string>(
       Object.values(allUrns)
         .map((tempData: TempData) => tempData.assetUrn ?? '')
@@ -80,12 +80,12 @@ export async function createThirdPartyItemChecker(
 
     // Mark as false all items with invalid mapping
     Object.values(allUrns)
-      .filter((tempData) => !tempData.result)
+      .filter((tempData) => tempData.result !== false)
       .forEach((tempData) => {
-        if (!entitiesByPointer[tempData.assetUrn!]) {
+        if (!entitiesByPointer[tempData.assetUrn]) {
           tempData.result = false
         }
-        const entity = entitiesByPointer[tempData.assetUrn!]
+        const entity = entitiesByPointer[tempData.assetUrn]
         const mappingsHelper = createMappingsHelper(entity.metadata.mappings)
         if (!mappingsHelper.includesNft(tempData.network! as ContractNetwork, tempData.contract!, tempData.nftId!)) {
           tempData.result = false
@@ -112,44 +112,45 @@ export async function createThirdPartyItemChecker(
     const filteredAssets: TempData[] = Object.values(allUrns).filter((tempData) => tempData.result === undefined)
     console.log('filteredAssets', filteredAssets)
 
-    const contracts: any = await Promise.all(
-      filteredAssets.map((asset) => {
-        if (thirdPartyContractRegistry.isErc721(asset.contract!)) {
-          return erc721ContractFactory.at(asset.contract!)
-        } else if (thirdPartyContractRegistry.isErc1155(asset.contract!)) {
-          return erc1155ContractFactory.at(asset.contract!)
-        }
-        throw new Error('Unknown contract type')
-      })
-    )
-    const batch: RPCSendableMessage[] = await Promise.all(
-      contracts.map((contract: any, idx: number) => {
-        if (thirdPartyContractRegistry.isErc721(filteredAssets[idx].contract!)) {
-          return contract.ownerOf.toRPCMessage(filteredAssets[idx].nftId)
-        } else if (thirdPartyContractRegistry.isErc1155(filteredAssets[idx].contract!)) {
-          return contract.balanceOf.toRPCMessage(ethAddress, filteredAssets[idx].nftId)
-        }
-        throw new Error('Unknown contract type')
-      })
-    )
+    if (filteredAssets.length > 0) {
+      const contracts: any = await Promise.all(
+        filteredAssets.map((asset) => {
+          if (thirdPartyContractRegistry.isErc721(asset.contract!)) {
+            return erc721ContractFactory.at(asset.contract!)
+          } else if (thirdPartyContractRegistry.isErc1155(asset.contract!)) {
+            return erc1155ContractFactory.at(asset.contract!)
+          }
+          throw new Error('Unknown contract type')
+        })
+      )
+      const batch: RPCSendableMessage[] = await Promise.all(
+        contracts.map((contract: any, idx: number) => {
+          if (thirdPartyContractRegistry.isErc721(filteredAssets[idx].contract!)) {
+            return contract.ownerOf.toRPCMessage(filteredAssets[idx].nftId)
+          } else if (thirdPartyContractRegistry.isErc1155(filteredAssets[idx].contract!)) {
+            return contract.balanceOf.toRPCMessage(ethAddress, filteredAssets[idx].nftId)
+          }
+          throw new Error('Unknown contract type')
+        })
+      )
 
-    const result = await sendBatch(provider, batch)
-    // console.log('result', result)
+      const result = await sendBatch(provider, batch)
 
-    result.forEach((r: any, idx: number) => {
-      if (!r.result) {
-        filteredAssets[idx].result = false
-      } else {
-        const data = toData(r.result)
-        if (thirdPartyContractRegistry.isErc721(filteredAssets[idx].contract!)) {
-          filteredAssets[idx].result =
-            (data === EMPTY_MESSAGE ? '' : contracts[idx].ownerOf.unpackOutput(data).toLowerCase()) ===
-            ethAddress.toLowerCase()
-        } else if (thirdPartyContractRegistry.isErc1155(filteredAssets[idx].contract!)) {
-          filteredAssets[idx].result = (data === EMPTY_MESSAGE ? 0 : contracts[idx].balanceOf.unpackOutput(data)) > 0
+      result.forEach((r: any, idx: number) => {
+        if (!r.result) {
+          filteredAssets[idx].result = false
+        } else {
+          const data = toData(r.result)
+          if (thirdPartyContractRegistry.isErc721(filteredAssets[idx].contract!)) {
+            filteredAssets[idx].result =
+              (data === EMPTY_MESSAGE ? '' : contracts[idx].ownerOf.unpackOutput(data).toLowerCase()) ===
+              ethAddress.toLowerCase()
+          } else if (thirdPartyContractRegistry.isErc1155(filteredAssets[idx].contract!)) {
+            filteredAssets[idx].result = (data === EMPTY_MESSAGE ? 0 : contracts[idx].balanceOf.unpackOutput(data)) > 0
+          }
         }
-      }
-    })
+      })
+    }
 
     // console.log('allUrn', allUrns)
     return itemUrns.map((itemUrn) => allUrns[itemUrn].result)
