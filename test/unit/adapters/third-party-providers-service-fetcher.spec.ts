@@ -13,7 +13,7 @@ describe('third-party-providers-service-fetcher', () => {
         config,
         fetch: mockedFetch
       },
-      'mumbai'
+      'amoy'
     )
 
     // Act
@@ -34,7 +34,7 @@ describe('third-party-providers-service-fetcher', () => {
         config,
         fetch: mockedFetch
       },
-      'mumbai'
+      'amoy'
     )
 
     // Act & Assert
@@ -71,7 +71,7 @@ describe('third-party-providers-service-fetcher', () => {
         config,
         fetch: mockedFetch
       },
-      'mumbai'
+      'amoy'
     )
 
     // Act
