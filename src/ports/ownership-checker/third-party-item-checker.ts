@@ -15,6 +15,8 @@ export type ThirdPartyItemChecker = {
   checkThirdPartyItems(ethAddress: string, itemUrns: string[]): Promise<boolean[]>
 }
 
+const EMPTY_MESSAGE = '0x'
+
 export async function createThirdPartyItemChecker(
   logs: ILoggerComponent,
   provider: HTTPProvider,
@@ -108,9 +110,10 @@ export async function createThirdPartyItemChecker(
         const data = toData(r.result)
         if (thirdPartyContractRegistry.isErc721(filteredAssets[idx].contract!)) {
           filteredAssets[idx].result =
-            (data === '0x' ? '' : contracts[idx].ownerOf.unpackOutput(data).toLowerCase()) === ethAddress.toLowerCase()
+            (data === EMPTY_MESSAGE ? '' : contracts[idx].ownerOf.unpackOutput(data).toLowerCase()) ===
+            ethAddress.toLowerCase()
         } else if (thirdPartyContractRegistry.isErc1155(filteredAssets[idx].contract!)) {
-          filteredAssets[idx].result = (data === '0x' ? 0 : contracts[idx].balanceOf.unpackOutput(data)) > 0
+          filteredAssets[idx].result = (data === EMPTY_MESSAGE ? 0 : contracts[idx].balanceOf.unpackOutput(data)) > 0
         }
       }
     })
