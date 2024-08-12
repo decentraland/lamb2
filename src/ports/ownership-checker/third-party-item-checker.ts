@@ -1,11 +1,14 @@
 import RequestManager, { ContractFactory, HTTPProvider, RPCSendableMessage, toData } from 'eth-connect'
-import { ILoggerComponent } from '@well-known-components/interfaces'
 import { BlockchainCollectionThirdPartyItem, parseUrn } from '@dcl/urn-resolver'
 import { ContractType, ThirdPartyContractRegistry } from './third-party-contract-registry'
 import { erc1155Abi, erc721Abi, sendBatch } from './contract-helpers'
+import { AppComponents } from '../../types'
+import { ContractNetwork, createMappingsHelper, Entity } from '@dcl/schemas'
 
 type TempData = {
   urn: string
+  assetUrn?: string
+  network?: string
   contract?: string
   nftId?: string
   type?: ContractType
@@ -18,7 +21,7 @@ export type ThirdPartyItemChecker = {
 const EMPTY_MESSAGE = '0x'
 
 export async function createThirdPartyItemChecker(
-  logs: ILoggerComponent,
+  { entitiesFetcher, logs }: Pick<AppComponents, 'entitiesFetcher' | 'logs'>,
   provider: HTTPProvider,
   thirdPartyContractRegistry: ThirdPartyContractRegistry
 ): Promise<ThirdPartyItemChecker> {
@@ -42,9 +45,7 @@ export async function createThirdPartyItemChecker(
       },
       {} as Record<string, TempData>
     )
-    // console.log('allUrn', allUrns)
-
-    // TODO Fetch wearables from DB and check the mappings. If token ids are outside the mappings, return validation error
+    console.log('allUrn', allUrns)
 
     // Mark as false all urns that cannot be parsed
     for (const urn of itemUrns) {
@@ -52,12 +53,45 @@ export async function createThirdPartyItemChecker(
       if (!parsed) {
         allUrns[urn].result = false
       } else {
-        const parsed1 = parsed as BlockchainCollectionThirdPartyItem
-        allUrns[urn].contract = parsed1.nftContractAddress.toLowerCase()
-        allUrns[urn].nftId = parsed1.nftTokenId
+        const thirdPartyItem = parsed as BlockchainCollectionThirdPartyItem
+        allUrns[urn].network = thirdPartyItem.nftChain.toLowerCase()
+        allUrns[urn].contract = thirdPartyItem.nftContractAddress.toLowerCase()
+        allUrns[urn].nftId = thirdPartyItem.nftTokenId
+        allUrns[urn].assetUrn = urn.split(':').slice(0, 7).join(':')
       }
     }
-    // console.log('allUrn', allUrns)
+
+    // Fetch wearables from the content server for check the mappings are valid.
+    const entitiesToFetch = new Set<string>(
+      Object.values(allUrns)
+        .map((tempData: TempData) => tempData.assetUrn ?? '')
+        .filter((assetUrn: string) => !!assetUrn)
+    )
+    const entities = await entitiesFetcher.fetchEntities(Array.from(entitiesToFetch))
+    const entitiesByPointer = entities.reduce(
+      (acc, entity: Entity | undefined) => {
+        if (entity?.metadata) {
+          acc[entity.metadata.id] = entity
+        }
+        return acc
+      },
+      {} as Record<string, Entity>
+    )
+
+    // Mark as false all items with invalid mapping
+    Object.values(allUrns)
+      .filter((tempData) => !tempData.result)
+      .forEach((tempData) => {
+        if (!entitiesByPointer[tempData.assetUrn!]) {
+          tempData.result = false
+        }
+        const entity = entitiesByPointer[tempData.assetUrn!]
+        const mappingsHelper = createMappingsHelper(entity.metadata.mappings)
+        if (!mappingsHelper.includesNft(tempData.network! as ContractNetwork, tempData.contract!, tempData.nftId!)) {
+          tempData.result = false
+        }
+      })
+    console.log('allUrn after filtering invalid mappings', allUrns)
 
     // Ensure all contracts are of a known type, otherwise try to determine it and store it.
     await thirdPartyContractRegistry.ensureContractsKnown(
@@ -74,7 +108,6 @@ export async function createThirdPartyItemChecker(
           tempData.result = false
         }
       })
-    // console.log('allUrn', allUrns)
 
     const filteredAssets: TempData[] = Object.values(allUrns).filter((tempData) => tempData.result === undefined)
     console.log('filteredAssets', filteredAssets)

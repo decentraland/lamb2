@@ -117,8 +117,16 @@ export async function initComponents(
 
   const l1ThirdPartyContractRegistry = await createThirdPartyContractRegistry(logs, l1Provider, l1Network as any, '.')
   const l2ThirdPartyContractRegistry = await createThirdPartyContractRegistry(logs, l2Provider, l2Network as any, '.')
-  const l1ThirdPartyItemChecker = await createThirdPartyItemChecker(logs, l1Provider, l1ThirdPartyContractRegistry)
-  const l2ThirdPartyItemChecker = await createThirdPartyItemChecker(logs, l2Provider, l2ThirdPartyContractRegistry)
+  const l1ThirdPartyItemChecker = await createThirdPartyItemChecker(
+    { entitiesFetcher, logs },
+    l1Provider,
+    l1ThirdPartyContractRegistry
+  )
+  const l2ThirdPartyItemChecker = await createThirdPartyItemChecker(
+    { entitiesFetcher, logs },
+    l2Provider,
+    l2ThirdPartyContractRegistry
+  )
 
   const thirdPartyProvidersGraphFetcher = createThirdPartyProvidersGraphFetcherComponent({ theGraph })
   const thirdPartyProvidersServiceFetcher = await createThirdPartyProvidersServiceFetcherComponent(
