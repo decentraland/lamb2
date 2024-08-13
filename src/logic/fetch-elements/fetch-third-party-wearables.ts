@@ -261,11 +261,11 @@ async function _fetchThirdPartyWearables(
 
     const providersThatReturnedNfts = new Set<string>()
     for (const nft of nfts) {
-      const nftParts = nft.split(':')
+      const [network, contractAddress] = nft.split(':')
       // TODO Performance could be improved here by having indexed the providers by their network and contract addresses
       const provider = linkedWearableProviders.find((provider) =>
         (provider.metadata.thirdParty.contracts || []).find(
-          (contract) => contract.network === nftParts[0] && contract.address === nftParts[1]
+          (contract) => contract.network === network && contract.address === contractAddress
         )
       )
       if (provider) {
