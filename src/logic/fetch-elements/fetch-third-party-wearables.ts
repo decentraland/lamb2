@@ -211,7 +211,6 @@ async function _fetchThirdPartyWearables(
   thirdParties: ThirdPartyProvider[]
 ): Promise<ThirdPartyWearable[]> {
   async function fetchThirdPartyV1(thirdParties: ThirdPartyProvider[]) {
-    console.log('fetchThirdPartyV1', 'thirdParties', thirdParties)
     if (thirdParties.length === 0) {
       return []
     }
@@ -239,7 +238,6 @@ async function _fetchThirdPartyWearables(
   }
 
   async function fetchThirdPartyV2(linkedWearableProviders: ThirdPartyProvider[]) {
-    console.log('fetchThirdPartyV2', 'linkedWearableProviders', linkedWearableProviders)
     if (linkedWearableProviders.length === 0) {
       return []
     }
@@ -254,10 +252,8 @@ async function _fetchThirdPartyWearables(
       },
       {} as Record<string, Set<string>>
     )
-    console.log('contractAddresses', contractAddresses)
 
     const nfts = await components.alchemyNftFetcher.getNFTsForOwner(owner, contractAddresses)
-    console.log('nfts', nfts)
 
     const providersThatReturnedNfts = new Set<string>()
     for (const nft of nfts) {
@@ -272,21 +268,17 @@ async function _fetchThirdPartyWearables(
         providersThatReturnedNfts.add(`${provider.id}`)
       }
     }
-    console.log('providersThatReturnedNfts', providersThatReturnedNfts)
 
     const providersToCheck = linkedWearableProviders.filter((provider) => providersThatReturnedNfts.has(provider.id))
-    console.log('providersToCheck', providersToCheck)
 
     const linkedWearableEntities = (
       await Promise.all(providersToCheck.map((provider: ThirdPartyProvider) => fetchAssetsV2(components, provider)))
     ).flat()
-    console.log('linkedWearableEntities', linkedWearableEntities)
 
     const assignedLinkedWearables: Record<string, { individualData: string[]; entity: Entity }> = {}
     for (const entity of linkedWearableEntities) {
       const urn = entity.metadata.id
       if (!entity.metadata.mappings) {
-        console.log("discarding entity because it doesn't have any mappings", urn)
         continue
       }
 
@@ -302,12 +294,8 @@ async function _fetchThirdPartyWearables(
         }
       }
     }
-    console.log('assignedLinkedWearables', assignedLinkedWearables)
 
-    const grouped = groupLinkedWearablesByURN(assignedLinkedWearables)
-    console.log('grouped', grouped)
-
-    return grouped
+    return groupLinkedWearablesByURN(assignedLinkedWearables)
   }
 
   const [providersV1, providersV2] = thirdParties.reduce(

@@ -45,7 +45,6 @@ export async function createThirdPartyItemChecker(
       },
       {} as Record<string, TempData>
     )
-    // console.log('allUrn', allUrns)
 
     // Mark as false all urns that cannot be parsed
     for (const urn of itemUrns) {
@@ -91,7 +90,6 @@ export async function createThirdPartyItemChecker(
           tempData.result = false
         }
       })
-    console.log('allUrn after filtering invalid mappings', allUrns)
 
     // Ensure all contracts are of a known type, otherwise try to determine it and store it.
     await thirdPartyContractRegistry.ensureContractsKnown(
@@ -110,7 +108,6 @@ export async function createThirdPartyItemChecker(
       })
 
     const filteredAssets: TempData[] = Object.values(allUrns).filter((tempData) => tempData.result === undefined)
-    console.log('filteredAssets', filteredAssets)
 
     if (filteredAssets.length > 0) {
       const contracts: any = await Promise.all(
@@ -152,7 +149,6 @@ export async function createThirdPartyItemChecker(
       })
     }
 
-    // console.log('allUrn', allUrns)
     return itemUrns.map((itemUrn) => allUrns[itemUrn].result)
   }
 
