@@ -6,14 +6,19 @@ import { createTPWOwnershipChecker } from '../ports/ownership-checker/tpw-owners
 export async function getOutfits(
   components: Pick<
     AppComponents,
+    | 'alchemyNftFetcher'
     | 'metrics'
     | 'content'
+    | 'contentServerUrl'
+    | 'entitiesFetcher'
     | 'theGraph'
     | 'config'
     | 'fetch'
     | 'ownershipCaches'
     | 'wearablesFetcher'
     | 'namesFetcher'
+    | 'l1ThirdPartyItemChecker'
+    | 'l2ThirdPartyItemChecker'
     | 'thirdPartyProvidersStorage'
     | 'logs'
   >,

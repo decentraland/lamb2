@@ -1,6 +1,6 @@
 import { nameZA } from '../../../src/logic/sorting'
 import { testWithComponents } from '../../components'
-import { generateThirdPartyWearables, generateWearableEntities } from '../../data/wearables'
+import { generateThirdPartyWearables, generateWearableEntities, getThirdPartyProviders } from '../../data/wearables'
 import { generateRandomAddress } from '../../helpers'
 import { createTheGraphComponentMock } from '../../mocks/the-graph-mock'
 import { convertToThirdPartyWearableResponse } from './convert-to-model-third-party'
@@ -9,12 +9,7 @@ import { convertToThirdPartyWearableResponse } from './convert-to-model-third-pa
 testWithComponents(() => {
   const theGraphMock = createTheGraphComponentMock()
   const resolverResponse = {
-    thirdParties: [
-      {
-        id: 'urn:decentraland:matic:collections-thirdparty:baby-doge-coin',
-        resolver: 'https://decentraland-api.babydoge.com/v1'
-      }
-    ]
+    thirdParties: [getThirdPartyProviders()[0]]
   }
 
   theGraphMock.thirdPartyRegistrySubgraph.query = jest.fn().mockResolvedValue(resolverResponse)

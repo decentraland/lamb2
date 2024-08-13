@@ -105,6 +105,74 @@ export function generateWearableEntities(urns: string[]): Entity[] {
   return urns.map(generateWearableEntity)
 }
 
+export function generateThirdPartyWearableEntity(urn: string): Entity {
+  return {
+    version: '3',
+    id: urn,
+    type: EntityType.WEARABLE,
+    pointers: [urn],
+    timestamp,
+    content: [
+      {
+        file: 'file',
+        hash: 'id'
+      },
+      {
+        file: imageFileNameFor(urn),
+        hash: 'imageHash'
+      },
+      {
+        file: thumbnailNameFor(urn),
+        hash: 'thumbnailHash'
+      }
+    ],
+    metadata: {
+      id: urn,
+      name: `nameFor${urn}`,
+      description: `descFor${urn}`,
+      i18n: [],
+      thumbnail: thumbnailNameFor(urn),
+      image: imageFileNameFor(urn),
+      data: {
+        tags: ['aTag'],
+        category: WearableCategory.EARRING,
+        representations: [
+          {
+            bodyShapes: [],
+            mainFile: `mainFileFor${urn}`,
+            contents: ['fileName'],
+            overrideHides: [],
+            overrideReplaces: []
+          }
+        ] as WearableRepresentation[]
+      },
+      content: {
+        file: 'id',
+        [imageFileNameFor(urn)]: 'imageHash',
+        [thumbnailNameFor(urn)]: 'thumbnailHash'
+      },
+      merkleProof: {
+        index: 0,
+        proof: [],
+        hashingKeys: ['id', 'name', 'description', 'i18n', 'data', 'image', 'thumbnail', 'metrics', 'content'],
+        entityHash: 'dead7e51b278d8089b82bec014e128cad8a6be1db188f50fd0e7e9ac3501c7f2'
+      },
+      mappings: {
+        sepolia: {
+          '0x74c78f5a4ab22f01d5fd08455cf0ff5c3367535c': [
+            { type: 'single', id: '7' },
+            { type: 'single', id: '70' }
+          ]
+        }
+      }
+    }
+  }
+}
+
+export function generateThirdPartyWearableEntities(urns: string[]): Entity[] {
+  return urns.map(generateThirdPartyWearableEntity)
+}
+
 export function generateThirdPartyWearables(quantity: number): ThirdPartyAsset[] {
   const generatedThirdPartyWearables = []
   for (let i = 0; i < quantity; i++) {

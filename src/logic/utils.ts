@@ -1,4 +1,5 @@
 import { parseUrn as resolverParseUrn } from '@dcl/urn-resolver'
+import { ThirdPartyProvider } from '../types'
 
 export const RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic', 'unique']
 
@@ -30,4 +31,15 @@ export async function findAsync<T>(elements: T[], f: (e: T) => Promise<boolean>)
   }
 
   return undefined
+}
+
+export function sanitizeContractList(thirdPartyProviders: ThirdPartyProvider[]) {
+  for (const thirdParty of thirdPartyProviders) {
+    if (thirdParty.metadata.thirdParty?.contracts) {
+      thirdParty.metadata.thirdParty.contracts = thirdParty.metadata.thirdParty.contracts.map((c) => ({
+        network: c.network.toLowerCase(),
+        address: c.address.toLowerCase()
+      }))
+    }
+  }
 }

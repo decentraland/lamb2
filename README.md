@@ -52,3 +52,38 @@ The layer that communicates with the outside world, such as http, kafka, and the
 We use the components abstraction to organize our ports (e.g. HTTP client, database client, redis client) and any other logic that needs to track mutable state or encode dependencies between stateful components. For every environment (e.g. test, e2e, prod, staging...) we have a different version of our component systems, enabling us to easily inject mocks or different implementations for different contexts.
 
 We make components available to incoming http and kafka handlers. For instance, the http-server handlers have access to things like the database or HTTP components, and pass them down to the controller level for general use.
+
+### Sequence diagram of for backpack building
+```mermaid
+sequenceDiagram
+   actor User
+   participant Catalyst
+   participant Graph as Third Party Resolvers
+   participant Alchemy as Alchemy API
+   User ->> Catalyst: Get all wearables I own
+   activate Catalyst
+   Catalyst ->> Graph: Get all active Third Party Providers
+   Graph -->> Catalyst: Ok (HTTP 200) with the list of TPAs
+   Catalyst ->> Catalyst: Build list of contracts to query
+   Catalyst ->> Alchemy: Get owned wearables for 0x123 in those contracts
+   Alchemy -->> Catalyst: Ok (HTTP 200) with the wearables
+   Catalyst ->> Catalyst: For each NFT owned returned from Alchemy<br>assign the corresponding wearable (based on mappings) 
+   deactivate Catalyst
+   Catalyst ->> User: Ok (HTTP 200) with the wearables
+```
+
+
+### Sequence diagram for ownership checking during profile validation
+```mermaid
+sequenceDiagram
+   actor User
+   participant Catalyst
+   participant Blockchain
+   User ->> Catalyst: Get my profile
+   activate Catalyst
+   Catalyst ->> Blockchain: Does 0x123 own this red shirt, this blue hat and the yellow shoes?
+   Blockchain->> Catalyst: Ok: yes, no, yes
+   Catalyst ->> Catalyst: Remove all non-owned wearables
+   deactivate Catalyst
+   Catalyst ->> User: Ok (HTTP 200) with the profile
+```

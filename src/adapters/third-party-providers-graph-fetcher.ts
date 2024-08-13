@@ -1,4 +1,5 @@
 import { AppComponents, ThirdPartyProvider } from '../types'
+import { sanitizeContractList } from '../logic/utils'
 
 export type ThirdPartyProvidersGraphFetcher = {
   get(): Promise<ThirdPartyProvider[]>
@@ -17,6 +18,10 @@ const QUERY_ALL_THIRD_PARTY_RESOLVERS = `
       thirdParty {
         name
         description
+        contracts {
+          network
+          address
+        }
       }
     }
   }
@@ -28,12 +33,18 @@ export function createThirdPartyProvidersGraphFetcherComponent({
 }: Pick<AppComponents, 'theGraph'>): ThirdPartyProvidersGraphFetcher {
   return {
     async get(): Promise<ThirdPartyProvider[]> {
-      return (
+      const thirdPartyProviders = (
         await theGraph.thirdPartyRegistrySubgraph.query<ThirdPartyResolversQueryResults>(
           QUERY_ALL_THIRD_PARTY_RESOLVERS,
           {}
         )
-      ).thirdParties.filter((thirdParty) => thirdParty.id.includes('collections-thirdparty'))
+      ).thirdParties
+
+      if (thirdPartyProviders) {
+        sanitizeContractList(thirdPartyProviders)
+      }
+
+      return thirdPartyProviders
     }
   }
 }

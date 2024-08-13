@@ -11,20 +11,24 @@ import {
 import { WearableCategory } from '@dcl/schemas'
 import { createProfilesComponent } from '../../src/adapters/profiles'
 import { createConfigComponent } from '@well-known-components/env-config-provider'
+import { generateWearableEntity } from '../data/wearables'
 
 test('integration tests for profile adapter', function ({ components, stubComponents }) {
   it('calling with a single profile address, owning everything claimed', async () => {
     const {
       metrics,
       config,
+      contentServerUrl,
       ownershipCaches,
       thirdPartyProvidersStorage,
       logs,
       wearablesFetcher,
       emotesFetcher,
-      namesFetcher
+      namesFetcher,
+      l1ThirdPartyItemChecker,
+      l2ThirdPartyItemChecker
     } = components
-    const { theGraph, fetch, content } = stubComponents
+    const { alchemyNftFetcher, entitiesFetcher, theGraph, fetch, content } = stubComponents
     const address = '0x1'
 
     content.fetchEntitiesByPointers.withArgs([address]).resolves(await Promise.all([profileEntityFull]))
@@ -134,14 +138,22 @@ test('integration tests for profile adapter', function ({ components, stubCompon
       .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
       .onCall(1)
       .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
+    entitiesFetcher.fetchEntities
+      .withArgs(tpwResolverResponseFull.assets.map((a) => a.urn.decentraland))
+      .resolves(tpwResolverResponseFull.assets.map((a) => generateWearableEntity(a.urn.decentraland)))
 
     const profilesComponent = await createProfilesComponent({
+      alchemyNftFetcher,
+      entitiesFetcher,
       metrics,
       content,
+      contentServerUrl,
       theGraph,
       config,
       fetch,
       ownershipCaches,
+      l1ThirdPartyItemChecker,
+      l2ThirdPartyItemChecker,
       thirdPartyProvidersStorage,
       logs,
       wearablesFetcher,
@@ -200,14 +212,17 @@ testWithComponents(() => {
       const {
         metrics,
         config,
+        contentServerUrl,
         ownershipCaches,
         thirdPartyProvidersStorage,
         logs,
         wearablesFetcher,
         emotesFetcher,
-        namesFetcher
+        namesFetcher,
+        l1ThirdPartyItemChecker,
+        l2ThirdPartyItemChecker
       } = components
-      const { theGraph, fetch, content } = stubComponents
+      const { alchemyNftFetcher, entitiesFetcher, theGraph, fetch, content } = stubComponents
       const address = '0x1'
 
       content.fetchEntitiesByPointers.withArgs([address]).resolves(await Promise.all([profileEntityFull]))
@@ -334,14 +349,22 @@ testWithComponents(() => {
         .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
         .onCall(1)
         .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
+      entitiesFetcher.fetchEntities
+        .withArgs(tpwResolverResponseFull.assets.map((a) => a.urn.decentraland))
+        .resolves(tpwResolverResponseFull.assets.map((a) => generateWearableEntity(a.urn.decentraland)))
 
       const profilesComponent = await createProfilesComponent({
+        alchemyNftFetcher,
+        entitiesFetcher,
         metrics,
         content,
+        contentServerUrl,
         theGraph,
         config,
         fetch,
         ownershipCaches,
+        l1ThirdPartyItemChecker,
+        l2ThirdPartyItemChecker,
         thirdPartyProvidersStorage,
         logs,
         wearablesFetcher,
@@ -391,14 +414,17 @@ testWithComponents(() => {
       const {
         metrics,
         config,
+        contentServerUrl,
         ownershipCaches,
         thirdPartyProvidersStorage,
         logs,
         wearablesFetcher,
         emotesFetcher,
-        namesFetcher
+        namesFetcher,
+        l1ThirdPartyItemChecker,
+        l2ThirdPartyItemChecker
       } = components
-      const { theGraph, fetch, content } = stubComponents
+      const { alchemyNftFetcher, entitiesFetcher, theGraph, fetch, content } = stubComponents
       const address = '0x1'
 
       content.fetchEntitiesByPointers
@@ -544,14 +570,22 @@ testWithComponents(() => {
         .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
         .onCall(1)
         .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
+      entitiesFetcher.fetchEntities
+        .withArgs(tpwResolverResponseFull.assets.map((a) => a.urn.decentraland))
+        .resolves(tpwResolverResponseFull.assets.map((a) => generateWearableEntity(a.urn.decentraland)))
 
       const profilesComponent = await createProfilesComponent({
+        alchemyNftFetcher,
+        entitiesFetcher,
         metrics,
         content,
+        contentServerUrl,
         theGraph,
         config,
         fetch,
         ownershipCaches,
+        l1ThirdPartyItemChecker,
+        l2ThirdPartyItemChecker,
         thirdPartyProvidersStorage,
         logs,
         wearablesFetcher,
@@ -584,14 +618,19 @@ testWithComponents(() => {
 test('integration tests for profile adapter', function ({ components, stubComponents }) {
   it('calling with a single profile address, two eth wearables, one of them not owned', async () => {
     const {
+      alchemyNftFetcher,
+      entitiesFetcher,
       metrics,
       config,
+      contentServerUrl,
       ownershipCaches,
       thirdPartyProvidersStorage,
       logs,
       wearablesFetcher,
       emotesFetcher,
-      namesFetcher
+      namesFetcher,
+      l1ThirdPartyItemChecker,
+      l2ThirdPartyItemChecker
     } = components
     const { theGraph, content, fetch } = stubComponents
     const addresses = ['0x3']
@@ -625,12 +664,17 @@ test('integration tests for profile adapter', function ({ components, stubCompon
     theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
 
     const profilesComponent = await createProfilesComponent({
+      alchemyNftFetcher,
+      entitiesFetcher,
       metrics,
       content,
+      contentServerUrl,
       theGraph,
       config,
       fetch,
       ownershipCaches,
+      l1ThirdPartyItemChecker,
+      l2ThirdPartyItemChecker,
       thirdPartyProvidersStorage,
       logs,
       wearablesFetcher,
