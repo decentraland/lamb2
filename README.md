@@ -53,32 +53,7 @@ We use the components abstraction to organize our ports (e.g. HTTP client, datab
 
 We make components available to incoming http and kafka handlers. For instance, the http-server handlers have access to things like the database or HTTP components, and pass them down to the controller level for general use.
 
-
-### Diagram with problem
-```mermaid
-sequenceDiagram
-   actor User
-   participant Catalyst
-   participant Graph as Third Party Resolvers
-   participant TPA1 as Crypto Kitties API
-   participant TPA2 as 3D Punks API
-   participant TPA3 as CryptoAvatars API
-   participant TPA4 as TPA 4
-   participant TPA6 as TPA n
-   User ->> Catalyst: Get all wearables I own
-   Catalyst ->> Graph: Get all active Third Party Providers
-   Graph -->> Catalyst: Ok (HTTP 200) with the list of TPAs
-   activate Catalyst
-   Catalyst ->> TPA1: Get owned wearables for 0x123
-   Catalyst ->> TPA2: Get owned wearables for 0x123
-   Catalyst ->> TPA3: Get owned wearables for 0x123
-   Catalyst ->> TPA4: Get owned wearables for 0x123
-   Catalyst ->> TPA6: Get owned wearables for 0x123
-   deactivate Catalyst
-   Catalyst ->> User: Ok (HTTP 200) with the wearables
-```
-
-### Diagram with solution
+### Sequence diagram of for backpack building
 ```mermaid
 sequenceDiagram
    actor User
@@ -97,26 +72,8 @@ sequenceDiagram
    Catalyst ->> User: Ok (HTTP 200) with the wearables
 ```
 
-### Diagram with problem
-```mermaid
-sequenceDiagram
-   actor User
-   participant Catalyst
-   participant Graph as Third Party Resolvers
-   participant TPA1 as Crypto Kitties API
-   participant TPA2 as 3D Punks API
-   User ->> Catalyst: Get my profile
-   Catalyst ->> Graph: Get all active Third Party Providers
-   Graph -->> Catalyst: Ok (HTTP 200) with the list of TPAs
-   activate Catalyst
-   Catalyst ->> TPA1: Does 0x123 own this red shirt?
-   Catalyst ->> TPA2: Does 0x123 own this blue hat and the yellow shoes?
-   Catalyst ->> Catalyst: Remove all non-owned wearables
-   deactivate Catalyst
-   Catalyst ->> User: Ok (HTTP 200) with the profile
-```
 
-### Diagram with solution
+### Sequence diagram for ownership checking during profile validation
 ```mermaid
 sequenceDiagram
    actor User
