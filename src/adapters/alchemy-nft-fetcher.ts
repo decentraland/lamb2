@@ -1,5 +1,4 @@
 import { AppComponents } from '../types'
-import { FetcherError } from './elements-fetcher'
 import { ContractNetwork } from '@dcl/schemas'
 
 export type AlchemyNftFetcher = {
@@ -34,7 +33,8 @@ export async function createAlchemyNftFetcher({
     })
 
     if (!response.ok) {
-      throw new FetcherError(`Error fetching NFTs from Alchemy: ${response.status} - ${response.statusText}`)
+      logger.error(`Error fetching NFTs from Alchemy: ${response.status} - ${response.statusText}`)
+      return []
     }
 
     const nfts = await response.json()
@@ -44,9 +44,9 @@ export async function createAlchemyNftFetcher({
 
   async function getNFTsForOwner(owner: string, contractsByNetwork: Record<string, Set<string>>): Promise<string[]> {
     const all = await Promise.all(
-      Object.entries(contractsByNetwork).map(([network, contractAddresses]) => {
-        return getNFTsForOwnerForNetwork(owner, network, contractAddresses)
-      })
+      Object.entries(contractsByNetwork).map(([network, contractAddresses]) =>
+        getNFTsForOwnerForNetwork(owner, network, contractAddresses)
+      )
     )
 
     return all.flat(1)
