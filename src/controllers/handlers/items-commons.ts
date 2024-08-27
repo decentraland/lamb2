@@ -1,5 +1,5 @@
-import { EmoteCategory, WearableCategory } from '@dcl/schemas'
-import { RARITIES } from '../../logic/utils'
+import { EmoteCategory, Rarity, WearableCategory } from '@dcl/schemas'
+import { SORTED_RARITIES } from '../../logic/utils'
 import { InvalidRequestError } from '../../types'
 
 export type FilterableItem = {
@@ -15,7 +15,7 @@ export function createFilters(url: URL): (item: FilterableItem) => boolean {
   const name = url.searchParams.has('name') ? url.searchParams.get('name')!.toLowerCase() : undefined
   const rarity = url.searchParams.has('rarity') ? url.searchParams.get('rarity')!.toLowerCase() : undefined
 
-  if (rarity && !RARITIES.includes(rarity)) {
+  if (rarity && !SORTED_RARITIES.includes(rarity as Rarity)) {
     throw new InvalidRequestError(`Invalid rarity requested: '${rarity}'.`)
   }
 

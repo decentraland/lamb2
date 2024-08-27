@@ -4,14 +4,19 @@ import { Entity } from '@dcl/schemas'
 
 export async function outfitsHandler(
   context: HandlerContextWithPath<
+    | 'alchemyNftFetcher'
     | 'metrics'
     | 'content'
+    | 'contentServerUrl'
+    | 'entitiesFetcher'
     | 'theGraph'
     | 'config'
     | 'fetch'
     | 'ownershipCaches'
     | 'wearablesFetcher'
     | 'namesFetcher'
+    | 'l1ThirdPartyItemChecker'
+    | 'l2ThirdPartyItemChecker'
     | 'thirdPartyProvidersStorage'
     | 'logs',
     '/outfits/:id'

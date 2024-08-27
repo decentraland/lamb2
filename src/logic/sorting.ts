@@ -1,4 +1,4 @@
-import { RARITIES } from './utils'
+import { SORTED_RARITIES } from './utils'
 import { HasDate, HasName, HasRarity, HasUrn, InvalidRequestError, SortingFunction } from '../types'
 
 function byUrn(item1: HasUrn, item2: HasUrn): number {
@@ -6,8 +6,8 @@ function byUrn(item1: HasUrn, item2: HasUrn): number {
 }
 
 export function compareByRarity<T extends HasRarity>(item1: T, item2: T) {
-  const w1RarityValue = RARITIES.findIndex((rarity) => rarity === item1.rarity)
-  const w2RarityValue = RARITIES.findIndex((rarity) => rarity === item2.rarity)
+  const w1RarityValue = SORTED_RARITIES.findIndex((rarity) => rarity === item1.rarity)
+  const w2RarityValue = SORTED_RARITIES.findIndex((rarity) => rarity === item2.rarity)
   return w2RarityValue - w1RarityValue
 }
 
