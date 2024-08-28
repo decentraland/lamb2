@@ -2,7 +2,7 @@ import { EmoteCategory, Entity } from '@dcl/schemas'
 import { extractEmoteDefinitionFromEntity } from '../../src/adapters/definitions'
 import { EmoteFromQuery } from '../../src/logic/fetch-elements/fetch-items'
 import { leastRare, nameAZ, nameZA, rarest } from '../../src/logic/sorting'
-import { RARITIES } from '../../src/logic/utils'
+import { SORTED_RARITIES } from '../../src/logic/utils'
 import { OnChainEmoteResponse } from '../../src/types'
 import { test } from '../components'
 import { generateEmoteContentDefinitions, generateEmotes } from '../data/emotes'
@@ -346,7 +346,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
       ...w,
       item: {
         ...w.item,
-        rarity: RARITIES[i % RARITIES.length]
+        rarity: SORTED_RARITIES[i % SORTED_RARITIES.length]
       }
     }))
 
