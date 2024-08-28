@@ -1,5 +1,5 @@
 import { HandlerContextWithPath } from '../../types'
-import { About, StatusContent } from '@dcl/catalyst-api-specs/lib/client'
+import { About, AboutConfigurationsMap, StatusContent } from '@dcl/catalyst-api-specs/lib/client'
 import { l1Contracts, L1Network } from '@dcl/catalyst-contracts'
 
 export type ArchipelagoStatus = {
@@ -92,7 +92,27 @@ export async function aboutHandler(
     }
   }
 
-  const result = {
+  // https://adr.decentraland.org/adr/ADR-250
+  const mapConfigurations: AboutConfigurationsMap = {
+    minimapEnabled: true,
+    sizes: [
+      { left: -150, top: 150, right: 150, bottom: -150 },
+      { left: 62, top: 158, right: 162, bottom: 151 },
+      { left: 151, top: 150, right: 163, bottom: 59 }
+    ],
+    satelliteView: {
+      version: 'v1',
+      baseUrl: 'https://genesis.city/map/latest',
+      suffixUrl: '.jpg',
+      topLeftOffset: { x: -2, y: -6 }
+    },
+    parcelView: {
+      version: 'v1',
+      imageUrl: 'https://api.decentraland.org/v1/minimap.png'
+    }
+  }
+
+  const result: About = {
     healthy: healthy,
     content: {
       healthy: contentStatus.healthy,
@@ -111,7 +131,8 @@ export async function aboutHandler(
       networkId: contracts.chainId,
       globalScenesUrn: [],
       scenesUrn: [],
-      realmName
+      realmName,
+      map: mapConfigurations
     },
     comms,
     bff: {
