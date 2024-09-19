@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@dcl/catalyst-api-specs": "^3.3.0",
-    "@dcl/catalyst-contracts": "^4.4.1",
+    "@dcl/catalyst-contracts": "^4.4.2",
     "@dcl/crypto": "^3.4.5",
     "@dcl/schemas": "^13.6.2",
     "@dcl/urn-resolver": "^3.6.0",
