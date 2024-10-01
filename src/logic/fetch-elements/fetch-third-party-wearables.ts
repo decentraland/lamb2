@@ -316,7 +316,17 @@ async function _fetchThirdPartyWearables(
     fetchThirdPartyV2(providersV2)
   ])
 
-  return [...thirdPartyV1, ...thirdPartyV2]
+  const allThirdPartyWearables = [...thirdPartyV1, ...thirdPartyV2]
+  const thirdPartyWearablesByUrn = allThirdPartyWearables.reduce(
+    (acc, tpw) => {
+      // If there are repeated wearables, we should merge them
+      acc[tpw.urn] = tpw
+      return acc
+    },
+    {} as Record<string, ThirdPartyWearable>
+  )
+
+  return Object.values(thirdPartyWearablesByUrn)
 }
 
 export async function fetchThirdPartyWearablesFromThirdPartyName(
