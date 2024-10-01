@@ -299,17 +299,8 @@ async function _fetchThirdPartyWearables(
     return groupLinkedWearablesByURN(assignedLinkedWearables)
   }
 
-  const [providersV1, providersV2] = thirdParties.reduce(
-    (acc, provider) => {
-      if ((provider.metadata.thirdParty.contracts?.length || 0) <= 0) {
-        acc[0].push(provider)
-      } else {
-        acc[1].push(provider)
-      }
-      return acc
-    },
-    [[], []] as ThirdPartyProvider[][]
-  )
+  const providersV1 = thirdParties.filter((provider) => provider.resolver !== null || provider.resolver !== 'Disabled')
+  const providersV2 = thirdParties.filter((provider) => (provider.metadata.thirdParty.contracts?.length ?? 0) < 0)
 
   const [thirdPartyV1, thirdPartyV2] = await Promise.all([
     fetchThirdPartyV1(providersV1),
