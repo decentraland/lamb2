@@ -300,7 +300,7 @@ async function _fetchThirdPartyWearables(
   }
 
   const providersV1 = thirdParties.filter((provider) => provider.resolver !== null || provider.resolver !== 'Disabled')
-  const providersV2 = thirdParties.filter((provider) => (provider.metadata.thirdParty.contracts?.length ?? 0) < 0)
+  const providersV2 = thirdParties.filter((provider) => (provider.metadata.thirdParty.contracts?.length ?? 0) > 0)
 
   const [thirdPartyV1, thirdPartyV2] = await Promise.all([
     fetchThirdPartyV1(providersV1),
