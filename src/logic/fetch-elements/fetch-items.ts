@@ -45,7 +45,7 @@ type ItemCategory = 'wearable' | 'emote'
 function createQueryForCategory(category: ItemCategory) {
   return `query fetchItemsByOwner($owner: String, $idFrom: ID) {
     nfts(
-      where: { id_gt: $idFrom, owner: $owner, category: "${category}"},
+      where: { id_gt: $idFrom, owner: $owner, category: ${category}},
       orderBy: id,
       orderDirection: asc,
       first: ${THE_GRAPH_PAGE_SIZE}

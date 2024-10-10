@@ -17,7 +17,7 @@ describe('fetchEmotes', () => {
     expect(theGraph.maticCollectionsSubgraph.query).toBeCalled()
     const expectedQuery = `query fetchItemsByOwner($owner: String, $idFrom: ID) {
     nfts(
-      where: { id_gt: $idFrom, owner: $owner, category: "emote"},
+      where: { id_gt: $idFrom, owner: $owner, category: emote},
       orderBy: id,
       orderDirection: asc,
       first: 1000

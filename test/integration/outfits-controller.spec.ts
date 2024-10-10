@@ -113,7 +113,7 @@ testWithComponents(() => {
       })
     })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
-      if (query.includes(`category: "wearable"`)) {
+      if (query.includes(`category: wearable`)) {
         return Promise.resolve({
           nfts: [
             {
@@ -169,7 +169,7 @@ testWithComponents(() => {
             }
           ]
         })
-      } else if (query.includes(`category: "emote"`)) {
+      } else if (query.includes(`category: emote`)) {
         return Promise.resolve({ nfts: [] })
       }
     })
@@ -307,7 +307,7 @@ testWithComponents(() => {
       })
     })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
-      if (query.includes(`category: "wearable"`)) {
+      if (query.includes(`category: wearable`)) {
         return Promise.resolve({
           nfts: [
             {
@@ -363,7 +363,7 @@ testWithComponents(() => {
             }
           ]
         })
-      } else if (query.includes(`category: "emote"`)) {
+      } else if (query.includes(`category: emote`)) {
         return Promise.resolve({ nfts: [] })
       }
     })
@@ -533,7 +533,7 @@ testWithComponents(() => {
       })
     })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
-      if (query.includes(`category: "wearable"`)) {
+      if (query.includes(`category: wearable`)) {
         return Promise.resolve({
           nfts: [
             {
@@ -589,7 +589,7 @@ testWithComponents(() => {
             }
           ]
         })
-      } else if (query.includes(`category: "emote"`)) {
+      } else if (query.includes(`category: emote`)) {
         return Promise.resolve({ nfts: [] })
       }
     })
@@ -714,7 +714,7 @@ testWithComponents(() => {
       })
     })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
-      if (query.includes(`category: "wearable"`)) {
+      if (query.includes(`category: wearable`)) {
         return Promise.resolve({
           nfts: [
             {
@@ -770,7 +770,7 @@ testWithComponents(() => {
             }
           ]
         })
-      } else if (query.includes(`category: "emote"`)) {
+      } else if (query.includes(`category: emote`)) {
         return Promise.resolve({ nfts: [] })
       }
     })
@@ -984,7 +984,7 @@ testWithComponents(() => {
       })
     })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
-      if (query.includes(`category: "wearable"`)) {
+      if (query.includes(`category: wearable`)) {
         return Promise.resolve({
           nfts: [
             {
@@ -1006,7 +1006,7 @@ testWithComponents(() => {
             }
           ]
         })
-      } else if (query.includes(`category: "emote"`)) {
+      } else if (query.includes(`category: emote`)) {
         return Promise.resolve({ nfts: [] })
       }
     })
@@ -1218,7 +1218,7 @@ testWithComponents(() => {
       })
     })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
-      if (query.includes(`category: "wearable"`)) {
+      if (query.includes(`category: wearable`)) {
         return Promise.resolve({
           nfts: [
             {
@@ -1240,7 +1240,7 @@ testWithComponents(() => {
             }
           ]
         })
-      } else if (query.includes(`category: "emote"`)) {
+      } else if (query.includes(`category: emote`)) {
         return Promise.resolve({ nfts: [] })
       }
     })
@@ -1460,7 +1460,7 @@ testWithComponents(() => {
       })
     })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
-      if (query.includes(`category: "wearable"`)) {
+      if (query.includes(`category: wearable`)) {
         return Promise.resolve({
           nfts: [
             {
@@ -1482,7 +1482,7 @@ testWithComponents(() => {
             }
           ]
         })
-      } else if (query.includes(`category: "emote"`)) {
+      } else if (query.includes(`category: emote`)) {
         return Promise.resolve({ nfts: [] })
       }
     })

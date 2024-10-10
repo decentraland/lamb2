@@ -74,7 +74,7 @@ test('integration tests for profile adapter', function ({ components, stubCompon
     })
 
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockImplementation(async (query: string) => {
-      if (query.includes(`category: "wearable"`)) {
+      if (query.includes(`category: wearable`)) {
         return {
           nfts: [
             {
@@ -113,7 +113,7 @@ test('integration tests for profile adapter', function ({ components, stubCompon
             }
           ]
         }
-      } else if (query.includes(`category: "emote"`)) {
+      } else if (query.includes(`category: emote`)) {
         return { nfts: [] }
       }
     })
@@ -285,7 +285,7 @@ testWithComponents(() => {
       })
 
       theGraph.maticCollectionsSubgraph.query = jest.fn().mockImplementation(async (query: string) => {
-        if (query.includes(`category: "wearable"`)) {
+        if (query.includes(`category: wearable`)) {
           return {
             nfts: [
               {
@@ -324,7 +324,7 @@ testWithComponents(() => {
               }
             ]
           }
-        } else if (query.includes(`category: "emote"`)) {
+        } else if (query.includes(`category: emote`)) {
           return { nfts: [] }
         }
       })
@@ -489,7 +489,7 @@ testWithComponents(() => {
       })
 
       theGraph.maticCollectionsSubgraph.query = jest.fn().mockImplementation(async (query: string) => {
-        if (query.includes(`category: "wearable"`)) {
+        if (query.includes(`category: wearable`)) {
           return {
             nfts: [
               {
@@ -545,7 +545,7 @@ testWithComponents(() => {
               }
             ]
           }
-        } else if (query.includes(`category: "emote"`)) {
+        } else if (query.includes(`category: emote`)) {
           return { nfts: [] }
         }
       })
