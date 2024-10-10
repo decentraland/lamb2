@@ -43,9 +43,11 @@ function groupItemsByURN<
 type ItemCategory = 'wearable' | 'emote'
 
 function createQueryForCategory(category: ItemCategory) {
+  const itemTypeFilter =
+    category === 'wearable' ? `itemType_in: [wearable_v1, wearable_v2, smart_wearable_v1]` : `itemType: emote_v1`
   return `query fetchItemsByOwner($owner: String, $idFrom: ID) {
     nfts(
-      where: { id_gt: $idFrom, owner: $owner, category: "${category}"},
+      where: { id_gt: $idFrom, owner: $owner, ${itemTypeFilter}},
       orderBy: id,
       orderDirection: asc,
       first: ${THE_GRAPH_PAGE_SIZE}

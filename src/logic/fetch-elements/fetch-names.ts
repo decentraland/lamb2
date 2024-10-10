@@ -4,7 +4,7 @@ import { fetchAllNFTs, THE_GRAPH_PAGE_SIZE } from './fetch-elements'
 const QUERY_NAMES_PAGINATED: string = `
   query fetchNamesByOwner($owner: String, $idFrom: ID) {
     nfts(
-      where: {owner: $owner, category: "ens", id_gt: $idFrom }
+      where: {owner: $owner, category: ens, id_gt: $idFrom }
       orderBy: id,
       orderDirection: asc,
       first: ${THE_GRAPH_PAGE_SIZE}
