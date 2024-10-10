@@ -15,7 +15,7 @@ describe('fetchEmotes', () => {
     const owner = 'anOwner'
     await fetchAllEmotes({ theGraph }, owner)
     expect(theGraph.maticCollectionsSubgraph.query).toBeCalled()
-    const expectedQuery = `query fetchItemsByOwner($owner: String, $idFrom: String) {
+    const expectedQuery = `query fetchItemsByOwner($owner: String, $idFrom: ID) {
     nfts(
       where: { id_gt: $idFrom, owner: $owner, category: "emote"},
       orderBy: id,
@@ -249,7 +249,7 @@ describe('fetchWearables', () => {
     await fetchAllWearables({ theGraph }, owner)
     expect(theGraph.ethereumCollectionsSubgraph.query).toBeCalled()
     expect(theGraph.maticCollectionsSubgraph.query).toBeCalled()
-    const expectedQuery = `query fetchItemsByOwner($owner: String, $idFrom: String) {
+    const expectedQuery = `query fetchItemsByOwner($owner: String, $idFrom: ID) {
     nfts(
       where: { id_gt: $idFrom, owner: $owner, category: "wearable"},
       orderBy: id,
