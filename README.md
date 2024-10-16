@@ -8,8 +8,8 @@ You can explore the Lambdas API along with the rest of the Catalyst API [here](h
 
 You may also want to check the following resources:
 
-    [Catalyst Owner](https://github.com/decentraland/catalyst-owner): This bundle of services allows you to deploy a Catalyst node and incorporates the lamb2 service.
-    [Catalyst](https://github.com/decentraland/catalyst): This repository contains the implementation of the content server.
+[Catalyst Owner](https://github.com/decentraland/catalyst-owner): This bundle of services allows you to deploy a Catalyst node and incorporates the lamb2 service.
+[Catalyst](https://github.com/decentraland/catalyst): This repository contains the implementation of the content server.
 
 ## Running the Server
 
