@@ -1,5 +1,7 @@
 # Catalyst: Lambdas v2
 
+[![Coverage Status](https://coveralls.io/repos/github/decentraland/lamb2/badge.svg?branch=coverage)](https://coveralls.io/github/decentraland/lamb2?branch=coverage)
+
 The lamb2 service is a new implementation that replaces the previous lambdas service bundle associated with Catalyst nodes. The lambdas service provides an API for interacting with Catalyst Content Servers, assisting in the resolution of entities and assets for any Decentraland client.
 
 You can explore the Lambdas API along with the rest of the Catalyst API [here](https://decentraland.github.io/catalyst-api-specs/#tag/Lambdas).
