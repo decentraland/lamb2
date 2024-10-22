@@ -1,5 +1,5 @@
-import { IFetchComponent } from '@well-known-components/http-server'
 import * as nodeFetch from 'node-fetch'
+import { IFetchComponent } from '@well-known-components/interfaces'
 
 class HTTPResponseError extends Error {
   constructor(public response: nodeFetch.Response) {

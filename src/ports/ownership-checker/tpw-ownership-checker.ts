@@ -1,11 +1,22 @@
-import { parseUrn } from '@dcl/urn-resolver'
-import { getCachedNFTsAndPendingCheckNFTs, fillCacheWithRecentlyCheckedWearables } from '../../logic/cache'
-import { fetchUserThirdPartyAssets } from '../../logic/fetch-elements/fetch-third-party-wearables'
+import { fillCacheWithRecentlyCheckedWearables, getCachedNFTsAndPendingCheckNFTs } from '../../logic/cache'
 import { mergeMapIntoMap } from '../../logic/maps'
 import { AppComponents, NFTsOwnershipChecker } from '../../types'
+import { splitItemsURNsByTypeAndNetwork } from './contract-helpers'
 
 export function createTPWOwnershipChecker(
-  components: Pick<AppComponents, 'thirdPartyProvidersStorage' | 'fetch' | 'ownershipCaches' | 'logs' | 'metrics'>
+  components: Pick<
+    AppComponents,
+    | 'alchemyNftFetcher'
+    | 'entitiesFetcher'
+    | 'contentServerUrl'
+    | 'l1ThirdPartyItemChecker'
+    | 'l2ThirdPartyItemChecker'
+    | 'thirdPartyProvidersStorage'
+    | 'fetch'
+    | 'ownershipCaches'
+    | 'logs'
+    | 'metrics'
+  >
 ): NFTsOwnershipChecker {
   let ownedTPWByAddress: Map<string, string[]> = new Map()
   const cache = components.ownershipCaches.tpwCache
@@ -21,13 +32,14 @@ export function createTPWOwnershipChecker(
       cache
     )
 
-    // Check ownership for the non-cached nfts
+    // Check ownership for the non-cached NFTs
     ownedTPWByAddress = await ownedThirdPartyWearables(components, nftsToCheckByAddress)
 
-    // Traverse the checked nfts to set the cache depending on its ownership
+    // Traverse the checked NFTs to set the cache depending on its ownership
     fillCacheWithRecentlyCheckedWearables(nftsToCheckByAddress, ownedTPWByAddress, cache)
 
-    // Merge cachedOwnedNFTsByAddress (contains the nfts which ownershipwas cached) into ownedWearablesByAddress (recently checked ownnership map)
+    // Merge cachedOwnedNFTsByAddress (contains the NFTs for which ownership was cached) into ownedWearablesByAddress
+    // (recently checked ownership map)
     mergeMapIntoMap(cachedOwnedNFTsByAddress, ownedTPWByAddress)
   }
 
@@ -44,65 +56,40 @@ export function createTPWOwnershipChecker(
 
 /*
  * It could happen that a user had a third-party wearable in its profile which it was
- * selled through the blockchain without being reflected on the content server, so we
- * need to make sure that every third-party wearable it is still owned by the user.
+ * sold through the blockchain without being reflected on the content server, so we
+ * need to make sure that the user still owns every third-party wearable.
  * This method gets the collection ids from a wearableIdsByAddress map, for each of them
  * gets its API resolver, gets the owned third party wearables for that collection, and
  * finally sanitize wearableIdsByAddress with the owned wearables.
  */
 async function ownedThirdPartyWearables(
   {
-    metrics,
-    thirdPartyProvidersStorage,
-    fetch,
-    logs
-  }: Pick<AppComponents, 'thirdPartyProvidersStorage' | 'fetch' | 'logs' | 'metrics'>,
+    l1ThirdPartyItemChecker,
+    l2ThirdPartyItemChecker
+  }: Pick<AppComponents, 'l1ThirdPartyItemChecker' | 'l2ThirdPartyItemChecker'>,
   wearableIdsByAddress: Map<string, string[]>
 ): Promise<Map<string, string[]>> {
   const response = new Map<string, string[]>()
 
-  const collectionsByAddress = new Map<string, string[]>()
   for (const [address, wearableIds] of wearableIdsByAddress) {
-    const collectionIds = await filterCollectionIdsFromWearables(wearableIds)
-    collectionsByAddress.set(address, collectionIds)
-  }
+    const { v1, l1ThirdParty, l2ThirdParty } = await splitItemsURNsByTypeAndNetwork(wearableIds)
 
-  for (const [address, collectionIds] of collectionsByAddress) {
-    const ownedTPW: Set<string> = new Set()
-    await Promise.all(
-      collectionIds.map(async (collectionId) => {
-        for (const asset of await fetchUserThirdPartyAssets(
-          { thirdPartyProvidersStorage, fetch, logs, metrics },
-          address,
-          collectionId
-        )) {
-          ownedTPW.add(asset.urn.decentraland)
-        }
-      })
-    )
-
-    const wearablesIds = wearableIdsByAddress.get(address)
-    response.set(
-      address,
-      wearablesIds!.filter((tpw) => ownedTPW.has(tpw))
-    )
+    const results = await Promise.all([
+      l1ThirdPartyItemChecker.checkThirdPartyItems(
+        address,
+        l1ThirdParty.map((tp) => tp.urn)
+      ),
+      l2ThirdPartyItemChecker.checkThirdPartyItems(
+        address,
+        l2ThirdParty.map((tp) => tp.urn)
+      )
+    ])
+    response.set(address, [
+      ...v1.map((tp) => tp.urn),
+      ...l1ThirdParty.filter((_tpw, idx) => results[0][idx]).map((tp) => tp.urn),
+      ...l2ThirdParty.filter((_tpw, idx) => results[1][idx]).map((tp) => tp.urn)
+    ])
   }
 
   return response
-}
-
-async function filterCollectionIdsFromWearables(wearableIds: string[]): Promise<string[]> {
-  const collectionIds: string[] = []
-  const parsedUrns = await Promise.allSettled(wearableIds.map(parseUrn))
-  for (const result of parsedUrns) {
-    if (result.status === 'fulfilled') {
-      const parsedUrn = result.value
-      if (parsedUrn?.type === 'blockchain-collection-third-party') {
-        const collectionId = parsedUrn.uri.toString().split(':').slice(0, -1).join(':')
-        collectionIds.push(collectionId)
-      }
-    }
-  }
-
-  return collectionIds
 }

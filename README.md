@@ -1,54 +1,23 @@
-# template-server
+# Catalyst: Lambdas v2
 
-## Architecture
+[![Coverage Status](https://coveralls.io/repos/github/decentraland/lamb2/badge.svg?branch=coverage)](https://coveralls.io/github/decentraland/lamb2?branch=coverage)
 
-Extension of "ports and adapters architecture", also known as "hexagonal architecture".
+The lamb2 service is a new implementation that replaces the previous lambdas service bundle associated with Catalyst nodes. The lambdas service provides an API for interacting with Catalyst Content Servers, assisting in the resolution of entities and assets for any Decentraland client.
 
-With this architecture, code is organized into several layers: logic, controllers, adapters, and ports.
+You can explore the Lambdas API along with the rest of the Catalyst API [here](https://decentraland.github.io/catalyst-api-specs/#tag/Lambdas).
 
-## Application lifecycle
+You may also want to check the following resources:
 
-1. **Start application lifecycle** - Handled by [src/index.ts](src/index.ts) in only one line of code: `Lifecycle.run({ main, initComponents })`
-2. **Create components** - Handled by [src/components.ts](src/components.ts) in the function `initComponents`
-3. **Wire application & start components** - Handled by [src/service.ts](src/service.ts) in the funciton `main`.
-   1. First wire HTTP routes and other events with [controllers](#src/controllers)
-   2. Then call to `startComponents()` to initialize the components (i.e. http-listener)
+[Catalyst Owner](https://github.com/decentraland/catalyst-owner): This bundle of services allows you to deploy a Catalyst node and incorporates the lamb2 service.
+[Catalyst](https://github.com/decentraland/catalyst): This repository contains the implementation of the content server.
 
-The same lifecycle is also valid for tests: [test/components.ts](test/components.ts)
+## Running the Server
 
-## Namespaces
+For development, configure the `.env` file to point to your desire services and run the following commands:
 
-### src/logic
-
-Deals with pure business logic and shouldn't have side-effects or throw exceptions.
-
-### src/controllers
-
-The "glue" between all the other layers, orchestrating calls between pure business logic, adapters, and ports.
-
-Controllers always receive an hydrated context containing components and parameters to call the business logic e.g:
-
-```ts
-// handler for /ping
-export async function pingHandler(context: {
-  url: URL // parameter added by http-server
-  components: AppComponents // components of the app, part of the global context
-}) {
-  components.metrics.increment("test_ping_counter")
-  return { status: 200 }
-}
+```bash
+git clone https://github.com/decentraland/lamb2.git
+yarn
+yarn build
+yarn start
 ```
-
-### src/adapters
-
-The layer that converts external data representations into internal ones, and vice-versa. Acts as buffer to protect the service from changes in the outside world; when a data representation changes, you only need to change how the adapters deal with it.
-
-### src/ports
-
-The layer that communicates with the outside world, such as http, kafka, and the database.
-
-### src/components.ts
-
-We use the components abstraction to organize our ports (e.g. HTTP client, database client, redis client) and any other logic that needs to track mutable state or encode dependencies between stateful components. For every environment (e.g. test, e2e, prod, staging...) we have a different version of our component systems, enabling us to easily inject mocks or different implementations for different contexts.
-
-We make components available to incoming http and kafka handlers. For instance, the http-server handlers have access to things like the database or HTTP components, and pass them down to the controller level for general use.

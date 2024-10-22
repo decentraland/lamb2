@@ -1,5 +1,6 @@
 import { createConfigComponent } from '@well-known-components/env-config-provider'
 import { createThirdPartyProvidersServiceFetcherComponent } from '../../../src/adapters/third-party-providers-service-fetcher'
+import { getThirdPartyProviders } from '../../data/wearables'
 
 describe('third-party-providers-service-fetcher', () => {
   it('should call service when DISABLE_THIRD_PARTY_PROVIDERS_RESOLVER_SERVICE_USAGE is not set', async () => {
@@ -13,7 +14,7 @@ describe('third-party-providers-service-fetcher', () => {
         config,
         fetch: mockedFetch
       },
-      'mumbai'
+      'amoy'
     )
 
     // Act
@@ -34,7 +35,7 @@ describe('third-party-providers-service-fetcher', () => {
         config,
         fetch: mockedFetch
       },
-      'mumbai'
+      'amoy'
     )
 
     // Act & Assert
@@ -46,20 +47,8 @@ describe('third-party-providers-service-fetcher', () => {
 
   it('should return fetched Third Party Providers', async () => {
     // Arrange
-    const expectedResponse = [
-      {
-        id: 'urn:decentraland:matic:collections-thirdparty:baby-doge-coin',
-        resolver: 'https://decentraland-api.babydoge.com/v1'
-      },
-      {
-        id: 'urn:decentraland:matic:collections-thirdparty:cryptoavatars',
-        resolver: 'https://api.cryptoavatars.io/'
-      },
-      {
-        id: 'urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip',
-        resolver: 'https://wearables-api.unxd.com'
-      }
-    ]
+    const expectedResponse = getThirdPartyProviders()
+
     const config = createConfigComponent({ DISABLE_THIRD_PARTY_PROVIDERS_RESOLVER_SERVICE_USAGE: 'false' })
     const mockedFetch = {
       fetch: jest
@@ -71,7 +60,7 @@ describe('third-party-providers-service-fetcher', () => {
         config,
         fetch: mockedFetch
       },
-      'mumbai'
+      'amoy'
     )
 
     // Act

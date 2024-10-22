@@ -9,10 +9,10 @@ import {
   WearableCategory,
   WearableDefinition
 } from '@dcl/schemas'
-import type { IFetchComponent } from '@well-known-components/http-server'
 import type {
   IBaseComponent,
   IConfigComponent,
+  IFetchComponent,
   IHttpServerComponent,
   ILoggerComponent,
   IMetricsComponent
@@ -35,6 +35,8 @@ import { ThirdPartyProvidersServiceFetcher } from './adapters/third-party-provid
 import { ThirdPartyProvidersGraphFetcher } from './adapters/third-party-providers-graph-fetcher'
 import { ThirdPartyProvidersStorage } from './logic/third-party-providers-storage'
 import { IProfilesComponent } from './adapters/profiles'
+import { AlchemyNftFetcher } from './adapters/alchemy-nft-fetcher'
+import { ThirdPartyItemChecker } from './ports/ownership-checker/third-party-item-checker'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -71,6 +73,9 @@ export type BaseComponents = {
   poisFetcher: POIsFetcher
   nameDenylistFetcher: NameDenylistFetcher
   profiles: IProfilesComponent
+  alchemyNftFetcher: AlchemyNftFetcher
+  l1ThirdPartyItemChecker: ThirdPartyItemChecker
+  l2ThirdPartyItemChecker: ThirdPartyItemChecker
 }
 
 // components used in runtime
@@ -108,7 +113,7 @@ export type ProfileMetadata = Profile & {
 
 export interface NFTsOwnershipChecker {
   addNFTsForAddress: (address: string, nfts: string[]) => void
-  checkNFTsOwnership: () => void
+  checkNFTsOwnership: () => Promise<void>
   getOwnedNFTsForAddress: (address: string) => string[]
 }
 
@@ -218,6 +223,7 @@ export type ThirdPartyProvider = {
     thirdParty: {
       name: string
       description: string
+      contracts?: { network: string; address: string }[]
     }
   }
 }

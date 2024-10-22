@@ -4,7 +4,21 @@ import { Entity } from '@dcl/schemas'
 
 export async function outfitsHandler(
   context: HandlerContextWithPath<
-    'metrics' | 'content' | 'theGraph' | 'config' | 'fetch' | 'ownershipCaches' | 'wearablesFetcher' | 'namesFetcher',
+    | 'alchemyNftFetcher'
+    | 'metrics'
+    | 'content'
+    | 'contentServerUrl'
+    | 'entitiesFetcher'
+    | 'theGraph'
+    | 'config'
+    | 'fetch'
+    | 'ownershipCaches'
+    | 'wearablesFetcher'
+    | 'namesFetcher'
+    | 'l1ThirdPartyItemChecker'
+    | 'l2ThirdPartyItemChecker'
+    | 'thirdPartyProvidersStorage'
+    | 'logs',
     '/outfits/:id'
   >
 ): Promise<{ status: 200; body: Entity }> {

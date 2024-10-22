@@ -4,7 +4,7 @@
 import { createLocalFetchCompoment, createRunner, defaultServerConfig } from '@well-known-components/test-helpers'
 
 import { createConfigComponent } from '@well-known-components/env-config-provider'
-import { IFetchComponent } from '@well-known-components/http-server'
+import { IConfigComponent, IFetchComponent } from '@well-known-components/interfaces'
 import { createLogComponent } from '@well-known-components/logger'
 import { createTestMetricsComponent } from '@well-known-components/metrics'
 import {
@@ -22,7 +22,7 @@ import { main } from '../src/service'
 import { TestComponents } from '../src/types'
 import { createContentClientMock } from './mocks/content-mock'
 import { createTheGraphComponentMock } from './mocks/the-graph-mock'
-import { IConfigComponent } from '@well-known-components/interfaces'
+import { createAlchemyNftFetcherMock } from './mocks/alchemy-mock'
 
 /**
  * Behaves like Jest "describe" function, used to describe a test for a
@@ -80,15 +80,18 @@ async function initComponents(
       thirdParties: [
         {
           id: 'urn:decentraland:matic:collections-thirdparty:baby-doge-coin',
-          resolver: 'https://decentraland-api.babydoge.com/v1'
+          resolver: 'https://decentraland-api.babydoge.com/v1',
+          metadata: {}
         },
         {
           id: 'urn:decentraland:matic:collections-thirdparty:cryptoavatars',
-          resolver: 'https://api.cryptoavatars.io/'
+          resolver: 'https://api.cryptoavatars.io/',
+          metadata: {}
         },
         {
           id: 'urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip',
-          resolver: 'https://wearables-api.unxd.com'
+          resolver: 'https://wearables-api.unxd.com',
+          metadata: {}
         }
       ]
     })
@@ -123,11 +126,14 @@ async function initComponents(
     contentServerUrl
   })
 
+  const alchemyNftFetcher = createAlchemyNftFetcherMock()
   const metrics = createTestMetricsComponent(metricDeclarations)
   const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllThirdPartyWearables(
       {
         metrics,
+        contentServerUrl,
+        alchemyNftFetcher,
         thirdPartyProvidersStorage: components.thirdPartyProvidersStorage,
         fetch,
         logs,
@@ -139,6 +145,7 @@ async function initComponents(
 
   return {
     ...components,
+    alchemyNftFetcher,
     config,
     metrics,
     localFetch: await createLocalFetchCompoment(config),

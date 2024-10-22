@@ -1,5 +1,6 @@
 import { L2Network } from '@dcl/catalyst-contracts'
 import { AppComponents, ThirdPartyProvider } from '../types'
+import { sanitizeContractList } from '../logic/utils'
 
 export type ThirdPartyProvidersServiceFetcher = {
   get(): Promise<ThirdPartyProvider[]>
@@ -11,7 +12,8 @@ type ThirdPartyProvidersServiceResponse = {
 
 const SERVICE_URL_DICTIONARY = {
   polygon: 'https://third-party-providers-resolver.decentraland.org',
-  mumbai: 'https://third-party-providers-resolver.decentraland.zone'
+  mumbai: 'https://third-party-providers-resolver.decentraland.zone',
+  amoy: 'https://third-party-providers-resolver.decentraland.zone'
 }
 
 export async function createThirdPartyProvidersServiceFetcherComponent(
@@ -22,15 +24,22 @@ export async function createThirdPartyProvidersServiceFetcherComponent(
   const isThirdPartyProvidersResolverServiceDisabled: boolean =
     (await config.getString('DISABLE_THIRD_PARTY_PROVIDERS_RESOLVER_SERVICE_USAGE')) === 'true'
 
-  return {
-    async get(): Promise<ThirdPartyProvider[]> {
-      if (isThirdPartyProvidersResolverServiceDisabled) {
-        throw new Error(
-          'Third Party Providers resolver service will not be used since DISABLE_THIRD_PARTY_PROVIDERS_RESOLVER_SERVICE_USAGE is set'
-        )
-      }
-      const response: ThirdPartyProvidersServiceResponse = await (await fetch.fetch(`${serviceUrl}/providers`)).json()
-      return response.thirdPartyProviders
+  async function get(): Promise<ThirdPartyProvider[]> {
+    if (isThirdPartyProvidersResolverServiceDisabled) {
+      throw new Error(
+        'Third Party Providers resolver service will not be used since DISABLE_THIRD_PARTY_PROVIDERS_RESOLVER_SERVICE_USAGE is set'
+      )
     }
+    const response: ThirdPartyProvidersServiceResponse = await (await fetch.fetch(`${serviceUrl}/providers`)).json()
+
+    if (response.thirdPartyProviders) {
+      sanitizeContractList(response.thirdPartyProviders)
+    }
+
+    return response.thirdPartyProviders
+  }
+
+  return {
+    get
   }
 }

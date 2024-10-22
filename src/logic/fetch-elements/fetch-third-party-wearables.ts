@@ -1,7 +1,7 @@
-import { Entity, Wearable } from '@dcl/schemas'
+import { ContractNetwork, createMappingsHelper, Entity, Wearable } from '@dcl/schemas'
 import { BlockchainCollectionThirdPartyName, parseUrn } from '@dcl/urn-resolver'
 import { FetcherError } from '../../adapters/elements-fetcher'
-import { AppComponents, ThirdPartyProvider, ThirdPartyAsset, ThirdPartyWearable } from '../../types'
+import { AppComponents, ThirdPartyAsset, ThirdPartyProvider, ThirdPartyWearable } from '../../types'
 
 const URN_THIRD_PARTY_NAME_TYPE = 'blockchain-collection-third-party-name'
 const URN_THIRD_PARTY_ASSET_TYPE = 'blockchain-collection-third-party'
@@ -14,6 +14,11 @@ export type ThirdPartyAssets = {
   next?: string
 }
 
+type LinkedWearableAssetEntities = {
+  total: number
+  entities: Entity[]
+}
+
 async function fetchAssets(
   { logs, fetch, metrics }: Pick<AppComponents, 'fetch' | 'logs' | 'metrics'>,
   owner: string,
@@ -23,6 +28,10 @@ async function fetchAssets(
   const urn = await parseUrn(thirdParty.id)
   if (!urn || urn.type !== URN_THIRD_PARTY_NAME_TYPE) {
     throw new Error(`Couldn't parse third party id: ${thirdParty.id}`)
+  }
+  if (!thirdParty.resolver) {
+    logger.warn(`Third party ${thirdParty.id} doesn't have a resolver`)
+    return []
   }
 
   const baseUrl = new URL(thirdParty.resolver).href.replace(/\/$/, '')
@@ -57,23 +66,35 @@ async function fetchAssets(
   return allAssets
 }
 
+async function fetchAssetsV2(
+  { contentServerUrl, fetch }: Pick<AppComponents, 'contentServerUrl' | 'fetch' | 'logs' | 'metrics'>,
+  linkedWearableProvider: ThirdPartyProvider
+): Promise<Entity[]> {
+  const urn = await parseUrn(linkedWearableProvider.id)
+  if (!urn || urn.type !== URN_THIRD_PARTY_NAME_TYPE) {
+    throw new Error(`Couldn't parse linked wearable provider id: ${linkedWearableProvider.id}`)
+  }
+
+  const response = await fetch.fetch(`${contentServerUrl}/entities/active/collections/${linkedWearableProvider.id}`)
+  const assetsByOwner: LinkedWearableAssetEntities = await response.json()
+  return assetsByOwner.entities || []
+}
+
 function groupThirdPartyWearablesByURN(assets: (ThirdPartyAsset & { entity: Entity })[]): ThirdPartyWearable[] {
   const wearablesByURN = new Map<string, ThirdPartyWearable>()
 
   for (const asset of assets) {
     const metadata: Wearable = asset.entity.metadata
+    const individualData = { id: asset.urn.decentraland }
+
     if (wearablesByURN.has(asset.urn.decentraland)) {
       const wearableFromMap = wearablesByURN.get(asset.urn.decentraland)!
-      wearableFromMap.individualData.push({ id: asset.id })
+      wearableFromMap.individualData.push(individualData)
       wearableFromMap.amount = wearableFromMap.amount + 1
     } else {
       wearablesByURN.set(asset.urn.decentraland, {
         urn: asset.urn.decentraland,
-        individualData: [
-          {
-            id: asset.id
-          }
-        ],
+        individualData: [individualData],
         amount: 1,
         name: metadata.name,
         category: metadata.data.category,
@@ -85,8 +106,44 @@ function groupThirdPartyWearablesByURN(assets: (ThirdPartyAsset & { entity: Enti
   return Array.from(wearablesByURN.values())
 }
 
+function groupLinkedWearablesByURN(
+  assets: Record<
+    string,
+    {
+      individualData: string[]
+      entity: Entity
+    }
+  >
+): ThirdPartyWearable[] {
+  const wearablesByURN = new Map<string, ThirdPartyWearable>()
+
+  for (const [assetId, data] of Object.entries(assets)) {
+    wearablesByURN.set(assetId, {
+      urn: assetId,
+      individualData: data.individualData.map((indi) => ({
+        id: `${assetId}:${indi}`,
+        tokenId: indi
+      })),
+      amount: data.individualData.length,
+      name: data.entity.metadata.name,
+      category: data.entity.metadata.data.category,
+      entity: data.entity
+    })
+  }
+  return Array.from(wearablesByURN.values())
+}
+
 export async function fetchUserThirdPartyAssets(
-  components: Pick<AppComponents, 'thirdPartyProvidersStorage' | 'fetch' | 'logs' | 'metrics'>,
+  components: Pick<
+    AppComponents,
+    | 'alchemyNftFetcher'
+    | 'contentServerUrl'
+    | 'thirdPartyProvidersStorage'
+    | 'fetch'
+    | 'logs'
+    | 'entitiesFetcher'
+    | 'metrics'
+  >,
   owner: string,
   collectionId: string
 ): Promise<ThirdPartyAsset[]> {
@@ -101,52 +158,166 @@ export async function fetchUserThirdPartyAssets(
 
   const thirdPartyId = parts.slice(0, 5).join(':')
 
-  let thirdPartyProvider: ThirdPartyProvider | undefined = undefined
-
   const thirdPartyProviders = await components.thirdPartyProvidersStorage.getAll()
-  for (const provider of thirdPartyProviders) {
-    if (provider.id === thirdPartyId) {
-      thirdPartyProvider = provider
-      break
-    }
-  }
+  const thirdPartyProvider: ThirdPartyProvider | undefined = thirdPartyProviders.find(
+    (provider) => provider.id === thirdPartyId
+  )
 
   if (!thirdPartyProvider) {
     return []
   }
 
-  const assetsByOwner = await fetchAssets(components, owner, thirdPartyProvider)
-  if (!assetsByOwner) {
-    throw new Error(`Could not fetch assets for owner: ${owner}`)
-  }
+  const thirdPartyWearables = await _fetchThirdPartyWearables(components, owner, [thirdPartyProvider])
 
-  return assetsByOwner.filter((asset) => asset.urn.decentraland.startsWith(thirdPartyId)) ?? []
+  return thirdPartyWearables.map((tpw) => ({
+    id: tpw.urn, // TODO check this, not sure id refers to full urn, it might be provider + collection id + item id
+    amount: tpw.amount,
+    urn: {
+      decentraland: tpw.urn
+    }
+  }))
 }
 
 export async function fetchAllThirdPartyWearables(
-  components: Pick<AppComponents, 'thirdPartyProvidersStorage' | 'fetch' | 'logs' | 'entitiesFetcher' | 'metrics'>,
+  components: Pick<
+    AppComponents,
+    | 'alchemyNftFetcher'
+    | 'contentServerUrl'
+    | 'thirdPartyProvidersStorage'
+    | 'fetch'
+    | 'logs'
+    | 'entitiesFetcher'
+    | 'metrics'
+  >,
   owner: string
 ): Promise<ThirdPartyWearable[]> {
   const thirdParties = await components.thirdPartyProvidersStorage.getAll()
 
-  // TODO: test if stateValue is kept in case of an exception
-  const thirdPartyAssets = (
-    await Promise.all(thirdParties.map((thirdParty: ThirdPartyProvider) => fetchAssets(components, owner, thirdParty)))
-  ).flat()
+  return await _fetchThirdPartyWearables(components, owner, thirdParties)
+}
 
-  const entities = await components.entitiesFetcher.fetchEntities(thirdPartyAssets.map((tpa) => tpa.urn.decentraland))
-  const results: (ThirdPartyAsset & { entity: Entity })[] = []
-  for (let i = 0; i < thirdPartyAssets.length; ++i) {
-    const entity = entities[i]
-    if (entity) {
-      results.push({
-        ...thirdPartyAssets[i],
-        entity
-      })
+async function _fetchThirdPartyWearables(
+  components: Pick<
+    AppComponents,
+    | 'alchemyNftFetcher'
+    | 'contentServerUrl'
+    | 'thirdPartyProvidersStorage'
+    | 'fetch'
+    | 'logs'
+    | 'entitiesFetcher'
+    | 'metrics'
+  >,
+  owner: string,
+  thirdParties: ThirdPartyProvider[]
+): Promise<ThirdPartyWearable[]> {
+  async function fetchThirdPartyV1(thirdParties: ThirdPartyProvider[]) {
+    if (thirdParties.length === 0) {
+      return []
     }
+
+    // TODO: test if stateValue is kept in case of an exception
+    const thirdPartyAssets = (
+      await Promise.all(
+        thirdParties.map((thirdParty: ThirdPartyProvider) => fetchAssets(components, owner, thirdParty))
+      )
+    ).flat()
+
+    const entities = await components.entitiesFetcher.fetchEntities(thirdPartyAssets.map((tpa) => tpa.urn.decentraland))
+    const results: (ThirdPartyAsset & { entity: Entity })[] = []
+    for (let i = 0; i < thirdPartyAssets.length; ++i) {
+      const entity = entities[i]
+      if (entity) {
+        results.push({
+          ...thirdPartyAssets[i],
+          entity
+        })
+      }
+    }
+
+    return groupThirdPartyWearablesByURN(results)
   }
 
-  return groupThirdPartyWearablesByURN(results)
+  async function fetchThirdPartyV2(linkedWearableProviders: ThirdPartyProvider[]) {
+    if (linkedWearableProviders.length === 0) {
+      return []
+    }
+
+    const contractAddresses = linkedWearableProviders.reduce(
+      (carry, provider) => {
+        ;(provider.metadata.thirdParty.contracts || []).forEach((contract) => {
+          carry[contract.network] = carry[contract.network] || new Set<string>()
+          carry[contract.network].add(contract.address)
+        })
+        return carry
+      },
+      {} as Record<string, Set<string>>
+    )
+
+    const nfts = await components.alchemyNftFetcher.getNFTsForOwner(owner, contractAddresses)
+
+    const providersThatReturnedNfts = new Set<string>()
+    for (const nft of nfts) {
+      const [network, contractAddress] = nft.split(':')
+      const providers = linkedWearableProviders.filter((provider) =>
+        (provider.metadata.thirdParty.contracts || []).find(
+          (contract) => contract.network === network && contract.address === contractAddress
+        )
+      )
+      if (providers.length > 0) {
+        for (const provider of providers) {
+          providersThatReturnedNfts.add(`${provider.id}`)
+        }
+      }
+    }
+
+    const providersToCheck = linkedWearableProviders.filter((provider) => providersThatReturnedNfts.has(provider.id))
+
+    const linkedWearableEntities = (
+      await Promise.all(providersToCheck.map((provider: ThirdPartyProvider) => fetchAssetsV2(components, provider)))
+    ).flat()
+
+    const assignedLinkedWearables: Record<string, { individualData: string[]; entity: Entity }> = {}
+    for (const entity of linkedWearableEntities) {
+      const urn = entity.metadata.id
+      if (!entity.metadata.mappings) {
+        continue
+      }
+
+      const mappingsHelper = createMappingsHelper(entity.metadata.mappings)
+      for (const nft of nfts) {
+        const [network, contract, tokenId] = nft.split(':')
+        if (mappingsHelper.includesNft(network as ContractNetwork, contract, tokenId)) {
+          if (assignedLinkedWearables[urn]) {
+            assignedLinkedWearables[urn].individualData.push(nft)
+          } else {
+            assignedLinkedWearables[urn] = { individualData: [nft], entity }
+          }
+        }
+      }
+    }
+
+    return groupLinkedWearablesByURN(assignedLinkedWearables)
+  }
+
+  const providersV1 = thirdParties.filter((provider) => provider.resolver !== null || provider.resolver !== 'Disabled')
+  const providersV2 = thirdParties.filter((provider) => (provider.metadata.thirdParty.contracts?.length ?? 0) > 0)
+
+  const [thirdPartyV1, thirdPartyV2] = await Promise.all([
+    fetchThirdPartyV1(providersV1),
+    fetchThirdPartyV2(providersV2)
+  ])
+
+  const allThirdPartyWearables = [...thirdPartyV1, ...thirdPartyV2]
+  const thirdPartyWearablesByUrn = allThirdPartyWearables.reduce(
+    (acc, tpw) => {
+      // If there are repeated wearables, we should merge them
+      acc[tpw.urn] = tpw
+      return acc
+    },
+    {} as Record<string, ThirdPartyWearable>
+  )
+
+  return Object.values(thirdPartyWearablesByUrn)
 }
 
 export async function fetchThirdPartyWearablesFromThirdPartyName(

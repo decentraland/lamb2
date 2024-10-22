@@ -1,7 +1,7 @@
 import { Entity, WearableCategory } from '@dcl/schemas'
 import { extractWearableDefinitionFromEntity } from '../../src/adapters/definitions'
 import { WearableFromQuery } from '../../src/logic/fetch-elements/fetch-items'
-import { RARITIES } from '../../src/logic/utils'
+import { SORTED_RARITIES } from '../../src/logic/utils'
 import { OnChainWearableResponse } from '../../src/types'
 import { test } from '../components'
 import { generateWearableEntities, generateWearables } from '../data/wearables'
@@ -502,7 +502,7 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
       ...w,
       item: {
         ...w.item,
-        rarity: RARITIES[i % RARITIES.length]
+        rarity: SORTED_RARITIES[i % SORTED_RARITIES.length]
       }
     }))
 
