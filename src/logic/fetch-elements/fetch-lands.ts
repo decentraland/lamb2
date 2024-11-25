@@ -4,7 +4,7 @@ import { fetchAllNFTs, THE_GRAPH_PAGE_SIZE } from './fetch-elements'
 const QUERY_LANDS: string = `
   query fetchLANDsByOwner($owner: String, $idFrom: ID) {
     nfts(
-      where: { owner: $owner, category_in: [parcel, estate], id_gt: $idFrom },
+      where: { owner_: {address: $owner}, category_in: [parcel, estate], id_gt: $idFrom },
       orderBy: transferredAt,
       orderDirection: desc,
       first: ${THE_GRAPH_PAGE_SIZE}
