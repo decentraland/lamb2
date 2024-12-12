@@ -101,6 +101,7 @@ export async function createProfilesComponent(
       return await Promise.all(
         profileEntities.map(async (entity) => {
           const ethAddress = entity.pointers[0]
+          const isDefaultProfile: boolean = ethAddress.startsWith('default')
           const metadata: ProfileMetadata = entity.metadata
           const content = new Map((entity.content ?? []).map(({ file, hash }) => [file, hash]))
 
@@ -122,16 +123,21 @@ export async function createProfilesComponent(
               }
             }
           }
-          thirdPartyWearablesOwnershipChecker.addNFTsForAddress(ethAddress, wearables)
 
-          const [ownedWearables, ownedEmotes, ownedNames] = await Promise.all([
-            wearablesFetcher.fetchOwnedElements(ethAddress),
-            emotesFetcher.fetchOwnedElements(ethAddress),
-            namesFetcher.fetchOwnedElements(ethAddress),
-            thirdPartyWearablesOwnershipChecker.checkNFTsOwnership()
-          ])
+          isDefaultProfile || thirdPartyWearablesOwnershipChecker.addNFTsForAddress(ethAddress, wearables)
 
-          const thirdPartyWearables = thirdPartyWearablesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
+          const [ownedWearables, ownedEmotes, ownedNames] = isDefaultProfile
+            ? [[], [], []]
+            : await Promise.all([
+                wearablesFetcher.fetchOwnedElements(ethAddress),
+                emotesFetcher.fetchOwnedElements(ethAddress),
+                namesFetcher.fetchOwnedElements(ethAddress),
+                thirdPartyWearablesOwnershipChecker.checkNFTsOwnership()
+              ])
+
+          const thirdPartyWearables = isDefaultProfile
+            ? []
+            : thirdPartyWearablesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
 
           const avatars: Avatar[] = []
           for (const avatar of metadata.avatars) {
