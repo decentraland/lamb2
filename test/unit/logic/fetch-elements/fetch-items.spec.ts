@@ -17,7 +17,7 @@ describe('fetchEmotes', () => {
     expect(theGraph.maticCollectionsSubgraph.query).toBeCalled()
     const expectedQuery = `query fetchItemsByOwner($owner: String, $idFrom: ID) {
     nfts(
-      where: { id_gt: $idFrom, owner: $owner, itemType: emote_v1},
+      where: { id_gt: $idFrom, owner_: {address: $owner}, itemType: emote_v1},
       orderBy: id,
       orderDirection: asc,
       first: 1000
@@ -251,7 +251,7 @@ describe('fetchWearables', () => {
     expect(theGraph.maticCollectionsSubgraph.query).toBeCalled()
     const expectedQuery = `query fetchItemsByOwner($owner: String, $idFrom: ID) {
     nfts(
-      where: { id_gt: $idFrom, owner: $owner, itemType_in: [wearable_v1, wearable_v2, smart_wearable_v1]},
+      where: { id_gt: $idFrom, owner_: {address: $owner}, itemType_in: [wearable_v1, wearable_v2, smart_wearable_v1]},
       orderBy: id,
       orderDirection: asc,
       first: 1000
