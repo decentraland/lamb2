@@ -26,8 +26,7 @@ async function wrapCall(asyncFn: () => Promise<ThirdPartyProvider[]>): Promise<W
 
 export async function createThirdPartyProvidersStorage({
   logs,
-  thirdPartyProvidersGraphFetcher,
-  thirdPartyProvidersServiceFetcher
+  thirdPartyProvidersGraphFetcher
 }: Pick<
   AppComponents,
   'logs' | 'thirdPartyProvidersGraphFetcher' | 'thirdPartyProvidersServiceFetcher'
@@ -38,16 +37,10 @@ export async function createThirdPartyProvidersStorage({
     max: 1,
     ttl: 1000 * 60 * 60 * 6,
     fetchMethod: async function (_: number, staleValue: ThirdPartyProvider[] | undefined) {
-      logger.info('Fetching Third Party Providers from service')
-      let response = await wrapCall(async (): Promise<ThirdPartyProvider[]> => {
-        return thirdPartyProvidersServiceFetcher.get()
+      logger.info('Fetching Third Party Providers from TheGraph')
+      const response = await wrapCall(async (): Promise<ThirdPartyProvider[]> => {
+        return await thirdPartyProvidersGraphFetcher.get()
       })
-      if (!response.ok) {
-        logger.info('Retry fetching Third Party Providers from TheGraph')
-        response = await wrapCall(async (): Promise<ThirdPartyProvider[]> => {
-          return await thirdPartyProvidersGraphFetcher.get()
-        })
-      }
 
       return response.ok ? response.thirdPartyProviders : staleValue
     }
