@@ -27,10 +27,7 @@ async function wrapCall(asyncFn: () => Promise<ThirdPartyProvider[]>): Promise<W
 export async function createThirdPartyProvidersStorage({
   logs,
   thirdPartyProvidersGraphFetcher
-}: Pick<
-  AppComponents,
-  'logs' | 'thirdPartyProvidersGraphFetcher' | 'thirdPartyProvidersServiceFetcher'
->): Promise<ThirdPartyProvidersStorage> {
+}: Pick<AppComponents, 'logs' | 'thirdPartyProvidersGraphFetcher'>): Promise<ThirdPartyProvidersStorage> {
   const logger = logs.getLogger('third-party-providers-storage')
 
   const cache = new LRU<number, ThirdPartyProvider[]>({
