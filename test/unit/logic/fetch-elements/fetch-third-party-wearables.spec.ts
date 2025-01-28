@@ -6,7 +6,7 @@ import { WearableCategory } from '@dcl/schemas'
 describe('fetchAllThirdPartyWearables', () => {
   test('should fetch all owned third party wearables from a single provider', function ({ components }) {
     it('run test', async () => {
-      const ownedNfts = ['sepolia:0xa:1', 'sepolia:0xa:2']
+      const ownedNfts = ['mainnet:0xa:1', 'mainnet:0xa:2']
       const providerId = 'urn:decentraland:matic:collections-thirdparty:baby-doge-coin'
       jest.spyOn(components.thirdPartyProvidersStorage, 'getAll').mockResolvedValue(getThirdPartyProviders())
       jest.spyOn(components.alchemyNftFetcher, 'getNFTsForOwner').mockResolvedValue(ownedNfts)
@@ -27,7 +27,7 @@ describe('fetchAllThirdPartyWearables', () => {
                         category: WearableCategory.EARRING
                       },
                       mappings: {
-                        sepolia: {
+                        mainnet: {
                           '0xa': [
                             {
                               type: 'multiple',
@@ -50,12 +50,12 @@ describe('fetchAllThirdPartyWearables', () => {
           amount: 2,
           individualData: [
             expect.objectContaining({
-              id: 'urn:decentraland:matic:collections-thirdparty:baby-doge-coin:entityIdA:sepolia:0xa:1',
-              tokenId: 'sepolia:0xa:1'
+              id: 'urn:decentraland:matic:collections-thirdparty:baby-doge-coin:entityIdA:mainnet:0xa:1',
+              tokenId: 'mainnet:0xa:1'
             }),
             expect.objectContaining({
-              id: 'urn:decentraland:matic:collections-thirdparty:baby-doge-coin:entityIdA:sepolia:0xa:2',
-              tokenId: 'sepolia:0xa:2'
+              id: 'urn:decentraland:matic:collections-thirdparty:baby-doge-coin:entityIdA:mainnet:0xa:2',
+              tokenId: 'mainnet:0xa:2'
             })
           ],
           name: 'nameForentityIdA',
@@ -68,7 +68,7 @@ describe('fetchAllThirdPartyWearables', () => {
 
   test('should fetch all owned third party wearables from different providers', function ({ components }) {
     it('run test', async () => {
-      const ownedNfts = ['sepolia:0xa:1', 'sepolia:0xb:3']
+      const ownedNfts = ['mainnet:0xa:1', 'mainnet:0xb:3']
       const providerId = 'urn:decentraland:matic:collections-thirdparty:baby-doge-coin'
       const providerId2 = 'urn:decentraland:matic:collections-thirdparty:cryptoavatars'
       jest.spyOn(components.thirdPartyProvidersStorage, 'getAll').mockResolvedValue(getThirdPartyProviders())
@@ -94,7 +94,7 @@ describe('fetchAllThirdPartyWearables', () => {
                           category: WearableCategory.EARRING
                         },
                         mappings: {
-                          sepolia: {
+                          mainnet: {
                             '0xa': [
                               {
                                 type: 'multiple',
@@ -127,7 +127,7 @@ describe('fetchAllThirdPartyWearables', () => {
                           category: WearableCategory.EARRING
                         },
                         mappings: {
-                          sepolia: {
+                          mainnet: {
                             '0xb': [
                               {
                                 type: 'single',
@@ -153,8 +153,8 @@ describe('fetchAllThirdPartyWearables', () => {
           amount: 1,
           individualData: [
             expect.objectContaining({
-              id: 'urn:decentraland:matic:collections-thirdparty:baby-doge-coin:entityIdA:sepolia:0xa:1',
-              tokenId: 'sepolia:0xa:1'
+              id: 'urn:decentraland:matic:collections-thirdparty:baby-doge-coin:entityIdA:mainnet:0xa:1',
+              tokenId: 'mainnet:0xa:1'
             })
           ],
           name: 'nameForentityIdA',
@@ -165,8 +165,8 @@ describe('fetchAllThirdPartyWearables', () => {
           amount: 1,
           individualData: [
             expect.objectContaining({
-              id: 'urn:decentraland:matic:collections-thirdparty:cryptoavatars:entityIdB:sepolia:0xb:3',
-              tokenId: 'sepolia:0xb:3'
+              id: 'urn:decentraland:matic:collections-thirdparty:cryptoavatars:entityIdB:mainnet:0xb:3',
+              tokenId: 'mainnet:0xb:3'
             })
           ],
           name: 'nameForentityIdB',
