@@ -22,9 +22,28 @@ type ContentInfo = {
 
 testWithComponents(() => {
   const theGraphMock = createTheGraphComponentMock()
-  const resolverResponse = { thirdParties: getThirdPartyProviders() }
+  const thirdPartyProvidersResponse = {
+    thirdParties: [
+      {
+        id: 'urn:decentraland:matic:collections-thirdparty:test-collection',
+        resolver: 'https://decentraland-api.test.com/v1',
+        metadata: {
+          thirdParty: {
+            name: 'test collection',
+            description: 'test collection',
+            contracts: [
+              {
+                network: 'mainnet',
+                address: '0xcontract'
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
 
-  theGraphMock.thirdPartyRegistrySubgraph.query = jest.fn().mockResolvedValue(resolverResponse)
+  theGraphMock.thirdPartyRegistrySubgraph.query = jest.fn().mockResolvedValue(thirdPartyProvidersResponse)
   return {
     theGraphComponent: theGraphMock
   }
@@ -64,13 +83,13 @@ testWithComponents(() => {
   })
 
   it('return only base wearables when no on-chain or third-party found', async () => {
-    const { baseWearablesFetcher, content, fetch, localFetch, theGraph } = components
+    const { baseWearablesFetcher, content, fetch, localFetch, alchemyNftFetcher, theGraph } = components
 
     const baseWearables = generateBaseWearables(278)
     baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(baseWearables)
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
-    fetch.fetch = jest.fn().mockResolvedValue({ ok: true, json: () => ({ assets: [] }) })
+    alchemyNftFetcher.getNFTsForOwner = jest.fn().mockResolvedValue([])
     const entities = generateWearableEntities(baseWearables.map((wearable) => wearable.urn))
     content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
       pointers.map((pointer) => entities.find((def) => def.id === pointer))
@@ -91,7 +110,8 @@ testWithComponents(() => {
   })
 
   it('return base + on-chain + third-party wearables', async () => {
-    const { content, fetch, localFetch, theGraph, baseWearablesFetcher, contentServerUrl } = components
+    const { content, fetch, localFetch, theGraph, baseWearablesFetcher, contentServerUrl, alchemyNftFetcher } =
+      components
     const baseWearables = generateBaseWearables(2)
     const onChainWearables = generateWearables(2)
     const thirdPartyWearables = generateThirdPartyWearables(2)
@@ -101,6 +121,9 @@ testWithComponents(() => {
       ...thirdPartyWearables.map((wearable) => wearable.urn.decentraland)
     ])
 
+    alchemyNftFetcher.getNFTsForOwner = jest
+      .fn()
+      .mockResolvedValue(thirdPartyWearables.map((wearable) => wearable.urn.decentraland))
     baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(baseWearables)
     content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
       pointers.map((pointer) => entities.find((def) => def.id === pointer))
@@ -108,15 +131,15 @@ testWithComponents(() => {
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: onChainWearables.slice(0, 5) })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: onChainWearables.slice(5, 10) })
     fetch.fetch = jest.fn().mockImplementation((url) => {
-      if (url.includes('babydoge')) {
+      if (url.includes('test-collection')) {
         return {
           ok: true,
           json: () => ({
-            assets: thirdPartyWearables
+            entities: generateWearableEntities(thirdPartyWearables.map((wearable) => wearable.urn.decentraland))
           })
         }
       } else {
-        return { ok: true, json: () => ({ assets: [] }) }
+        return { ok: true, json: () => ({ entities: [] }) }
       }
     })
 
@@ -324,11 +347,8 @@ function convertToMixedOnChainWearableResponse(
   })
 }
 
-function convertToMixedThirdPartyWearableResponse(
-  wearables: ThirdPartyAsset[],
-  { entities }: ContentInfo
-): MixedWearableResponse[] {
-  return wearables.map((wearable): MixedWearableResponse => {
+function convertToMixedThirdPartyWearableResponse(wearables: any[], { entities }: ContentInfo): any[] {
+  return wearables.map((wearable): any => {
     const entity = entities.find((def) => def.id === wearable.urn.decentraland)
     return {
       type: 'third-party',
@@ -336,7 +356,8 @@ function convertToMixedThirdPartyWearableResponse(
       amount: 1,
       individualData: [
         {
-          id: wearable.urn.decentraland
+          id: wearable.urn.decentraland + ':' + wearable.urn.tokenId,
+          tokenId: wearable.urn.tokenId
         }
       ],
       category: entity.metadata.data.category,
