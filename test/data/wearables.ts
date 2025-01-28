@@ -195,7 +195,13 @@ export function getThirdPartyProviders(): ThirdPartyProvider[] {
       metadata: {
         thirdParty: {
           name: 'baby doge coin',
-          description: 'baby doge coin'
+          description: 'baby doge coin',
+          contracts: [
+            {
+              network: 'mainnet',
+              address: '0xa'
+            }
+          ]
         }
       }
     },
@@ -205,7 +211,13 @@ export function getThirdPartyProviders(): ThirdPartyProvider[] {
       metadata: {
         thirdParty: {
           name: 'crypto avatars',
-          description: 'avatars'
+          description: 'avatars',
+          contracts: [
+            {
+              network: 'mainnet',
+              address: '0xb'
+            }
+          ]
         }
       }
     },
@@ -215,7 +227,13 @@ export function getThirdPartyProviders(): ThirdPartyProvider[] {
       metadata: {
         thirdParty: {
           name: 'disco',
-          description: 'disco'
+          description: 'disco',
+          contracts: [
+            {
+              network: 'mainnet',
+              address: '0xc'
+            }
+          ]
         }
       }
     }
