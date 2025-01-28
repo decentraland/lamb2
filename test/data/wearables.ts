@@ -96,8 +96,13 @@ export function generateWearableEntity(urn: string): Entity {
             overrideReplaces: []
           }
         ] as WearableRepresentation[]
+      },
+      mappings: {
+        mainnet: {
+          '0xcontract': [{ type: 'single', id: urn.split(':').pop() }]
+        }
       }
-    } as Wearable
+    } as unknown as Wearable
   }
 }
 
@@ -180,7 +185,8 @@ export function generateThirdPartyWearables(quantity: number): ThirdPartyAsset[]
       id: 'id-' + i,
       amount: 1,
       urn: {
-        decentraland: 'urn-tp-' + i
+        decentraland: 'mainnet:0xcontract:' + i,
+        tokenId: 'mainnet:0xcontract:' + i
       }
     })
   }
