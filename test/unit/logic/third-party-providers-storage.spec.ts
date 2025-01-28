@@ -25,14 +25,10 @@ describe('third-party-providers-storage', () => {
     const thirdPartyProvidersGraphFetcherMock = {
       get: () => Promise.reject(new Error())
     }
-    const thirdPartyProvidersServiceFetcherMock = {
-      get: () => Promise.reject(new Error())
-    }
 
     const sut = await createThirdPartyProvidersStorage({
       logs,
-      thirdPartyProvidersGraphFetcher: thirdPartyProvidersGraphFetcherMock,
-      thirdPartyProvidersServiceFetcher: thirdPartyProvidersServiceFetcherMock
+      thirdPartyProvidersGraphFetcher: thirdPartyProvidersGraphFetcherMock
     })
 
     // Act & Assert
@@ -45,16 +41,12 @@ describe('third-party-providers-storage', () => {
     // Arrange
     const logs = await createLogComponent({})
     const thirdPartyProvidersGraphFetcherMock = {
-      get: jest.fn().mockRejectedValue(new Error())
-    }
-    const thirdPartyProvidersServiceFetcherMock = {
       get: jest.fn().mockResolvedValue(thirdPartyProviders)
     }
 
     const sut = await createThirdPartyProvidersStorage({
       logs,
-      thirdPartyProvidersGraphFetcher: thirdPartyProvidersGraphFetcherMock,
-      thirdPartyProvidersServiceFetcher: thirdPartyProvidersServiceFetcherMock
+      thirdPartyProvidersGraphFetcher: thirdPartyProvidersGraphFetcherMock
     })
 
     // Act
@@ -63,7 +55,7 @@ describe('third-party-providers-storage', () => {
 
     // Assert
     expect(response).toEqual(thirdPartyProviders)
-    expect(thirdPartyProvidersGraphFetcherMock.get).not.toHaveBeenCalled()
+    expect(thirdPartyProvidersGraphFetcherMock.get).toHaveBeenCalled()
   })
 
   it('should start if providers could be fetched from graph', async () => {
@@ -72,14 +64,10 @@ describe('third-party-providers-storage', () => {
     const thirdPartyProvidersGraphFetcherMock = {
       get: jest.fn().mockResolvedValue(thirdPartyProviders)
     }
-    const thirdPartyProvidersServiceFetcherMock = {
-      get: jest.fn().mockRejectedValue(new Error())
-    }
 
     const sut = await createThirdPartyProvidersStorage({
       logs,
-      thirdPartyProvidersGraphFetcher: thirdPartyProvidersGraphFetcherMock,
-      thirdPartyProvidersServiceFetcher: thirdPartyProvidersServiceFetcherMock
+      thirdPartyProvidersGraphFetcher: thirdPartyProvidersGraphFetcherMock
     })
 
     // Act
@@ -88,7 +76,6 @@ describe('third-party-providers-storage', () => {
 
     // Assert
     expect(response).toEqual(thirdPartyProviders)
-    expect(thirdPartyProvidersServiceFetcherMock.get).toHaveBeenCalled()
     expect(thirdPartyProvidersGraphFetcherMock.get).toHaveBeenCalled()
   })
 
@@ -96,16 +83,12 @@ describe('third-party-providers-storage', () => {
     // Arrange
     const logs = await createLogComponent({})
     const thirdPartyProvidersGraphFetcherMock = {
-      get: jest.fn().mockRejectedValue(new Error())
-    }
-    const thirdPartyProvidersServiceFetcherMock = {
       get: jest.fn().mockResolvedValue(thirdPartyProviders)
     }
 
     const sut = await createThirdPartyProvidersStorage({
       logs,
-      thirdPartyProvidersGraphFetcher: thirdPartyProvidersGraphFetcherMock,
-      thirdPartyProvidersServiceFetcher: thirdPartyProvidersServiceFetcherMock
+      thirdPartyProvidersGraphFetcher: thirdPartyProvidersGraphFetcherMock
     })
     const nonExistentThirdPartyNameUrn = await parseUrn('urn:decentraland:matic:collections-thirdparty:non-existent')
 
@@ -122,16 +105,12 @@ describe('third-party-providers-storage', () => {
     // Arrange
     const logs = await createLogComponent({})
     const thirdPartyProvidersGraphFetcherMock = {
-      get: jest.fn().mockRejectedValue(new Error())
-    }
-    const thirdPartyProvidersServiceFetcherMock = {
       get: jest.fn().mockResolvedValue(thirdPartyProviders)
     }
 
     const sut = await createThirdPartyProvidersStorage({
       logs,
-      thirdPartyProvidersGraphFetcher: thirdPartyProvidersGraphFetcherMock,
-      thirdPartyProvidersServiceFetcher: thirdPartyProvidersServiceFetcherMock
+      thirdPartyProvidersGraphFetcher: thirdPartyProvidersGraphFetcherMock
     })
     const thirdPartyNameUrn = await parseUrn('urn:decentraland:matic:collections-thirdparty:cryptoavatars')
 
