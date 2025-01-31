@@ -114,8 +114,6 @@ testWithComponents(() => {
 
       const r = await localFetch.fetch(`/users/${generateRandomAddress()}/third-party-wearables?includeDefinitions`)
 
-      console.log('entities', JSON.stringify(entities, null, 2))
-      console.log('wearables', JSON.stringify(wearables, null, 2))
       expect(r.status).toBe(200)
       expect(await r.json()).toEqual({
         elements: convertToThirdPartyWearableResponse(wearables, { entities, contentServerUrl }, true),
