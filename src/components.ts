@@ -32,7 +32,6 @@ import { createOwnershipCachesComponent } from './ports/ownership-caches'
 import { createTheGraphComponent, TheGraphComponent } from './ports/the-graph'
 import { AppComponents, BaseWearable, GlobalContext } from './types'
 import { createThirdPartyProvidersGraphFetcherComponent } from './adapters/third-party-providers-graph-fetcher'
-import { createThirdPartyProvidersServiceFetcherComponent } from './adapters/third-party-providers-service-fetcher'
 import { createThirdPartyProvidersStorage } from './logic/third-party-providers-storage'
 import { createProfilesComponent } from './adapters/profiles'
 import { IFetchComponent } from '@well-known-components/interfaces'
@@ -129,14 +128,9 @@ export async function initComponents(
   )
 
   const thirdPartyProvidersGraphFetcher = createThirdPartyProvidersGraphFetcherComponent({ theGraph })
-  const thirdPartyProvidersServiceFetcher = await createThirdPartyProvidersServiceFetcherComponent(
-    { config, fetch },
-    l2Network
-  )
   const thirdPartyProvidersStorage = await createThirdPartyProvidersStorage({
     logs,
-    thirdPartyProvidersGraphFetcher,
-    thirdPartyProvidersServiceFetcher
+    thirdPartyProvidersGraphFetcher
   })
   const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllThirdPartyWearables(
@@ -186,7 +180,6 @@ export async function initComponents(
     namesFetcher,
     landsFetcher,
     thirdPartyProvidersGraphFetcher,
-    thirdPartyProvidersServiceFetcher,
     thirdPartyProvidersStorage,
     contentServerUrl,
     resourcesStatusCheck,

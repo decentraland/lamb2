@@ -9,7 +9,24 @@ import { convertToThirdPartyWearableResponse } from './convert-to-model-third-pa
 testWithComponents(() => {
   const theGraphMock = createTheGraphComponentMock()
   const resolverResponse = {
-    thirdParties: [getThirdPartyProviders()[0]]
+    thirdParties: [
+      {
+        id: 'urn:decentraland:matic:collections-thirdparty:test-collection',
+        resolver: 'https://decentraland-api.test.com/v1',
+        metadata: {
+          thirdParty: {
+            name: 'test collection',
+            description: 'test collection',
+            contracts: [
+              {
+                network: 'mainnet',
+                address: '0xcontract'
+              }
+            ]
+          }
+        }
+      }
+    ]
   }
 
   theGraphMock.thirdPartyRegistrySubgraph.query = jest.fn().mockResolvedValue(resolverResponse)
@@ -20,9 +37,10 @@ testWithComponents(() => {
   'third-party-wearables-handler: GET /users/:address/third-party-wearables with a single provider should',
   function ({ components }) {
     it('return empty when no wearables are found', async () => {
-      const { localFetch, fetch } = components
+      const { localFetch, fetch, alchemyNftFetcher } = components
 
-      fetch.fetch = jest.fn().mockResolvedValue({ ok: true, json: () => ({ assets: [] }) })
+      alchemyNftFetcher.getNFTsForOwner = jest.fn().mockResolvedValue([])
+      fetch.fetch = jest.fn().mockResolvedValue({ ok: true, json: () => ({ entities: [] }) })
 
       const r = await localFetch.fetch(`/users/${generateRandomAddress()}/third-party-wearables`)
 
@@ -33,13 +51,14 @@ testWithComponents(() => {
         totalAmount: 0,
         pageSize: 100
       })
-      expect(fetch.fetch).toHaveBeenCalledTimes(1)
+      expect(fetch.fetch).toHaveBeenCalledTimes(0)
     })
 
     it('return empty when no wearables are found with includeDefinitions set', async () => {
-      const { localFetch, fetch } = components
+      const { localFetch, fetch, alchemyNftFetcher } = components
 
-      fetch.fetch = jest.fn().mockResolvedValue({ ok: true, json: () => ({ assets: [] }) })
+      alchemyNftFetcher.getNFTsForOwner = jest.fn().mockResolvedValue([])
+      fetch.fetch = jest.fn().mockResolvedValue({ ok: true, json: () => ({ entities: [] }) })
 
       const r = await localFetch.fetch(`/users/${generateRandomAddress()}/third-party-wearables?includeDefinitions`)
 
@@ -50,18 +69,20 @@ testWithComponents(() => {
         totalAmount: 0,
         pageSize: 100
       })
-      expect(fetch.fetch).toHaveBeenCalledTimes(1)
+      expect(fetch.fetch).toHaveBeenCalledTimes(0)
     })
 
     it('return wearables when found', async () => {
-      const { localFetch, fetch, content, contentServerUrl } = components
+      const { localFetch, fetch, content, contentServerUrl, alchemyNftFetcher } = components
       const wearables = generateThirdPartyWearables(2)
-      const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn.decentraland))
-      content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(entities)
+      const urns = wearables.map((wearable) => wearable.urn.decentraland)
+      const entities = generateWearableEntities(urns)
+
+      alchemyNftFetcher.getNFTsForOwner = jest.fn().mockResolvedValue(urns)
       fetch.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
         json: () => ({
-          assets: wearables
+          entities: entities
         })
       })
 
@@ -77,40 +98,17 @@ testWithComponents(() => {
     })
 
     it('return wearables when found with entities when set', async () => {
-      const { localFetch, fetch, content, contentServerUrl } = components
-      const assets = generateThirdPartyWearables(2)
-      const entities = generateWearableEntities(assets.map((asset) => asset.urn.decentraland))
-
-      content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(entities)
-
-      fetch.fetch = jest.fn().mockResolvedValueOnce({
-        ok: true,
-        json: () => ({
-          assets
-        })
-      })
-
-      const r = await localFetch.fetch(`/users/${generateRandomAddress()}/third-party-wearables?includeDefinitions`)
-
-      expect(r.status).toBe(200)
-      expect(await r.json()).toEqual({
-        elements: convertToThirdPartyWearableResponse(assets, { entities, contentServerUrl }, true),
-        totalAmount: 2,
-        pageNum: 1,
-        pageSize: 100
-      })
-    })
-
-    it('return two wearables but only one including entities', async () => {
-      const { localFetch, fetch, content, contentServerUrl } = components
+      const { localFetch, fetch, content, contentServerUrl, alchemyNftFetcher } = components
       const wearables = generateThirdPartyWearables(2)
-      wearables[0].urn.decentraland = 'non-cached-urn'
-      const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn.decentraland))
+      const urns = wearables.map((wearable) => wearable.urn.decentraland)
+      const entities = generateWearableEntities(urns)
+
+      alchemyNftFetcher.getNFTsForOwner = jest.fn().mockResolvedValue(urns)
       content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(entities)
       fetch.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
         json: () => ({
-          assets: wearables
+          entities: entities
         })
       })
 
@@ -126,15 +124,17 @@ testWithComponents(() => {
     })
 
     it('return a single wearable with definition 2 times, returning from cache on second round', async () => {
-      const { localFetch, fetch, content, contentServerUrl } = components
+      const { localFetch, fetch, content, contentServerUrl, alchemyNftFetcher } = components
       const wearables = generateThirdPartyWearables(1)
-      wearables[0].urn.decentraland = 'to-be-cached-urn'
-      const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn.decentraland))
+      const urns = wearables.map((wearable) => wearable.urn.decentraland)
+      const entities = generateWearableEntities(urns)
+
       content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(entities)
+      alchemyNftFetcher.getNFTsForOwner = jest.fn().mockResolvedValue(urns)
       fetch.fetch = jest.fn().mockResolvedValue({
         ok: true,
         json: () => ({
-          assets: wearables
+          entities: entities
         })
       })
 
@@ -158,15 +158,16 @@ testWithComponents(() => {
     })
 
     it('return paginated wearables (total 7, page 1, size 3)', async () => {
-      const { localFetch, fetch, content, contentServerUrl } = components
+      const { localFetch, fetch, content, contentServerUrl, alchemyNftFetcher } = components
       const wearables = generateThirdPartyWearables(7)
-      const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn.decentraland))
-      content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(entities)
+      const urns = wearables.map((wearable) => wearable.urn.decentraland)
+      const entities = generateWearableEntities(urns)
 
+      alchemyNftFetcher.getNFTsForOwner = jest.fn().mockResolvedValue(urns)
       fetch.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
         json: () => ({
-          assets: wearables
+          entities: entities
         })
       })
 
@@ -182,15 +183,16 @@ testWithComponents(() => {
     })
 
     it('return paginated wearables (total 7, page 2, size 3)', async () => {
-      const { localFetch, fetch, content, contentServerUrl } = components
+      const { localFetch, fetch, content, contentServerUrl, alchemyNftFetcher } = components
       const wearables = generateThirdPartyWearables(7)
-      const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn.decentraland))
-      content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(entities)
+      const urns = wearables.map((wearable) => wearable.urn.decentraland)
+      const entities = generateWearableEntities(urns)
 
+      alchemyNftFetcher.getNFTsForOwner = jest.fn().mockResolvedValue(urns)
       fetch.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
         json: () => ({
-          assets: wearables
+          entities: entities
         })
       })
 
@@ -206,15 +208,16 @@ testWithComponents(() => {
     })
 
     it('return paginated wearables (total 7, page 3, size 3)', async () => {
-      const { localFetch, fetch, content, contentServerUrl } = components
+      const { localFetch, fetch, content, contentServerUrl, alchemyNftFetcher } = components
       const wearables = generateThirdPartyWearables(7)
-      const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn.decentraland))
-      content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(entities)
+      const urns = wearables.map((wearable) => wearable.urn.decentraland)
+      const entities = generateWearableEntities(urns)
 
+      alchemyNftFetcher.getNFTsForOwner = jest.fn().mockResolvedValue(urns)
       fetch.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
         json: () => ({
-          assets: wearables
+          entities: entities
         })
       })
 
@@ -229,31 +232,18 @@ testWithComponents(() => {
       })
     })
 
-    it('return empty when third party provider fails', async () => {
-      const { localFetch, fetch } = components
-
-      fetch.fetch = jest.fn().mockResolvedValueOnce({ ok: false })
-
-      const r = await localFetch.fetch(`/users/${generateRandomAddress()}/third-party-wearables`)
-
-      expect(r.status).toBe(200)
-      expect(await r.json()).toEqual({
-        elements: [],
-        totalAmount: 0,
-        pageNum: 1,
-        pageSize: 100
-      })
-    })
-
     it('return wearables sorted by name', async () => {
-      const { localFetch, fetch, content, contentServerUrl } = components
+      const { localFetch, fetch, content, contentServerUrl, alchemyNftFetcher } = components
       const wearables = generateThirdPartyWearables(2)
-      const entities = generateWearableEntities(wearables.map((wearable) => wearable.urn.decentraland))
+      const urns = wearables.map((wearable) => wearable.urn.decentraland)
+      const entities = generateWearableEntities(urns)
+
+      alchemyNftFetcher.getNFTsForOwner = jest.fn().mockResolvedValue(urns)
       content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(entities)
       fetch.fetch = jest.fn().mockResolvedValue({
         ok: true,
         json: () => ({
-          assets: wearables
+          entities: entities
         })
       })
 

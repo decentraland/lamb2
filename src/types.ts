@@ -31,7 +31,6 @@ import { IStatusComponent } from './adapters/status'
 import { metricDeclarations } from './metrics'
 import { OwnershipCachesComponent } from './ports/ownership-caches'
 import { TheGraphComponent } from './ports/the-graph'
-import { ThirdPartyProvidersServiceFetcher } from './adapters/third-party-providers-service-fetcher'
 import { ThirdPartyProvidersGraphFetcher } from './adapters/third-party-providers-graph-fetcher'
 import { ThirdPartyProvidersStorage } from './logic/third-party-providers-storage'
 import { IProfilesComponent } from './adapters/profiles'
@@ -56,7 +55,6 @@ export type BaseComponents = {
   baseWearablesFetcher: ElementsFetcher<BaseWearable>
   wearablesFetcher: ElementsFetcher<OnChainWearable>
   thirdPartyProvidersGraphFetcher: ThirdPartyProvidersGraphFetcher
-  thirdPartyProvidersServiceFetcher: ThirdPartyProvidersServiceFetcher
   thirdPartyProvidersStorage: ThirdPartyProvidersStorage
   thirdPartyWearablesFetcher: ElementsFetcher<ThirdPartyWearable>
   emotesFetcher: ElementsFetcher<OnChainEmote>
