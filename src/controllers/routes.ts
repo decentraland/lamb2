@@ -41,10 +41,7 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
   router.get('/contracts/servers', getCatalystServersHandler)
   router.get('/contracts/pois', getPOIsHandler)
   router.get('/contracts/denylisted-names', getNameDenylistHandler)
-
-  /* internal */
   router.get('/explorer/:address/wearables', explorerHandler)
-  /* end internal */
 
   return router
 }
