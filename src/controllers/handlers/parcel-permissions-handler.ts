@@ -20,9 +20,9 @@ export async function parcelPermissionsHandler(
     throw new InvalidRequestError('Address must be a valid Ethereum address')
   }
 
-  const fetcher = await parcelPermissionsFetcher.getParcelPermissions(address, parseInt(x), parseInt(y))
+  const permissions = await parcelPermissionsFetcher.getParcelPermissions(address, parseInt(x), parseInt(y))
   return {
     status: 200,
-    body: fetcher
+    body: permissions
   }
 }

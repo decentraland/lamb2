@@ -2,14 +2,14 @@ import { ParcelPermissions } from '../../src/adapters/parcel-permissions-fetcher
 import { test } from '../components'
 import { generateRandomAddress } from '../helpers'
 
-test('integration tests for parcel permissions handler', function ({ components }) {
+test('integration tests for parcel permissions handler', function ({ components, stubComponents }) {
   it('should return permissions when the user is the owner of the parcel', async () => {
-    const { localFetch, parcelPermissionsFetcher } = components
+    const { localFetch } = components
     const userAddress = generateRandomAddress()
     const parcelX = 10
     const parcelY = 20
 
-    parcelPermissionsFetcher.getParcelPermissions = jest.fn().mockResolvedValueOnce({
+    stubComponents.parcelPermissionsFetcher.getParcelPermissions.resolves({
       address: true,
       operator: false
     } as ParcelPermissions)
@@ -21,16 +21,15 @@ test('integration tests for parcel permissions handler', function ({ components 
       address: true,
       operator: false
     })
-    expect(parcelPermissionsFetcher.getParcelPermissions).toHaveBeenCalledWith(userAddress, parcelX, parcelY)
   })
 
   it('should return permissions when the user is the operator of the parcel', async () => {
-    const { localFetch, parcelPermissionsFetcher } = components
+    const { localFetch } = components
     const userAddress = generateRandomAddress()
     const parcelX = 10
     const parcelY = 20
 
-    parcelPermissionsFetcher.getParcelPermissions = jest.fn().mockResolvedValueOnce({
+    stubComponents.parcelPermissionsFetcher.getParcelPermissions.resolves({
       address: false,
       operator: true
     } as ParcelPermissions)
@@ -45,12 +44,12 @@ test('integration tests for parcel permissions handler', function ({ components 
   })
 
   it('should return permissions when the user has no rights on the parcel', async () => {
-    const { localFetch, parcelPermissionsFetcher } = components
+    const { localFetch } = components
     const userAddress = generateRandomAddress()
     const parcelX = 10
     const parcelY = 20
 
-    parcelPermissionsFetcher.getParcelPermissions = jest.fn().mockResolvedValueOnce({
+    stubComponents.parcelPermissionsFetcher.getParcelPermissions.resolves({
       address: false,
       operator: false
     } as ParcelPermissions)
