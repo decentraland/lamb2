@@ -19,6 +19,7 @@ import { outfitsHandler } from './handlers/outfits-handler'
 import { getCatalystServersHandler } from './handlers/catalyst-servers-handler'
 import { getNameDenylistHandler } from './handlers/get-name-denylist-handler'
 import { getPOIsHandler } from './handlers/get-pois-handler'
+import { parcelPermissionsHandler } from './handlers/parcel-permissions-handler'
 
 // We return the entire router because it will be easier to test than a whole server
 export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContext>> {
@@ -33,6 +34,7 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
   router.get('/third-party-integrations', thirdPartyIntegrationsHandler)
   router.get('/users/:address/emotes', emotesHandler)
   router.get('/users/:address/names', namesHandler)
+  router.get('/users/:address/parcels/:x/:y/permissions', parcelPermissionsHandler)
   router.get('/users/:address/lands', landsHandler)
   router.post('/profiles', profilesHandler)
   router.get('/profiles/:id', profileHandler)
