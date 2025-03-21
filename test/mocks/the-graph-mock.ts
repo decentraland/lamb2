@@ -13,6 +13,7 @@ export function createTheGraphComponentMock(): TheGraphComponent {
     ethereumCollectionsSubgraph: createMockSubgraphComponent(),
     maticCollectionsSubgraph: createMockSubgraphComponent(),
     ensSubgraph: createMockSubgraphComponent(),
-    thirdPartyRegistrySubgraph: createMockSubgraphComponent()
+    thirdPartyRegistrySubgraph: createMockSubgraphComponent(),
+    landSubgraph: createMockSubgraphComponent()
   }
 }
