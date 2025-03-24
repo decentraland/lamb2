@@ -18,7 +18,7 @@ function createMockTheGraphComponent(mockLandQuery: jest.Mock): TheGraphComponen
 }
 
 describe('ParcelPermissionsComponent', () => {
-  it('returns correct permissions when user is parcel owner', async () => {
+  it('resolves to the owner permission being true when user is parcel owner', async () => {
     const logs = await createLogComponent({})
     const userAddress = '0xuser'
     const parcelX = 10
@@ -43,7 +43,7 @@ describe('ParcelPermissionsComponent', () => {
     const component = await createParcelPermissionsComponent({ theGraph, logs })
     const permissions = await component.getParcelPermissions(userAddress, parcelX, parcelY)
 
-    expect(permissions).toEqual({ address: true, operator: false })
+    expect(permissions).toEqual({ owner: true, operator: false })
     expect(mockQuery).toHaveBeenCalledWith(expect.any(String), {
       addressLower: userAddress,
       x: parcelX,
@@ -51,7 +51,7 @@ describe('ParcelPermissionsComponent', () => {
     })
   })
 
-  it('returns correct permissions when user is parcel operator', async () => {
+  it('resolves to the operator permission being true when user is parcel owner', async () => {
     const logs = await createLogComponent({})
     const userAddress = '0xuser'
     const ownerAddress = '0xowner'
@@ -77,7 +77,7 @@ describe('ParcelPermissionsComponent', () => {
     const component = await createParcelPermissionsComponent({ theGraph, logs })
     const permissions = await component.getParcelPermissions(userAddress, parcelX, parcelY)
 
-    expect(permissions).toEqual({ address: false, operator: true })
+    expect(permissions).toEqual({ owner: false, operator: true })
   })
 
   it('returns correct permissions when user is estate owner', async () => {
@@ -103,7 +103,7 @@ describe('ParcelPermissionsComponent', () => {
     const component = await createParcelPermissionsComponent({ theGraph, logs })
     const permissions = await component.getParcelPermissions(userAddress, parcelX, parcelY)
 
-    expect(permissions).toEqual({ address: true, operator: false })
+    expect(permissions).toEqual({ owner: true, operator: false })
   })
 
   it('returns correct permissions when user is estate operator', async () => {
@@ -130,7 +130,7 @@ describe('ParcelPermissionsComponent', () => {
     const component = await createParcelPermissionsComponent({ theGraph, logs })
     const permissions = await component.getParcelPermissions(userAddress, parcelX, parcelY)
 
-    expect(permissions).toEqual({ address: false, operator: true })
+    expect(permissions).toEqual({ owner: false, operator: true })
   })
 
   it('returns negative permissions when there are no matches', async () => {
@@ -149,7 +149,7 @@ describe('ParcelPermissionsComponent', () => {
     const component = await createParcelPermissionsComponent({ theGraph, logs })
     const permissions = await component.getParcelPermissions(userAddress, parcelX, parcelY)
 
-    expect(permissions).toEqual({ address: false, operator: false })
+    expect(permissions).toEqual({ owner: false, operator: false })
   })
 
   it('logs information about the permissions query', async () => {

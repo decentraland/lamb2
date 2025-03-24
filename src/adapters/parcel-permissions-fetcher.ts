@@ -75,7 +75,7 @@ export type ParcelPermissionsFromQuery = {
 }
 
 export type ParcelPermissions = {
-  address: boolean
+  owner: boolean
   operator: boolean
 }
 
@@ -91,7 +91,7 @@ export async function createParcelPermissionsComponent(
 
   return {
     async getParcelPermissions(address: string, x: number, y: number): Promise<ParcelPermissions> {
-      const response = { address: false, operator: false }
+      const response = { owner: false, operator: false }
       const addressLower = address.toLowerCase()
       const result = await theGraph.landSubgraph.query<ParcelPermissionsFromQuery>(QUERY_OPERATOR, {
         addressLower,
@@ -100,13 +100,13 @@ export async function createParcelPermissionsComponent(
       })
       logger.info(`Parcel permissions for address ${address} at x=${x} y=${y}: ${JSON.stringify(result)}`)
       if (result.parcels.length > 0) {
-        response.address = result.parcels[0].owner.address === addressLower
-        response.operator = result.parcels[0].updateOperator === addressLower
+        response.owner = result.parcels[0].owner.address.toLocaleLowerCase() === addressLower
+        response.operator = result.parcels[0].updateOperator.toLocaleLowerCase() === addressLower
       }
 
       if (result.estates.length > 0) {
-        response.address = result.estates[0].owner.address === addressLower
-        response.operator = result.estates[0].updateOperator === addressLower
+        response.owner = result.estates[0].owner.address.toLocaleLowerCase() === addressLower
+        response.operator = result.estates[0].updateOperator.toLocaleLowerCase() === addressLower
       }
 
       return response

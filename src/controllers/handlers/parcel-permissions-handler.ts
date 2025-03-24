@@ -1,4 +1,4 @@
-import { EthAddress } from '@dcl/schemas'
+import { EthAddress, Parcel } from '@dcl/schemas'
 import { ParcelPermissions } from '../../adapters/parcel-permissions-fetcher'
 import { HandlerContextWithPath, InvalidRequestError } from '../../types'
 
@@ -9,8 +9,14 @@ export async function parcelPermissionsHandler(
   const { parcelPermissionsFetcher } = context.components
 
   const logger = context.components.logs.getLogger('parcel-permissions-handler')
+  const xInt = parseInt(x)
+  const yInt = parseInt(y)
+  if (isNaN(xInt) || isNaN(yInt)) {
+    logger.error(`Invalid values for coordinates: x=${x}, y=${y}`)
+    throw new InvalidRequestError('Coordinates X and Y must be valid numbers')
+  }
 
-  if (isNaN(parseInt(x)) || isNaN(parseInt(y))) {
+  if (!Parcel.validate(xInt, yInt)) {
     logger.error(`Invalid values for coordinates: x=${x}, y=${y}`)
     throw new InvalidRequestError('Coordinates X and Y must be valid numbers')
   }
@@ -20,7 +26,7 @@ export async function parcelPermissionsHandler(
     throw new InvalidRequestError('Address must be a valid Ethereum address')
   }
 
-  const permissions = await parcelPermissionsFetcher.getParcelPermissions(address, parseInt(x), parseInt(y))
+  const permissions = await parcelPermissionsFetcher.getParcelPermissions(address, xInt, yInt)
   return {
     status: 200,
     body: permissions
