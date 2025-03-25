@@ -11,10 +11,6 @@ export async function parcelPermissionsHandler(
   const logger = context.components.logs.getLogger('parcel-permissions-handler')
   const xInt = parseInt(x)
   const yInt = parseInt(y)
-  if (isNaN(xInt) || isNaN(yInt)) {
-    logger.error(`Invalid values for coordinates: x=${x}, y=${y}`)
-    throw new InvalidRequestError('Coordinates X and Y must be valid numbers')
-  }
 
   if (!Parcel.validate(xInt, yInt)) {
     logger.error(`Invalid values for coordinates: x=${x}, y=${y}`)

@@ -3,11 +3,9 @@ import { test } from '../components'
 import { generateRandomAddress } from '../helpers'
 import { InvalidRequestError } from '../../src/types'
 
-// Mock de los handlers
 jest.mock('../../src/controllers/handlers/parcel-permissions-handler', () => {
   const originalModule = jest.requireActual('../../src/controllers/handlers/parcel-permissions-handler')
 
-  // Conservar la función original para algunas pruebas
   const originalHandler = originalModule.parcelPermissionsHandler
 
   return {
@@ -15,22 +13,10 @@ jest.mock('../../src/controllers/handlers/parcel-permissions-handler', () => {
     parcelPermissionsHandler: async (context) => {
       const { address, x, y } = context.params
 
-      // Para la prueba de coordenadas no numéricas, usar el handler original
       if (x === 'invalid' || y === 'coord') {
         return originalHandler(context)
       }
 
-      // Para la prueba de coordenadas inválidas pero numéricas
-      if (x === '9999999' && y === '9999999') {
-        throw new InvalidRequestError('Coordinates X and Y must be valid numbers')
-      }
-
-      // Para la prueba de dirección inválida
-      if (address === 'invalid-address') {
-        throw new InvalidRequestError('Address must be a valid Ethereum address')
-      }
-
-      // En otros casos, proceder normalmente
       return {
         status: 200,
         body: await context.components.parcelPermissionsFetcher.getParcelPermissions(address, parseInt(x), parseInt(y))
