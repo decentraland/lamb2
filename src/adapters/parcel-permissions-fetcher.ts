@@ -101,12 +101,12 @@ export async function createParcelPermissionsComponent(
       logger.info(`Parcel permissions for address ${address} at x=${x} y=${y}: ${JSON.stringify(result)}`)
       if (result.parcels.length > 0) {
         response.owner = result.parcels[0].owner.address.toLowerCase() === addressLower
-        response.operator = result.parcels[0].updateOperator.toLowerCase() === addressLower
+        response.operator = result.parcels[0].updateOperator?.toLowerCase() === addressLower
       }
 
       if (result.estates.length > 0) {
         response.owner = result.estates[0].owner.address.toLowerCase() === addressLower
-        response.operator = result.estates[0].updateOperator.toLowerCase() === addressLower
+        response.operator = result.estates[0].updateOperator?.toLowerCase() === addressLower
       }
 
       return response
