@@ -14,7 +14,7 @@ export async function parcelPermissionsHandler(
 
   if (!Parcel.validate({ x: xInt, y: yInt })) {
     logger.error(`Invalid values for coordinates: x=${x}, y=${y}`)
-    throw new InvalidRequestError('Coordinates X and Y must be valid numbers')
+    throw new InvalidRequestError('Coordinates X and Y must be valid numbers in a valid range')
   }
 
   if (!EthAddress.validate(address)) {
