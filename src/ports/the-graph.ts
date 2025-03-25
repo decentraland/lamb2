@@ -20,7 +20,7 @@ const DEFAULT_ENS_OWNER_PROVIDER_URL_SEPOLIA =
 const DEFAULT_ENS_OWNER_PROVIDER_URL_MAINNET = 'https://subgraph.decentraland.org/marketplace'
 const DEFAULT_THIRD_PARTY_REGISTRY_SUBGRAPH_MATIC_AMOY = 'https://subgraph.decentraland.org/tpr-matic-amoy'
 const DEFAULT_THIRD_PARTY_REGISTRY_SUBGRAPH_MATIC_MAINNET = 'https://subgraph.decentraland.org/tpr-matic-mainnet'
-const DEFAULT_LAND_SUBGRAPH_SEPOLIA = 'https://api.studio.thegraph.com/query/49472/land-manager-sepolia/version/latest'
+const DEFAULT_LAND_SUBGRAPH_SEPOLIA = 'https://subgraph.decentraland.org/land-manager-sepolia'
 const DEFAULT_LAND_SUBGRAPH_MATIC_MAINNET = 'https://subgraph.decentraland.org/land-manager'
 
 export async function createTheGraphComponent(
