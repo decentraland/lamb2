@@ -1,29 +1,6 @@
 import { ParcelPermissions } from '../../src/adapters/parcel-permissions-fetcher'
 import { test } from '../components'
 import { generateRandomAddress } from '../helpers'
-import { InvalidRequestError } from '../../src/types'
-
-jest.mock('../../src/controllers/handlers/parcel-permissions-handler', () => {
-  const originalModule = jest.requireActual('../../src/controllers/handlers/parcel-permissions-handler')
-
-  const originalHandler = originalModule.parcelPermissionsHandler
-
-  return {
-    ...originalModule,
-    parcelPermissionsHandler: async (context) => {
-      const { address, x, y } = context.params
-
-      if (x === 'invalid' || y === 'coord') {
-        return originalHandler(context)
-      }
-
-      return {
-        status: 200,
-        body: await context.components.parcelPermissionsFetcher.getParcelPermissions(address, parseInt(x), parseInt(y))
-      }
-    }
-  }
-})
 
 test('integration tests for parcel permissions handler', function ({ components, stubComponents }) {
   it('should respond with a 200 and the owner permission as true when the user is the owner of the parcel', async () => {
