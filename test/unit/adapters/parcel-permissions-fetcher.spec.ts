@@ -152,6 +152,62 @@ describe('ParcelPermissionsComponent', () => {
     expect(permissions).toEqual({ owner: false, operator: false })
   })
 
+  it('handles null updateOperator in parcels correctly', async () => {
+    const logs = await createLogComponent({})
+    const userAddress = '0xuser'
+    const ownerAddress = '0xowner'
+    const parcelX = 10
+    const parcelY = 20
+
+    const mockQuery = jest.fn().mockResolvedValue({
+      parcels: [
+        {
+          x: parcelX.toString(),
+          y: parcelY.toString(),
+          owner: {
+            address: ownerAddress
+          },
+          updateOperator: null
+        }
+      ],
+      estates: []
+    })
+
+    const theGraph = createMockTheGraphComponent(mockQuery)
+
+    const component = await createParcelPermissionsComponent({ theGraph, logs })
+    const permissions = await component.getParcelPermissions(userAddress, parcelX, parcelY)
+
+    expect(permissions).toEqual({ owner: false, operator: false })
+  })
+
+  it('handles undefined updateOperator in estates correctly', async () => {
+    const logs = await createLogComponent({})
+    const userAddress = '0xuser'
+    const ownerAddress = '0xowner'
+    const parcelX = 10
+    const parcelY = 20
+
+    const mockQuery = jest.fn().mockResolvedValue({
+      parcels: [],
+      estates: [
+        {
+          owner: {
+            address: ownerAddress
+          },
+          updateOperator: undefined
+        }
+      ]
+    })
+
+    const theGraph = createMockTheGraphComponent(mockQuery)
+
+    const component = await createParcelPermissionsComponent({ theGraph, logs })
+    const permissions = await component.getParcelPermissions(userAddress, parcelX, parcelY)
+
+    expect(permissions).toEqual({ owner: false, operator: false })
+  })
+
   it('logs information about the permissions query', async () => {
     const logs = await createLogComponent({})
     const mockLogger = {
