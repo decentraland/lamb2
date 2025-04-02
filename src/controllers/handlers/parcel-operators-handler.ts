@@ -1,12 +1,12 @@
 import { Parcel } from '@dcl/schemas'
 import { HandlerContextWithPath, InvalidRequestError } from '../../types'
-import { ParcelOperators } from '../../adapters/parcel-operators-fetcher'
+import { ParcelOperators } from '../../adapters/parcel-rights-fetcher'
 
 export async function parcelOperatorsHandler(
-  context: HandlerContextWithPath<'parcelOperatorsFetcher' | 'logs', '/parcels/:x/:y/operators'>
+  context: HandlerContextWithPath<'parcelRightsFetcher' | 'logs', '/parcels/:x/:y/operators'>
 ): Promise<{ status: 200; body: ParcelOperators }> {
   const { x, y } = context.params
-  const { parcelOperatorsFetcher } = context.components
+  const { parcelRightsFetcher } = context.components
 
   const logger = context.components.logs.getLogger('parcel-operators-handler')
   const xInt = parseInt(x)
@@ -17,7 +17,7 @@ export async function parcelOperatorsHandler(
     throw new InvalidRequestError('Coordinates X and Y must be valid numbers in a valid range')
   }
 
-  const operators = await parcelOperatorsFetcher.getOperatorsOfParcel(xInt, yInt)
+  const operators = await parcelRightsFetcher.getOperatorsOfParcel(xInt, yInt)
 
   return {
     status: 200,

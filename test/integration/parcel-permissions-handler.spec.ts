@@ -9,7 +9,7 @@ test('integration tests for parcel permissions handler', function ({ components,
     const parcelX = 10
     const parcelY = 20
 
-    stubComponents.parcelPermissionsFetcher.getParcelPermissions.resolves({
+    stubComponents.parcelRightsFetcher.getParcelPermissions.resolves({
       owner: true,
       operator: false
     } as ParcelPermissions)
@@ -29,7 +29,7 @@ test('integration tests for parcel permissions handler', function ({ components,
     const parcelX = 10
     const parcelY = 20
 
-    stubComponents.parcelPermissionsFetcher.getParcelPermissions.resolves({
+    stubComponents.parcelRightsFetcher.getParcelPermissions.resolves({
       owner: false,
       operator: true
     } as ParcelPermissions)
@@ -49,7 +49,7 @@ test('integration tests for parcel permissions handler', function ({ components,
     const parcelX = 10
     const parcelY = 20
 
-    stubComponents.parcelPermissionsFetcher.getParcelPermissions.resolves({
+    stubComponents.parcelRightsFetcher.getParcelPermissions.resolves({
       owner: false,
       operator: false
     } as ParcelPermissions)

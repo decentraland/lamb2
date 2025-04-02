@@ -55,15 +55,21 @@ export type ParcelOperators = {
   operator?: string
 }
 
-export type ParcelOperatorsFetcher = IBaseComponent & {
-  getOperatorsOfParcel(x: number, y: number): Promise<ParcelOperators>
+export type ParcelPermissions = {
+  owner: boolean
+  operator: boolean
 }
 
-export async function createParcelOperatorsComponent(
+export type ParcelRightsFetcher = IBaseComponent & {
+  getOperatorsOfParcel(x: number, y: number): Promise<ParcelOperators>
+  getParcelPermissions(address: string, x: number, y: number): Promise<ParcelPermissions>
+}
+
+export async function createParcelRightsComponent(
   components: Pick<AppComponents, 'theGraph' | 'logs'>
-): Promise<ParcelOperatorsFetcher> {
+): Promise<ParcelRightsFetcher> {
   const { theGraph, logs } = components
-  const logger = logs.getLogger('parcel-operators-component')
+  const logger = logs.getLogger('parcel-rights-component')
 
   return {
     async getOperatorsOfParcel(x: number, y: number): Promise<ParcelOperators> {
@@ -91,6 +97,26 @@ export async function createParcelOperatorsComponent(
         delete response!.operator
       }
       return response!
+    },
+    async getParcelPermissions(address: string, x: number, y: number): Promise<ParcelPermissions> {
+      const response = { owner: false, operator: false }
+      const addressLower = address.toLowerCase()
+      const result = await theGraph.landSubgraph.query<ParcelOperatorsFromQuery>(QUERY_OPERATORS_PARCEL, {
+        x,
+        y
+      })
+      logger.info(`Parcel permissions for address ${address} at x=${x} y=${y}: ${JSON.stringify(result)}`)
+      if (result.parcels.length > 0) {
+        response.owner = result.parcels[0].owner.address.toLowerCase() === addressLower
+        response.operator = result.parcels[0].updateOperator?.toLowerCase() === addressLower
+      }
+
+      if (result.estates.length > 0) {
+        response.owner = result.estates[0].owner.address.toLowerCase() === addressLower
+        response.operator = result.estates[0].updateOperator?.toLowerCase() === addressLower
+      }
+
+      return response
     }
   }
 }

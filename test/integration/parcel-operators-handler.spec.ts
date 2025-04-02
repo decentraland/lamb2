@@ -1,4 +1,4 @@
-import { ParcelOperators } from '../../src/adapters/parcel-operators-fetcher'
+import { ParcelOperators } from '../../src/adapters/parcel-rights-fetcher'
 import { test } from '../components'
 import { generateRandomAddress } from '../helpers'
 
@@ -10,7 +10,7 @@ test('integration tests for parcel operators handler', function ({ components, s
     const parcelX = 10
     const parcelY = 20
 
-    stubComponents.parcelOperatorsFetcher.getOperatorsOfParcel.resolves({
+    stubComponents.parcelRightsFetcher.getOperatorsOfParcel.resolves({
       owner: ownerAddress,
       operator: operatorAddress
     } as ParcelOperators)
@@ -31,7 +31,7 @@ test('integration tests for parcel operators handler', function ({ components, s
     const parcelX = 10
     const parcelY = 20
 
-    stubComponents.parcelOperatorsFetcher.getOperatorsOfParcel.resolves({
+    stubComponents.parcelRightsFetcher.getOperatorsOfParcel.resolves({
       owner: ownerAddress.toLowerCase(),
       operator: operatorAddress.toLowerCase()
     } as ParcelOperators)
@@ -50,7 +50,7 @@ test('integration tests for parcel operators handler', function ({ components, s
     const parcelX = 10
     const parcelY = 20
 
-    stubComponents.parcelOperatorsFetcher.getOperatorsOfParcel.resolves({
+    stubComponents.parcelRightsFetcher.getOperatorsOfParcel.resolves({
       owner: ''
     } as ParcelOperators)
 
