@@ -37,6 +37,7 @@ import { IProfilesComponent } from './adapters/profiles'
 import { AlchemyNftFetcher } from './adapters/alchemy-nft-fetcher'
 import { ThirdPartyItemChecker } from './ports/ownership-checker/third-party-item-checker'
 import { ParcelPermissionsFetcher } from './adapters/parcel-permissions-fetcher'
+import { ParcelOperatorsFetcher } from './adapters/parcel-operators-fetcher'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -65,6 +66,7 @@ export type BaseComponents = {
   namesFetcher: ElementsFetcher<Name>
   landsFetcher: ElementsFetcher<LAND>
   parcelPermissionsFetcher: ParcelPermissionsFetcher
+  parcelOperatorsFetcher: ParcelOperatorsFetcher
   resourcesStatusCheck: IResourcesStatusComponent
   status: IStatusComponent
   l1Provider: HTTPProvider

@@ -39,6 +39,7 @@ import { createAlchemyNftFetcher } from './adapters/alchemy-nft-fetcher'
 import { createThirdPartyContractRegistry } from './ports/ownership-checker/third-party-contract-registry'
 import { createThirdPartyItemChecker } from './ports/ownership-checker/third-party-item-checker'
 import { createParcelPermissionsComponent } from './adapters/parcel-permissions-fetcher'
+import { createParcelOperatorsComponent } from './adapters/parcel-operators-fetcher'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -96,6 +97,7 @@ export async function initComponents(
   const namesFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllNames({ theGraph }, address))
   const landsFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllLANDs({ theGraph }, address))
   const parcelPermissionsFetcher = await createParcelPermissionsComponent({ logs, theGraph })
+  const parcelOperatorsFetcher = await createParcelOperatorsComponent({ logs, theGraph })
 
   const resourcesStatusCheck = createResourcesStatusComponent({ logs })
   const status = await createStatusComponent({ logs, fetch })
@@ -182,6 +184,7 @@ export async function initComponents(
     namesFetcher,
     landsFetcher,
     parcelPermissionsFetcher,
+    parcelOperatorsFetcher,
     thirdPartyProvidersGraphFetcher,
     thirdPartyProvidersStorage,
     contentServerUrl,
