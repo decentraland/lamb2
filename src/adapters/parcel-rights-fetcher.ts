@@ -84,9 +84,7 @@ export async function createParcelRightsComponent(
           owner: result.parcels[0].owner.address,
           operator: result.parcels[0].updateOperator ?? undefined
         }
-      }
-
-      if (result.estates.length > 0) {
+      } else if (result.estates.length > 0) {
         response = {
           owner: result.estates[0].owner.address,
           operator: result.estates[0].updateOperator ?? undefined
