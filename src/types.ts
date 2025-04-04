@@ -205,6 +205,12 @@ export class NotFoundError extends Error {
     Error.captureStackTrace(this, this.constructor)
   }
 }
+export class ParcelOrStateNotFoundError extends Error {
+  constructor(message: string) {
+    super(message)
+    Error.captureStackTrace(this, this.constructor)
+  }
+}
 
 export type Limits = {
   offset: number

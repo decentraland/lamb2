@@ -1,5 +1,5 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
-import { AppComponents } from '../types'
+import { AppComponents, ParcelOrStateNotFoundError } from '../types'
 
 const QUERY_OPERATORS_PARCEL: string = `
   query fetchOperatorsOfParcel($x: Int, $y: Int){
@@ -78,7 +78,7 @@ export async function createParcelRightsComponent(
         x,
         y
       })
-      logger.info(`Parcel operators at x=${x} y=${y}: ${JSON.stringify(result)}`)
+      logger.info(`Parcel operators at x=${x} y=${y}`)
       if (result.parcels.length > 0) {
         response = {
           owner: result.parcels[0].owner.address,
@@ -89,11 +89,16 @@ export async function createParcelRightsComponent(
           owner: result.estates[0].owner.address,
           operator: result.estates[0].updateOperator ?? undefined
         }
+      } else {
+        throw new ParcelOrStateNotFoundError('No parcel or estate found')
       }
 
-      if (response!.operator === undefined) {
+      if (!response!.operator) {
         delete response!.operator
       }
+
+      logger.info(`Parcel operators at x=${x} y=${y} response: ${JSON.stringify(response)}`)
+
       return response!
     },
     async getParcelPermissions(address: string, x: number, y: number): Promise<ParcelPermissions> {
@@ -104,14 +109,13 @@ export async function createParcelRightsComponent(
         y
       })
       logger.info(`Parcel permissions for address ${address} at x=${x} y=${y}: ${JSON.stringify(result)}`)
-      if (result.parcels.length > 0) {
-        response.owner = result.parcels[0].owner.address.toLowerCase() === addressLower
-        response.operator = result.parcels[0].updateOperator?.toLowerCase() === addressLower
-      }
-
       if (result.estates.length > 0) {
         response.owner = result.estates[0].owner.address.toLowerCase() === addressLower
         response.operator = result.estates[0].updateOperator?.toLowerCase() === addressLower
+      }
+      if (result.parcels.length > 0) {
+        response.owner = result.parcels[0].owner.address.toLowerCase() === addressLower
+        response.operator = result.parcels[0].updateOperator?.toLowerCase() === addressLower
       }
 
       return response

@@ -1,6 +1,6 @@
 import { LambdasError } from '@dcl/catalyst-api-specs/lib/client'
 import { IHttpServerComponent } from '@well-known-components/interfaces'
-import { InvalidRequestError, NotFoundError } from '../../types'
+import { InvalidRequestError, NotFoundError, ParcelOrStateNotFoundError } from '../../types'
 import { FetcherError } from '../../adapters/elements-fetcher'
 
 function handleError(error: any): { status: number; body: LambdasError } {
@@ -29,6 +29,16 @@ function handleError(error: any): { status: number; body: LambdasError } {
       status: 404,
       body: {
         error: 'Not Found',
+        message: error.message
+      }
+    }
+  }
+
+  if (error instanceof ParcelOrStateNotFoundError) {
+    return {
+      status: 404,
+      body: {
+        error: 'Bad Request',
         message: error.message
       }
     }

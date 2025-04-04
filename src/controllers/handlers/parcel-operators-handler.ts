@@ -13,7 +13,7 @@ export async function parcelOperatorsHandler(
   const yInt = parseInt(y)
 
   if (!Parcel.validate({ x: xInt, y: yInt })) {
-    logger.error(`Invalid values for coordinates: x=${x}, y=${y}`)
+    logger.info(`Invalid values for coordinates: x=${x}, y=${y}`)
     throw new InvalidRequestError('Coordinates X and Y must be valid numbers in a valid range')
   }
 
