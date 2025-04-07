@@ -3,10 +3,10 @@ import { ParcelPermissions } from '../../adapters/parcel-permissions-fetcher'
 import { HandlerContextWithPath, InvalidRequestError } from '../../types'
 
 export async function parcelPermissionsHandler(
-  context: HandlerContextWithPath<'parcelPermissionsFetcher' | 'logs', '/users/:address/parcels/:x/:y/permissions'>
+  context: HandlerContextWithPath<'parcelRightsFetcher' | 'logs', '/users/:address/parcels/:x/:y/permissions'>
 ): Promise<{ status: 200; body: ParcelPermissions }> {
   const { address, x, y } = context.params
-  const { parcelPermissionsFetcher } = context.components
+  const { parcelRightsFetcher } = context.components
 
   const logger = context.components.logs.getLogger('parcel-permissions-handler')
   const xInt = parseInt(x)
@@ -22,7 +22,7 @@ export async function parcelPermissionsHandler(
     throw new InvalidRequestError('Address must be a valid Ethereum address')
   }
 
-  const permissions = await parcelPermissionsFetcher.getParcelPermissions(address, xInt, yInt)
+  const permissions = await parcelRightsFetcher.getParcelPermissions(address, xInt, yInt)
   return {
     status: 200,
     body: permissions

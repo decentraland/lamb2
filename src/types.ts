@@ -36,7 +36,7 @@ import { ThirdPartyProvidersStorage } from './logic/third-party-providers-storag
 import { IProfilesComponent } from './adapters/profiles'
 import { AlchemyNftFetcher } from './adapters/alchemy-nft-fetcher'
 import { ThirdPartyItemChecker } from './ports/ownership-checker/third-party-item-checker'
-import { ParcelPermissionsFetcher } from './adapters/parcel-permissions-fetcher'
+import { ParcelRightsFetcher } from './adapters/parcel-rights-fetcher'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -64,7 +64,7 @@ export type BaseComponents = {
   entitiesFetcher: EntitiesFetcher
   namesFetcher: ElementsFetcher<Name>
   landsFetcher: ElementsFetcher<LAND>
-  parcelPermissionsFetcher: ParcelPermissionsFetcher
+  parcelRightsFetcher: ParcelRightsFetcher
   resourcesStatusCheck: IResourcesStatusComponent
   status: IStatusComponent
   l1Provider: HTTPProvider
@@ -202,6 +202,12 @@ export class InvalidRequestError extends Error {
 export class NotFoundError extends Error {
   constructor(message: string) {
     super(message)
+    Error.captureStackTrace(this, this.constructor)
+  }
+}
+export class ParcelOrStateNotFoundError extends Error {
+  constructor(x: number, y: number) {
+    super(`Parcel or estate rights not found for x: ${x}, y: ${y}`)
     Error.captureStackTrace(this, this.constructor)
   }
 }

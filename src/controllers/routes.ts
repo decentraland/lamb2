@@ -20,6 +20,7 @@ import { getCatalystServersHandler } from './handlers/catalyst-servers-handler'
 import { getNameDenylistHandler } from './handlers/get-name-denylist-handler'
 import { getPOIsHandler } from './handlers/get-pois-handler'
 import { parcelPermissionsHandler } from './handlers/parcel-permissions-handler'
+import { parcelOperatorsHandler } from './handlers/parcel-operators-handler'
 
 // We return the entire router because it will be easier to test than a whole server
 export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContext>> {
@@ -44,6 +45,7 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
   router.get('/contracts/pois', getPOIsHandler)
   router.get('/contracts/denylisted-names', getNameDenylistHandler)
   router.get('/explorer/:address/wearables', explorerHandler)
+  router.get('/parcels/:x/:y/operators', parcelOperatorsHandler)
 
   return router
 }
