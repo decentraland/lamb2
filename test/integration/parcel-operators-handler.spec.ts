@@ -4,7 +4,7 @@ import { test } from '../components'
 import { generateRandomAddress } from '../helpers'
 
 test('integration tests for parcel operators handler', function ({ components, stubComponents }) {
-  it('should respond with a 200 and the owner and operator when the land exists', async () => {
+  it('should respond with a 200 with the owner and operator when the land exists', async () => {
     const { localFetch } = components
     const ownerAddress = generateRandomAddress()
     const operatorAddress = generateRandomAddress()
