@@ -206,8 +206,8 @@ export class NotFoundError extends Error {
   }
 }
 export class ParcelOrStateNotFoundError extends Error {
-  constructor(message: string) {
-    super(message)
+  constructor(x: number, y: number) {
+    super(`Parcel or estate rights not found for x: ${x}, y: ${y}`)
     Error.captureStackTrace(this, this.constructor)
   }
 }

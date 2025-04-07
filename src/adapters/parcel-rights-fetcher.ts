@@ -90,14 +90,16 @@ export async function createParcelRightsComponent(
           operator: result.estates[0].updateOperator ?? undefined
         }
       } else {
-        throw new ParcelOrStateNotFoundError('No parcel or estate found')
+        throw new ParcelOrStateNotFoundError(x, y)
       }
 
       if (!response!.operator) {
         delete response!.operator
       }
 
-      logger.info(`Parcel operators at x=${x} y=${y} response: ${JSON.stringify(response)}`)
+      logger.info(
+        `Parcel operators at x=${x} y=${y} owner: ${response.owner ?? 'none'} operator: ${response.operator ?? 'none'}`
+      )
 
       return response!
     },

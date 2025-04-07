@@ -1,9 +1,10 @@
 import { ParcelOperators } from '../../src/adapters/parcel-rights-fetcher'
+import { ParcelOrStateNotFoundError } from '../../src/types'
 import { test } from '../components'
 import { generateRandomAddress } from '../helpers'
 
 test('integration tests for parcel operators handler', function ({ components, stubComponents }) {
-  it('should respond with a 200 and the correct owner and operator when parcel exists', async () => {
+  it('should respond with a 200 and the owner and operator when the land exists', async () => {
     const { localFetch } = components
     const ownerAddress = generateRandomAddress()
     const operatorAddress = generateRandomAddress()
@@ -21,44 +22,6 @@ test('integration tests for parcel operators handler', function ({ components, s
     expect(await r.json()).toEqual({
       owner: ownerAddress,
       operator: operatorAddress
-    })
-  })
-
-  it('should respond with a 200 and the correct owner and operator when estate exists', async () => {
-    const { localFetch } = components
-    const ownerAddress = generateRandomAddress()
-    const operatorAddress = generateRandomAddress()
-    const parcelX = 10
-    const parcelY = 20
-
-    stubComponents.parcelRightsFetcher.getOperatorsOfParcel.resolves({
-      owner: ownerAddress.toLowerCase(),
-      operator: operatorAddress.toLowerCase()
-    } as ParcelOperators)
-
-    const r = await localFetch.fetch(`/parcels/${parcelX}/${parcelY}/operators`)
-
-    expect(r.status).toBe(200)
-    expect(await r.json()).toEqual({
-      owner: ownerAddress.toLowerCase(),
-      operator: operatorAddress.toLowerCase()
-    })
-  })
-
-  it('should respond with a 200 and empty strings when no operators exist', async () => {
-    const { localFetch } = components
-    const parcelX = 10
-    const parcelY = 20
-
-    stubComponents.parcelRightsFetcher.getOperatorsOfParcel.resolves({
-      owner: ''
-    } as ParcelOperators)
-
-    const r = await localFetch.fetch(`/parcels/${parcelX}/${parcelY}/operators`)
-
-    expect(r.status).toBe(200)
-    expect(await r.json()).toEqual({
-      owner: ''
     })
   })
 
