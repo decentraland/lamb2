@@ -79,15 +79,14 @@ export async function createParcelRightsComponent(
         y
       })
       logger.info(`Parcel operators at x=${x} y=${y}`)
-      if (result.parcels.length > 0) {
-        response = {
-          owner: result.parcels[0].owner.address,
-          operator: result.parcels[0].updateOperator ?? undefined
-        }
-      } else if (result.estates.length > 0) {
+      if (result.estates.length > 0) {
         response = {
           owner: result.estates[0].owner.address,
           operator: result.estates[0].updateOperator ?? undefined
+      }  else if (result.parcels.length > 0) {
+        response = {
+          owner: result.parcels[0].owner.address,
+          operator: result.parcels[0].updateOperator ?? undefined
         }
       } else {
         throw new ParcelOrStateNotFoundError(x, y)
