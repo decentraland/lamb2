@@ -1,5 +1,5 @@
 import { EthAddress, Parcel } from '@dcl/schemas'
-import { ParcelPermissions } from '../../adapters/parcel-permissions-fetcher'
+import { ParcelPermissions } from '../../adapters/parcel-rights-fetcher'
 import { HandlerContextWithPath, InvalidRequestError } from '../../types'
 
 export async function parcelPermissionsHandler(
