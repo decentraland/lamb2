@@ -49,8 +49,6 @@ export async function createTheGraphComponent(
     (await config.getString('LAND_SUBGRAPH_URL')) ??
     (ethNetwork === 'mainnet' ? DEFAULT_LAND_SUBGRAPH_MATIC_MAINNET : DEFAULT_LAND_SUBGRAPH_SEPOLIA)
 
-  console.log('Land subgraph URL', landSubgraphURL)
-
   const ethereumCollectionsSubgraph = await createSubgraphComponent(components, ethereumCollectionsSubgraphURL)
   const maticCollectionsSubgraph = await createSubgraphComponent(components, maticCollectionsSubgraphURL)
   const ensSubgraph = await createSubgraphComponent(components, ensSubgraphURL)
