@@ -302,10 +302,10 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@dcl/catalyst-api-specs@^3.3.0":
-  version "3.3.0"
-  resolved "https://registry.yarnpkg.com/@dcl/catalyst-api-specs/-/catalyst-api-specs-3.3.0.tgz#6efebe6142e4934bcf51d60367639e203204de2b"
-  integrity sha512-SwOY3+XRP0KBFOkUl4k4plSP8iYMd3On5iDcCeHkcWBuDvNplW2eydC2S9A6XHjjGwRZI7pmqMS9Q2LX1xeGGQ==
+"@dcl/catalyst-api-specs@^3.5.0":
+  version "3.5.0"
+  resolved "https://registry.yarnpkg.com/@dcl/catalyst-api-specs/-/catalyst-api-specs-3.5.0.tgz#29375631f86a242a8f5300793ade21ec4576cf4e"
+  integrity sha512-T05gjqPDkogq1YGuF69L/hPKKOAxnhFS3WQA5xhDeX664t2wyNWZQKGq4B1UR8vW5icb9ytOpVxLqUrafnPavg==
   dependencies:
     yaml "^2.3.4"
 
