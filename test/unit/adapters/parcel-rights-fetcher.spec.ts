@@ -36,11 +36,7 @@ describe('Parcel Rights Fetcher Component', () => {
       } as any,
       logs: mockLogger
     }
-    parcelRightsFetcher = await createParcelRightsComponent(
-      components,
-      LANDS_CONTRACT_ADDRESS,
-      ESTATES_CONTRACT_ADDRESS
-    )
+    parcelRightsFetcher = await createParcelRightsComponent(components, 'mainnet')
   })
 
   describe('getOperatorsOfParcel', () => {

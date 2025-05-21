@@ -1,4 +1,5 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
+import { l1Contracts, L1Network } from '@dcl/catalyst-contracts'
 import { AppComponents, ParcelOrStateNotFoundError } from '../types'
 import { THE_GRAPH_PAGE_SIZE } from '../logic/fetch-elements/fetch-elements'
 
@@ -17,8 +18,8 @@ const QUERY_OPERATORS_PARCEL: string = `
     owner {
       address
     }
-    updateOperator
     operator
+    updateOperator
   }
   estates(
     where: { parcels_: { x: $x, y: $y } }
@@ -105,11 +106,12 @@ export type ParcelRightsFetcher = IBaseComponent & {
 
 export async function createParcelRightsComponent(
   components: Pick<AppComponents, 'theGraph' | 'logs'>,
-  landsContractAddress: string,
-  estatesContractAddress: string
+  l1Network: L1Network
 ): Promise<ParcelRightsFetcher> {
   const { theGraph, logs } = components
   const logger = logs.getLogger('parcel-rights-component')
+  const LAND_REGISTRY_CONTRACT_ADDRESS = l1Contracts[l1Network].land
+  const ESTATE_REGISTRY_CONTRACT_ADDRESS = l1Contracts[l1Network].state
 
   async function getUpdateManagersAndApprovedForAllUsers(
     address: string,
@@ -188,7 +190,7 @@ export async function createParcelRightsComponent(
 
     const { updateManagers, approvedForAll } = await getUpdateManagersAndApprovedForAllUsers(
       owner,
-      parcelBelongsToEstate ? estatesContractAddress : landsContractAddress
+      parcelBelongsToEstate ? ESTATE_REGISTRY_CONTRACT_ADDRESS : LAND_REGISTRY_CONTRACT_ADDRESS
     )
 
     logger.info(

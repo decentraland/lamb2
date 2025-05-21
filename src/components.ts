@@ -114,22 +114,12 @@ export async function initComponents(
   const catalystsFetcher = await createCatalystsFetcher({ l1Provider }, l1Network)
   const poisFetcher = await createPOIsFetcher({ l2Provider }, l2Network)
   const nameDenylistFetcher = await createNameDenylistFetcher({ l1Provider }, l1Network)
-  const landsContractAddress =
-    l1Network === 'mainnet'
-      ? await config.requireString('L1_LAND_REGISTRY_CONTRACT_ADDRESS')
-      : await config.requireString('L2_LAND_REGISTRY_CONTRACT_ADDRESS')
-  const estatesContractAddress =
-    l1Network === 'mainnet'
-      ? await config.requireString('L1_ESTATE_REGISTRY_CONTRACT_ADDRESS')
-      : await config.requireString('L2_ESTATE_REGISTRY_CONTRACT_ADDRESS')
-
   const parcelRightsFetcher = await createParcelRightsComponent(
     {
       logs,
       theGraph
     },
-    landsContractAddress,
-    estatesContractAddress
+    l1Network
   )
 
   const l1ThirdPartyContractRegistry = await createThirdPartyContractRegistry(logs, l1Provider, l1Network as any, '.')
