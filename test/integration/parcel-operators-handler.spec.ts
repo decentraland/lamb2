@@ -1,5 +1,4 @@
 import { ParcelOperators } from '../../src/adapters/parcel-rights-fetcher'
-import { ParcelOrStateNotFoundError } from '../../src/types'
 import { test } from '../components'
 import { generateRandomAddress } from '../helpers'
 
@@ -13,7 +12,10 @@ test('integration tests for parcel operators handler', function ({ components, s
 
     stubComponents.parcelRightsFetcher.getOperatorsOfParcel.resolves({
       owner: ownerAddress,
-      operator: operatorAddress
+      operator: operatorAddress,
+      updateOperator: null,
+      updateManagers: [],
+      approvedForAll: []
     } as ParcelOperators)
 
     const r = await localFetch.fetch(`/parcels/${parcelX}/${parcelY}/operators`)
@@ -21,7 +23,10 @@ test('integration tests for parcel operators handler', function ({ components, s
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
       owner: ownerAddress,
-      operator: operatorAddress
+      operator: operatorAddress,
+      updateOperator: null,
+      updateManagers: [],
+      approvedForAll: []
     })
   })
 

@@ -95,7 +95,6 @@ export async function initComponents(
   )
   const namesFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllNames({ theGraph }, address))
   const landsFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllLANDs({ theGraph }, address))
-  const parcelRightsFetcher = await createParcelRightsComponent({ logs, theGraph })
 
   const resourcesStatusCheck = createResourcesStatusComponent({ logs })
   const status = await createStatusComponent({ logs, fetch })
@@ -115,6 +114,13 @@ export async function initComponents(
   const catalystsFetcher = await createCatalystsFetcher({ l1Provider }, l1Network)
   const poisFetcher = await createPOIsFetcher({ l2Provider }, l2Network)
   const nameDenylistFetcher = await createNameDenylistFetcher({ l1Provider }, l1Network)
+  const parcelRightsFetcher = await createParcelRightsComponent(
+    {
+      logs,
+      theGraph
+    },
+    l1Network
+  )
 
   const l1ThirdPartyContractRegistry = await createThirdPartyContractRegistry(logs, l1Provider, l1Network as any, '.')
   const l2ThirdPartyContractRegistry = await createThirdPartyContractRegistry(logs, l2Provider, l2Network as any, '.')

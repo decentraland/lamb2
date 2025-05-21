@@ -1,568 +1,487 @@
-import { createLogComponent } from '@well-known-components/logger'
-import { createParcelRightsComponent } from '../../../src/adapters/parcel-rights-fetcher'
+import { ILoggerComponent } from '@well-known-components/interfaces'
+import {
+  Authorization,
+  AuthorizationType,
+  createParcelRightsComponent,
+  ParcelOperatorsFromQuery,
+  ParcelRightsFetcher
+} from '../../../src/adapters/parcel-rights-fetcher'
+import { AppComponents, ParcelOrStateNotFoundError } from '../../../src/types'
 import { ISubgraphComponent } from '@well-known-components/thegraph-component'
-import { TheGraphComponent } from '../../../src/ports/the-graph'
-import { createParcelPermissionsComponent } from '../../../src/adapters/parcel-permissions-fetcher'
 
-function createMockTheGraphComponent(mockLandQuery: jest.Mock): TheGraphComponent {
-  return {
-    start: async () => {},
-    stop: async () => {},
-    ethereumCollectionsSubgraph: {} as ISubgraphComponent,
-    maticCollectionsSubgraph: {} as ISubgraphComponent,
-    ensSubgraph: {} as ISubgraphComponent,
-    thirdPartyRegistrySubgraph: {} as ISubgraphComponent,
-    landSubgraph: {
-      query: mockLandQuery
-    } as ISubgraphComponent
-  }
-}
+const LANDS_CONTRACT_ADDRESS = '0xlands'
+const ESTATES_CONTRACT_ADDRESS = '0xestates'
 
-describe('ParcelRightsComponent', () => {
+describe('Parcel Rights Fetcher Component', () => {
+  let components: Pick<AppComponents, 'theGraph' | 'logs'>
+  let parcelRightsFetcher: ParcelRightsFetcher
+  let mockLandSubgraphQuery: jest.Mock
+  let mockLogger: ILoggerComponent
+
+  beforeEach(async () => {
+    mockLandSubgraphQuery = jest.fn()
+    mockLogger = {
+      getLogger: jest.fn().mockReturnValue({
+        info: jest.fn(),
+        debug: jest.fn(),
+        error: jest.fn(),
+        warn: jest.fn()
+      })
+    } as any
+    components = {
+      theGraph: {
+        landSubgraph: {
+          query: mockLandSubgraphQuery
+        } as ISubgraphComponent
+      } as any,
+      logs: mockLogger
+    }
+    parcelRightsFetcher = await createParcelRightsComponent(components, 'mainnet')
+  })
+
   describe('getOperatorsOfParcel', () => {
-    it('resolves to the correct owner and operator when parcel exists', async () => {
-      const logs = await createLogComponent({})
-      const ownerAddress = '0xowner'
-      const operatorAddress = '0xoperator'
-      const parcelX = 10
-      const parcelY = 20
+    const X = 10
+    const Y = 20
+    const OWNER_ADDRESS = '0xowner'
+    const OPERATOR_ADDRESS = '0xoperator'
+    const UPDATE_OPERATOR_ADDRESS = '0xupdateoperator'
+    const UPDATE_MANAGER_ADDRESS = '0xupdatemanager'
+    const APPROVED_FOR_ALL_ADDRESS = '0xapprovedforall'
 
-      const mockQuery = jest.fn().mockResolvedValue({
-        parcels: [
-          {
-            x: parcelX.toString(),
-            y: parcelY.toString(),
-            owner: {
-              address: ownerAddress
-            },
-            updateOperator: operatorAddress
+    describe('when the parcel is not part of an estate', () => {
+      let parcel: ParcelOperatorsFromQuery['parcels'][0]
+      let authorizations: Authorization[]
+
+      beforeEach(() => {
+        authorizations = []
+        parcel = {
+          x: X.toString(),
+          y: Y.toString(),
+          owner: { address: OWNER_ADDRESS },
+          operator: null,
+          updateOperator: null
+        }
+        mockLandSubgraphQuery.mockImplementation(async (query: string) => {
+          if (query.includes('fetchOperatorsOfParcel')) {
+            return {
+              parcels: [parcel],
+              estates: []
+            }
           }
-        ],
-        estates: []
-      } as unknown)
+          if (query.includes('fetchAuthorizations')) {
+            return { authorizations }
+          }
+          return {}
+        })
+      })
 
-      const theGraph = createMockTheGraphComponent(mockQuery)
+      describe('and has no operators or update operators', () => {
+        it('should return the owner and empty operators and updateOperators', async () => {
+          const result = await parcelRightsFetcher.getOperatorsOfParcel(X, Y)
+          expect(result).toEqual({
+            owner: OWNER_ADDRESS,
+            operator: null,
+            updateOperator: null,
+            updateManagers: [],
+            approvedForAll: []
+          })
+        })
+      })
 
-      const component = await createParcelRightsComponent({ theGraph, logs })
-      const operators = await component.getOperatorsOfParcel(parcelX, parcelY)
+      describe('and has an operator and update operator', () => {
+        beforeEach(() => {
+          parcel.operator = OPERATOR_ADDRESS
+          parcel.updateOperator = UPDATE_OPERATOR_ADDRESS
+        })
 
-      expect(operators).toEqual({ owner: ownerAddress, operator: operatorAddress })
-      expect(mockQuery).toHaveBeenCalledWith(expect.any(String), {
-        x: parcelX,
-        y: parcelY
+        it('should return the owner, operator, and update operator', async () => {
+          const result = await parcelRightsFetcher.getOperatorsOfParcel(X, Y)
+          expect(result).toEqual({
+            owner: OWNER_ADDRESS,
+            operator: OPERATOR_ADDRESS,
+            updateOperator: UPDATE_OPERATOR_ADDRESS,
+            updateManagers: [],
+            approvedForAll: []
+          })
+        })
+      })
+
+      describe('and has an update manager and approved for all', () => {
+        beforeEach(() => {
+          authorizations.push(
+            {
+              type: AuthorizationType.UpdateManager,
+              operator: UPDATE_MANAGER_ADDRESS,
+              isApproved: true,
+              timestamp: 1
+            },
+            {
+              type: AuthorizationType.Operator,
+              operator: APPROVED_FOR_ALL_ADDRESS,
+              isApproved: true,
+              timestamp: 2
+            }
+          )
+        })
+
+        it('should return the owner, update manager, and approved for all', async () => {
+          const result = await parcelRightsFetcher.getOperatorsOfParcel(X, Y)
+          expect(result).toEqual({
+            owner: OWNER_ADDRESS,
+            operator: null,
+            updateOperator: null,
+            updateManagers: [UPDATE_MANAGER_ADDRESS],
+            approvedForAll: [APPROVED_FOR_ALL_ADDRESS]
+          })
+        })
+      })
+
+      describe('and has update managers and approved for all that have been revoked', () => {
+        beforeEach(() => {
+          authorizations.push(
+            // The following should be ignored because the operator is not approved
+            {
+              type: AuthorizationType.UpdateManager,
+              operator: 'anotherAddress',
+              isApproved: true,
+              timestamp: 3
+            },
+            {
+              type: AuthorizationType.Operator,
+              operator: 'anotherAddress',
+              isApproved: true,
+              timestamp: 4
+            },
+            {
+              type: AuthorizationType.UpdateManager,
+              operator: 'anotherAddress',
+              isApproved: false,
+              timestamp: 5
+            },
+            {
+              type: AuthorizationType.Operator,
+              operator: 'anotherAddress',
+              isApproved: false,
+              timestamp: 6
+            }
+          )
+        })
+
+        it('should return the owner and no update manager nor approved for all', async () => {
+          const result = await parcelRightsFetcher.getOperatorsOfParcel(X, Y)
+          expect(result).toEqual({
+            owner: OWNER_ADDRESS,
+            operator: null,
+            updateOperator: null,
+            updateManagers: [],
+            approvedForAll: []
+          })
+        })
       })
     })
 
-    it('resolves to the correct owner and operator when estate exists', async () => {
-      const logs = await createLogComponent({})
-      const ownerAddress = '0xowner'
-      const operatorAddress = '0xoperator'
-      const parcelX = 10
-      const parcelY = 20
+    describe('when the parcel is part of an estate', () => {
+      const ESTATE_OWNER_ADDRESS = '0xestateowner'
+      const ESTATE_OPERATOR_ADDRESS = '0xestateoperator'
+      const ESTATE_UPDATE_OPERATOR_ADDRESS = '0xestateupdateoperator'
+      let parcel: ParcelOperatorsFromQuery['parcels'][0]
+      let estate: ParcelOperatorsFromQuery['estates'][0]
+      let authorizations: Authorization[]
 
-      const mockQuery = jest.fn().mockResolvedValue({
-        parcels: [],
-        estates: [
-          {
-            owner: {
-              address: ownerAddress
-            },
-            updateOperator: operatorAddress
+      beforeEach(() => {
+        authorizations = []
+        parcel = {
+          x: X.toString(),
+          y: Y.toString(),
+          owner: { address: OWNER_ADDRESS },
+          operator: null,
+          updateOperator: null
+        }
+        estate = {
+          owner: { address: ESTATE_OWNER_ADDRESS },
+          operator: null,
+          updateOperator: null
+        }
+
+        mockLandSubgraphQuery.mockImplementation(async (query: string) => {
+          if (query.includes('fetchOperatorsOfParcel')) {
+            return {
+              parcels: [parcel],
+              estates: [estate]
+            }
           }
-        ]
-      } as unknown)
+          if (query.includes('fetchAuthorizations')) {
+            return { authorizations }
+          }
+          return {}
+        })
+      })
 
-      const theGraph = createMockTheGraphComponent(mockQuery)
+      describe('and has an operator in the estate', () => {
+        beforeEach(() => {
+          parcel.operator = null
+          estate.operator = ESTATE_OPERATOR_ADDRESS
+        })
 
-      const component = await createParcelRightsComponent({ theGraph, logs })
-      const operators = await component.getOperatorsOfParcel(parcelX, parcelY)
+        it('should return the owner from the estate and the estate operator', async () => {
+          const result = await parcelRightsFetcher.getOperatorsOfParcel(X, Y)
+          expect(result).toEqual({
+            owner: ESTATE_OWNER_ADDRESS,
+            operator: ESTATE_OPERATOR_ADDRESS,
+            updateOperator: null,
+            updateManagers: [],
+            approvedForAll: []
+          })
+        })
+      })
 
-      expect(operators).toEqual({
-        owner: ownerAddress.toLowerCase(),
-        operator: operatorAddress.toLowerCase()
+      describe('and has an update operator in the estate', () => {
+        beforeEach(() => {
+          parcel.updateOperator = null
+          estate.updateOperator = ESTATE_UPDATE_OPERATOR_ADDRESS
+        })
+
+        it('should return the owner from the estate and the estate update operator', async () => {
+          const result = await parcelRightsFetcher.getOperatorsOfParcel(X, Y)
+          expect(result).toEqual({
+            owner: ESTATE_OWNER_ADDRESS,
+            operator: null,
+            updateOperator: ESTATE_UPDATE_OPERATOR_ADDRESS,
+            updateManagers: [],
+            approvedForAll: []
+          })
+        })
+      })
+
+      describe('and has no operator in the estate', () => {
+        beforeEach(() => {
+          parcel.operator = null
+          estate.operator = null
+        })
+
+        it('should return the owner from the estate and empty operators and updateOperators', async () => {
+          const result = await parcelRightsFetcher.getOperatorsOfParcel(X, Y)
+          expect(result).toEqual({
+            owner: ESTATE_OWNER_ADDRESS,
+            operator: null,
+            updateOperator: null,
+            updateManagers: [],
+            approvedForAll: []
+          })
+        })
+      })
+
+      describe('and has no update operator in the estate', () => {
+        beforeEach(() => {
+          parcel.updateOperator = null
+          estate.updateOperator = null
+        })
+
+        it('should return the owner from the estate and empty operators and updateOperators', async () => {
+          const result = await parcelRightsFetcher.getOperatorsOfParcel(X, Y)
+          expect(result).toEqual({
+            owner: ESTATE_OWNER_ADDRESS,
+            operator: null,
+            updateOperator: null,
+            updateManagers: [],
+            approvedForAll: []
+          })
+        })
       })
     })
 
-    it('handles null updateOperator in parcels correctly', async () => {
-      const logs = await createLogComponent({})
-      const ownerAddress = '0xowner'
-      const parcelX = 10
-      const parcelY = 20
-
-      const mockQuery = jest.fn().mockResolvedValue({
-        parcels: [
-          {
-            x: parcelX.toString(),
-            y: parcelY.toString(),
-            owner: {
-              address: ownerAddress
-            },
-            updateOperator: null
-          }
-        ],
-        estates: []
-      } as unknown)
-
-      const theGraph = createMockTheGraphComponent(mockQuery)
-
-      const component = await createParcelRightsComponent({ theGraph, logs })
-      const operators = await component.getOperatorsOfParcel(parcelX, parcelY)
-
-      expect(operators).toEqual({ owner: ownerAddress })
-    })
-
-    it('handles undefined updateOperator in estates correctly', async () => {
-      const logs = await createLogComponent({})
-      const ownerAddress = '0xowner'
-      const parcelX = 10
-      const parcelY = 20
-
-      const mockQuery = jest.fn().mockResolvedValue({
-        parcels: [],
-        estates: [
-          {
-            owner: {
-              address: ownerAddress
-            },
-            updateOperator: undefined
-          }
-        ]
-      } as unknown)
-
-      const theGraph = createMockTheGraphComponent(mockQuery)
-
-      const component = await createParcelRightsComponent({ theGraph, logs })
-      const operators = await component.getOperatorsOfParcel(parcelX, parcelY)
-
-      expect(operators).toEqual({
-        owner: ownerAddress.toLowerCase()
+    describe('when parcel and estate do not exist', () => {
+      beforeEach(() => {
+        mockLandSubgraphQuery.mockResolvedValue({
+          parcels: [],
+          estates: []
+        })
       })
-    })
 
-    it('uses first estate when multiple estates exist', async () => {
-      const logs = await createLogComponent({})
-      const ownerAddress = '0xowner1'
-      const operatorAddress = '0xoperator1'
-      const parcelX = 10
-      const parcelY = 20
-
-      const mockQuery = jest.fn().mockResolvedValue({
-        parcels: [],
-        estates: [
-          {
-            owner: {
-              address: ownerAddress
-            },
-            updateOperator: operatorAddress
-          },
-          {
-            owner: {
-              address: '0xowner2'
-            },
-            updateOperator: '0xoperator2'
-          }
-        ]
-      } as unknown)
-
-      const theGraph = createMockTheGraphComponent(mockQuery)
-
-      const component = await createParcelRightsComponent({ theGraph, logs })
-      const operators = await component.getOperatorsOfParcel(parcelX, parcelY)
-
-      expect(operators).toEqual({
-        owner: ownerAddress.toLowerCase(),
-        operator: operatorAddress.toLowerCase()
+      it('should throw ParcelOrStateNotFoundError', async () => {
+        await expect(parcelRightsFetcher.getOperatorsOfParcel(X, Y)).rejects.toThrow(
+          new ParcelOrStateNotFoundError(X, Y)
+        )
       })
-    })
-
-    it('uses first parcel when multiple parcels exist', async () => {
-      const logs = await createLogComponent({})
-      const ownerAddress = '0xowner1'
-      const operatorAddress = '0xoperator1'
-      const parcelX = 10
-      const parcelY = 20
-
-      const mockQuery = jest.fn().mockResolvedValue({
-        parcels: [
-          {
-            x: parcelX.toString(),
-            y: parcelY.toString(),
-            owner: {
-              address: ownerAddress
-            },
-            updateOperator: operatorAddress
-          },
-          {
-            x: parcelX.toString(),
-            y: parcelY.toString(),
-            owner: {
-              address: '0xowner2'
-            },
-            updateOperator: '0xoperator2'
-          }
-        ],
-        estates: []
-      } as unknown)
-
-      const theGraph = createMockTheGraphComponent(mockQuery)
-
-      const component = await createParcelRightsComponent({ theGraph, logs })
-      const operators = await component.getOperatorsOfParcel(parcelX, parcelY)
-
-      expect(operators).toEqual({
-        owner: ownerAddress,
-        operator: operatorAddress
-      })
-    })
-
-    it('throws error when no parcel or estate is found', async () => {
-      const logs = await createLogComponent({})
-      const parcelX = 10
-      const parcelY = 20
-
-      const mockQuery = jest.fn().mockResolvedValue({
-        parcels: [],
-        estates: []
-      } as unknown)
-
-      const theGraph = createMockTheGraphComponent(mockQuery)
-
-      const component = await createParcelRightsComponent({ theGraph, logs })
-      await expect(component.getOperatorsOfParcel(parcelX, parcelY)).rejects.toThrow()
-    })
-
-    it('throws error when owner is null in parcels', async () => {
-      const logs = await createLogComponent({})
-      const parcelX = 10
-      const parcelY = 20
-
-      const mockQuery = jest.fn().mockResolvedValue({
-        parcels: [
-          {
-            x: parcelX.toString(),
-            y: parcelY.toString(),
-            owner: null,
-            updateOperator: '0xoperator'
-          }
-        ],
-        estates: []
-      } as unknown)
-
-      const theGraph = createMockTheGraphComponent(mockQuery)
-
-      const component = await createParcelRightsComponent({ theGraph, logs })
-      await expect(component.getOperatorsOfParcel(parcelX, parcelY)).rejects.toThrow()
     })
   })
 
-  describe('ParcelPermissionsComponent', () => {
-    it('resolves to the owner permission being true when user is parcel owner', async () => {
-      const logs = await createLogComponent({})
-      const userAddress = '0xuser'
-      const parcelX = 10
-      const parcelY = 20
+  describe('getParcelPermissions', () => {
+    const X = 10
+    const Y = 20
+    const USER_ADDRESS = '0xuseraddress'
+    const OWNER_ADDRESS = '0xowner'
+    let parcel: any
+    let authorizations: Authorization[]
 
-      const mockQuery = jest.fn().mockResolvedValue({
-        parcels: [
-          {
-            x: parcelX.toString(),
-            y: parcelY.toString(),
-            owner: {
-              address: userAddress
-            },
-            updateOperator: '0xsomeoneelse'
-          }
-        ],
-        estates: []
-      } as unknown)
-
-      const theGraph = createMockTheGraphComponent(mockQuery)
-
-      const component = await createParcelPermissionsComponent({ theGraph, logs })
-      const permissions = await component.getParcelPermissions(userAddress, parcelX, parcelY)
-
-      expect(permissions).toEqual({ owner: true, operator: false })
-      expect(mockQuery).toHaveBeenCalledWith(expect.any(String), {
-        addressLower: userAddress,
-        x: parcelX,
-        y: parcelY
-      })
-    })
-
-    it('resolves to the operator permission being true when user is parcel owner', async () => {
-      const logs = await createLogComponent({})
-      const userAddress = '0xuser'
-      const ownerAddress = '0xowner'
-      const parcelX = 10
-      const parcelY = 20
-
-      const mockQuery = jest.fn().mockResolvedValue({
-        parcels: [
-          {
-            x: parcelX.toString(),
-            y: parcelY.toString(),
-            owner: {
-              address: ownerAddress
-            },
-            updateOperator: userAddress
-          }
-        ],
-        estates: []
-      } as unknown)
-
-      const theGraph = createMockTheGraphComponent(mockQuery)
-
-      const component = await createParcelPermissionsComponent({ theGraph, logs })
-      const permissions = await component.getParcelPermissions(userAddress, parcelX, parcelY)
-
-      expect(permissions).toEqual({ owner: false, operator: true })
-    })
-
-    it('returns correct permissions when user is estate owner', async () => {
-      const logs = await createLogComponent({})
-      const userAddress = '0xuser'
-      const parcelX = 10
-      const parcelY = 20
-
-      const mockQuery = jest.fn().mockResolvedValue({
-        parcels: [],
-        estates: [
-          {
-            owner: {
-              address: userAddress
-            },
-            updateOperator: '0xsomeoneelse'
-          }
-        ]
-      } as unknown)
-
-      const theGraph = createMockTheGraphComponent(mockQuery)
-
-      const component = await createParcelPermissionsComponent({ theGraph, logs })
-      const permissions = await component.getParcelPermissions(userAddress, parcelX, parcelY)
-
-      expect(permissions).toEqual({ owner: true, operator: false })
-    })
-
-    it('returns correct permissions when user is estate operator', async () => {
-      const logs = await createLogComponent({})
-      const userAddress = '0xuser'
-      const ownerAddress = '0xowner'
-      const parcelX = 10
-      const parcelY = 20
-
-      const mockQuery = jest.fn().mockResolvedValue({
-        parcels: [],
-        estates: [
-          {
-            owner: {
-              address: ownerAddress
-            },
-            updateOperator: userAddress
-          }
-        ]
-      } as unknown)
-
-      const theGraph = createMockTheGraphComponent(mockQuery)
-
-      const component = await createParcelPermissionsComponent({ theGraph, logs })
-      const permissions = await component.getParcelPermissions(userAddress, parcelX, parcelY)
-
-      expect(permissions).toEqual({ owner: false, operator: true })
-    })
-
-    it('returns negative permissions when there are no matches', async () => {
-      const logs = await createLogComponent({})
-      const userAddress = '0xuser'
-      const parcelX = 10
-      const parcelY = 20
-
-      const mockQuery = jest.fn().mockResolvedValue({
-        parcels: [],
-        estates: []
-      } as unknown)
-
-      const theGraph = createMockTheGraphComponent(mockQuery)
-
-      const component = await createParcelPermissionsComponent({ theGraph, logs })
-      const permissions = await component.getParcelPermissions(userAddress, parcelX, parcelY)
-
-      expect(permissions).toEqual({ owner: false, operator: false })
-    })
-
-    it('handles null updateOperator in parcels correctly', async () => {
-      const logs = await createLogComponent({})
-      const userAddress = '0xuser'
-      const ownerAddress = '0xowner'
-      const parcelX = 10
-      const parcelY = 20
-
-      const mockQuery = jest.fn().mockResolvedValue({
-        parcels: [
-          {
-            x: parcelX.toString(),
-            y: parcelY.toString(),
-            owner: {
-              address: ownerAddress
-            },
-            updateOperator: null
-          }
-        ],
-        estates: []
-      })
-
-      const theGraph = createMockTheGraphComponent(mockQuery)
-
-      const component = await createParcelPermissionsComponent({ theGraph, logs })
-      const permissions = await component.getParcelPermissions(userAddress, parcelX, parcelY)
-
-      expect(permissions).toEqual({ owner: false, operator: false })
-    })
-
-    it('handles undefined updateOperator in estates correctly', async () => {
-      const logs = await createLogComponent({})
-      const userAddress = '0xuser'
-      const ownerAddress = '0xowner'
-      const parcelX = 10
-      const parcelY = 20
-
-      const mockQuery = jest.fn().mockResolvedValue({
-        parcels: [],
-        estates: [
-          {
-            owner: {
-              address: ownerAddress
-            },
-            updateOperator: undefined
-          }
-        ]
-      })
-
-      const theGraph = createMockTheGraphComponent(mockQuery)
-
-      const component = await createParcelPermissionsComponent({ theGraph, logs })
-      const permissions = await component.getParcelPermissions(userAddress, parcelX, parcelY)
-
-      expect(permissions).toEqual({ owner: false, operator: false })
-    })
-
-    it('logs information about the permissions query', async () => {
-      const logs = await createLogComponent({})
-      const mockLogger = {
-        info: jest.fn()
+    beforeEach(() => {
+      authorizations = []
+      parcel = {
+        x: X.toString(),
+        y: Y.toString(),
+        owner: { address: OWNER_ADDRESS },
+        operator: null,
+        updateOperator: null
       }
-      logs.getLogger = jest.fn().mockReturnValue(mockLogger)
-
-      const userAddress = '0xuser'
-      const parcelX = 10
-      const parcelY = 20
-
-      const mockResult = {
-        parcels: [],
-        estates: []
-      } as unknown
-
-      const mockQuery = jest.fn().mockResolvedValue(mockResult)
-
-      const theGraph = createMockTheGraphComponent(mockQuery)
-
-      const component = await createParcelPermissionsComponent({ theGraph, logs })
-      await component.getParcelPermissions(userAddress, parcelX, parcelY)
-
-      expect(logs.getLogger).toHaveBeenCalledWith('parcel-permissions-component')
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        `Parcel permissions for address ${userAddress} at x=${parcelX} y=${parcelY}: ${JSON.stringify(mockResult)}`
-      )
-    })
-
-    it('returns no permissions when user has no access', async () => {
-      const logs = await createLogComponent({})
-      const userAddress = '0xuser'
-      const ownerAddress = '0xowner'
-      const parcelX = 10
-      const parcelY = 20
-
-      const mockQuery = jest.fn().mockResolvedValue({
-        parcels: [
-          {
-            x: parcelX.toString(),
-            y: parcelY.toString(),
-            owner: {
-              address: ownerAddress
-            },
-            updateOperator: '0xsomeoneelse'
+      mockLandSubgraphQuery.mockImplementation(async (query: string) => {
+        if (query.includes('fetchOperatorsOfParcel')) {
+          return {
+            parcels: [parcel],
+            estates: []
           }
-        ],
-        estates: []
-      } as unknown)
-
-      const theGraph = createMockTheGraphComponent(mockQuery)
-
-      const component = await createParcelPermissionsComponent({ theGraph, logs })
-      const permissions = await component.getParcelPermissions(userAddress, parcelX, parcelY)
-
-      expect(permissions).toEqual({ owner: false, operator: false })
+        }
+        if (query.includes('fetchAuthorizations')) {
+          return { authorizations }
+        }
+        return {}
+      })
     })
 
-    it('returns both permissions when user is both owner and operator', async () => {
-      const logs = await createLogComponent({})
-      const userAddress = '0xuser'
-      const parcelX = 10
-      const parcelY = 20
-
-      const mockQuery = jest.fn().mockResolvedValue({
-        parcels: [
+    describe('when user has all permissions', () => {
+      beforeEach(() => {
+        authorizations.push(
           {
-            x: parcelX.toString(),
-            y: parcelY.toString(),
-            owner: {
-              address: userAddress
-            },
-            updateOperator: userAddress
-          }
-        ],
-        estates: []
-      } as unknown)
-
-      const theGraph = createMockTheGraphComponent(mockQuery)
-
-      const component = await createParcelPermissionsComponent({ theGraph, logs })
-      const permissions = await component.getParcelPermissions(userAddress, parcelX, parcelY)
-
-      expect(permissions).toEqual({ owner: true, operator: true })
-    })
-
-    it('uses first estate when multiple estates exist', async () => {
-      const logs = await createLogComponent({})
-      const userAddress = '0xuser'
-      const ownerAddress = '0xowner'
-      const parcelX = 10
-      const parcelY = 20
-
-      const mockQuery = jest.fn().mockResolvedValue({
-        parcels: [],
-        estates: [
-          {
-            owner: {
-              address: userAddress
-            },
-            updateOperator: '0xsomeoneelse'
+            type: AuthorizationType.UpdateManager,
+            operator: USER_ADDRESS,
+            isApproved: true,
+            timestamp: 1
           },
           {
-            owner: {
-              address: ownerAddress
-            },
-            updateOperator: userAddress
+            type: AuthorizationType.Operator,
+            operator: USER_ADDRESS,
+            isApproved: true,
+            timestamp: 2
           }
-        ]
-      } as unknown)
+        )
+        parcel.operator = USER_ADDRESS
+        parcel.updateOperator = USER_ADDRESS
+      })
 
-      const theGraph = createMockTheGraphComponent(mockQuery)
+      it('should return all permissions as true', async () => {
+        const permissions = await parcelRightsFetcher.getParcelPermissions(USER_ADDRESS, X, Y)
+        expect(permissions).toEqual({
+          owner: false,
+          operator: true,
+          updateOperator: true,
+          updateManager: true,
+          approvedForAll: true
+        })
+      })
+    })
 
-      const component = await createParcelPermissionsComponent({ theGraph, logs })
-      const permissions = await component.getParcelPermissions(userAddress, parcelX, parcelY)
+    describe('when user is the owner only', () => {
+      beforeEach(() => {
+        parcel.owner.address = USER_ADDRESS
+      })
 
-      expect(permissions).toEqual({ owner: true, operator: false })
+      it('should return owner as true and others as false', async () => {
+        const permissions = await parcelRightsFetcher.getParcelPermissions(USER_ADDRESS, X, Y)
+        expect(permissions).toEqual({
+          owner: true,
+          operator: false,
+          updateOperator: false,
+          updateManager: false,
+          approvedForAll: false
+        })
+      })
+    })
+
+    describe('when user is an operator only', () => {
+      beforeEach(() => {
+        parcel.operator = USER_ADDRESS
+      })
+
+      it('should return operator as true and others as false', async () => {
+        const permissions = await parcelRightsFetcher.getParcelPermissions(USER_ADDRESS, X, Y)
+        expect(permissions.owner).toBe(false)
+        expect(permissions.operator).toBe(true)
+        expect(permissions.updateOperator).toBe(false)
+        expect(permissions.updateManager).toBe(false)
+        expect(permissions.approvedForAll).toBe(false)
+      })
+    })
+
+    describe('when user is an update operator only', () => {
+      beforeEach(() => {
+        parcel.updateOperator = USER_ADDRESS
+      })
+
+      it('should return updateOperator as true and others as false', async () => {
+        const permissions = await parcelRightsFetcher.getParcelPermissions(USER_ADDRESS, X, Y)
+        expect(permissions).toEqual({
+          owner: false,
+          operator: false,
+          updateOperator: true,
+          updateManager: false,
+          approvedForAll: false
+        })
+      })
+    })
+
+    describe('when user is an update manager only', () => {
+      beforeEach(() => {
+        authorizations.push({
+          type: AuthorizationType.UpdateManager,
+          operator: USER_ADDRESS,
+          isApproved: true,
+          timestamp: 1
+        })
+      })
+
+      it('should return updateManager as true and others as false', async () => {
+        const permissions = await parcelRightsFetcher.getParcelPermissions(USER_ADDRESS, X, Y)
+        expect(permissions).toEqual({
+          owner: false,
+          operator: false,
+          updateOperator: false,
+          updateManager: true,
+          approvedForAll: false
+        })
+      })
+    })
+
+    describe('when user is approved for all only', () => {
+      beforeEach(() => {
+        authorizations.push({
+          type: AuthorizationType.Operator,
+          operator: USER_ADDRESS,
+          isApproved: true,
+          timestamp: 1
+        })
+      })
+
+      it('should return approvedForAll as true and others as false', async () => {
+        const permissions = await parcelRightsFetcher.getParcelPermissions(USER_ADDRESS, X, Y)
+        expect(permissions).toEqual({
+          owner: false,
+          operator: false,
+          updateOperator: false,
+          updateManager: false,
+          approvedForAll: true
+        })
+      })
+    })
+
+    describe('when user has no permissions', () => {
+      it('should return all permissions as false', async () => {
+        const permissions = await parcelRightsFetcher.getParcelPermissions(USER_ADDRESS, X, Y)
+        expect(permissions.owner).toBe(false)
+        expect(permissions.operator).toBe(false)
+        expect(permissions.updateOperator).toBe(false)
+        expect(permissions.updateManager).toBe(false)
+        expect(permissions.approvedForAll).toBe(false)
+      })
+    })
+
+    describe('when getOperatorsOfParcel throws an error', () => {
+      const ERROR_MESSAGE = 'Parcel not found'
+      beforeEach(() => {
+        mockLandSubgraphQuery.mockRejectedValue(new Error(ERROR_MESSAGE))
+      })
+
+      it('should propagate the error', async () => {
+        await expect(parcelRightsFetcher.getParcelPermissions(USER_ADDRESS, X, Y)).rejects.toThrow(ERROR_MESSAGE)
+      })
     })
   })
 })
