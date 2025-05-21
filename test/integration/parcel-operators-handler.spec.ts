@@ -12,8 +12,8 @@ test('integration tests for parcel operators handler', function ({ components, s
 
     stubComponents.parcelRightsFetcher.getOperatorsOfParcel.resolves({
       owner: ownerAddress,
-      operators: [operatorAddress],
-      updateOperators: [],
+      operator: operatorAddress,
+      updateOperator: null,
       updateManagers: [],
       approvedForAll: []
     } as ParcelOperators)
@@ -23,8 +23,8 @@ test('integration tests for parcel operators handler', function ({ components, s
     expect(r.status).toBe(200)
     expect(await r.json()).toEqual({
       owner: ownerAddress,
-      operators: [operatorAddress],
-      updateOperators: [],
+      operator: operatorAddress,
+      updateOperator: null,
       updateManagers: [],
       approvedForAll: []
     })

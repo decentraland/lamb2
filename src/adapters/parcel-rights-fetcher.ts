@@ -68,8 +68,8 @@ export type ParcelOperatorsFromQuery = {
 
 export type ParcelOperators = {
   owner: string
-  operators: string[]
-  updateOperators: string[]
+  operator: string | null
+  updateOperator: string | null
   updateManagers: string[]
   approvedForAll: string[]
 }
@@ -171,33 +171,18 @@ export async function createParcelRightsComponent(
     const parcelBelongsToEstate = result.estates.length > 0
 
     let owner: string = ''
-    const operators: Set<string> = new Set()
-    const updateOperators: Set<string> = new Set()
+    let operator: string | null = null
+    let updateOperator: string | null = null
 
     if (parcelBelongsToEstate) {
       owner = result.estates[0].owner.address
-      if (result.estates[0].operator) {
-        operators.add(result.estates[0].operator)
-      }
-
-      if (result.estates[0].updateOperator) {
-        updateOperators.add(result.estates[0].updateOperator)
-      }
+      operator = result.estates[0].operator
+      updateOperator = result.estates[0].updateOperator
     } else if (result.parcels.length > 0) {
       owner = result.parcels[0].owner.address
-    }
-
-    if (result.parcels.length > 0) {
-      if (result.parcels[0].operator) {
-        operators.add(result.parcels[0].operator)
-      }
-
-      if (result.parcels[0].updateOperator) {
-        updateOperators.add(result.parcels[0].updateOperator)
-      }
-    }
-
-    if (!parcelBelongsToEstate && !result.parcels.length) {
+      operator = result.parcels[0].operator
+      updateOperator = result.parcels[0].updateOperator
+    } else {
       throw new ParcelOrStateNotFoundError(x, y)
     }
 
@@ -206,15 +191,16 @@ export async function createParcelRightsComponent(
       parcelBelongsToEstate ? estatesContractAddress : landsContractAddress
     )
 
-    logger.info(`Parcel operators at x=${x} y=${y} owner: ${owner} operators: [${Array.from(operators).join(', ')}]`)
-    logger.info(`Update operators at x=${x} y=${y}: [${Array.from(updateOperators).join(', ')}]`)
+    logger.info(
+      `Parcel operators at x=${x} y=${y} owner: ${owner} operator: ${operator} updateOperator: ${updateOperator}`
+    )
     logger.info(`Update managers at x=${x} y=${y}: [${updateManagers.join(', ')}]`)
     logger.info(`Approved for all at x=${x} y=${y}: [${approvedForAll.join(', ')}]`)
 
     return {
       owner,
-      operators: Array.from(operators),
-      updateOperators: Array.from(updateOperators),
+      operator,
+      updateOperator,
       updateManagers,
       approvedForAll
     }
@@ -226,8 +212,8 @@ export async function createParcelRightsComponent(
 
     return {
       owner: parcelOperators.owner === addressLower,
-      operator: parcelOperators.operators.includes(addressLower),
-      updateOperator: parcelOperators.updateOperators.includes(addressLower),
+      operator: parcelOperators.operator === addressLower,
+      updateOperator: parcelOperators.updateOperator === addressLower,
       updateManager: parcelOperators.updateManagers.includes(addressLower),
       approvedForAll: parcelOperators.approvedForAll.includes(addressLower)
     }

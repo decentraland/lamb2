@@ -84,8 +84,8 @@ describe('Parcel Rights Fetcher Component', () => {
           const result = await parcelRightsFetcher.getOperatorsOfParcel(X, Y)
           expect(result).toEqual({
             owner: OWNER_ADDRESS,
-            operators: [],
-            updateOperators: [],
+            operator: null,
+            updateOperator: null,
             updateManagers: [],
             approvedForAll: []
           })
@@ -102,8 +102,8 @@ describe('Parcel Rights Fetcher Component', () => {
           const result = await parcelRightsFetcher.getOperatorsOfParcel(X, Y)
           expect(result).toEqual({
             owner: OWNER_ADDRESS,
-            operators: [OPERATOR_ADDRESS],
-            updateOperators: [UPDATE_OPERATOR_ADDRESS],
+            operator: OPERATOR_ADDRESS,
+            updateOperator: UPDATE_OPERATOR_ADDRESS,
             updateManagers: [],
             approvedForAll: []
           })
@@ -132,8 +132,8 @@ describe('Parcel Rights Fetcher Component', () => {
           const result = await parcelRightsFetcher.getOperatorsOfParcel(X, Y)
           expect(result).toEqual({
             owner: OWNER_ADDRESS,
-            operators: [],
-            updateOperators: [],
+            operator: null,
+            updateOperator: null,
             updateManagers: [UPDATE_MANAGER_ADDRESS],
             approvedForAll: [APPROVED_FOR_ALL_ADDRESS]
           })
@@ -175,8 +175,8 @@ describe('Parcel Rights Fetcher Component', () => {
           const result = await parcelRightsFetcher.getOperatorsOfParcel(X, Y)
           expect(result).toEqual({
             owner: OWNER_ADDRESS,
-            operators: [],
-            updateOperators: [],
+            operator: null,
+            updateOperator: null,
             updateManagers: [],
             approvedForAll: []
           })
@@ -221,43 +221,7 @@ describe('Parcel Rights Fetcher Component', () => {
         })
       })
 
-      describe('and has an operator in both parcel and estate', () => {
-        beforeEach(() => {
-          parcel.operator = OPERATOR_ADDRESS
-          estate.operator = ESTATE_OPERATOR_ADDRESS
-        })
-
-        it('should return the owner from the estate, and combine parcel and estate operators', async () => {
-          const result = await parcelRightsFetcher.getOperatorsOfParcel(X, Y)
-          expect(result).toEqual({
-            owner: ESTATE_OWNER_ADDRESS,
-            operators: [ESTATE_OPERATOR_ADDRESS, OPERATOR_ADDRESS],
-            updateOperators: [],
-            updateManagers: [],
-            approvedForAll: []
-          })
-        })
-      })
-
-      describe('and has an update operator in both parcel and estate', () => {
-        beforeEach(() => {
-          parcel.updateOperator = UPDATE_OPERATOR_ADDRESS
-          estate.updateOperator = ESTATE_UPDATE_OPERATOR_ADDRESS
-        })
-
-        it('should return the owner from the estate, and combine parcel and estate update operators', async () => {
-          const result = await parcelRightsFetcher.getOperatorsOfParcel(X, Y)
-          expect(result).toEqual({
-            owner: ESTATE_OWNER_ADDRESS,
-            operators: [],
-            updateOperators: [ESTATE_UPDATE_OPERATOR_ADDRESS, UPDATE_OPERATOR_ADDRESS],
-            updateManagers: [],
-            approvedForAll: []
-          })
-        })
-      })
-
-      describe('and has no operator in the parcel but has an operator in the estate', () => {
+      describe('and has an operator in the estate', () => {
         beforeEach(() => {
           parcel.operator = null
           estate.operator = ESTATE_OPERATOR_ADDRESS
@@ -267,33 +231,33 @@ describe('Parcel Rights Fetcher Component', () => {
           const result = await parcelRightsFetcher.getOperatorsOfParcel(X, Y)
           expect(result).toEqual({
             owner: ESTATE_OWNER_ADDRESS,
-            operators: [ESTATE_OPERATOR_ADDRESS],
-            updateOperators: [],
+            operator: ESTATE_OPERATOR_ADDRESS,
+            updateOperator: null,
             updateManagers: [],
             approvedForAll: []
           })
         })
       })
 
-      describe('and has no update operator in the parcel but has an update operator in the estate', () => {
+      describe('and has an update operator in the estate', () => {
         beforeEach(() => {
           parcel.updateOperator = null
           estate.updateOperator = ESTATE_UPDATE_OPERATOR_ADDRESS
         })
 
-        it('should return the owner from the estate and combine the estate update operator', async () => {
+        it('should return the owner from the estate and the estate update operator', async () => {
           const result = await parcelRightsFetcher.getOperatorsOfParcel(X, Y)
           expect(result).toEqual({
             owner: ESTATE_OWNER_ADDRESS,
-            operators: [],
-            updateOperators: [ESTATE_UPDATE_OPERATOR_ADDRESS],
+            operator: null,
+            updateOperator: ESTATE_UPDATE_OPERATOR_ADDRESS,
             updateManagers: [],
             approvedForAll: []
           })
         })
       })
 
-      describe('and has no operator in the parcel and estate', () => {
+      describe('and has no operator in the estate', () => {
         beforeEach(() => {
           parcel.operator = null
           estate.operator = null
@@ -303,15 +267,15 @@ describe('Parcel Rights Fetcher Component', () => {
           const result = await parcelRightsFetcher.getOperatorsOfParcel(X, Y)
           expect(result).toEqual({
             owner: ESTATE_OWNER_ADDRESS,
-            operators: [],
-            updateOperators: [],
+            operator: null,
+            updateOperator: null,
             updateManagers: [],
             approvedForAll: []
           })
         })
       })
 
-      describe('and has no update operator in the parcel and estate', () => {
+      describe('and has no update operator in the estate', () => {
         beforeEach(() => {
           parcel.updateOperator = null
           estate.updateOperator = null
@@ -321,46 +285,10 @@ describe('Parcel Rights Fetcher Component', () => {
           const result = await parcelRightsFetcher.getOperatorsOfParcel(X, Y)
           expect(result).toEqual({
             owner: ESTATE_OWNER_ADDRESS,
-            operators: [],
-            updateOperators: [],
+            operator: null,
+            updateOperator: null,
             updateManagers: [],
             approvedForAll: []
-          })
-        })
-      })
-
-      describe('and has both operators and update operators in the parcel and estate alongside update managers and approved for all', () => {
-        beforeEach(() => {
-          parcel.operator = OPERATOR_ADDRESS
-          parcel.updateOperator = UPDATE_OPERATOR_ADDRESS
-
-          estate.operator = ESTATE_OPERATOR_ADDRESS
-          estate.updateOperator = ESTATE_UPDATE_OPERATOR_ADDRESS
-
-          authorizations.push(
-            {
-              type: AuthorizationType.UpdateManager,
-              operator: UPDATE_MANAGER_ADDRESS,
-              isApproved: true,
-              timestamp: 1
-            },
-            {
-              type: AuthorizationType.Operator,
-              operator: APPROVED_FOR_ALL_ADDRESS,
-              isApproved: true,
-              timestamp: 2
-            }
-          )
-        })
-
-        it('should return the owner from the estate, and combine parcel and estate operators and update operators, update managers and approved for all', async () => {
-          const result = await parcelRightsFetcher.getOperatorsOfParcel(X, Y)
-          expect(result).toEqual({
-            owner: ESTATE_OWNER_ADDRESS,
-            operators: [ESTATE_OPERATOR_ADDRESS, OPERATOR_ADDRESS],
-            updateOperators: [ESTATE_UPDATE_OPERATOR_ADDRESS, UPDATE_OPERATOR_ADDRESS],
-            updateManagers: [UPDATE_MANAGER_ADDRESS],
-            approvedForAll: [APPROVED_FOR_ALL_ADDRESS]
           })
         })
       })
@@ -435,11 +363,13 @@ describe('Parcel Rights Fetcher Component', () => {
 
       it('should return all permissions as true', async () => {
         const permissions = await parcelRightsFetcher.getParcelPermissions(USER_ADDRESS, X, Y)
-        expect(permissions.owner).toBe(false)
-        expect(permissions.operator).toBe(true)
-        expect(permissions.updateOperator).toBe(true)
-        expect(permissions.updateManager).toBe(true)
-        expect(permissions.approvedForAll).toBe(true)
+        expect(permissions).toEqual({
+          owner: false,
+          operator: true,
+          updateOperator: true,
+          updateManager: true,
+          approvedForAll: true
+        })
       })
     })
 
@@ -450,11 +380,13 @@ describe('Parcel Rights Fetcher Component', () => {
 
       it('should return owner as true and others as false', async () => {
         const permissions = await parcelRightsFetcher.getParcelPermissions(USER_ADDRESS, X, Y)
-        expect(permissions.owner).toBe(true)
-        expect(permissions.operator).toBe(false)
-        expect(permissions.updateOperator).toBe(false)
-        expect(permissions.updateManager).toBe(false)
-        expect(permissions.approvedForAll).toBe(false)
+        expect(permissions).toEqual({
+          owner: true,
+          operator: false,
+          updateOperator: false,
+          updateManager: false,
+          approvedForAll: false
+        })
       })
     })
 
@@ -480,11 +412,13 @@ describe('Parcel Rights Fetcher Component', () => {
 
       it('should return updateOperator as true and others as false', async () => {
         const permissions = await parcelRightsFetcher.getParcelPermissions(USER_ADDRESS, X, Y)
-        expect(permissions.owner).toBe(false)
-        expect(permissions.operator).toBe(false)
-        expect(permissions.updateOperator).toBe(true)
-        expect(permissions.updateManager).toBe(false)
-        expect(permissions.approvedForAll).toBe(false)
+        expect(permissions).toEqual({
+          owner: false,
+          operator: false,
+          updateOperator: true,
+          updateManager: false,
+          approvedForAll: false
+        })
       })
     })
 
@@ -500,11 +434,13 @@ describe('Parcel Rights Fetcher Component', () => {
 
       it('should return updateManager as true and others as false', async () => {
         const permissions = await parcelRightsFetcher.getParcelPermissions(USER_ADDRESS, X, Y)
-        expect(permissions.owner).toBe(false)
-        expect(permissions.operator).toBe(false)
-        expect(permissions.updateOperator).toBe(false)
-        expect(permissions.updateManager).toBe(true)
-        expect(permissions.approvedForAll).toBe(false)
+        expect(permissions).toEqual({
+          owner: false,
+          operator: false,
+          updateOperator: false,
+          updateManager: true,
+          approvedForAll: false
+        })
       })
     })
 
@@ -520,11 +456,13 @@ describe('Parcel Rights Fetcher Component', () => {
 
       it('should return approvedForAll as true and others as false', async () => {
         const permissions = await parcelRightsFetcher.getParcelPermissions(USER_ADDRESS, X, Y)
-        expect(permissions.owner).toBe(false)
-        expect(permissions.operator).toBe(false)
-        expect(permissions.updateOperator).toBe(false)
-        expect(permissions.updateManager).toBe(false)
-        expect(permissions.approvedForAll).toBe(true)
+        expect(permissions).toEqual({
+          owner: false,
+          operator: false,
+          updateOperator: false,
+          updateManager: false,
+          approvedForAll: true
+        })
       })
     })
 
