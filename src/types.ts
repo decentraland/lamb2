@@ -33,10 +33,11 @@ import { OwnershipCachesComponent } from './ports/ownership-caches'
 import { TheGraphComponent } from './ports/the-graph'
 import { ThirdPartyProvidersGraphFetcher } from './adapters/third-party-providers-graph-fetcher'
 import { ThirdPartyProvidersStorage } from './logic/third-party-providers-storage'
-import { IProfilesComponent } from './adapters/profiles'
+import { IProfilesComponent } from './logic/profiles'
 import { AlchemyNftFetcher } from './adapters/alchemy-nft-fetcher'
 import { ThirdPartyItemChecker } from './ports/ownership-checker/third-party-item-checker'
 import { ParcelRightsFetcher } from './adapters/parcel-rights-fetcher'
+import { IDappsDbComponent } from './ports/dapps-db'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -52,6 +53,7 @@ export type BaseComponents = {
   content: Pick<ContentClient, 'fetchEntitiesByPointers'>
   contentServerUrl: string
   theGraph: TheGraphComponent
+  dappsDb: IDappsDbComponent
   ownershipCaches: OwnershipCachesComponent
   baseWearablesFetcher: ElementsFetcher<BaseWearable>
   wearablesFetcher: ElementsFetcher<OnChainWearable>

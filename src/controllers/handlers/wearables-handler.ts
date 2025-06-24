@@ -4,6 +4,7 @@ import { createSorting } from '../../logic/sorting'
 import { HandlerContextWithPath, InvalidRequestError, OnChainWearable, OnChainWearableResponse } from '../../types'
 import { createFilters } from './items-commons'
 import { GetWearables200 } from '@dcl/catalyst-api-specs/lib/client'
+import { fromProfileWearablesToOnChainWearables } from '../../ports/dapps-db/mappers'
 
 function mapItemToItemResponse(
   item: OnChainWearable,
@@ -24,11 +25,11 @@ function mapItemToItemResponse(
 
 export async function wearablesHandler(
   context: HandlerContextWithPath<
-    'wearablesFetcher' | 'entitiesFetcher' | 'wearableDefinitionsFetcher',
+    'entitiesFetcher' | 'wearableDefinitionsFetcher' | 'dappsDb',
     '/users/:address/wearables'
   >
 ): Promise<{ status: 200; body: GetWearables200 }> {
-  const { wearableDefinitionsFetcher, entitiesFetcher, wearablesFetcher } = context.components
+  const { wearableDefinitionsFetcher, entitiesFetcher, dappsDb } = context.components
   const { address } = context.params
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
   const includeEntities = context.url.searchParams.has('includeEntities')
@@ -41,7 +42,10 @@ export async function wearablesHandler(
   }
 
   const page = await fetchAndPaginate<OnChainWearable>(
-    () => wearablesFetcher.fetchOwnedElements(address),
+    async () => {
+      const profileWearables = await dappsDb.getWearablesByOwner(address)
+      return fromProfileWearablesToOnChainWearables(profileWearables)
+    },
     pagination,
     filter,
     sorting

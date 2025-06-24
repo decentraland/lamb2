@@ -13,12 +13,11 @@ export async function outfitsHandler(
     | 'config'
     | 'fetch'
     | 'ownershipCaches'
-    | 'wearablesFetcher'
-    | 'namesFetcher'
     | 'l1ThirdPartyItemChecker'
     | 'l2ThirdPartyItemChecker'
     | 'thirdPartyProvidersStorage'
-    | 'logs',
+    | 'logs'
+    | 'dappsDb',
     '/outfits/:id'
   >
 ): Promise<{ status: 200; body: Entity }> {

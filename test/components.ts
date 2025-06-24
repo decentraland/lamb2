@@ -23,6 +23,7 @@ import { TestComponents } from '../src/types'
 import { createContentClientMock } from './mocks/content-mock'
 import { createTheGraphComponentMock } from './mocks/the-graph-mock'
 import { createAlchemyNftFetcherMock } from './mocks/alchemy-mock'
+import { createDappsDbMock } from './mocks/dapps-db-mock'
 
 /**
  * Behaves like Jest "describe" function, used to describe a test for a
@@ -143,6 +144,8 @@ async function initComponents(
     )
   )
 
+  const dappsDb = createDappsDbMock()
+
   return {
     ...components,
     alchemyNftFetcher,
@@ -157,6 +160,7 @@ async function initComponents(
     emotesFetcher,
     wearableDefinitionsFetcher,
     emoteDefinitionsFetcher,
-    thirdPartyWearablesFetcher
+    thirdPartyWearablesFetcher,
+    dappsDb
   }
 }
