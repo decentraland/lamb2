@@ -112,34 +112,10 @@ export async function createProfilesComponent(
           const [ownedWearables, ownedEmotes, ownedNames] = isDefaultProfile
             ? [[], [], []]
             : await Promise.all([
-                (async () => {
-                  const start = performance.now()
-                  const result = await dappsDb.getOwnedWearablesUrnAndTokenId(ethAddress)
-                  const end = performance.now()
-                  logger.info(`getOwnedWearablesUrnAndTokenId took ${(end - start).toFixed(2)}ms for ${ethAddress}`)
-                  return result
-                })(),
-                (async () => {
-                  const start = performance.now()
-                  const result = await dappsDb.getOwnedEmotesUrnAndTokenId(ethAddress)
-                  const end = performance.now()
-                  logger.info(`getOwnedEmotesUrnAndTokenId took ${(end - start).toFixed(2)}ms for ${ethAddress}`)
-                  return result
-                })(),
-                (async () => {
-                  const start = performance.now()
-                  const result = await dappsDb.getOwnedNamesOnly(ethAddress)
-                  const end = performance.now()
-                  logger.info(`getOwnedNamesOnly took ${(end - start).toFixed(2)}ms for ${ethAddress}`)
-                  return result
-                })(),
-                (async () => {
-                  const start = performance.now()
-                  const result = await thirdPartyWearablesOwnershipChecker.checkNFTsOwnership()
-                  const end = performance.now()
-                  logger.info(`checkNFTsOwnership took ${(end - start).toFixed(2)}ms for ${ethAddress}`)
-                  return result
-                })()
+                dappsDb.getOwnedWearablesUrnAndTokenId(ethAddress),
+                dappsDb.getOwnedEmotesUrnAndTokenId(ethAddress),
+                dappsDb.getOwnedNamesOnly(ethAddress),
+                thirdPartyWearablesOwnershipChecker.checkNFTsOwnership()
               ])
 
           const thirdPartyWearables = isDefaultProfile
