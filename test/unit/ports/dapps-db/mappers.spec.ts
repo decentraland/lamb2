@@ -87,10 +87,8 @@ describe('dapps-db mappers', () => {
           created_at: '2023-01-01T00:00:00Z',
           updated_at: '2023-01-01T00:00:00Z',
           urn: 'urn:decentraland:ethereum:collections-v1:test:item',
-          owner: '0xuser',
-          category: 'invalid_category' as any
-          // missing: name, rarity, price, transferred_at
-        }
+          owner: '0xuser'
+        } as DappsDbRow
       ]
 
       const result = fromDbRowsToWearables(rows)
@@ -142,9 +140,8 @@ describe('dapps-db mappers', () => {
           updated_at: '2023-01-01T00:00:00Z',
           urn: 'urn:decentraland:ethereum:collections-v1:test:invalid',
           owner: '0xuser',
-          category: 'invalid_category' as any,
           name: 'Test Emote'
-        }
+        } as DappsDbRow
       ]
 
       const result = fromDbRowsToEmotes(rows)
