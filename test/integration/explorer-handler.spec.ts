@@ -51,10 +51,6 @@ testWithComponents(() => {
     theGraphComponent: theGraphMock
   }
 })('wearables-handler: GET /explorer/:address/wearables', function ({ components }) {
-  beforeEach(() => {
-    // Clear all mocks before each test
-    jest.clearAllMocks()
-  })
   it('return descriptive errors for bad requests', async () => {
     const { localFetch } = components
 
