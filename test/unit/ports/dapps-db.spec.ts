@@ -8,10 +8,6 @@ describe('dapps-db component', () => {
     dappsDb = createDappsDbMock()
   })
 
-  afterEach(() => {
-    jest.clearAllMocks()
-  })
-
   describe('getWearablesByOwner', () => {
     beforeEach(() => {
       jest.spyOn(dappsDb, 'getWearablesByOwner').mockResolvedValue([])

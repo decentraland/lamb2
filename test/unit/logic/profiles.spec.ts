@@ -54,10 +54,6 @@ describe('profiles logic component', () => {
     profilesComponent = await createProfilesComponent(components)
   })
 
-  afterEach(() => {
-    jest.clearAllMocks()
-  })
-
   describe('getProfile', () => {
     it('should return profile with owned wearables when user owns everything', async () => {
       const address = '0x1'
