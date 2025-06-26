@@ -11,11 +11,6 @@ import { createMockProfileEmote } from '../mocks/dapps-db-mock'
 
 // NOTE: each test generates a new wallet to avoid matches on cache
 test('emotes-handler: GET /users/:address/emotes should', function ({ components }) {
-  beforeEach(() => {
-    // Clear all mocks before each test
-    jest.clearAllMocks()
-  })
-
   // Helper function to convert EmoteFromQuery to ProfileEmote
   function convertToProfileEmotes(emotes: EmoteFromQuery[]) {
     return emotes.map((e) =>

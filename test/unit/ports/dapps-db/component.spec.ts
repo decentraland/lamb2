@@ -13,8 +13,6 @@ describe('dapps-db component', () => {
   let mockClient: any
 
   beforeEach(() => {
-    jest.clearAllMocks()
-
     mockLogger = {
       debug: jest.fn(),
       error: jest.fn(),

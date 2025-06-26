@@ -13,11 +13,6 @@ import { createConfigComponent } from '@well-known-components/env-config-provide
 import { generateWearableEntity } from '../data/wearables'
 
 test('integration tests for profile adapter', function ({ components, stubComponents }) {
-  beforeEach(() => {
-    // Clear all mocks before each test
-    jest.clearAllMocks()
-  })
-
   it('calling with a single profile address, owning everything claimed', async () => {
     const {
       metrics,

@@ -3,10 +3,6 @@ import { generateRandomAddress } from '../helpers'
 import { ProfileMetadata } from '../../src/types'
 
 test('profile-handler: GET /profiles/:id should', function ({ components }) {
-  beforeEach(() => {
-    jest.clearAllMocks()
-  })
-
   it('return profile with base wearables when no items are owned', async () => {
     const { localFetch } = components
     const address = generateRandomAddress()
@@ -162,10 +158,6 @@ test('profile-handler: GET /profiles/:id should', function ({ components }) {
 })
 
 test('profile-handler: POST /profiles should', function ({ components }) {
-  beforeEach(() => {
-    jest.clearAllMocks()
-  })
-
   describe('when requesting batch', () => {
     let address1: string
     let address2: string

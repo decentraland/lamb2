@@ -12,11 +12,6 @@ import { generateRandomAddress } from '../helpers'
 
 // NOTE: each test generates a new wallet to avoid matches on cache
 test('wearables-handler: GET /users/:address/wearables should', function ({ components }) {
-  beforeEach(() => {
-    // Clear all mocks before each test
-    jest.clearAllMocks()
-  })
-
   // Helper function to convert WearableFromQuery to ProfileWearable
   function convertToProfileWearables(wearables: WearableFromQuery[]) {
     return wearables.map((w) =>

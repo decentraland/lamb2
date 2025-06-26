@@ -15,10 +15,6 @@ jest.mock('@dcl/urn-resolver', () => ({
 const { parseUrn } = require('@dcl/urn-resolver')
 
 describe('profiles adapter', () => {
-  beforeEach(() => {
-    jest.clearAllMocks()
-  })
-
   describe('isBaseWearable', () => {
     it('should return true for base-avatars wearables', () => {
       const baseWearable = 'urn:decentraland:off-chain:base-avatars:eyebrows_00'

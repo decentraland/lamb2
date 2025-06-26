@@ -7,11 +7,6 @@ import { createMockProfileWearable, createMockProfileName } from '../mocks/dapps
 testWithComponents(() => {
   return {}
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
-  beforeEach(() => {
-    // Clear all mocks before each test
-    jest.clearAllMocks()
-  })
-
   it('return outfits when all wearables are owned', async () => {
     const { localFetch, dappsDb } = components
     const { content } = stubComponents
@@ -439,11 +434,6 @@ testWithComponents(() => {
 testWithComponents(() => {
   return {}
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
-  beforeEach(() => {
-    // Clear all mocks before each test
-    jest.clearAllMocks()
-  })
-
   it('remove outfit when wearables are not owned', async () => {
     const { localFetch, dappsDb } = components
     const { content } = stubComponents

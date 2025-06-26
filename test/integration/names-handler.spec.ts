@@ -6,10 +6,6 @@ import { FetcherError } from '../../src/adapters/elements-fetcher'
 
 // NOTE: each test generates a new wallet to avoid matches on cache
 test('names-handler: GET /users/:address/names should', function ({ components }) {
-  beforeEach(() => {
-    // Clear all mocks before each test
-    jest.clearAllMocks()
-  })
   it('return empty when no names are found', async () => {
     const { localFetch, dappsDb } = components
 
