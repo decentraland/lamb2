@@ -33,12 +33,13 @@ import { createTheGraphComponent, TheGraphComponent } from './ports/the-graph'
 import { AppComponents, BaseWearable, GlobalContext } from './types'
 import { createThirdPartyProvidersGraphFetcherComponent } from './adapters/third-party-providers-graph-fetcher'
 import { createThirdPartyProvidersStorage } from './logic/third-party-providers-storage'
-import { createProfilesComponent } from './adapters/profiles'
+import { createProfilesComponent } from './logic/profiles'
 import { IFetchComponent } from '@well-known-components/interfaces'
 import { createAlchemyNftFetcher } from './adapters/alchemy-nft-fetcher'
 import { createThirdPartyContractRegistry } from './ports/ownership-checker/third-party-contract-registry'
 import { createThirdPartyItemChecker } from './ports/ownership-checker/third-party-item-checker'
 import { createParcelRightsComponent } from './adapters/parcel-rights-fetcher'
+import { createDappsDbComponent } from './ports/dapps-db'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -66,6 +67,8 @@ export async function initComponents(
   const theGraph = theGraphComponent
     ? theGraphComponent
     : await createTheGraphComponent({ config, logs, fetch, metrics })
+
+  const dappsDb = await createDappsDbComponent({ config, logs, metrics })
 
   const ownershipCaches = await createOwnershipCachesComponent({ config })
 
@@ -161,11 +164,9 @@ export async function initComponents(
     ownershipCaches,
     thirdPartyProvidersStorage,
     logs,
-    wearablesFetcher,
-    emotesFetcher,
-    namesFetcher,
     l1ThirdPartyItemChecker,
-    l2ThirdPartyItemChecker
+    l2ThirdPartyItemChecker,
+    dappsDb
   })
 
   return {
@@ -177,6 +178,7 @@ export async function initComponents(
     metrics,
     content,
     theGraph,
+    dappsDb,
     ownershipCaches,
     baseWearablesFetcher,
     wearablesFetcher,

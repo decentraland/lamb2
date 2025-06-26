@@ -2,13 +2,14 @@ import { defaultServerConfig } from '@well-known-components/test-helpers'
 import { Entity, EntityType, Outfits, WearableCategory } from '@dcl/schemas'
 import { testWithComponents } from '../components'
 import { createConfigComponent } from '@well-known-components/env-config-provider'
+import { createMockProfileWearable, createMockProfileName } from '../mocks/dapps-db-mock'
 
 testWithComponents(() => {
   return {}
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
   it('return outfits when all wearables are owned', async () => {
-    const { localFetch } = components
-    const { content, theGraph } = stubComponents
+    const { localFetch, dappsDb } = components
+    const { content } = stubComponents
     const address = '0x1'
 
     const outfitsMetadata: Outfits = {
@@ -55,126 +56,62 @@ testWithComponents(() => {
     }
 
     content.fetchEntitiesByPointers.resolves([outfitsEntity])
-    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
-      return Promise.resolve({
-        nfts: [
+
+    // Mock dappsDb for wearables
+    const mockWearables = [
+      createMockProfileWearable({
+        urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet',
+        tokenId: '5',
+        name: 'name-1',
+        category: WearableCategory.EYEWEAR,
+        rarity: 'unique',
+        price: 100,
+        individualData: [
           {
-            urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet',
-            id: 'id-1',
+            id: 'data-id-1',
             tokenId: '5',
-            category: 'wearable',
             transferredAt: Date.now(),
-            metadata: {
-              wearable: {
-                name: 'name-1',
-                category: WearableCategory.EYEWEAR
-              }
-            },
-            item: {
-              rarity: 'unique',
-              price: 100
-            }
-          },
+            price: 100
+          }
+        ]
+      }),
+      createMockProfileWearable({
+        urn: 'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
+        tokenId: '3',
+        name: 'name-3',
+        category: WearableCategory.EYEWEAR,
+        rarity: 'unique',
+        price: 100,
+        individualData: [
           {
-            urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet',
-            id: 'id-1',
-            tokenId: '1',
-            category: 'wearable',
+            id: 'data-id-2',
+            tokenId: '3',
             transferredAt: Date.now(),
-            metadata: {
-              wearable: {
-                name: 'name-1',
-                category: WearableCategory.EYEWEAR
-              }
-            },
-            item: {
-              rarity: 'unique',
-              price: 100
-            }
-          },
+            price: 100
+          }
+        ]
+      }),
+      createMockProfileWearable({
+        urn: 'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2',
+        tokenId: '1',
+        name: 'name-4',
+        category: WearableCategory.EYEWEAR,
+        rarity: 'unique',
+        price: 100,
+        individualData: [
           {
-            urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand',
-            id: 'id-2',
+            id: 'data-id-3',
             tokenId: '1',
-            category: 'wearable',
             transferredAt: Date.now(),
-            metadata: {
-              wearable: {
-                name: 'name-2',
-                category: WearableCategory.EYEWEAR
-              }
-            },
-            item: {
-              rarity: 'unique',
-              price: 100
-            }
+            price: 100
           }
         ]
       })
-    })
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
-      if (query.includes(`itemType_in: [wearable_v1, wearable_v2, smart_wearable_v1]`)) {
-        return Promise.resolve({
-          nfts: [
-            {
-              urn: 'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
-              id: 'id-3',
-              tokenId: '3',
-              category: 'wearable',
-              transferredAt: Date.now(),
-              metadata: {
-                wearable: {
-                  name: 'name-3',
-                  category: WearableCategory.EYEWEAR
-                }
-              },
-              item: {
-                rarity: 'unique',
-                price: 100
-              }
-            },
-            {
-              urn: 'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7',
-              id: 'id-3',
-              tokenId: '1',
-              category: 'wearable',
-              transferredAt: Date.now(),
-              metadata: {
-                wearable: {
-                  name: 'name-3',
-                  category: WearableCategory.EYEWEAR
-                }
-              },
-              item: {
-                rarity: 'unique',
-                price: 100
-              }
-            },
-            {
-              urn: 'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2',
-              id: 'id-4',
-              tokenId: '1',
-              category: 'wearable',
-              transferredAt: Date.now(),
-              metadata: {
-                wearable: {
-                  name: 'name-3',
-                  category: WearableCategory.EYEWEAR
-                }
-              },
-              item: {
-                rarity: 'unique',
-                price: 100
-              }
-            }
-          ]
-        })
-      } else if (query.includes(`itemType: emote_v1`)) {
-        return Promise.resolve({ nfts: [] })
-      }
-    })
+    ]
 
-    theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
+    dappsDb.getWearablesByOwner = jest.fn().mockResolvedValue(mockWearables)
+    dappsDb.getEmotesByOwner = jest.fn().mockResolvedValue([])
+    dappsDb.getNamesByOwner = jest.fn().mockResolvedValue([])
 
     const response = await localFetch.fetch(`/outfits/${address}`)
 
@@ -201,8 +138,8 @@ testWithComponents(() => {
   }
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
   it('return and extends outfits when all wearables are owned and ERC-721 is disabled', async () => {
-    const { localFetch } = components
-    const { content, theGraph } = stubComponents
+    const { localFetch, dappsDb } = components
+    const { content } = stubComponents
     const address = '0x1'
 
     const outfitsMetadata: Outfits = {
@@ -249,126 +186,64 @@ testWithComponents(() => {
     }
 
     content.fetchEntitiesByPointers.resolves([outfitsEntity])
-    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
-      return Promise.resolve({
-        nfts: [
+
+    // Mock dappsDb for wearables - matching those needed by the outfits
+    const mockWearables = [
+      createMockProfileWearable({
+        urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet',
+        tokenId: '1',
+        name: 'name-1',
+        category: WearableCategory.EYEWEAR,
+        rarity: 'unique',
+        price: 100,
+        individualData: [
           {
-            urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet',
-            id: 'id-1',
-            tokenId: '5',
-            category: 'wearable',
-            transferredAt: Date.now(),
-            metadata: {
-              wearable: {
-                name: 'name-1',
-                category: WearableCategory.EYEWEAR
-              }
-            },
-            item: {
-              rarity: 'unique',
-              price: 100
-            }
-          },
-          {
-            urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet',
-            id: 'id-1',
+            id: 'data-id-1',
             tokenId: '1',
-            category: 'wearable',
             transferredAt: Date.now(),
-            metadata: {
-              wearable: {
-                name: 'name-1',
-                category: WearableCategory.EYEWEAR
-              }
-            },
-            item: {
-              rarity: 'unique',
-              price: 100
-            }
-          },
+            price: 100
+          }
+        ]
+      }),
+      createMockProfileWearable({
+        urn: 'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
+        tokenId: '1',
+        name: 'name-3',
+        category: WearableCategory.EYEWEAR,
+        rarity: 'unique',
+        price: 100,
+        individualData: [
           {
-            urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand',
-            id: 'id-2',
+            id: 'data-id-2',
             tokenId: '1',
-            category: 'wearable',
             transferredAt: Date.now(),
-            metadata: {
-              wearable: {
-                name: 'name-2',
-                category: WearableCategory.EYEWEAR
-              }
-            },
-            item: {
-              rarity: 'unique',
-              price: 100
-            }
+            price: 100
+          }
+        ]
+      }),
+      createMockProfileWearable({
+        urn: 'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2',
+        tokenId: '1',
+        name: 'name-4',
+        category: WearableCategory.EYEWEAR,
+        rarity: 'unique',
+        price: 100,
+        individualData: [
+          {
+            id: 'data-id-3',
+            tokenId: '1',
+            transferredAt: Date.now(),
+            price: 100
           }
         ]
       })
-    })
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
-      if (query.includes(`itemType_in: [wearable_v1, wearable_v2, smart_wearable_v1]`)) {
-        return Promise.resolve({
-          nfts: [
-            {
-              urn: 'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
-              id: 'id-3',
-              tokenId: '3',
-              category: 'wearable',
-              transferredAt: Date.now(),
-              metadata: {
-                wearable: {
-                  name: 'name-3',
-                  category: WearableCategory.EYEWEAR
-                }
-              },
-              item: {
-                rarity: 'unique',
-                price: 100
-              }
-            },
-            {
-              urn: 'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7',
-              id: 'id-3',
-              tokenId: '1',
-              category: 'wearable',
-              transferredAt: Date.now(),
-              metadata: {
-                wearable: {
-                  name: 'name-3',
-                  category: WearableCategory.EYEWEAR
-                }
-              },
-              item: {
-                rarity: 'unique',
-                price: 100
-              }
-            },
-            {
-              urn: 'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2',
-              id: 'id-4',
-              tokenId: '1',
-              category: 'wearable',
-              transferredAt: Date.now(),
-              metadata: {
-                wearable: {
-                  name: 'name-3',
-                  category: WearableCategory.EYEWEAR
-                }
-              },
-              item: {
-                rarity: 'unique',
-                price: 100
-              }
-            }
-          ]
-        })
-      } else if (query.includes(`itemType: emote_v1`)) {
-        return Promise.resolve({ nfts: [] })
-      }
-    })
+    ]
 
-    theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
+    dappsDb.getWearablesByOwner = jest.fn().mockResolvedValue(mockWearables)
+    dappsDb.getEmotesByOwner = jest.fn().mockResolvedValue([])
+    dappsDb.getNamesByOwner = jest.fn().mockResolvedValue([])
+
+    // This test should not query theGraph anymore - using dappsDb instead
 
     const response = await localFetch.fetch(`/outfits/${address}`)
 
@@ -427,8 +302,8 @@ testWithComponents(() => {
   }
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
   it('return extended outfits when all extended wearables are owned', async () => {
-    const { localFetch } = components
-    const { content, theGraph } = stubComponents
+    const { localFetch, dappsDb } = components
+    const { content } = stubComponents
     const address = '0x1'
 
     const outfitsMetadata: Outfits = {
@@ -475,126 +350,78 @@ testWithComponents(() => {
     }
 
     content.fetchEntitiesByPointers.resolves([outfitsEntity])
-    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
-      return Promise.resolve({
-        nfts: [
+
+    // Mock dappsDb for wearables - all wearables needed for the outfits
+    const mockWearables = [
+      createMockProfileWearable({
+        urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet',
+        tokenId: '5',
+        name: 'name-1',
+        category: WearableCategory.EYEWEAR,
+        rarity: 'unique',
+        price: 100,
+        individualData: [
           {
-            urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet',
-            id: 'id-1',
+            id: 'data-id-1',
             tokenId: '5',
-            category: 'wearable',
             transferredAt: Date.now(),
-            metadata: {
-              wearable: {
-                name: 'name-1',
-                category: WearableCategory.EYEWEAR
-              }
-            },
-            item: {
-              rarity: 'unique',
-              price: 100
-            }
-          },
+            price: 100
+          }
+        ]
+      }),
+      createMockProfileWearable({
+        urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet',
+        tokenId: '1',
+        name: 'name-1',
+        category: WearableCategory.EYEWEAR,
+        rarity: 'unique',
+        price: 100,
+        individualData: [
           {
-            urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet',
-            id: 'id-1',
+            id: 'data-id-2',
             tokenId: '1',
-            category: 'wearable',
             transferredAt: Date.now(),
-            metadata: {
-              wearable: {
-                name: 'name-1',
-                category: WearableCategory.EYEWEAR
-              }
-            },
-            item: {
-              rarity: 'unique',
-              price: 100
-            }
-          },
+            price: 100
+          }
+        ]
+      }),
+      createMockProfileWearable({
+        urn: 'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
+        tokenId: '3',
+        name: 'name-3',
+        category: WearableCategory.EYEWEAR,
+        rarity: 'unique',
+        price: 100,
+        individualData: [
           {
-            urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand',
-            id: 'id-2',
-            tokenId: '1',
-            category: 'wearable',
+            id: 'data-id-3',
+            tokenId: '3',
             transferredAt: Date.now(),
-            metadata: {
-              wearable: {
-                name: 'name-2',
-                category: WearableCategory.EYEWEAR
-              }
-            },
-            item: {
-              rarity: 'unique',
-              price: 100
-            }
+            price: 100
+          }
+        ]
+      }),
+      createMockProfileWearable({
+        urn: 'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2',
+        tokenId: '1',
+        name: 'name-4',
+        category: WearableCategory.EYEWEAR,
+        rarity: 'unique',
+        price: 100,
+        individualData: [
+          {
+            id: 'data-id-4',
+            tokenId: '1',
+            transferredAt: Date.now(),
+            price: 100
           }
         ]
       })
-    })
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
-      if (query.includes(`itemType_in: [wearable_v1, wearable_v2, smart_wearable_v1]`)) {
-        return Promise.resolve({
-          nfts: [
-            {
-              urn: 'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
-              id: 'id-3',
-              tokenId: '3',
-              category: 'wearable',
-              transferredAt: Date.now(),
-              metadata: {
-                wearable: {
-                  name: 'name-3',
-                  category: WearableCategory.EYEWEAR
-                }
-              },
-              item: {
-                rarity: 'unique',
-                price: 100
-              }
-            },
-            {
-              urn: 'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7',
-              id: 'id-3',
-              tokenId: '1',
-              category: 'wearable',
-              transferredAt: Date.now(),
-              metadata: {
-                wearable: {
-                  name: 'name-3',
-                  category: WearableCategory.EYEWEAR
-                }
-              },
-              item: {
-                rarity: 'unique',
-                price: 100
-              }
-            },
-            {
-              urn: 'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2',
-              id: 'id-4',
-              tokenId: '1',
-              category: 'wearable',
-              transferredAt: Date.now(),
-              metadata: {
-                wearable: {
-                  name: 'name-3',
-                  category: WearableCategory.EYEWEAR
-                }
-              },
-              item: {
-                rarity: 'unique',
-                price: 100
-              }
-            }
-          ]
-        })
-      } else if (query.includes(`itemType: emote_v1`)) {
-        return Promise.resolve({ nfts: [] })
-      }
-    })
+    ]
 
-    theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
+    dappsDb.getWearablesByOwner = jest.fn().mockResolvedValue(mockWearables)
+    dappsDb.getEmotesByOwner = jest.fn().mockResolvedValue([])
+    dappsDb.getNamesByOwner = jest.fn().mockResolvedValue([])
 
     const response = await localFetch.fetch(`/outfits/${address}`)
 
@@ -608,8 +435,8 @@ testWithComponents(() => {
   return {}
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
   it('remove outfit when wearables are not owned', async () => {
-    const { localFetch } = components
-    const { content, theGraph } = stubComponents
+    const { localFetch, dappsDb } = components
+    const { content } = stubComponents
     const address = '0x1'
 
     const outfitsMetadata: Outfits = {
@@ -656,126 +483,63 @@ testWithComponents(() => {
     }
 
     content.fetchEntitiesByPointers.resolves([outfitsEntity])
-    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
-      return Promise.resolve({
-        nfts: [
+
+    // Mock dappsDb for wearables - include all wearables for slot 1, missing some for slot 2
+    const mockWearables = [
+      createMockProfileWearable({
+        urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet',
+        tokenId: '5',
+        name: 'name-1',
+        category: WearableCategory.EYEWEAR,
+        rarity: 'unique',
+        price: 100,
+        individualData: [
           {
-            urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet',
-            id: 'id-1',
+            id: 'data-id-1',
             tokenId: '5',
-            category: 'wearable',
             transferredAt: Date.now(),
-            metadata: {
-              wearable: {
-                name: 'name-1',
-                category: WearableCategory.EYEWEAR
-              }
-            },
-            item: {
-              rarity: 'unique',
-              price: 100
-            }
-          },
+            price: 100
+          }
+        ]
+      }),
+      createMockProfileWearable({
+        urn: 'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
+        tokenId: '3',
+        name: 'name-3',
+        category: WearableCategory.EYEWEAR,
+        rarity: 'unique',
+        price: 100,
+        individualData: [
           {
-            urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet',
-            id: 'id-1',
-            tokenId: '1',
-            category: 'wearable',
+            id: 'data-id-2',
+            tokenId: '3',
             transferredAt: Date.now(),
-            metadata: {
-              wearable: {
-                name: 'name-1',
-                category: WearableCategory.EYEWEAR
-              }
-            },
-            item: {
-              rarity: 'unique',
-              price: 100
-            }
-          },
+            price: 100
+          }
+        ]
+      }),
+      createMockProfileWearable({
+        urn: 'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2',
+        tokenId: '1',
+        name: 'name-4',
+        category: WearableCategory.EYEWEAR,
+        rarity: 'unique',
+        price: 100,
+        individualData: [
           {
-            urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand',
-            id: 'id-2',
+            id: 'data-id-3',
             tokenId: '1',
-            category: 'wearable',
             transferredAt: Date.now(),
-            metadata: {
-              wearable: {
-                name: 'name-2',
-                category: WearableCategory.EYEWEAR
-              }
-            },
-            item: {
-              rarity: 'unique',
-              price: 100
-            }
+            price: 100
           }
         ]
       })
-    })
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
-      if (query.includes(`itemType_in: [wearable_v1, wearable_v2, smart_wearable_v1]`)) {
-        return Promise.resolve({
-          nfts: [
-            {
-              urn: 'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
-              id: 'id-3',
-              tokenId: '3',
-              category: 'wearable',
-              transferredAt: Date.now(),
-              metadata: {
-                wearable: {
-                  name: 'name-3',
-                  category: WearableCategory.EYEWEAR
-                }
-              },
-              item: {
-                rarity: 'unique',
-                price: 100
-              }
-            },
-            {
-              urn: 'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7',
-              id: 'id-3',
-              tokenId: '1',
-              category: 'wearable',
-              transferredAt: Date.now(),
-              metadata: {
-                wearable: {
-                  name: 'name-3',
-                  category: WearableCategory.EYEWEAR
-                }
-              },
-              item: {
-                rarity: 'unique',
-                price: 100
-              }
-            },
-            {
-              urn: 'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2',
-              id: 'id-4',
-              tokenId: '1',
-              category: 'wearable',
-              transferredAt: Date.now(),
-              metadata: {
-                wearable: {
-                  name: 'name-3',
-                  category: WearableCategory.EYEWEAR
-                }
-              },
-              item: {
-                rarity: 'unique',
-                price: 100
-              }
-            }
-          ]
-        })
-      } else if (query.includes(`itemType: emote_v1`)) {
-        return Promise.resolve({ nfts: [] })
-      }
-    })
+      // Missing: urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:7 (for slot 2)
+    ]
 
-    theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
+    dappsDb.getWearablesByOwner = jest.fn().mockResolvedValue(mockWearables)
+    dappsDb.getEmotesByOwner = jest.fn().mockResolvedValue([])
+    dappsDb.getNamesByOwner = jest.fn().mockResolvedValue([])
 
     const response = await localFetch.fetch(`/outfits/${address}`)
 
@@ -804,8 +568,8 @@ testWithComponents(() => {
   }
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
   it('return complete outfits when its contain base wearables and an owned wearable', async () => {
-    const { localFetch } = components
-    const { content, theGraph } = stubComponents
+    const { localFetch, dappsDb } = components
+    const { content } = stubComponents
     const address = '0x1'
 
     const outfitsMetadata: Outfits = {
@@ -978,40 +742,30 @@ testWithComponents(() => {
     }
 
     content.fetchEntitiesByPointers.resolves([outfitsEntity])
-    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
-      return Promise.resolve({
-        nfts: []
-      })
-    })
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
-      if (query.includes(`itemType_in: [wearable_v1, wearable_v2, smart_wearable_v1]`)) {
-        return Promise.resolve({
-          nfts: [
-            {
-              urn: 'urn:decentraland:amoy:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0',
-              id: 'id-3',
-              tokenId: '3',
-              category: 'wearable',
-              transferredAt: Date.now(),
-              metadata: {
-                wearable: {
-                  name: 'name-3',
-                  category: WearableCategory.EYEWEAR
-                }
-              },
-              item: {
-                rarity: 'unique',
-                price: 100
-              }
-            }
-          ]
-        })
-      } else if (query.includes(`itemType: emote_v1`)) {
-        return Promise.resolve({ nfts: [] })
-      }
-    })
 
-    theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
+    // Mock dappsDb for wearables - only include the owned wearable
+    const mockWearables = [
+      createMockProfileWearable({
+        urn: 'urn:decentraland:amoy:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0',
+        tokenId: '1',
+        name: 'name-3',
+        category: WearableCategory.EYEWEAR,
+        rarity: 'unique',
+        price: 100,
+        individualData: [
+          {
+            id: 'data-id-1',
+            tokenId: '1',
+            transferredAt: Date.now(),
+            price: 100
+          }
+        ]
+      })
+    ]
+
+    dappsDb.getWearablesByOwner = jest.fn().mockResolvedValue(mockWearables)
+    dappsDb.getEmotesByOwner = jest.fn().mockResolvedValue([])
+    dappsDb.getNamesByOwner = jest.fn().mockResolvedValue([])
 
     const response = await localFetch.fetch(`/outfits/${address}`)
 
@@ -1038,8 +792,8 @@ testWithComponents(() => {
   }
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
   it('return complete outfit without extensions when outfit comes extended from content-server but ERC-721 standard is disabled', async () => {
-    const { localFetch } = components
-    const { content, theGraph } = stubComponents
+    const { localFetch, dappsDb } = components
+    const { content } = stubComponents
     const address = '0x1'
 
     const outfitsMetadata: Outfits = {
@@ -1212,40 +966,30 @@ testWithComponents(() => {
     }
 
     content.fetchEntitiesByPointers.resolves([outfitsEntity])
-    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
-      return Promise.resolve({
-        nfts: []
-      })
-    })
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
-      if (query.includes(`itemType_in: [wearable_v1, wearable_v2, smart_wearable_v1]`)) {
-        return Promise.resolve({
-          nfts: [
-            {
-              urn: 'urn:decentraland:amoy:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0',
-              id: 'id-3',
-              tokenId: '3',
-              category: 'wearable',
-              transferredAt: Date.now(),
-              metadata: {
-                wearable: {
-                  name: 'name-3',
-                  category: WearableCategory.EYEWEAR
-                }
-              },
-              item: {
-                rarity: 'unique',
-                price: 100
-              }
-            }
-          ]
-        })
-      } else if (query.includes(`itemType: emote_v1`)) {
-        return Promise.resolve({ nfts: [] })
-      }
-    })
 
-    theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
+    // Mock dappsDb for wearables
+    const mockWearables = [
+      createMockProfileWearable({
+        urn: 'urn:decentraland:amoy:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0',
+        tokenId: '3',
+        name: 'name-3',
+        category: WearableCategory.EYEWEAR,
+        rarity: 'unique',
+        price: 100,
+        individualData: [
+          {
+            id: 'data-id-1',
+            tokenId: '3',
+            transferredAt: Date.now(),
+            price: 100
+          }
+        ]
+      })
+    ]
+
+    dappsDb.getWearablesByOwner = jest.fn().mockResolvedValue(mockWearables)
+    dappsDb.getEmotesByOwner = jest.fn().mockResolvedValue([])
+    dappsDb.getNamesByOwner = jest.fn().mockResolvedValue([])
 
     const response = await localFetch.fetch(`/outfits/${address}`)
 
@@ -1280,8 +1024,8 @@ testWithComponents(() => {
   }
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
   it('return complete extended outfit when outfit comes extended from content-server', async () => {
-    const { localFetch } = components
-    const { content, theGraph } = stubComponents
+    const { localFetch, dappsDb } = components
+    const { content } = stubComponents
     const address = '0x1'
 
     const outfitsMetadata: Outfits = {
@@ -1454,40 +1198,30 @@ testWithComponents(() => {
     }
 
     content.fetchEntitiesByPointers.resolves([outfitsEntity])
-    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
-      return Promise.resolve({
-        nfts: []
-      })
-    })
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
-      if (query.includes(`itemType_in: [wearable_v1, wearable_v2, smart_wearable_v1]`)) {
-        return Promise.resolve({
-          nfts: [
-            {
-              urn: 'urn:decentraland:amoy:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0',
-              id: 'id-3',
-              tokenId: '3',
-              category: 'wearable',
-              transferredAt: Date.now(),
-              metadata: {
-                wearable: {
-                  name: 'name-3',
-                  category: WearableCategory.EYEWEAR
-                }
-              },
-              item: {
-                rarity: 'unique',
-                price: 100
-              }
-            }
-          ]
-        })
-      } else if (query.includes(`itemType: emote_v1`)) {
-        return Promise.resolve({ nfts: [] })
-      }
-    })
 
-    theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
+    // Mock dappsDb for wearables
+    const mockWearables = [
+      createMockProfileWearable({
+        urn: 'urn:decentraland:amoy:collections-v2:0x6abaadad08b761e0a90f467d8dd3095583b4f3a2:0',
+        tokenId: '3',
+        name: 'name-3',
+        category: WearableCategory.EYEWEAR,
+        rarity: 'unique',
+        price: 100,
+        individualData: [
+          {
+            id: 'data-id-1',
+            tokenId: '3',
+            transferredAt: Date.now(),
+            price: 100
+          }
+        ]
+      })
+    ]
+
+    dappsDb.getWearablesByOwner = jest.fn().mockResolvedValue(mockWearables)
+    dappsDb.getEmotesByOwner = jest.fn().mockResolvedValue([])
+    dappsDb.getNamesByOwner = jest.fn().mockResolvedValue([])
 
     const response = await localFetch.fetch(`/outfits/${address}`)
 

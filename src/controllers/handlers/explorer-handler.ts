@@ -13,6 +13,7 @@ import {
   ThirdPartyWearable
 } from '../../types'
 import { createFilters } from './items-commons'
+import { fromProfileWearablesToOnChainWearables } from '../../ports/dapps-db/mappers'
 
 const VALID_COLLECTION_TYPES = ['base-wearable', 'on-chain', 'third-party']
 
@@ -44,6 +45,7 @@ async function fetchCombinedElements(
     | 'entitiesFetcher'
     | 'thirdPartyWearablesFetcher'
     | 'thirdPartyProvidersStorage'
+    | 'dappsDb'
   >,
   collectionTypes: string[],
   thirdPartyCollectionId: string[],
@@ -71,7 +73,8 @@ async function fetchCombinedElements(
   }
 
   async function fetchOnChainWearables(): Promise<MixedOnChainWearable[]> {
-    const elements = await components.wearablesFetcher.fetchOwnedElements(address)
+    const profileWearables = await components.dappsDb.getWearablesByOwner(address)
+    const elements = fromProfileWearablesToOnChainWearables(profileWearables)
     const entities = await components.entitiesFetcher.fetchEntities(elements.map((e) => e.urn))
     const result: MixedOnChainWearable[] = []
     for (let i = 0; i < elements.length; ++i) {
@@ -138,7 +141,8 @@ export async function explorerHandler(
     | 'wearablesFetcher'
     | 'thirdPartyWearablesFetcher'
     | 'entitiesFetcher'
-    | 'thirdPartyProvidersStorage',
+    | 'thirdPartyProvidersStorage'
+    | 'dappsDb',
     '/explorer/:address/wearables'
   >
 ): Promise<PaginatedResponse<MixedWearableResponse>> {

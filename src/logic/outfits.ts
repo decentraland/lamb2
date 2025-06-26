@@ -2,6 +2,7 @@ import { Outfit, Outfits } from '@dcl/schemas'
 import { AppComponents, OnChainWearable, TypedEntity } from '../types'
 import { splitUrnAndTokenId } from './utils'
 import { createTPWOwnershipChecker } from '../ports/ownership-checker/tpw-ownership-checker'
+import { fromProfileWearablesToOnChainWearables } from '../ports/dapps-db/mappers'
 
 export async function getOutfits(
   components: Pick<
@@ -15,16 +16,15 @@ export async function getOutfits(
     | 'config'
     | 'fetch'
     | 'ownershipCaches'
-    | 'wearablesFetcher'
-    | 'namesFetcher'
     | 'l1ThirdPartyItemChecker'
     | 'l2ThirdPartyItemChecker'
     | 'thirdPartyProvidersStorage'
     | 'logs'
+    | 'dappsDb'
   >,
   ethAddress: string
 ): Promise<TypedEntity<Outfits> | undefined> {
-  const { config, wearablesFetcher, namesFetcher, content } = components
+  const { config, content, dappsDb } = components
   const ensureERC721 = (await config.getString('ENSURE_ERC_721')) !== 'false'
   const thirdPartyWearablesOwnershipChecker = createTPWOwnershipChecker(components)
 
@@ -41,8 +41,8 @@ export async function getOutfits(
 
   const { metadata } = outfitsEntity
 
-  // Outfits containing all wearables owned
-  const ownedWearables: OnChainWearable[] = await wearablesFetcher.fetchOwnedElements(ethAddress)
+  const profileWearables = await dappsDb.getWearablesByOwner(ethAddress)
+  const ownedWearables: OnChainWearable[] = fromProfileWearablesToOnChainWearables(profileWearables)
 
   const fullyOwnedOutfits: { slot: number; outfit: Outfit }[] = []
 
@@ -96,7 +96,7 @@ export async function getOutfits(
     }
   }
 
-  const names = await namesFetcher.fetchOwnedElements(ethAddress)
+  const names = await dappsDb.getNamesByOwner(ethAddress)
 
   const normalOutfitsWithOwnedWearables = fullyOwnedOutfits.filter((outfit) => outfit.slot <= 4)
   const extraOutfitsWithOwnedWearables = fullyOwnedOutfits.filter((outfit) => outfit.slot > 4)

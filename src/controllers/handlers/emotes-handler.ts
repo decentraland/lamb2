@@ -1,9 +1,10 @@
 import { EmoteDefinition, Entity } from '@dcl/schemas'
+import { GetEmotes200 } from '@dcl/catalyst-api-specs/lib/client'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
+import { fromProfileEmotesToOnChainEmotes } from '../../ports/dapps-db/mappers'
 import { createSorting } from '../../logic/sorting'
 import { HandlerContextWithPath, InvalidRequestError, OnChainEmote, OnChainEmoteResponse } from '../../types'
 import { createFilters } from './items-commons'
-import { GetEmotes200 } from '@dcl/catalyst-api-specs/lib/client'
 
 function mapItemToItemResponse(
   item: OnChainEmote,
@@ -23,12 +24,9 @@ function mapItemToItemResponse(
 }
 
 export async function emotesHandler(
-  context: HandlerContextWithPath<
-    'emotesFetcher' | 'entitiesFetcher' | 'emoteDefinitionsFetcher',
-    '/users/:address/emotes'
-  >
+  context: HandlerContextWithPath<'entitiesFetcher' | 'emoteDefinitionsFetcher' | 'dappsDb', '/users/:address/emotes'>
 ): Promise<{ status: 200; body: GetEmotes200 }> {
-  const { emoteDefinitionsFetcher, emotesFetcher, entitiesFetcher } = context.components
+  const { emoteDefinitionsFetcher, entitiesFetcher, dappsDb } = context.components
   const { address } = context.params
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
   const includeEntities = context.url.searchParams.has('includeEntities')
@@ -41,7 +39,10 @@ export async function emotesHandler(
   }
 
   const page = await fetchAndPaginate<OnChainEmote>(
-    () => emotesFetcher.fetchOwnedElements(address),
+    async () => {
+      const profileEmotes = await dappsDb.getEmotesByOwner(address)
+      return fromProfileEmotesToOnChainEmotes(profileEmotes)
+    },
     pagination,
     filter,
     sorting
