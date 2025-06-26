@@ -93,29 +93,39 @@ export function fromDbRowsToNames(rows: DappsDbRow[]): ProfileName[] {
   }))
 }
 
+// Base interface for the common properties between Profile and OnChain types
+interface ProfileToOnChainMappable {
+  urn: string
+  amount: number
+  individualData: any[]
+  name: string
+  rarity: string
+  minTransferredAt: number
+  maxTransferredAt: number
+  category: string
+}
+
+// Generic mapper function to convert Profile types to OnChain types
+function fromProfileToOnChain<TProfile extends ProfileToOnChainMappable, TOnChain>(
+  profileItems: TProfile[]
+): TOnChain[] {
+  return profileItems.map((profileItem) => ({
+    urn: profileItem.urn,
+    amount: profileItem.amount,
+    individualData: profileItem.individualData,
+    name: profileItem.name,
+    rarity: profileItem.rarity,
+    minTransferredAt: profileItem.minTransferredAt,
+    maxTransferredAt: profileItem.maxTransferredAt,
+    category: profileItem.category
+  })) as TOnChain[]
+}
+
 // Mappers to convert from Profile types to OnChain types for endpoints
 export function fromProfileWearablesToOnChainWearables(profileWearables: ProfileWearable[]): OnChainWearable[] {
-  return profileWearables.map((profileWearable) => ({
-    urn: profileWearable.urn,
-    amount: profileWearable.amount,
-    individualData: profileWearable.individualData,
-    name: profileWearable.name,
-    rarity: profileWearable.rarity,
-    minTransferredAt: profileWearable.minTransferredAt,
-    maxTransferredAt: profileWearable.maxTransferredAt,
-    category: profileWearable.category
-  }))
+  return fromProfileToOnChain<ProfileWearable, OnChainWearable>(profileWearables)
 }
 
 export function fromProfileEmotesToOnChainEmotes(profileEmotes: ProfileEmote[]): OnChainEmote[] {
-  return profileEmotes.map((profileEmote) => ({
-    urn: profileEmote.urn,
-    amount: profileEmote.amount,
-    individualData: profileEmote.individualData,
-    name: profileEmote.name,
-    rarity: profileEmote.rarity,
-    minTransferredAt: profileEmote.minTransferredAt,
-    maxTransferredAt: profileEmote.maxTransferredAt,
-    category: profileEmote.category
-  }))
+  return fromProfileToOnChain<ProfileEmote, OnChainEmote>(profileEmotes)
 }

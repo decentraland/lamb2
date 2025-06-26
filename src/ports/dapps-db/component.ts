@@ -97,7 +97,6 @@ export async function createDappsDbComponent(
 
       try {
         const query = getEmotesByOwnerQuery(owner, limit)
-        console.log(query.text, query.values)
 
         const result = await client.query<DappsDbRow>(query)
 
@@ -159,7 +158,6 @@ export async function createDappsDbComponent(
 
       try {
         const query = getNamesByOwnerQuery(owner, limit)
-        console.log(query.text, query.values)
 
         const result = await client.query<DappsDbRow>(query)
 
