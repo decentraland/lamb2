@@ -7,13 +7,13 @@ import { createConfigComponent } from '@well-known-components/env-config-provide
 import { IConfigComponent, IFetchComponent } from '@well-known-components/interfaces'
 import { createLogComponent } from '@well-known-components/logger'
 import { createTestMetricsComponent } from '@well-known-components/metrics'
+import { initComponents as originalInitComponents } from '../src/components'
 import {
   createEmoteDefinitionsFetcherComponent,
   createWearableDefinitionsFetcherComponent
 } from '../src/adapters/definitions-fetcher'
 import { createElementsFetcherComponent } from '../src/adapters/elements-fetcher'
 import { createEntitiesFetcherComponent } from '../src/adapters/entities-fetcher'
-import { initComponents as originalInitComponents } from '../src/components'
 import { fetchAllEmotes, fetchAllWearables } from '../src/logic/fetch-elements/fetch-items'
 import { fetchAllThirdPartyWearables } from '../src/logic/fetch-elements/fetch-third-party-wearables'
 import { metricDeclarations } from '../src/metrics'
@@ -23,6 +23,7 @@ import { TestComponents } from '../src/types'
 import { createContentClientMock } from './mocks/content-mock'
 import { createTheGraphComponentMock } from './mocks/the-graph-mock'
 import { createAlchemyNftFetcherMock } from './mocks/alchemy-mock'
+import { createMarketplaceApiMock } from './mocks/marketplace-api-fetcher-mock'
 
 /**
  * Behaves like Jest "describe" function, used to describe a test for a
@@ -69,6 +70,7 @@ async function initComponents(
       PROFILE_CDN_BASE_URL: 'https://peer.decentraland.org/content',
       LAMBDAS_URL: 'https://peer.decentraland.org/lambdas',
       ARCHIPELAGO_URL: 'https://peer.decentraland.org/archipelago',
+      MARKETPLACE_API_URL: 'https://marketplace-api.decentraland.org',
       COMMIT_HASH: 'commit_hash',
       CURRENT_VERSION: 'version',
       HTTP_SERVER_PORT: '7272'
@@ -157,6 +159,7 @@ async function initComponents(
     emotesFetcher,
     wearableDefinitionsFetcher,
     emoteDefinitionsFetcher,
-    thirdPartyWearablesFetcher
+    thirdPartyWearablesFetcher,
+    marketplaceApiFetcher: createMarketplaceApiMock()
   }
 }
