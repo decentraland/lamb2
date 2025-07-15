@@ -27,7 +27,7 @@ export interface IMarketplaceApiFetcher {
   getOwnedNamesOnly(address: string, first?: number, skip?: number): Promise<{ data: string[]; total: number }>
 }
 
-export interface MarketplaceApiResponse<T> {
+export type MarketplaceApiResponse<T> = {
   ok: boolean
   data: {
     elements: T[]
@@ -64,7 +64,7 @@ export async function createMarketplaceApiFetcher(components: {
       const result: MarketplaceApiResponse<T> = await response.json()
 
       if (!result.ok) {
-        throw new Error(result.message || 'API request failed')
+        throw new Error(result.message || 'Marketplace API request failed')
       }
 
       return {
