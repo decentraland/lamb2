@@ -71,6 +71,7 @@ describe('marketplace-api-fetcher', () => {
           data: {
             elements: [mockWearable, { ...mockWearable, id: 'test-id-2', tokenId: '124' }],
             total: 5,
+            totalItems: 5,
             page: 1,
             pages: 3,
             limit: 2
@@ -84,6 +85,7 @@ describe('marketplace-api-fetcher', () => {
               { ...mockWearable, id: 'test-id-4', tokenId: '126' }
             ],
             total: 5,
+            totalItems: 5,
             page: 2,
             pages: 3,
             limit: 2
@@ -94,6 +96,7 @@ describe('marketplace-api-fetcher', () => {
           data: {
             elements: [{ ...mockWearable, id: 'test-id-5', tokenId: '127' }],
             total: 5,
+            totalItems: 5,
             page: 3,
             pages: 3,
             limit: 2
@@ -152,6 +155,7 @@ describe('marketplace-api-fetcher', () => {
         data: {
           elements: [],
           total: 0,
+          totalItems: 0,
           page: 1,
           pages: 1,
           limit: MARKETPLACE_API_BATCH_SIZE
@@ -191,6 +195,7 @@ describe('marketplace-api-fetcher', () => {
         data: {
           elements: [mockWearable],
           total: 1,
+          totalItems: 1,
           page: 1,
           pages: 1,
           limit: MARKETPLACE_API_BATCH_SIZE
@@ -226,6 +231,7 @@ describe('marketplace-api-fetcher', () => {
         data: {
           elements: [],
           total: 0,
+          totalItems: 0,
           page: 1,
           pages: 1,
           limit: MARKETPLACE_API_BATCH_SIZE
@@ -262,6 +268,7 @@ describe('marketplace-api-fetcher', () => {
         data: {
           elements: [mockWearable],
           total: 1,
+          totalItems: 1,
           page: 1,
           pages: 1,
           limit: MARKETPLACE_API_BATCH_SIZE
@@ -321,6 +328,7 @@ describe('marketplace-api-fetcher', () => {
         data: {
           elements: [mockEmote, { ...mockEmote, id: 'test-emote-id-2', tokenId: '457' }],
           total: 2,
+          totalItems: 2,
           page: 1,
           pages: 1,
           limit: MARKETPLACE_API_BATCH_SIZE
@@ -354,6 +362,7 @@ describe('marketplace-api-fetcher', () => {
         data: {
           elements: [mockName, { ...mockName, name: 'testname2.dcl.eth', tokenId: '124' }],
           total: 2,
+          totalItems: 2,
           page: 1,
           pages: 1,
           limit: MARKETPLACE_API_BATCH_SIZE
@@ -375,7 +384,7 @@ describe('marketplace-api-fetcher', () => {
 
   describe('MARKETPLACE_API_BATCH_SIZE', () => {
     it('should use the correct batch size', () => {
-      expect(MARKETPLACE_API_BATCH_SIZE).toBe(1000)
+      expect(MARKETPLACE_API_BATCH_SIZE).toBe(5000)
     })
   })
 })

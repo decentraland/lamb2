@@ -108,6 +108,7 @@ describe('fetch-names-with-fallback', () => {
     mockGraphNameResponse = {
       nfts: [
         {
+          id: 'mock-nft-id-1',
           name: 'testname.dcl.eth',
           contractAddress: '0x123abc',
           tokenId: '123',
