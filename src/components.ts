@@ -15,7 +15,7 @@ import {
   createEmoteDefinitionsFetcherComponent,
   createWearableDefinitionsFetcherComponent
 } from './adapters/definitions-fetcher'
-import { createElementsFetcherComponent } from './adapters/elements-fetcher'
+import { createElementsFetcherComponent, createPaginatedElementsFetcherComponent } from './adapters/elements-fetcher'
 import { createEntitiesFetcherComponent } from './adapters/entities-fetcher'
 import { createMarketplaceApiFetcher } from './adapters/marketplace-api-fetcher'
 import { createNameDenylistFetcher } from './adapters/name-denylist-fetcher'
@@ -25,10 +25,15 @@ import { createStatusComponent } from './adapters/status'
 import { fetchAllBaseWearables } from './logic/fetch-elements/fetch-base-items'
 import {
   fetchAllWearablesWithFallback,
-  fetchAllEmotesWithFallback
+  fetchWearablesPaginatedWithFallback,
+  fetchAllEmotesWithFallback,
+  fetchEmotesPaginatedWithFallback
 } from './logic/fetch-elements/fetch-items-with-fallback'
 import { fetchAllLANDs } from './logic/fetch-elements/fetch-lands'
-import { fetchAllNamesWithFallback } from './logic/fetch-elements/fetch-names-with-fallback'
+import {
+  fetchAllNamesWithFallback,
+  fetchNamesPaginatedWithFallback
+} from './logic/fetch-elements/fetch-names-with-fallback'
 import { fetchAllThirdPartyWearables } from './logic/fetch-elements/fetch-third-party-wearables'
 import { metricDeclarations } from './metrics'
 import { createFetchComponent } from './ports/fetch'
@@ -93,14 +98,23 @@ export async function initComponents(
   const baseWearablesFetcher = createElementsFetcherComponent<BaseWearable>({ logs }, async (_address) =>
     fetchAllBaseWearables({ entitiesFetcher })
   )
-  const wearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllWearablesWithFallback({ theGraph, marketplaceApiFetcher, logs }, address)
+  const wearablesFetcher = createPaginatedElementsFetcherComponent(
+    { logs },
+    async (address) => fetchAllWearablesWithFallback({ theGraph, marketplaceApiFetcher, logs }, address),
+    async (address, limit, offset) =>
+      fetchWearablesPaginatedWithFallback({ theGraph, marketplaceApiFetcher, logs }, address, limit, offset)
   )
-  const emotesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllEmotesWithFallback({ theGraph, marketplaceApiFetcher, logs }, address)
+  const emotesFetcher = createPaginatedElementsFetcherComponent(
+    { logs },
+    async (address) => fetchAllEmotesWithFallback({ theGraph, marketplaceApiFetcher, logs }, address),
+    async (address, limit, offset) =>
+      fetchEmotesPaginatedWithFallback({ theGraph, marketplaceApiFetcher, logs }, address, limit, offset)
   )
-  const namesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllNamesWithFallback({ theGraph, marketplaceApiFetcher, logs }, address)
+  const namesFetcher = createPaginatedElementsFetcherComponent(
+    { logs },
+    async (address) => fetchAllNamesWithFallback({ theGraph, marketplaceApiFetcher, logs }, address),
+    async (address, limit, offset) =>
+      fetchNamesPaginatedWithFallback({ theGraph, marketplaceApiFetcher, logs }, address, limit, offset)
   )
   const landsFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllLANDs({ theGraph }, address))
 

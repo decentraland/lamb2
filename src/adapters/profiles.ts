@@ -71,7 +71,9 @@ export async function createProfilesComponent(
   const logger = logs.getLogger('profiles')
 
   const ensureERC721 = (await config.getString('ENSURE_ERC_721')) !== 'false'
-  const baseUrl = (await config.getString('PROFILE_CDN_BASE_URL')) ?? 'https://profile-images.decentraland.org'
+  const baseUrl =
+    (await config.getString('PROFILE_CDN_BASE_URL')) ??
+    'https://profile-images-bucket-43d0c58.s3.us-east-1.amazonaws.com/v1'
 
   async function getProfiles(
     ethAddresses: string[],

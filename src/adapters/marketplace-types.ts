@@ -1,5 +1,6 @@
 import { EmoteCategory, WearableCategory } from '@dcl/schemas'
-import { OnChainWearable, OnChainEmote } from '../types'
+import { OnChainWearable, OnChainEmote, Item } from '../types'
+import { compareByRarity } from '../logic/sorting'
 
 export type ProfileWearable = {
   urn: string
@@ -48,44 +49,54 @@ export type ProfileName = {
   price?: number
 }
 
-// Base interface for the common properties between Profile and OnChain types
-interface ProfileToOnChainMappable {
-  urn: string
-  amount: number
-  individualData: Array<{
-    id: string
-    tokenId: string
-    transferredAt: number
-    price: number
-  }>
-  name: string
-  rarity: string
-  minTransferredAt: number
-  maxTransferredAt: number
-  category: string
+/**
+ * Groups marketplace-api profile items by URN and constructs individualData
+ * Similar to groupItemsByURN in fetch-items.ts but for marketplace-api data
+ */
+function groupProfileItemsByURN<
+  T extends ProfileWearable | ProfileEmote,
+  TCategory extends WearableCategory | EmoteCategory
+>(profileItems: T[]): Item<TCategory>[] {
+  const itemsByURN = new Map<string, Item<TCategory>>()
+
+  profileItems.forEach((profileItem) => {
+    const individualData = {
+      id: profileItem.urn + ':' + profileItem.tokenId,
+      tokenId: profileItem.tokenId,
+      transferredAt: profileItem.transferredAt,
+      price: profileItem.price || 0
+    }
+
+    if (itemsByURN.has(profileItem.urn)) {
+      const itemFromMap = itemsByURN.get(profileItem.urn)!
+      itemFromMap.individualData.push(individualData)
+      itemFromMap.amount = itemFromMap.amount + 1
+      itemFromMap.minTransferredAt = Math.min(profileItem.transferredAt, itemFromMap.minTransferredAt)
+      itemFromMap.maxTransferredAt = Math.max(profileItem.transferredAt, itemFromMap.maxTransferredAt)
+    } else {
+      itemsByURN.set(profileItem.urn, {
+        urn: profileItem.urn,
+        individualData: [individualData],
+        rarity: profileItem.rarity,
+        amount: 1,
+        name: profileItem.name,
+        category: profileItem.category as TCategory,
+        minTransferredAt: profileItem.transferredAt,
+        maxTransferredAt: profileItem.transferredAt
+      })
+    }
+  })
+
+  return Array.from(itemsByURN.values())
 }
 
-// Generic mapper function to convert Profile types to OnChain types
-function fromProfileToOnChain<TProfile extends ProfileToOnChainMappable, TOnChain>(
-  profileItems: TProfile[]
-): TOnChain[] {
-  return profileItems.map((profileItem) => ({
-    urn: profileItem.urn,
-    amount: profileItem.amount,
-    individualData: profileItem.individualData,
-    name: profileItem.name,
-    rarity: profileItem.rarity,
-    minTransferredAt: profileItem.minTransferredAt,
-    maxTransferredAt: profileItem.maxTransferredAt,
-    category: profileItem.category
-  })) as TOnChain[]
-}
-
-// Mappers to convert from Profile types to OnChain types for endpoints
+// Mappers to convert from Profile types to OnChain types with proper URN grouping
 export function fromProfileWearablesToOnChainWearables(profileWearables: ProfileWearable[]): OnChainWearable[] {
-  return fromProfileToOnChain<ProfileWearable, OnChainWearable>(profileWearables)
+  const groupedItems = groupProfileItemsByURN<ProfileWearable, WearableCategory>(profileWearables)
+  return groupedItems.sort(compareByRarity) as OnChainWearable[]
 }
 
 export function fromProfileEmotesToOnChainEmotes(profileEmotes: ProfileEmote[]): OnChainEmote[] {
-  return fromProfileToOnChain<ProfileEmote, OnChainEmote>(profileEmotes)
+  const groupedItems = groupProfileItemsByURN<ProfileEmote, EmoteCategory>(profileEmotes)
+  return groupedItems.sort(compareByRarity) as OnChainEmote[]
 }

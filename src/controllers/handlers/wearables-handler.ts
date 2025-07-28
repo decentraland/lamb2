@@ -1,5 +1,5 @@
 import { Entity, WearableDefinition } from '@dcl/schemas'
-import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
+import { fetchAndPaginateWithFetcher, paginationObject } from '../../logic/pagination'
 import { createSorting } from '../../logic/sorting'
 import { HandlerContextWithPath, InvalidRequestError, OnChainWearable, OnChainWearableResponse } from '../../types'
 import { createFilters } from './items-commons'
@@ -33,6 +33,7 @@ export async function wearablesHandler(
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
   const includeEntities = context.url.searchParams.has('includeEntities')
   const pagination = paginationObject(context.url, Number.MAX_VALUE)
+  console.log('pagination', pagination)
   const filter = createFilters(context.url)
   const sorting = createSorting(context.url)
 
@@ -40,8 +41,9 @@ export async function wearablesHandler(
     throw new InvalidRequestError('Cannot use includeEntities and includeDefinitions together')
   }
 
-  const page = await fetchAndPaginate<OnChainWearable>(
-    () => wearablesFetcher.fetchOwnedElements(address),
+  const page = await fetchAndPaginateWithFetcher<OnChainWearable>(
+    wearablesFetcher,
+    address,
     pagination,
     filter,
     sorting

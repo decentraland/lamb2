@@ -22,7 +22,7 @@ import { ContentClient } from 'dcl-catalyst-client'
 import { HTTPProvider } from 'eth-connect'
 import { CatalystsFetcher } from './adapters/catalysts-fetcher'
 import { DefinitionsFetcher } from './adapters/definitions-fetcher'
-import { ElementsFetcher } from './adapters/elements-fetcher'
+import { ElementsFetcher, PaginatedElementsFetcher } from './adapters/elements-fetcher'
 import { EntitiesFetcher } from './adapters/entities-fetcher'
 import { IMarketplaceApiFetcher } from './adapters/marketplace-api-fetcher'
 import { NameDenylistFetcher } from './adapters/name-denylist-fetcher'
@@ -56,15 +56,15 @@ export type BaseComponents = {
   marketplaceApiFetcher: IMarketplaceApiFetcher
   ownershipCaches: OwnershipCachesComponent
   baseWearablesFetcher: ElementsFetcher<BaseWearable>
-  wearablesFetcher: ElementsFetcher<OnChainWearable>
+  wearablesFetcher: PaginatedElementsFetcher<OnChainWearable>
   thirdPartyProvidersGraphFetcher: ThirdPartyProvidersGraphFetcher
   thirdPartyProvidersStorage: ThirdPartyProvidersStorage
   thirdPartyWearablesFetcher: ElementsFetcher<ThirdPartyWearable>
-  emotesFetcher: ElementsFetcher<OnChainEmote>
+  emotesFetcher: PaginatedElementsFetcher<OnChainEmote>
   emoteDefinitionsFetcher: DefinitionsFetcher<EmoteDefinition>
   wearableDefinitionsFetcher: DefinitionsFetcher<WearableDefinition>
   entitiesFetcher: EntitiesFetcher
-  namesFetcher: ElementsFetcher<Name>
+  namesFetcher: PaginatedElementsFetcher<Name>
   landsFetcher: ElementsFetcher<LAND>
   parcelRightsFetcher: ParcelRightsFetcher
   resourcesStatusCheck: IResourcesStatusComponent
