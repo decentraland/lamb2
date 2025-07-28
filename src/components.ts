@@ -24,11 +24,13 @@ import { createResourcesStatusComponent } from './adapters/resource-status'
 import { createStatusComponent } from './adapters/status'
 import { fetchAllBaseWearables } from './logic/fetch-elements/fetch-base-items'
 import {
-  fetchAllWearablesWithFallback,
-  fetchAllEmotesWithFallback
+  fetchWearablesWithFallback,
+  fetchEmotesWithFallback,
+  fetchAllWearablesForProfile,
+  fetchAllEmotesForProfile
 } from './logic/fetch-elements/fetch-items-with-fallback'
 import { fetchAllLANDs } from './logic/fetch-elements/fetch-lands'
-import { fetchAllNamesWithFallback } from './logic/fetch-elements/fetch-names-with-fallback'
+import { fetchNamesWithFallback, fetchAllNamesForProfile } from './logic/fetch-elements/fetch-names-with-fallback'
 import { fetchAllThirdPartyWearables } from './logic/fetch-elements/fetch-third-party-wearables'
 import { metricDeclarations } from './metrics'
 import { createFetchComponent } from './ports/fetch'
@@ -90,19 +92,36 @@ export async function initComponents(
     content,
     contentServerUrl
   })
-  const baseWearablesFetcher = createElementsFetcherComponent<BaseWearable>({ logs }, async (_address) =>
-    fetchAllBaseWearables({ entitiesFetcher })
+  const baseWearablesFetcher = createElementsFetcherComponent<BaseWearable>({ logs }, async (_address) => {
+    const result = await fetchAllBaseWearables({ entitiesFetcher })
+    return { elements: result, totalAmount: result.length }
+  })
+
+  const wearablesFetcher = createElementsFetcherComponent(
+    { logs },
+    (address, limit, offset) =>
+      fetchWearablesWithFallback({ theGraph, marketplaceApiFetcher, logs }, address, limit, offset),
+    (address) => fetchAllWearablesForProfile({ theGraph, marketplaceApiFetcher, logs }, address)
   )
-  const wearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllWearablesWithFallback({ theGraph, marketplaceApiFetcher, logs }, address)
+
+  const emotesFetcher = createElementsFetcherComponent(
+    { logs },
+    (address, limit, offset) =>
+      fetchEmotesWithFallback({ theGraph, marketplaceApiFetcher, logs }, address, limit, offset),
+    (address) => fetchAllEmotesForProfile({ theGraph, marketplaceApiFetcher, logs }, address)
   )
-  const emotesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllEmotesWithFallback({ theGraph, marketplaceApiFetcher, logs }, address)
+
+  const namesFetcher = createElementsFetcherComponent(
+    { logs },
+    (address, limit, offset) =>
+      fetchNamesWithFallback({ theGraph, marketplaceApiFetcher, logs }, address, limit, offset),
+    (address) => fetchAllNamesForProfile({ theGraph, marketplaceApiFetcher, logs }, address)
   )
-  const namesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllNamesWithFallback({ theGraph, marketplaceApiFetcher, logs }, address)
-  )
-  const landsFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllLANDs({ theGraph }, address))
+
+  const landsFetcher = createElementsFetcherComponent({ logs }, async (address) => {
+    const result = await fetchAllLANDs({ theGraph }, address)
+    return { elements: result, totalAmount: result.length }
+  })
 
   const resourcesStatusCheck = createResourcesStatusComponent({ logs })
   const status = await createStatusComponent({ logs, fetch })
@@ -148,12 +167,13 @@ export async function initComponents(
     logs,
     thirdPartyProvidersGraphFetcher
   })
-  const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllThirdPartyWearables(
+  const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) => {
+    const result = await fetchAllThirdPartyWearables(
       { alchemyNftFetcher, contentServerUrl, thirdPartyProvidersStorage, fetch, logs, entitiesFetcher, metrics },
       address
     )
-  )
+    return { elements: result, totalAmount: result.length }
+  })
 
   const alchemyNftFetcher = await createAlchemyNftFetcher({ config, logs, fetch })
 

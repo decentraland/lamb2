@@ -1,412 +1,456 @@
-import { createMarketplaceApiFetcher, IMarketplaceApiFetcher } from '../../../src/adapters/marketplace-api-fetcher'
+import { EmoteCategory, WearableCategory, Rarity } from '@dcl/schemas'
+import { ILoggerComponent, IConfigComponent, IFetchComponent } from '@well-known-components/interfaces'
+import {
+  createMarketplaceApiFetcher,
+  IMarketplaceApiFetcher,
+  MarketplaceApiResponse,
+  MARKETPLACE_API_BATCH_SIZE
+} from '../../../src/adapters/marketplace-api-fetcher'
 import { ProfileWearable, ProfileEmote, ProfileName } from '../../../src/adapters/marketplace-types'
-import { WearableCategory, EmoteCategory, Rarity } from '@dcl/schemas'
-
-// Type definitions for mocks
-interface MockLogger {
-  debug: jest.Mock
-  error: jest.Mock
-  log: jest.Mock
-  info: jest.Mock
-  warn: jest.Mock
-  severity: string
-}
-
-interface MockLoggerComponent {
-  getLogger: jest.Mock<MockLogger, [string]>
-}
-
-interface MockConfigComponent {
-  requireString: jest.Mock<Promise<string>, [string]>
-  getString: jest.Mock<Promise<string>, [string]>
-  getNumber: jest.Mock<Promise<number>, [string]>
-  requireNumber: jest.Mock<Promise<number>, [string]>
-}
+import { OnChainWearable, OnChainEmote } from '../../../src/types'
 
 describe('marketplace-api-fetcher', () => {
+  let mockLogger: any
+  let mockLoggerComponent: jest.Mocked<ILoggerComponent>
+  let mockConfig: jest.Mocked<IConfigComponent>
+  let mockFetch: jest.Mocked<IFetchComponent>
   let marketplaceApiFetcher: IMarketplaceApiFetcher
-  let mockFetch: jest.Mock
-  let mockConfig: MockConfigComponent
-  let mockLogs: MockLoggerComponent
-  let mockLogger: MockLogger
 
-  const MARKETPLACE_API_URL = 'https://marketplace-api.decentraland.org'
+  const mockMarketplaceApiUrl = 'https://marketplace-api.decentraland.org'
 
   beforeEach(async () => {
-    // Setup mocks
-    mockFetch = jest.fn()
     mockLogger = {
       debug: jest.fn(),
-      error: jest.fn(),
-      log: jest.fn(),
-      info: jest.fn(),
       warn: jest.fn(),
-      severity: 'debug'
+      error: jest.fn(),
+      info: jest.fn(),
+      log: jest.fn()
     }
-    mockLogs = {
-      getLogger: jest.fn().mockReturnValue(mockLogger)
-    }
+
+    mockLoggerComponent = {
+      getLogger: jest.fn(() => mockLogger)
+    } as any
+
     mockConfig = {
-      requireString: jest.fn().mockResolvedValue(MARKETPLACE_API_URL),
-      getString: jest.fn(),
-      getNumber: jest.fn(),
-      requireNumber: jest.fn()
-    }
+      requireString: jest.fn().mockResolvedValue(mockMarketplaceApiUrl)
+    } as any
 
-    // Create fetcher instance
+    mockFetch = {
+      fetch: jest.fn()
+    } as any
+
     marketplaceApiFetcher = await createMarketplaceApiFetcher({
-      fetch: { fetch: mockFetch },
+      logs: mockLoggerComponent,
       config: mockConfig,
-      logs: mockLogs
+      fetch: mockFetch
     })
-  })
 
-  afterEach(() => {
     jest.clearAllMocks()
   })
 
-  describe('when creating marketplace API fetcher', () => {
-    it('should require MARKETPLACE_API_URL from config', async () => {
-      await createMarketplaceApiFetcher({
-        fetch: { fetch: mockFetch },
-        config: mockConfig,
-        logs: mockLogs
-      })
-
-      expect(mockConfig.requireString).toHaveBeenCalledWith('MARKETPLACE_API_URL')
-    })
-
-    it('should create logger with correct name', async () => {
-      await createMarketplaceApiFetcher({
-        fetch: { fetch: mockFetch },
-        config: mockConfig,
-        logs: mockLogs
-      })
-
-      expect(mockLogs.getLogger).toHaveBeenCalledWith('marketplace-api-fetcher')
-    })
-  })
-
-  describe('when fetching wearables by owner', () => {
-    const mockWearableResponse = {
-      ok: true,
-      data: {
-        elements: [
+  describe('getAllWearablesByOwner', () => {
+    it('should fetch all wearables across multiple pages', async () => {
+      const mockGroupedWearable: OnChainWearable = {
+        urn: 'urn:decentraland:ethereum:collections-v1:test:item',
+        name: 'Test Wearable',
+        category: WearableCategory.UPPER_BODY,
+        rarity: Rarity.COMMON,
+        amount: 1,
+        individualData: [
           {
-            urn: 'urn:decentraland:ethereum:collections-v1:test:item',
             id: 'test-id',
             tokenId: '123',
-            category: WearableCategory.UPPER_BODY,
             transferredAt: 1234567890000,
-            name: 'Test Wearable',
-            rarity: Rarity.COMMON,
-            price: 100,
-            individualData: [
+            price: 100
+          }
+        ],
+        minTransferredAt: 1234567890000,
+        maxTransferredAt: 1234567890000
+      }
+
+      // Mock responses for 3 pages using grouped endpoint
+      const mockResponses: MarketplaceApiResponse<OnChainWearable>[] = [
+        {
+          ok: true,
+          data: {
+            elements: [
+              mockGroupedWearable,
               {
-                id: 'test-id',
-                tokenId: '123',
-                transferredAt: 1234567890000,
-                price: 100
+                ...mockGroupedWearable,
+                urn: 'urn:decentraland:ethereum:collections-v1:test:item2',
+                individualData: [
+                  {
+                    id: 'test-id-2',
+                    tokenId: '124',
+                    transferredAt: 1234567890000,
+                    price: 100
+                  }
+                ]
               }
             ],
-            amount: 1,
-            minTransferredAt: 1234567890000,
-            maxTransferredAt: 1234567890000
+            total: 5,
+            page: 1,
+            pages: 3,
+            limit: 2
           }
-        ] as ProfileWearable[],
-        total: 1,
+        },
+        {
+          ok: true,
+          data: {
+            elements: [
+              {
+                ...mockGroupedWearable,
+                urn: 'urn:decentraland:ethereum:collections-v1:test:item3',
+                individualData: [
+                  {
+                    id: 'test-id-3',
+                    tokenId: '125',
+                    transferredAt: 1234567890000,
+                    price: 100
+                  }
+                ]
+              },
+              {
+                ...mockGroupedWearable,
+                urn: 'urn:decentraland:ethereum:collections-v1:test:item4',
+                individualData: [
+                  {
+                    id: 'test-id-4',
+                    tokenId: '126',
+                    transferredAt: 1234567890000,
+                    price: 100
+                  }
+                ]
+              }
+            ],
+            total: 5,
+            page: 2,
+            pages: 3,
+            limit: 2
+          }
+        },
+        {
+          ok: true,
+          data: {
+            elements: [
+              {
+                ...mockGroupedWearable,
+                urn: 'urn:decentraland:ethereum:collections-v1:test:item5',
+                individualData: [
+                  {
+                    id: 'test-id-5',
+                    tokenId: '127',
+                    transferredAt: 1234567890000,
+                    price: 100
+                  }
+                ]
+              }
+            ],
+            total: 5,
+            page: 3,
+            pages: 3,
+            limit: 2
+          }
+        }
+      ]
+
+      // Mock fetch to return different responses for each page
+      mockFetch.fetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(mockResponses[0])
+        } as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(mockResponses[1])
+        } as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(mockResponses[2])
+        } as any)
+
+      const result = await marketplaceApiFetcher.getAllWearablesByOwner('0x123')
+
+      expect(result).toHaveLength(5)
+      expect(result[0].individualData[0].id).toBe('test-id')
+      expect(result[1].individualData[0].id).toBe('test-id-2')
+      expect(result[2].individualData[0].id).toBe('test-id-3')
+      expect(result[3].individualData[0].id).toBe('test-id-4')
+      expect(result[4].individualData[0].id).toBe('test-id-5')
+
+      // Should have made 3 fetch calls (one per page)
+      expect(mockFetch.fetch).toHaveBeenCalledTimes(3)
+
+      // Verify URLs include correct pagination parameters and use grouped endpoint
+      expect(mockFetch.fetch).toHaveBeenNthCalledWith(
+        1,
+        `${mockMarketplaceApiUrl}/v1/users/0x123/wearables/grouped?first=${MARKETPLACE_API_BATCH_SIZE}&skip=0`,
+        expect.any(Object)
+      )
+      expect(mockFetch.fetch).toHaveBeenNthCalledWith(
+        2,
+        `${mockMarketplaceApiUrl}/v1/users/0x123/wearables/grouped?first=${MARKETPLACE_API_BATCH_SIZE}&skip=${MARKETPLACE_API_BATCH_SIZE}`,
+        expect.any(Object)
+      )
+      expect(mockFetch.fetch).toHaveBeenNthCalledWith(
+        3,
+        `${mockMarketplaceApiUrl}/v1/users/0x123/wearables/grouped?first=${MARKETPLACE_API_BATCH_SIZE}&skip=${2 * MARKETPLACE_API_BATCH_SIZE}`,
+        expect.any(Object)
+      )
+    })
+
+    it('should handle empty results', async () => {
+      const mockResponse: MarketplaceApiResponse<ProfileWearable> = {
+        ok: true,
+        data: {
+          elements: [],
+          total: 0,
+          totalItems: 0,
+          page: 1,
+          pages: 1,
+          limit: MARKETPLACE_API_BATCH_SIZE
+        }
+      }
+
+      mockFetch.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse)
+      } as any)
+
+      const result = await marketplaceApiFetcher.getAllWearablesByOwner('0x123')
+
+      expect(result).toHaveLength(0)
+      expect(mockFetch.fetch).toHaveBeenCalledTimes(1)
+    })
+
+    it('should stop when reaching last page', async () => {
+      const mockWearable: ProfileWearable = {
+        id: 'test-id',
+        urn: 'urn:decentraland:ethereum:collections-v1:test:item',
+        tokenId: '123',
+        category: WearableCategory.UPPER_BODY,
+        transferredAt: 1234567890000,
+        name: 'Test Wearable',
+        rarity: Rarity.COMMON,
+        price: 100,
+        individualData: [],
+        amount: 1,
+        minTransferredAt: 1234567890000,
+        maxTransferredAt: 1234567890000
+      }
+
+      // Mock response with only 1 page
+      const mockResponse: MarketplaceApiResponse<ProfileWearable> = {
+        ok: true,
+        data: {
+          elements: [mockWearable],
+          total: 1,
+          totalItems: 1,
+          page: 1,
+          pages: 1,
+          limit: MARKETPLACE_API_BATCH_SIZE
+        }
+      }
+
+      mockFetch.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse)
+      } as any)
+
+      const result = await marketplaceApiFetcher.getAllWearablesByOwner('0x123')
+
+      expect(result).toHaveLength(1)
+      expect(mockFetch.fetch).toHaveBeenCalledTimes(1)
+    })
+
+    it('should handle API errors', async () => {
+      mockFetch.fetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error'
+      } as any)
+
+      await expect(marketplaceApiFetcher.getAllWearablesByOwner('0x123')).rejects.toThrow(
+        'HTTP 500: Internal Server Error'
+      )
+    })
+
+    it('should handle API response with ok: false', async () => {
+      const mockResponse: MarketplaceApiResponse<ProfileWearable> = {
+        ok: false,
+        data: {
+          elements: [],
+          total: 0,
+          totalItems: 0,
+          page: 1,
+          pages: 1,
+          limit: MARKETPLACE_API_BATCH_SIZE
+        },
+        message: 'User not found'
+      }
+
+      mockFetch.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse)
+      } as any)
+
+      await expect(marketplaceApiFetcher.getAllWearablesByOwner('0x123')).rejects.toThrow('User not found')
+    })
+
+    it('should log pagination progress', async () => {
+      const mockWearable: ProfileWearable = {
+        id: 'test-id',
+        urn: 'urn:decentraland:ethereum:collections-v1:test:item',
+        tokenId: '123',
+        category: WearableCategory.UPPER_BODY,
+        transferredAt: 1234567890000,
+        name: 'Test Wearable',
+        rarity: Rarity.COMMON,
+        price: 100,
+        individualData: [],
+        amount: 1,
+        minTransferredAt: 1234567890000,
+        maxTransferredAt: 1234567890000
+      }
+
+      const mockResponse: MarketplaceApiResponse<ProfileWearable> = {
+        ok: true,
+        data: {
+          elements: [mockWearable],
+          total: 1,
+          totalItems: 1,
+          page: 1,
+          pages: 1,
+          limit: MARKETPLACE_API_BATCH_SIZE
+        }
+      }
+
+      mockFetch.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse)
+      } as any)
+
+      await marketplaceApiFetcher.getAllWearablesByOwner('0x123')
+
+      expect(mockLogger.debug).toHaveBeenCalledWith('Starting paginated fetch from marketplace API', {
+        endpoint: '/v1/users/0x123/wearables/grouped',
+        address: '0x123'
+      })
+
+      expect(mockLogger.debug).toHaveBeenCalledWith('Fetched page from marketplace API', {
+        endpoint: '/v1/users/0x123/wearables/grouped',
+        address: '0x123',
         page: 1,
         pages: 1,
-        limit: 1000
-      }
-    }
-
-    it('should fetch wearables successfully with default pagination', async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(mockWearableResponse)
-      })
-
-      const result = await marketplaceApiFetcher.getWearablesByOwner('0x123')
-
-      expect(mockFetch).toHaveBeenCalledWith(`${MARKETPLACE_API_URL}/v1/users/0x123/wearables?first=1000&skip=0`)
-      expect(mockLogger.debug).toHaveBeenCalledWith('Making request to marketplace API', {
-        url: `${MARKETPLACE_API_URL}/v1/users/0x123/wearables?first=1000&skip=0`
-      })
-      expect(result).toEqual({
-        data: mockWearableResponse.data.elements,
+        elementsThisPage: 1,
+        totalElementsSoFar: 1,
         total: 1
       })
-    })
 
-    it('should fetch wearables with custom pagination', async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(mockWearableResponse)
+      expect(mockLogger.debug).toHaveBeenCalledWith('Completed paginated fetch from marketplace API', {
+        endpoint: '/v1/users/0x123/wearables/grouped',
+        address: '0x123',
+        totalElements: 1,
+        totalPages: 1
       })
-
-      await marketplaceApiFetcher.getWearablesByOwner('0x123', 50, 10)
-
-      expect(mockFetch).toHaveBeenCalledWith(`${MARKETPLACE_API_URL}/v1/users/0x123/wearables?first=50&skip=10`)
-    })
-
-    it('should throw error when HTTP response is not ok', async () => {
-      mockFetch.mockResolvedValue({
-        ok: false,
-        status: 404,
-        statusText: 'Not Found'
-      })
-
-      await expect(marketplaceApiFetcher.getWearablesByOwner('0x123')).rejects.toThrow('HTTP 404: Not Found')
-
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        'Error fetching from marketplace API',
-        expect.objectContaining({
-          url: `${MARKETPLACE_API_URL}/v1/users/0x123/wearables?first=1000&skip=0`,
-          error: 'HTTP 404: Not Found'
-        })
-      )
-    })
-
-    it('should throw error when API response is not ok', async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            ok: false,
-            message: 'API Error'
-          })
-      })
-
-      await expect(marketplaceApiFetcher.getWearablesByOwner('0x123')).rejects.toThrow('API Error')
-
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        'Error fetching from marketplace API',
-        expect.objectContaining({
-          error: 'API Error'
-        })
-      )
-    })
-
-    it('should throw error when API response is not ok without message', async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            ok: false
-          })
-      })
-
-      await expect(marketplaceApiFetcher.getWearablesByOwner('0x123')).rejects.toThrow('API request failed')
-    })
-
-    it('should handle fetch network errors', async () => {
-      const networkError = new Error('Network Error')
-      mockFetch.mockRejectedValue(networkError)
-
-      await expect(marketplaceApiFetcher.getWearablesByOwner('0x123')).rejects.toThrow('Network Error')
-
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        'Error fetching from marketplace API',
-        expect.objectContaining({
-          error: 'Network Error'
-        })
-      )
-    })
-
-    it('should handle non-Error objects thrown', async () => {
-      mockFetch.mockRejectedValue('String error')
-
-      await expect(marketplaceApiFetcher.getWearablesByOwner('0x123')).rejects.toBe('String error')
-
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        'Error fetching from marketplace API',
-        expect.objectContaining({
-          error: 'String error'
-        })
-      )
     })
   })
 
-  describe('when fetching emotes by owner', () => {
-    const mockEmoteResponse = {
-      ok: true,
-      data: {
-        elements: [
+  describe('getAllEmotesByOwner', () => {
+    it('should fetch all emotes across multiple pages', async () => {
+      const mockGroupedEmote: OnChainEmote = {
+        urn: 'urn:decentraland:matic:collections-v1:test:emote',
+        name: 'Test Emote',
+        category: EmoteCategory.DANCE,
+        rarity: Rarity.RARE,
+        amount: 1,
+        individualData: [
           {
-            urn: 'urn:decentraland:matic:collections-v1:test:emote',
             id: 'test-emote-id',
             tokenId: '456',
-            category: EmoteCategory.DANCE,
             transferredAt: 1234567890000,
-            name: 'Test Emote',
-            rarity: Rarity.RARE,
-            price: 200,
-            individualData: [
-              {
-                id: 'test-emote-id',
-                tokenId: '456',
-                transferredAt: 1234567890000,
-                price: 200
-              }
-            ],
-            amount: 1,
-            minTransferredAt: 1234567890000,
-            maxTransferredAt: 1234567890000
+            price: 200
           }
-        ] as ProfileEmote[],
-        total: 1,
-        page: 1,
-        pages: 1,
-        limit: 1000
+        ],
+        minTransferredAt: 1234567890000,
+        maxTransferredAt: 1234567890000
       }
-    }
 
-    it('should fetch emotes successfully', async () => {
-      mockFetch.mockResolvedValue({
+      const mockResponse: MarketplaceApiResponse<OnChainEmote> = {
         ok: true,
-        json: () => Promise.resolve(mockEmoteResponse)
-      })
-
-      const result = await marketplaceApiFetcher.getEmotesByOwner('0x123')
-
-      expect(mockFetch).toHaveBeenCalledWith(`${MARKETPLACE_API_URL}/v1/users/0x123/emotes?first=1000&skip=0`)
-      expect(result).toEqual({
-        data: mockEmoteResponse.data.elements,
-        total: 1
-      })
-    })
-
-    it('should fetch emotes with custom pagination', async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(mockEmoteResponse)
-      })
-
-      await marketplaceApiFetcher.getEmotesByOwner('0x123', 25, 5)
-
-      expect(mockFetch).toHaveBeenCalledWith(`${MARKETPLACE_API_URL}/v1/users/0x123/emotes?first=25&skip=5`)
-    })
-  })
-
-  describe('when fetching names by owner', () => {
-    const mockNameResponse = {
-      ok: true,
-      data: {
-        elements: [
-          {
-            name: 'testname',
-            contractAddress: '0x2a187453064356c3f3b6e5a8a5b8e4f4c45a6a67',
-            tokenId: '123',
-            price: 500
-          }
-        ] as ProfileName[],
-        total: 1,
-        page: 1,
-        pages: 1,
-        limit: 1000
+        data: {
+          elements: [
+            mockGroupedEmote,
+            {
+              ...mockGroupedEmote,
+              urn: 'urn:decentraland:matic:collections-v1:test:emote2',
+              individualData: [
+                {
+                  id: 'test-emote-id-2',
+                  tokenId: '457',
+                  transferredAt: 1234567890000,
+                  price: 200
+                }
+              ]
+            }
+          ],
+          total: 2,
+          page: 1,
+          pages: 1,
+          limit: MARKETPLACE_API_BATCH_SIZE
+        }
       }
-    }
 
-    it('should fetch names successfully', async () => {
-      mockFetch.mockResolvedValue({
+      mockFetch.fetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve(mockNameResponse)
-      })
+        json: () => Promise.resolve(mockResponse)
+      } as any)
 
-      const result = await marketplaceApiFetcher.getNamesByOwner('0x123')
+      const result = await marketplaceApiFetcher.getAllEmotesByOwner('0x123')
 
-      expect(mockFetch).toHaveBeenCalledWith(`${MARKETPLACE_API_URL}/v1/users/0x123/names?first=1000&skip=0`)
-      expect(result).toEqual({
-        data: mockNameResponse.data.elements,
-        total: 1
-      })
+      expect(result).toHaveLength(2)
+      expect(result[0].individualData[0].id).toBe('test-emote-id')
+      expect(result[1].individualData[0].id).toBe('test-emote-id-2')
     })
   })
 
-  describe('when fetching owned wearables URN and token ID', () => {
-    const mockUrnTokenResponse = {
-      ok: true,
-      data: {
-        elements: [{ urn: 'urn:decentraland:ethereum:collections-v1:test:item', tokenId: '123' }],
-        total: 1,
-        page: 1,
-        pages: 1,
-        limit: 1000
+  describe('getAllNamesByOwner', () => {
+    it('should fetch all names across multiple pages', async () => {
+      const mockName: ProfileName = {
+        name: 'testname.dcl.eth',
+        contractAddress: '0x123abc',
+        tokenId: '123',
+        price: 500
       }
-    }
 
-    it('should fetch wearables URN and token ID successfully', async () => {
-      mockFetch.mockResolvedValue({
+      const mockResponse: MarketplaceApiResponse<ProfileName> = {
         ok: true,
-        json: () => Promise.resolve(mockUrnTokenResponse)
-      })
+        data: {
+          elements: [mockName, { ...mockName, name: 'testname2.dcl.eth', tokenId: '124' }],
+          total: 2,
+          totalItems: 2,
+          page: 1,
+          pages: 1,
+          limit: MARKETPLACE_API_BATCH_SIZE
+        }
+      }
 
-      const result = await marketplaceApiFetcher.getOwnedWearablesUrnAndTokenId('0x123')
+      mockFetch.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse)
+      } as any)
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        `${MARKETPLACE_API_URL}/v1/users/0x123/wearables/urn-token?first=1000&skip=0`
-      )
-      expect(result).toEqual({
-        data: mockUrnTokenResponse.data.elements,
-        total: 1
-      })
+      const result = await marketplaceApiFetcher.getAllNamesByOwner('0x123')
+
+      expect(result).toHaveLength(2)
+      expect(result[0].name).toBe('testname.dcl.eth')
+      expect(result[1].name).toBe('testname2.dcl.eth')
     })
   })
 
-  describe('when fetching owned emotes URN and token ID', () => {
-    const mockUrnTokenResponse = {
-      ok: true,
-      data: {
-        elements: [{ urn: 'urn:decentraland:matic:collections-v1:test:emote', tokenId: '456' }],
-        total: 1,
-        page: 1,
-        pages: 1,
-        limit: 1000
-      }
-    }
-
-    it('should fetch emotes URN and token ID successfully', async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(mockUrnTokenResponse)
-      })
-
-      const result = await marketplaceApiFetcher.getOwnedEmotesUrnAndTokenId('0x123')
-
-      expect(mockFetch).toHaveBeenCalledWith(`${MARKETPLACE_API_URL}/v1/users/0x123/emotes/urn-token?first=1000&skip=0`)
-      expect(result).toEqual({
-        data: mockUrnTokenResponse.data.elements,
-        total: 1
-      })
-    })
-  })
-
-  describe('when fetching owned names only', () => {
-    const mockNamesOnlyResponse = {
-      ok: true,
-      data: {
-        elements: ['testname1', 'testname2'],
-        total: 2,
-        page: 1,
-        pages: 1,
-        limit: 1000
-      }
-    }
-
-    it('should fetch names only successfully', async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(mockNamesOnlyResponse)
-      })
-
-      const result = await marketplaceApiFetcher.getOwnedNamesOnly('0x123')
-
-      expect(mockFetch).toHaveBeenCalledWith(`${MARKETPLACE_API_URL}/v1/users/0x123/names/names-only?first=1000&skip=0`)
-      expect(result).toEqual({
-        data: mockNamesOnlyResponse.data.elements,
-        total: 2
-      })
+  describe('MARKETPLACE_API_BATCH_SIZE', () => {
+    it('should use the correct batch size', () => {
+      expect(MARKETPLACE_API_BATCH_SIZE).toBe(5000)
     })
   })
 })

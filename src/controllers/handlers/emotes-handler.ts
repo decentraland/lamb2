@@ -1,5 +1,5 @@
 import { EmoteDefinition, Entity } from '@dcl/schemas'
-import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
+import { fetchAndPaginateWithFetcher, paginationObject } from '../../logic/pagination'
 import { createSorting } from '../../logic/sorting'
 import { HandlerContextWithPath, InvalidRequestError, OnChainEmote, OnChainEmoteResponse } from '../../types'
 import { createFilters } from './items-commons'
@@ -40,12 +40,7 @@ export async function emotesHandler(
     throw new InvalidRequestError('Cannot use includeEntities and includeDefinitions together')
   }
 
-  const page = await fetchAndPaginate<OnChainEmote>(
-    () => emotesFetcher.fetchOwnedElements(address),
-    pagination,
-    filter,
-    sorting
-  )
+  const page = await fetchAndPaginateWithFetcher<OnChainEmote>(emotesFetcher, address, pagination, filter, sorting)
 
   const results: OnChainEmoteResponse[] = []
   const emotes = page.elements

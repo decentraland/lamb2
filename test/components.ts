@@ -15,6 +15,12 @@ import {
 import { createElementsFetcherComponent } from '../src/adapters/elements-fetcher'
 import { createEntitiesFetcherComponent } from '../src/adapters/entities-fetcher'
 import { fetchAllEmotes, fetchAllWearables } from '../src/logic/fetch-elements/fetch-items'
+import {
+  fetchWearablesWithFallback,
+  fetchEmotesWithFallback,
+  fetchAllWearablesForProfile,
+  fetchAllEmotesForProfile
+} from '../src/logic/fetch-elements/fetch-items-with-fallback'
 import { fetchAllThirdPartyWearables } from '../src/logic/fetch-elements/fetch-third-party-wearables'
 import { metricDeclarations } from '../src/metrics'
 import { TheGraphComponent } from '../src/ports/the-graph'
@@ -104,11 +110,20 @@ async function initComponents(
   const logs = await createLogComponent({})
 
   const content = createContentClientMock()
-  const wearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllWearables({ theGraph: theGraphMock }, address)
+  const marketplaceApiFetcher = createMarketplaceApiMock()
+
+  const wearablesFetcher = createElementsFetcherComponent(
+    { logs },
+    (address, limit, offset) =>
+      fetchWearablesWithFallback({ theGraph: theGraphMock, marketplaceApiFetcher, logs }, address, limit, offset),
+    (address) => fetchAllWearablesForProfile({ theGraph: theGraphMock, marketplaceApiFetcher, logs }, address)
   )
-  const emotesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllEmotes({ theGraph: theGraphMock }, address)
+
+  const emotesFetcher = createElementsFetcherComponent(
+    { logs },
+    (address, limit, offset) =>
+      fetchEmotesWithFallback({ theGraph: theGraphMock, marketplaceApiFetcher, logs }, address, limit, offset),
+    (address) => fetchAllEmotesForProfile({ theGraph: theGraphMock, marketplaceApiFetcher, logs }, address)
   )
 
   const entitiesFetcher = await createEntitiesFetcherComponent({ config, logs, content })
@@ -130,8 +145,8 @@ async function initComponents(
 
   const alchemyNftFetcher = createAlchemyNftFetcherMock()
   const metrics = createTestMetricsComponent(metricDeclarations)
-  const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllThirdPartyWearables(
+  const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) => {
+    const result = await fetchAllThirdPartyWearables(
       {
         metrics,
         contentServerUrl,
@@ -143,7 +158,8 @@ async function initComponents(
       },
       address
     )
-  )
+    return { elements: result, totalAmount: result.length }
+  })
 
   return {
     ...components,
@@ -160,6 +176,6 @@ async function initComponents(
     wearableDefinitionsFetcher,
     emoteDefinitionsFetcher,
     thirdPartyWearablesFetcher,
-    marketplaceApiFetcher: createMarketplaceApiMock()
+    marketplaceApiFetcher
   }
 }

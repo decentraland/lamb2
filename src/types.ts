@@ -131,8 +131,8 @@ export type Item<C extends WearableCategory | EmoteCategory> = {
   individualData: {
     id: string
     tokenId: string
-    transferredAt: number
-    price: number
+    transferredAt: string
+    price: string
   }[]
   name: string
   rarity: string
@@ -169,7 +169,7 @@ export type Name = {
   name: string
   contractAddress: string
   tokenId: string
-  price?: number
+  price?: string
 }
 
 export type LAND = {
@@ -180,7 +180,7 @@ export type LAND = {
   x?: string
   y?: string
   description?: string
-  price?: number
+  price?: string
   image?: string
 }
 

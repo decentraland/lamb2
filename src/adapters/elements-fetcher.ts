@@ -7,20 +7,28 @@ export type ElementsResult<T> = {
   totalAmount: number
 }
 
+export type PaginatedElementsResult<T> = {
+  elements: T[]
+  totalAmount: number
+}
+
 export type ElementsFetcher<T> = IBaseComponent & {
   fetchOwnedElements(address: string): Promise<T[]>
+  fetchOwnedElementsPaginated(address: string, limit: number, offset: number): Promise<PaginatedElementsResult<T>>
 }
 
 export class FetcherError extends Error {
   constructor(message: string) {
     super(message)
+    this.name = 'FetcherError'
     Error.captureStackTrace(this, this.constructor)
   }
 }
 
 export function createElementsFetcherComponent<T>(
   { logs }: Pick<AppComponents, 'logs'>,
-  fetchAllOwnedElements: (address: string) => Promise<T[]>
+  fetchWithFallback: (address: string, limit?: number, offset?: number) => Promise<PaginatedElementsResult<T>>,
+  fetchAllForProfile?: (address: string) => Promise<T[]>
 ): ElementsFetcher<T> {
   const logger = logs.getLogger('elements-fetcher')
 
@@ -29,8 +37,12 @@ export function createElementsFetcherComponent<T>(
     ttl: 600000, // 10 minutes
     fetchMethod: async function (address: string, staleValue: T[] | undefined) {
       try {
-        const es = await fetchAllOwnedElements(address)
-        return es
+        // Use fetchAllForProfile if available (for profiles that need ALL elements)
+        // Otherwise fetch with a large limit to get most elements for caching
+        const elements = fetchAllForProfile
+          ? await fetchAllForProfile(address)
+          : (await fetchWithFallback(address, 10000, 0)).elements
+        return elements
       } catch (err: any) {
         logger.error(err)
         return staleValue
@@ -47,6 +59,16 @@ export function createElementsFetcherComponent<T>(
       }
 
       throw new FetcherError(`Cannot fetch elements for ${address}`)
+    },
+
+    async fetchOwnedElementsPaginated(address: string, limit: number, offset: number) {
+      try {
+        const result = await fetchWithFallback(address, limit, offset)
+        return result
+      } catch (err: any) {
+        logger.error('Error fetching paginated elements', { address, limit, offset, error: err.message })
+        throw new FetcherError(`Cannot fetch paginated elements for ${address}: ${err.message}`)
+      }
     }
   }
 }
