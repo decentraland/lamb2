@@ -22,7 +22,7 @@ import { ContentClient } from 'dcl-catalyst-client'
 import { HTTPProvider } from 'eth-connect'
 import { CatalystsFetcher } from './adapters/catalysts-fetcher'
 import { DefinitionsFetcher } from './adapters/definitions-fetcher'
-import { ElementsFetcher, PaginatedElementsFetcher } from './adapters/elements-fetcher'
+import { ElementsFetcher } from './adapters/elements-fetcher'
 import { EntitiesFetcher } from './adapters/entities-fetcher'
 import { IMarketplaceApiFetcher } from './adapters/marketplace-api-fetcher'
 import { NameDenylistFetcher } from './adapters/name-denylist-fetcher'
@@ -56,15 +56,15 @@ export type BaseComponents = {
   marketplaceApiFetcher: IMarketplaceApiFetcher
   ownershipCaches: OwnershipCachesComponent
   baseWearablesFetcher: ElementsFetcher<BaseWearable>
-  wearablesFetcher: PaginatedElementsFetcher<OnChainWearable>
+  wearablesFetcher: ElementsFetcher<OnChainWearable>
   thirdPartyProvidersGraphFetcher: ThirdPartyProvidersGraphFetcher
   thirdPartyProvidersStorage: ThirdPartyProvidersStorage
   thirdPartyWearablesFetcher: ElementsFetcher<ThirdPartyWearable>
-  emotesFetcher: PaginatedElementsFetcher<OnChainEmote>
+  emotesFetcher: ElementsFetcher<OnChainEmote>
   emoteDefinitionsFetcher: DefinitionsFetcher<EmoteDefinition>
   wearableDefinitionsFetcher: DefinitionsFetcher<WearableDefinition>
   entitiesFetcher: EntitiesFetcher
-  namesFetcher: PaginatedElementsFetcher<Name>
+  namesFetcher: ElementsFetcher<Name>
   landsFetcher: ElementsFetcher<LAND>
   parcelRightsFetcher: ParcelRightsFetcher
   resourcesStatusCheck: IResourcesStatusComponent
@@ -131,8 +131,8 @@ export type Item<C extends WearableCategory | EmoteCategory> = {
   individualData: {
     id: string
     tokenId: string
-    transferredAt: number
-    price: number
+    transferredAt: string
+    price: string
   }[]
   name: string
   rarity: string
@@ -169,7 +169,7 @@ export type Name = {
   name: string
   contractAddress: string
   tokenId: string
-  price?: number
+  price?: string
 }
 
 export type LAND = {
@@ -180,7 +180,7 @@ export type LAND = {
   x?: string
   y?: string
   description?: string
-  price?: number
+  price?: string
   image?: string
 }
 

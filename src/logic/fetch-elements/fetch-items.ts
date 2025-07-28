@@ -13,16 +13,16 @@ function groupItemsByURN<
     const individualData = {
       id: itemFromQuery.urn + ':' + itemFromQuery.tokenId,
       tokenId: itemFromQuery.tokenId,
-      transferredAt: itemFromQuery.transferredAt,
-      price: itemFromQuery.item.price
+      transferredAt: String(itemFromQuery.transferredAt),
+      price: String(itemFromQuery.item.price)
     }
 
     if (itemsByURN.has(itemFromQuery.urn)) {
       const itemFromMap = itemsByURN.get(itemFromQuery.urn)!
       itemFromMap.individualData.push(individualData)
       itemFromMap.amount = itemFromMap.amount + 1
-      itemFromMap.minTransferredAt = Math.min(itemFromQuery.transferredAt, itemFromMap.minTransferredAt)
-      itemFromMap.maxTransferredAt = Math.max(itemFromQuery.transferredAt, itemFromMap.maxTransferredAt)
+      itemFromMap.minTransferredAt = Math.min(Number(itemFromQuery.transferredAt), itemFromMap.minTransferredAt)
+      itemFromMap.maxTransferredAt = Math.max(Number(itemFromQuery.transferredAt), itemFromMap.maxTransferredAt)
     } else {
       itemsByURN.set(itemFromQuery.urn, {
         urn: itemFromQuery.urn,
@@ -31,8 +31,8 @@ function groupItemsByURN<
         amount: 1,
         name: getMetadata(itemFromQuery).name,
         category: getMetadata(itemFromQuery).category,
-        minTransferredAt: itemFromQuery.transferredAt,
-        maxTransferredAt: itemFromQuery.transferredAt
+        minTransferredAt: Number(itemFromQuery.transferredAt),
+        maxTransferredAt: Number(itemFromQuery.transferredAt)
       })
     }
   })
@@ -80,10 +80,10 @@ type ItemFromQuery = {
   urn: string
   id: string
   tokenId: string
-  transferredAt: number
+  transferredAt: string
   item: {
     rarity: string
-    price: number
+    price: string
   }
   category: ItemCategory
 }

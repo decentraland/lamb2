@@ -12,17 +12,14 @@ import {
   createEmoteDefinitionsFetcherComponent,
   createWearableDefinitionsFetcherComponent
 } from '../src/adapters/definitions-fetcher'
-import {
-  createElementsFetcherComponent,
-  createPaginatedElementsFetcherComponent
-} from '../src/adapters/elements-fetcher'
+import { createElementsFetcherComponent } from '../src/adapters/elements-fetcher'
 import { createEntitiesFetcherComponent } from '../src/adapters/entities-fetcher'
 import { fetchAllEmotes, fetchAllWearables } from '../src/logic/fetch-elements/fetch-items'
 import {
-  fetchAllWearablesWithFallback,
-  fetchWearablesPaginatedWithFallback,
-  fetchAllEmotesWithFallback,
-  fetchEmotesPaginatedWithFallback
+  fetchWearablesWithFallback,
+  fetchEmotesWithFallback,
+  fetchAllWearablesForProfile,
+  fetchAllEmotesForProfile
 } from '../src/logic/fetch-elements/fetch-items-with-fallback'
 import { fetchAllThirdPartyWearables } from '../src/logic/fetch-elements/fetch-third-party-wearables'
 import { metricDeclarations } from '../src/metrics'
@@ -115,22 +112,18 @@ async function initComponents(
   const content = createContentClientMock()
   const marketplaceApiFetcher = createMarketplaceApiMock()
 
-  const wearablesFetcher = createPaginatedElementsFetcherComponent(
+  const wearablesFetcher = createElementsFetcherComponent(
     { logs },
-    async (address) => fetchAllWearablesWithFallback({ theGraph: theGraphMock, marketplaceApiFetcher, logs }, address),
-    async (address, limit, offset) =>
-      fetchWearablesPaginatedWithFallback(
-        { theGraph: theGraphMock, marketplaceApiFetcher, logs },
-        address,
-        limit,
-        offset
-      )
+    (address, limit, offset) =>
+      fetchWearablesWithFallback({ theGraph: theGraphMock, marketplaceApiFetcher, logs }, address, limit, offset),
+    (address) => fetchAllWearablesForProfile({ theGraph: theGraphMock, marketplaceApiFetcher, logs }, address)
   )
-  const emotesFetcher = createPaginatedElementsFetcherComponent(
+
+  const emotesFetcher = createElementsFetcherComponent(
     { logs },
-    async (address) => fetchAllEmotesWithFallback({ theGraph: theGraphMock, marketplaceApiFetcher, logs }, address),
-    async (address, limit, offset) =>
-      fetchEmotesPaginatedWithFallback({ theGraph: theGraphMock, marketplaceApiFetcher, logs }, address, limit, offset)
+    (address, limit, offset) =>
+      fetchEmotesWithFallback({ theGraph: theGraphMock, marketplaceApiFetcher, logs }, address, limit, offset),
+    (address) => fetchAllEmotesForProfile({ theGraph: theGraphMock, marketplaceApiFetcher, logs }, address)
   )
 
   const entitiesFetcher = await createEntitiesFetcherComponent({ config, logs, content })
@@ -152,8 +145,8 @@ async function initComponents(
 
   const alchemyNftFetcher = createAlchemyNftFetcherMock()
   const metrics = createTestMetricsComponent(metricDeclarations)
-  const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllThirdPartyWearables(
+  const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) => {
+    const result = await fetchAllThirdPartyWearables(
       {
         metrics,
         contentServerUrl,
@@ -165,7 +158,8 @@ async function initComponents(
       },
       address
     )
-  )
+    return { elements: result, totalAmount: result.length }
+  })
 
   return {
     ...components,

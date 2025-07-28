@@ -1,19 +1,18 @@
-import { IFetchComponent, IConfigComponent, ILoggerComponent } from '@well-known-components/interfaces'
-import { ProfileWearable, ProfileEmote, ProfileName } from './marketplace-types'
+import { IFetchComponent } from '@well-known-components/interfaces'
+import { IConfigComponent, ILoggerComponent } from '@well-known-components/interfaces'
+import { ProfileName } from './marketplace-types'
+import { OnChainWearable, OnChainEmote } from '../types'
 
 export const MARKETPLACE_API_BATCH_SIZE = 5000
 
 export interface IMarketplaceApiFetcher {
+  // Main methods now return grouped data by default
   getWearablesByOwner(
     address: string,
     first?: number,
     skip?: number
-  ): Promise<{ data: ProfileWearable[]; total: number; totalItems: number }>
-  getEmotesByOwner(
-    address: string,
-    first?: number,
-    skip?: number
-  ): Promise<{ data: ProfileEmote[]; total: number; totalItems: number }>
+  ): Promise<{ data: OnChainWearable[]; total: number }>
+  getEmotesByOwner(address: string, first?: number, skip?: number): Promise<{ data: OnChainEmote[]; total: number }>
   getNamesByOwner(
     address: string,
     first?: number,
@@ -35,9 +34,9 @@ export interface IMarketplaceApiFetcher {
     skip?: number
   ): Promise<{ data: string[]; total: number; totalItems: number }>
 
-  // Methods to fetch ALL results automatically with pagination
-  getAllWearablesByOwner(address: string): Promise<ProfileWearable[]>
-  getAllEmotesByOwner(address: string): Promise<ProfileEmote[]>
+  // Methods to fetch ALL results automatically with pagination - now return grouped data
+  getAllWearablesByOwner(address: string): Promise<OnChainWearable[]>
+  getAllEmotesByOwner(address: string): Promise<OnChainEmote[]>
   getAllNamesByOwner(address: string): Promise<ProfileName[]>
 }
 
@@ -46,7 +45,7 @@ export type MarketplaceApiResponse<T> = {
   data: {
     elements: T[]
     total: number
-    totalItems: number
+    totalItems?: number
     page: number
     pages: number
     limit: number
@@ -63,15 +62,17 @@ export async function createMarketplaceApiFetcher(components: {
   const logger = logs.getLogger('marketplace-api-fetcher')
   const marketplaceApiUrl = (await config.requireString('MARKETPLACE_API_URL')) as string
 
+  // Unified request function that handles both regular and grouped endpoints
   async function makeRequest<T>(
     endpoint: string,
     params: URLSearchParams
-  ): Promise<{ data: T[]; total: number; totalItems: number }> {
-    const url = `${marketplaceApiUrl}${endpoint}?${params.toString()}`
+  ): Promise<{ data: T[]; total: number; totalItems?: number }> {
+    const url = new URL(endpoint, marketplaceApiUrl)
+    params.forEach((value, key) => url.searchParams.set(key, value))
 
     try {
-      logger.debug('Making request to marketplace API', { url })
-      const response = await fetch.fetch(url, {
+      logger.debug('Making request to marketplace API', { url: url.toString() })
+      const response = await fetch.fetch(url.toString(), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -91,11 +92,11 @@ export async function createMarketplaceApiFetcher(components: {
       return {
         data: result.data.elements,
         total: result.data.total,
-        totalItems: result.data.totalItems
+        totalItems: result.data.totalItems // Optional - only present for some endpoints
       }
     } catch (error) {
       logger.error('Error fetching from marketplace API', {
-        url,
+        url: url.toString(),
         error: error instanceof Error ? error.message : String(error)
       })
       throw error
@@ -169,24 +170,25 @@ export async function createMarketplaceApiFetcher(components: {
   }
 
   return {
+    // Main methods now return grouped data by default
     async getWearablesByOwner(
       address: string,
       first = MARKETPLACE_API_BATCH_SIZE,
       skip = 0
-    ): Promise<{ data: ProfileWearable[]; total: number; totalItems: number }> {
+    ): Promise<{ data: OnChainWearable[]; total: number }> {
       const params = getPaginationParams(first, skip)
-
-      return makeRequest<ProfileWearable>(`/v1/users/${address}/wearables`, params)
+      const result = await makeRequest<OnChainWearable>(`/v1/users/${address}/wearables/grouped`, params)
+      return { data: result.data, total: result.total }
     },
 
     async getEmotesByOwner(
       address: string,
       first = MARKETPLACE_API_BATCH_SIZE,
       skip = 0
-    ): Promise<{ data: ProfileEmote[]; total: number; totalItems: number }> {
+    ): Promise<{ data: OnChainEmote[]; total: number }> {
       const params = getPaginationParams(first, skip)
-
-      return makeRequest<ProfileEmote>(`/v1/users/${address}/emotes`, params)
+      const result = await makeRequest<OnChainEmote>(`/v1/users/${address}/emotes/grouped`, params)
+      return { data: result.data, total: result.total }
     },
 
     async getNamesByOwner(
@@ -195,8 +197,12 @@ export async function createMarketplaceApiFetcher(components: {
       skip = 0
     ): Promise<{ data: ProfileName[]; total: number; totalItems: number }> {
       const params = getPaginationParams(first, skip)
-
-      return makeRequest<ProfileName>(`/v1/users/${address}/names`, params)
+      const result = await makeRequest<ProfileName>(`/v1/users/${address}/names`, params)
+      return {
+        data: result.data,
+        total: result.total,
+        totalItems: result.totalItems || result.total
+      }
     },
 
     async getOwnedWearablesUrnAndTokenId(
@@ -205,8 +211,15 @@ export async function createMarketplaceApiFetcher(components: {
       skip = 0
     ): Promise<{ data: Array<{ urn: string; tokenId: string }>; total: number; totalItems: number }> {
       const params = getPaginationParams(first, skip)
-
-      return makeRequest<{ urn: string; tokenId: string }>(`/v1/users/${address}/wearables/urn-token`, params)
+      const result = await makeRequest<{ urn: string; tokenId: string }>(
+        `/v1/users/${address}/wearables/urn-token`,
+        params
+      )
+      return {
+        data: result.data,
+        total: result.total,
+        totalItems: result.totalItems || result.total
+      }
     },
 
     async getOwnedEmotesUrnAndTokenId(
@@ -215,8 +228,15 @@ export async function createMarketplaceApiFetcher(components: {
       skip = 0
     ): Promise<{ data: Array<{ urn: string; tokenId: string }>; total: number; totalItems: number }> {
       const params = getPaginationParams(first, skip)
-
-      return makeRequest<{ urn: string; tokenId: string }>(`/v1/users/${address}/emotes/urn-token`, params)
+      const result = await makeRequest<{ urn: string; tokenId: string }>(
+        `/v1/users/${address}/emotes/urn-token`,
+        params
+      )
+      return {
+        data: result.data,
+        total: result.total,
+        totalItems: result.totalItems || result.total
+      }
     },
 
     async getOwnedNamesOnly(
@@ -225,17 +245,21 @@ export async function createMarketplaceApiFetcher(components: {
       skip = 0
     ): Promise<{ data: string[]; total: number; totalItems: number }> {
       const params = getPaginationParams(first, skip)
-
-      return makeRequest<string>(`/v1/users/${address}/names/names-only`, params)
+      const result = await makeRequest<string>(`/v1/users/${address}/names/names-only`, params)
+      return {
+        data: result.data,
+        total: result.total,
+        totalItems: result.totalItems || result.total
+      }
     },
 
-    // New methods to fetch ALL results with automatic pagination
-    async getAllWearablesByOwner(address: string): Promise<ProfileWearable[]> {
-      return fetchAllPaginated<ProfileWearable>(`/v1/users/${address}/wearables`, address)
+    // Methods to fetch ALL results with automatic pagination - now return grouped data
+    async getAllWearablesByOwner(address: string): Promise<OnChainWearable[]> {
+      return fetchAllPaginated<OnChainWearable>(`/v1/users/${address}/wearables/grouped`, address)
     },
 
-    async getAllEmotesByOwner(address: string): Promise<ProfileEmote[]> {
-      return fetchAllPaginated<ProfileEmote>(`/v1/users/${address}/emotes`, address)
+    async getAllEmotesByOwner(address: string): Promise<OnChainEmote[]> {
+      return fetchAllPaginated<OnChainEmote>(`/v1/users/${address}/emotes/grouped`, address)
     },
 
     async getAllNamesByOwner(address: string): Promise<ProfileName[]> {

@@ -46,8 +46,8 @@ describe('fetch-items-with-fallback', () => {
   let mockTheGraph: MockTheGraphComponent
   let mockComponents: TestComponents
 
-  let mockProfileWearable: ProfileWearable
-  let mockProfileEmote: ProfileEmote
+  let mockProfileWearable: OnChainWearable
+  let mockProfileEmote: OnChainEmote
   let mockGraphWearableResponse: { nfts: any[] }
   let mockGraphEmoteResponse: { nfts: any[] }
 
@@ -103,47 +103,39 @@ describe('fetch-items-with-fallback', () => {
       theGraph: mockTheGraph
     }
 
-    // Setup test data
+    // Setup test data - now using OnChain types directly since marketplace-api returns grouped data
     mockProfileWearable = {
       urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet',
-      id: 'test-id',
-      tokenId: '123',
-      category: WearableCategory.FEET,
-      transferredAt: 1234567890000,
       name: 'Ethermon Feet',
+      category: WearableCategory.FEET,
       rarity: Rarity.COMMON,
-      price: 100,
+      amount: 1,
       individualData: [
         {
-          id: 'test-id',
+          id: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:123',
           tokenId: '123',
           transferredAt: 1234567890000,
           price: 100
         }
       ],
-      amount: 1,
       minTransferredAt: 1234567890000,
       maxTransferredAt: 1234567890000
     }
 
     mockProfileEmote = {
       urn: 'urn:decentraland:matic:collections-v1:dgtble_headspace:dgtble_dance',
-      id: 'test-emote-id',
-      tokenId: '456',
-      category: EmoteCategory.DANCE,
-      transferredAt: 1234567890000,
       name: 'Dance Emote',
+      category: EmoteCategory.DANCE,
       rarity: Rarity.RARE,
-      price: 200,
+      amount: 1,
       individualData: [
         {
-          id: 'test-emote-id',
+          id: 'urn:decentraland:matic:collections-v1:dgtble_headspace:dgtble_dance:456',
           tokenId: '456',
           transferredAt: 1234567890000,
           price: 200
         }
       ],
-      amount: 1,
       minTransferredAt: 1234567890000,
       maxTransferredAt: 1234567890000
     }
@@ -214,10 +206,9 @@ describe('fetch-items-with-fallback', () => {
       it('should log successful marketplace API fetch', async () => {
         await fetchAllWearablesWithFallback(mockComponents, '0x123')
 
-        expect(mockLogger.debug).toHaveBeenCalledWith('Successfully fetched wearables from marketplace-api', {
+        expect(mockLogger.debug).toHaveBeenCalledWith('Successfully fetched all wearables from marketplace-api', {
           owner: '0x123',
-          profileWearablesCount: 1,
-          onChainWearablesCount: 1
+          count: 1
         })
       })
 
@@ -238,18 +229,32 @@ describe('fetch-items-with-fallback', () => {
       })
 
       it('should group multiple wearables with same URN from marketplace-api', async () => {
-        const mockMultipleWearables: ProfileWearable[] = [
-          mockProfileWearable,
-          {
-            ...mockProfileWearable,
-            id: 'test-id-2',
-            tokenId: '456',
-            transferredAt: 1234567895000,
-            price: 150
-          }
-        ]
+        // Since marketplace-api now returns grouped data, we mock it as already grouped
+        const mockGroupedWearable: OnChainWearable = {
+          urn: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet',
+          name: 'Ethermon Feet',
+          category: WearableCategory.FEET,
+          rarity: Rarity.COMMON,
+          amount: 2,
+          individualData: [
+            {
+              id: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:123',
+              tokenId: '123',
+              transferredAt: 1234567890000,
+              price: 100
+            },
+            {
+              id: 'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:456',
+              tokenId: '456',
+              transferredAt: 1234567895000,
+              price: 150
+            }
+          ],
+          minTransferredAt: 1234567890000,
+          maxTransferredAt: 1234567895000
+        }
 
-        mockMarketplaceApiFetcher.getAllWearablesByOwner.mockResolvedValue(mockMultipleWearables)
+        mockMarketplaceApiFetcher.getAllWearablesByOwner.mockResolvedValue([mockGroupedWearable])
 
         const result = await fetchAllWearablesWithFallback(mockComponents, '0x123')
 
@@ -296,13 +301,14 @@ describe('fetch-items-with-fallback', () => {
         await fetchAllWearablesWithFallback(mockComponents, '0x123')
 
         expect(mockLogger.warn).toHaveBeenCalledWith(
-          'Failed to fetch wearables from marketplace-api, falling back to TheGraph',
+          'Failed to fetch all wearables from marketplace-api, falling back to TheGraph',
           {
             owner: '0x123',
             error: 'API Error'
           }
         )
-        expect(mockLogger.debug).toHaveBeenCalledWith('Successfully fetched wearables from TheGraph fallback', {
+
+        expect(mockLogger.debug).toHaveBeenCalledWith('Successfully fetched all wearables from TheGraph fallback', {
           owner: '0x123',
           count: 1
         })
@@ -330,7 +336,7 @@ describe('fetch-items-with-fallback', () => {
         }
 
         expect(mockLogger.error).toHaveBeenCalledWith(
-          'Failed to fetch wearables from both marketplace-api and TheGraph',
+          'Failed to fetch all wearables from both marketplace-api and TheGraph',
           {
             owner: '0x123',
             marketplaceError: 'API Error',
@@ -352,7 +358,7 @@ describe('fetch-items-with-fallback', () => {
 
         expect(result).toHaveLength(1)
         expect(mockLogger.warn).toHaveBeenCalledWith(
-          'Failed to fetch wearables from marketplace-api, falling back to TheGraph',
+          'Failed to fetch all wearables from marketplace-api, falling back to TheGraph',
           {
             owner: '0x123',
             error: 'Unknown error'
@@ -382,10 +388,9 @@ describe('fetch-items-with-fallback', () => {
       it('should log successful marketplace API fetch', async () => {
         await fetchAllEmotesWithFallback(mockComponents, '0x123')
 
-        expect(mockLogger.debug).toHaveBeenCalledWith('Successfully fetched emotes from marketplace-api', {
+        expect(mockLogger.debug).toHaveBeenCalledWith('Successfully fetched all emotes from marketplace-api', {
           owner: '0x123',
-          profileEmotesCount: 1,
-          onChainEmotesCount: 1
+          count: 1
         })
       })
 
@@ -406,18 +411,32 @@ describe('fetch-items-with-fallback', () => {
       })
 
       it('should group multiple emotes with same URN from marketplace-api', async () => {
-        const mockMultipleEmotes: ProfileEmote[] = [
-          mockProfileEmote,
-          {
-            ...mockProfileEmote,
-            id: 'test-emote-id-2',
-            tokenId: '789',
-            transferredAt: 1234567895000,
-            price: 250
-          }
-        ]
+        // Since marketplace-api now returns grouped data, we mock it as already grouped
+        const mockGroupedEmote: OnChainEmote = {
+          urn: 'urn:decentraland:matic:collections-v1:dgtble_headspace:dgtble_dance',
+          name: 'Dance Emote',
+          category: EmoteCategory.DANCE,
+          rarity: Rarity.RARE,
+          amount: 2,
+          individualData: [
+            {
+              id: 'urn:decentraland:matic:collections-v1:dgtble_headspace:dgtble_dance:456',
+              tokenId: '456',
+              transferredAt: 1234567890000,
+              price: 200
+            },
+            {
+              id: 'urn:decentraland:matic:collections-v1:dgtble_headspace:dgtble_dance:789',
+              tokenId: '789',
+              transferredAt: 1234567895000,
+              price: 250
+            }
+          ],
+          minTransferredAt: 1234567890000,
+          maxTransferredAt: 1234567895000
+        }
 
-        mockMarketplaceApiFetcher.getAllEmotesByOwner.mockResolvedValue(mockMultipleEmotes)
+        mockMarketplaceApiFetcher.getAllEmotesByOwner.mockResolvedValue([mockGroupedEmote])
 
         const result = await fetchAllEmotesWithFallback(mockComponents, '0x123')
 
@@ -452,10 +471,9 @@ describe('fetch-items-with-fallback', () => {
         const result = await fetchAllEmotesWithFallback(mockComponents, '0x123')
 
         expect(result).toHaveLength(0)
-        expect(mockLogger.debug).toHaveBeenCalledWith('Successfully fetched emotes from marketplace-api', {
+        expect(mockLogger.debug).toHaveBeenCalledWith('Successfully fetched all emotes from marketplace-api', {
           owner: '0x123',
-          profileEmotesCount: 0,
-          onChainEmotesCount: 0
+          count: 0
         })
       })
     })
@@ -479,13 +497,14 @@ describe('fetch-items-with-fallback', () => {
         await fetchAllEmotesWithFallback(mockComponents, '0x123')
 
         expect(mockLogger.warn).toHaveBeenCalledWith(
-          'Failed to fetch emotes from marketplace-api, falling back to TheGraph',
+          'Failed to fetch all emotes from marketplace-api, falling back to TheGraph',
           {
             owner: '0x123',
             error: 'API Error'
           }
         )
-        expect(mockLogger.debug).toHaveBeenCalledWith('Successfully fetched emotes from TheGraph fallback', {
+
+        expect(mockLogger.debug).toHaveBeenCalledWith('Successfully fetched all emotes from TheGraph fallback', {
           owner: '0x123',
           count: 1
         })
@@ -512,11 +531,14 @@ describe('fetch-items-with-fallback', () => {
           // Expected to throw
         }
 
-        expect(mockLogger.error).toHaveBeenCalledWith('Failed to fetch emotes from both marketplace-api and TheGraph', {
-          owner: '0x123',
-          marketplaceError: 'API Error',
-          graphError: 'Graph Error'
-        })
+        expect(mockLogger.error).toHaveBeenCalledWith(
+          'Failed to fetch all emotes from both marketplace-api and TheGraph',
+          {
+            owner: '0x123',
+            marketplaceError: 'API Error',
+            graphError: 'Graph Error'
+          }
+        )
       })
     })
   })

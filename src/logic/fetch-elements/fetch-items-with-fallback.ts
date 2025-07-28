@@ -1,118 +1,67 @@
-import { AppComponents, OnChainWearable, OnChainEmote } from '../../types'
-import {
-  fromProfileWearablesToOnChainWearables,
-  fromProfileEmotesToOnChainEmotes
-} from '../../adapters/marketplace-types'
-import {
-  fetchAllWearables as fetchAllWearablesFromGraph,
-  fetchAllEmotes as fetchAllEmotesFromGraph
-} from './fetch-items'
+import { OnChainWearable, OnChainEmote, AppComponents } from '../../types'
+import { fetchAllWearables, fetchAllEmotes } from './fetch-items'
 import { PaginatedElementsResult } from '../../adapters/elements-fetcher'
-import { fetchWearablesWithSmartPagination, fetchEmotesWithSmartPagination } from './smart-pagination-helper'
 
 /**
- * Fetches all wearables for a user with fallback logic:
- * 1. Try marketplace-api first (with automatic pagination)
+ * Fetches wearables for a user with fallback logic:
+ * 1. Try marketplace-api first
  * 2. If it fails, fallback to TheGraph
  */
-export async function fetchAllWearablesWithFallback(
+export async function fetchWearablesWithFallback(
   components: Pick<AppComponents, 'theGraph' | 'marketplaceApiFetcher' | 'logs'>,
-  owner: string
-): Promise<OnChainWearable[]> {
+  owner: string,
+  limit?: number,
+  offset?: number
+): Promise<PaginatedElementsResult<OnChainWearable>> {
   const { marketplaceApiFetcher, theGraph, logs } = components
   const logger = logs.getLogger('fetch-wearables-with-fallback')
 
   try {
-    logger.debug('Attempting to fetch wearables from marketplace-api', { owner })
-    const profileWearables = await marketplaceApiFetcher.getAllWearablesByOwner(owner)
-    const onChainWearables = fromProfileWearablesToOnChainWearables(profileWearables)
+    logger.debug('Attempting to fetch wearables from marketplace-api', {
+      owner,
+      limit: limit || 100,
+      offset: offset || 0
+    })
+    const result = await marketplaceApiFetcher.getWearablesByOwner(owner, limit || 100, offset || 0)
     logger.debug('Successfully fetched wearables from marketplace-api', {
       owner,
-      profileWearablesCount: profileWearables.length,
-      onChainWearablesCount: onChainWearables.length
+      limit: limit || 100,
+      offset: offset || 0,
+      returned: result.data.length,
+      total: result.total
     })
-    return onChainWearables
+
+    return {
+      elements: result.data,
+      totalAmount: result.total
+    }
   } catch (error) {
     logger.warn('Failed to fetch wearables from marketplace-api, falling back to TheGraph', {
       owner,
       error: error instanceof Error ? error.message : 'Unknown error'
     })
 
+    // Fallback to TheGraph
     try {
-      const onChainWearables = await fetchAllWearablesFromGraph({ theGraph }, owner)
+      const allWearables = await fetchAllWearables({ theGraph }, owner)
+      const actualLimit = limit || allWearables.length
+      const actualOffset = offset || 0
+      const elements = allWearables.slice(actualOffset, actualOffset + actualLimit)
+
       logger.debug('Successfully fetched wearables from TheGraph fallback', {
         owner,
-        count: onChainWearables.length
-      })
-      return onChainWearables
-    } catch (fallbackError) {
-      logger.error('Failed to fetch wearables from both marketplace-api and TheGraph', {
-        owner,
-        marketplaceError: error instanceof Error ? error.message : 'Unknown error',
-        graphError: fallbackError instanceof Error ? fallbackError.message : 'Unknown error'
-      })
-      throw fallbackError
-    }
-  }
-}
-
-/**
- * Fetches paginated wearables for a user with fallback logic:
- * 1. Try marketplace-api first (using direct pagination)
- * 2. If it fails, fallback to TheGraph (load all and paginate locally)
- */
-export async function fetchWearablesPaginatedWithFallback(
-  components: Pick<AppComponents, 'theGraph' | 'marketplaceApiFetcher' | 'logs'>,
-  owner: string,
-  limit: number,
-  offset: number
-): Promise<PaginatedElementsResult<OnChainWearable>> {
-  const { marketplaceApiFetcher, theGraph, logs } = components
-  const logger = logs.getLogger('fetch-wearables-paginated-with-fallback')
-
-  try {
-    logger.debug('Attempting to fetch paginated wearables using smart pagination', { owner, limit, offset })
-    const result = await fetchWearablesWithSmartPagination(marketplaceApiFetcher, owner, limit, offset, logger)
-    logger.debug('Successfully fetched paginated wearables using smart pagination', {
-      owner,
-      limit,
-      offset,
-      returned: result.elements.length,
-      totalUniqueItems: result.totalUniqueItems,
-      pagesProcessed: result.pagesProcessed
-    })
-    return {
-      elements: result.elements,
-      totalAmount: result.totalAmount
-    }
-  } catch (error) {
-    logger.warn('Failed to fetch paginated wearables from marketplace-api, falling back to TheGraph', {
-      owner,
-      limit,
-      offset,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    })
-
-    try {
-      const allWearables = await fetchAllWearablesFromGraph({ theGraph }, owner)
-      const totalAmount = allWearables.length
-      const elements = allWearables.slice(offset, offset + limit)
-      logger.debug('Successfully fetched wearables from TheGraph fallback (paginated locally)', {
-        owner,
-        limit,
-        offset,
+        limit: actualLimit,
+        offset: actualOffset,
         returned: elements.length,
-        total: totalAmount
+        total: allWearables.length
       })
       return {
         elements,
-        totalAmount
+        totalAmount: allWearables.length
       }
     } catch (fallbackError) {
       logger.error('Failed to fetch wearables from both marketplace-api and TheGraph', {
         owner,
-        limit,
-        offset,
         marketplaceError: error instanceof Error ? error.message : 'Unknown error',
         graphError: fallbackError instanceof Error ? fallbackError.message : 'Unknown error'
       })
@@ -122,40 +71,57 @@ export async function fetchWearablesPaginatedWithFallback(
 }
 
 /**
- * Fetches all emotes for a user with fallback logic:
- * 1. Try marketplace-api first (with automatic pagination)
+ * Fetches emotes for a user with fallback logic:
+ * 1. Try marketplace-api first
  * 2. If it fails, fallback to TheGraph
  */
-export async function fetchAllEmotesWithFallback(
+export async function fetchEmotesWithFallback(
   components: Pick<AppComponents, 'theGraph' | 'marketplaceApiFetcher' | 'logs'>,
-  owner: string
-): Promise<OnChainEmote[]> {
+  owner: string,
+  limit?: number,
+  offset?: number
+): Promise<PaginatedElementsResult<OnChainEmote>> {
   const { marketplaceApiFetcher, theGraph, logs } = components
   const logger = logs.getLogger('fetch-emotes-with-fallback')
 
   try {
-    logger.debug('Attempting to fetch emotes from marketplace-api', { owner })
-    const profileEmotes = await marketplaceApiFetcher.getAllEmotesByOwner(owner)
-    const onChainEmotes = fromProfileEmotesToOnChainEmotes(profileEmotes)
+    logger.debug('Attempting to fetch emotes from marketplace-api', { owner, limit: limit || 100, offset: offset || 0 })
+    const result = await marketplaceApiFetcher.getEmotesByOwner(owner, limit || 100, offset || 0)
     logger.debug('Successfully fetched emotes from marketplace-api', {
       owner,
-      profileEmotesCount: profileEmotes.length,
-      onChainEmotesCount: onChainEmotes.length
+      limit: limit || 100,
+      offset: offset || 0,
+      returned: result.data.length,
+      total: result.total
     })
-    return onChainEmotes
+    return {
+      elements: result.data,
+      totalAmount: result.total
+    }
   } catch (error) {
     logger.warn('Failed to fetch emotes from marketplace-api, falling back to TheGraph', {
       owner,
       error: error instanceof Error ? error.message : 'Unknown error'
     })
 
+    // Fallback to TheGraph
     try {
-      const onChainEmotes = await fetchAllEmotesFromGraph({ theGraph }, owner)
+      const allEmotes = await fetchAllEmotes({ theGraph }, owner)
+      const actualLimit = limit || allEmotes.length
+      const actualOffset = offset || 0
+      const elements = allEmotes.slice(actualOffset, actualOffset + actualLimit)
+
       logger.debug('Successfully fetched emotes from TheGraph fallback', {
         owner,
-        count: onChainEmotes.length
+        limit: actualLimit,
+        offset: actualOffset,
+        returned: elements.length,
+        total: allEmotes.length
       })
-      return onChainEmotes
+      return {
+        elements,
+        totalAmount: allEmotes.length
+      }
     } catch (fallbackError) {
       logger.error('Failed to fetch emotes from both marketplace-api and TheGraph', {
         owner,
@@ -168,62 +134,83 @@ export async function fetchAllEmotesWithFallback(
 }
 
 /**
- * Fetches paginated emotes for a user with fallback logic:
- * 1. Try marketplace-api first (using direct pagination)
- * 2. If it fails, fallback to TheGraph (load all and paginate locally)
+ * Fetches ALL wearables for a user (used only for profiles that need complete ownership data)
+ * Makes multiple paginated calls to get every single wearable owned by the user
  */
-export async function fetchEmotesPaginatedWithFallback(
+export async function fetchAllWearablesForProfile(
   components: Pick<AppComponents, 'theGraph' | 'marketplaceApiFetcher' | 'logs'>,
-  owner: string,
-  limit: number,
-  offset: number
-): Promise<PaginatedElementsResult<OnChainEmote>> {
+  owner: string
+): Promise<OnChainWearable[]> {
   const { marketplaceApiFetcher, theGraph, logs } = components
-  const logger = logs.getLogger('fetch-emotes-paginated-with-fallback')
+  const logger = logs.getLogger('fetch-all-wearables-for-profile')
 
   try {
-    logger.debug('Attempting to fetch paginated emotes using smart pagination', { owner, limit, offset })
-    const result = await fetchEmotesWithSmartPagination(marketplaceApiFetcher, owner, limit, offset, logger)
-    logger.debug('Successfully fetched paginated emotes using smart pagination', {
+    logger.debug('Attempting to fetch ALL wearables from marketplace-api for profile', { owner })
+    const result = await marketplaceApiFetcher.getAllWearablesByOwner(owner)
+    logger.debug('Successfully fetched ALL wearables from marketplace-api for profile', {
       owner,
-      limit,
-      offset,
-      returned: result.elements.length,
-      totalUniqueItems: result.totalUniqueItems,
-      pagesProcessed: result.pagesProcessed
+      count: result.length
     })
-    return {
-      elements: result.elements,
-      totalAmount: result.totalAmount
-    }
+    return result
   } catch (error) {
-    logger.warn('Failed to fetch paginated emotes from marketplace-api, falling back to TheGraph', {
+    logger.warn('Failed to fetch ALL wearables from marketplace-api, falling back to TheGraph', {
       owner,
-      limit,
-      offset,
       error: error instanceof Error ? error.message : 'Unknown error'
     })
 
     try {
-      const allEmotes = await fetchAllEmotesFromGraph({ theGraph }, owner)
-      const totalAmount = allEmotes.length
-      const elements = allEmotes.slice(offset, offset + limit)
-      logger.debug('Successfully fetched emotes from TheGraph fallback (paginated locally)', {
+      const result = await fetchAllWearables({ theGraph }, owner)
+      logger.debug('Successfully fetched ALL wearables from TheGraph fallback for profile', {
         owner,
-        limit,
-        offset,
-        returned: elements.length,
-        total: totalAmount
+        count: result.length
       })
-      return {
-        elements,
-        totalAmount
-      }
+      return result
     } catch (fallbackError) {
-      logger.error('Failed to fetch emotes from both marketplace-api and TheGraph', {
+      logger.error('Failed to fetch ALL wearables from both marketplace-api and TheGraph', {
         owner,
-        limit,
-        offset,
+        marketplaceError: error instanceof Error ? error.message : 'Unknown error',
+        graphError: fallbackError instanceof Error ? fallbackError.message : 'Unknown error'
+      })
+      throw fallbackError
+    }
+  }
+}
+
+/**
+ * Fetches ALL emotes for a user (used only for profiles that need complete ownership data)
+ * Makes multiple paginated calls to get every single emote owned by the user
+ */
+export async function fetchAllEmotesForProfile(
+  components: Pick<AppComponents, 'theGraph' | 'marketplaceApiFetcher' | 'logs'>,
+  owner: string
+): Promise<OnChainEmote[]> {
+  const { marketplaceApiFetcher, theGraph, logs } = components
+  const logger = logs.getLogger('fetch-all-emotes-for-profile')
+
+  try {
+    logger.debug('Attempting to fetch ALL emotes from marketplace-api for profile', { owner })
+    const result = await marketplaceApiFetcher.getAllEmotesByOwner(owner)
+    logger.debug('Successfully fetched ALL emotes from marketplace-api for profile', {
+      owner,
+      count: result.length
+    })
+    return result
+  } catch (error) {
+    logger.warn('Failed to fetch ALL emotes from marketplace-api, falling back to TheGraph', {
+      owner,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    })
+
+    try {
+      const result = await fetchAllEmotes({ theGraph }, owner)
+      logger.debug('Successfully fetched ALL emotes from TheGraph fallback for profile', {
+        owner,
+        count: result.length
+      })
+      return result
+    } catch (fallbackError) {
+      logger.error('Failed to fetch ALL emotes from both marketplace-api and TheGraph', {
+        owner,
         marketplaceError: error instanceof Error ? error.message : 'Unknown error',
         graphError: fallbackError instanceof Error ? fallbackError.message : 'Unknown error'
       })

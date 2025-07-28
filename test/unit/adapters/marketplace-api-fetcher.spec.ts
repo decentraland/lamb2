@@ -1,12 +1,13 @@
+import { EmoteCategory, WearableCategory, Rarity } from '@dcl/schemas'
 import { ILoggerComponent, IConfigComponent, IFetchComponent } from '@well-known-components/interfaces'
-import { WearableCategory, EmoteCategory, Rarity } from '@dcl/schemas'
 import {
   createMarketplaceApiFetcher,
   IMarketplaceApiFetcher,
-  MARKETPLACE_API_BATCH_SIZE,
-  MarketplaceApiResponse
+  MarketplaceApiResponse,
+  MARKETPLACE_API_BATCH_SIZE
 } from '../../../src/adapters/marketplace-api-fetcher'
 import { ProfileWearable, ProfileEmote, ProfileName } from '../../../src/adapters/marketplace-types'
+import { OnChainWearable, OnChainEmote } from '../../../src/types'
 
 describe('marketplace-api-fetcher', () => {
   let mockLogger: any
@@ -49,29 +50,45 @@ describe('marketplace-api-fetcher', () => {
 
   describe('getAllWearablesByOwner', () => {
     it('should fetch all wearables across multiple pages', async () => {
-      const mockWearable: ProfileWearable = {
-        id: 'test-id',
+      const mockGroupedWearable: OnChainWearable = {
         urn: 'urn:decentraland:ethereum:collections-v1:test:item',
-        tokenId: '123',
-        category: WearableCategory.UPPER_BODY,
-        transferredAt: 1234567890000,
         name: 'Test Wearable',
+        category: WearableCategory.UPPER_BODY,
         rarity: Rarity.COMMON,
-        price: 100,
-        individualData: [],
         amount: 1,
+        individualData: [
+          {
+            id: 'test-id',
+            tokenId: '123',
+            transferredAt: 1234567890000,
+            price: 100
+          }
+        ],
         minTransferredAt: 1234567890000,
         maxTransferredAt: 1234567890000
       }
 
-      // Mock responses for 3 pages
-      const mockResponses: MarketplaceApiResponse<ProfileWearable>[] = [
+      // Mock responses for 3 pages using grouped endpoint
+      const mockResponses: MarketplaceApiResponse<OnChainWearable>[] = [
         {
           ok: true,
           data: {
-            elements: [mockWearable, { ...mockWearable, id: 'test-id-2', tokenId: '124' }],
+            elements: [
+              mockGroupedWearable,
+              {
+                ...mockGroupedWearable,
+                urn: 'urn:decentraland:ethereum:collections-v1:test:item2',
+                individualData: [
+                  {
+                    id: 'test-id-2',
+                    tokenId: '124',
+                    transferredAt: 1234567890000,
+                    price: 100
+                  }
+                ]
+              }
+            ],
             total: 5,
-            totalItems: 5,
             page: 1,
             pages: 3,
             limit: 2
@@ -81,11 +98,32 @@ describe('marketplace-api-fetcher', () => {
           ok: true,
           data: {
             elements: [
-              { ...mockWearable, id: 'test-id-3', tokenId: '125' },
-              { ...mockWearable, id: 'test-id-4', tokenId: '126' }
+              {
+                ...mockGroupedWearable,
+                urn: 'urn:decentraland:ethereum:collections-v1:test:item3',
+                individualData: [
+                  {
+                    id: 'test-id-3',
+                    tokenId: '125',
+                    transferredAt: 1234567890000,
+                    price: 100
+                  }
+                ]
+              },
+              {
+                ...mockGroupedWearable,
+                urn: 'urn:decentraland:ethereum:collections-v1:test:item4',
+                individualData: [
+                  {
+                    id: 'test-id-4',
+                    tokenId: '126',
+                    transferredAt: 1234567890000,
+                    price: 100
+                  }
+                ]
+              }
             ],
             total: 5,
-            totalItems: 5,
             page: 2,
             pages: 3,
             limit: 2
@@ -94,9 +132,21 @@ describe('marketplace-api-fetcher', () => {
         {
           ok: true,
           data: {
-            elements: [{ ...mockWearable, id: 'test-id-5', tokenId: '127' }],
+            elements: [
+              {
+                ...mockGroupedWearable,
+                urn: 'urn:decentraland:ethereum:collections-v1:test:item5',
+                individualData: [
+                  {
+                    id: 'test-id-5',
+                    tokenId: '127',
+                    transferredAt: 1234567890000,
+                    price: 100
+                  }
+                ]
+              }
+            ],
             total: 5,
-            totalItems: 5,
             page: 3,
             pages: 3,
             limit: 2
@@ -122,29 +172,29 @@ describe('marketplace-api-fetcher', () => {
       const result = await marketplaceApiFetcher.getAllWearablesByOwner('0x123')
 
       expect(result).toHaveLength(5)
-      expect(result[0].id).toBe('test-id')
-      expect(result[1].id).toBe('test-id-2')
-      expect(result[2].id).toBe('test-id-3')
-      expect(result[3].id).toBe('test-id-4')
-      expect(result[4].id).toBe('test-id-5')
+      expect(result[0].individualData[0].id).toBe('test-id')
+      expect(result[1].individualData[0].id).toBe('test-id-2')
+      expect(result[2].individualData[0].id).toBe('test-id-3')
+      expect(result[3].individualData[0].id).toBe('test-id-4')
+      expect(result[4].individualData[0].id).toBe('test-id-5')
 
       // Should have made 3 fetch calls (one per page)
       expect(mockFetch.fetch).toHaveBeenCalledTimes(3)
 
-      // Verify URLs include correct pagination parameters
+      // Verify URLs include correct pagination parameters and use grouped endpoint
       expect(mockFetch.fetch).toHaveBeenNthCalledWith(
         1,
-        `${mockMarketplaceApiUrl}/v1/users/0x123/wearables?first=${MARKETPLACE_API_BATCH_SIZE}&skip=0`,
+        `${mockMarketplaceApiUrl}/v1/users/0x123/wearables/grouped?first=${MARKETPLACE_API_BATCH_SIZE}&skip=0`,
         expect.any(Object)
       )
       expect(mockFetch.fetch).toHaveBeenNthCalledWith(
         2,
-        `${mockMarketplaceApiUrl}/v1/users/0x123/wearables?first=${MARKETPLACE_API_BATCH_SIZE}&skip=${MARKETPLACE_API_BATCH_SIZE}`,
+        `${mockMarketplaceApiUrl}/v1/users/0x123/wearables/grouped?first=${MARKETPLACE_API_BATCH_SIZE}&skip=${MARKETPLACE_API_BATCH_SIZE}`,
         expect.any(Object)
       )
       expect(mockFetch.fetch).toHaveBeenNthCalledWith(
         3,
-        `${mockMarketplaceApiUrl}/v1/users/0x123/wearables?first=${MARKETPLACE_API_BATCH_SIZE}&skip=${2 * MARKETPLACE_API_BATCH_SIZE}`,
+        `${mockMarketplaceApiUrl}/v1/users/0x123/wearables/grouped?first=${MARKETPLACE_API_BATCH_SIZE}&skip=${2 * MARKETPLACE_API_BATCH_SIZE}`,
         expect.any(Object)
       )
     })
@@ -283,12 +333,12 @@ describe('marketplace-api-fetcher', () => {
       await marketplaceApiFetcher.getAllWearablesByOwner('0x123')
 
       expect(mockLogger.debug).toHaveBeenCalledWith('Starting paginated fetch from marketplace API', {
-        endpoint: '/v1/users/0x123/wearables',
+        endpoint: '/v1/users/0x123/wearables/grouped',
         address: '0x123'
       })
 
       expect(mockLogger.debug).toHaveBeenCalledWith('Fetched page from marketplace API', {
-        endpoint: '/v1/users/0x123/wearables',
+        endpoint: '/v1/users/0x123/wearables/grouped',
         address: '0x123',
         page: 1,
         pages: 1,
@@ -298,7 +348,7 @@ describe('marketplace-api-fetcher', () => {
       })
 
       expect(mockLogger.debug).toHaveBeenCalledWith('Completed paginated fetch from marketplace API', {
-        endpoint: '/v1/users/0x123/wearables',
+        endpoint: '/v1/users/0x123/wearables/grouped',
         address: '0x123',
         totalElements: 1,
         totalPages: 1
@@ -308,27 +358,43 @@ describe('marketplace-api-fetcher', () => {
 
   describe('getAllEmotesByOwner', () => {
     it('should fetch all emotes across multiple pages', async () => {
-      const mockEmote: ProfileEmote = {
-        id: 'test-emote-id',
+      const mockGroupedEmote: OnChainEmote = {
         urn: 'urn:decentraland:matic:collections-v1:test:emote',
-        tokenId: '456',
-        category: EmoteCategory.DANCE,
-        transferredAt: 1234567890000,
         name: 'Test Emote',
+        category: EmoteCategory.DANCE,
         rarity: Rarity.RARE,
-        price: 200,
-        individualData: [],
         amount: 1,
+        individualData: [
+          {
+            id: 'test-emote-id',
+            tokenId: '456',
+            transferredAt: 1234567890000,
+            price: 200
+          }
+        ],
         minTransferredAt: 1234567890000,
         maxTransferredAt: 1234567890000
       }
 
-      const mockResponse: MarketplaceApiResponse<ProfileEmote> = {
+      const mockResponse: MarketplaceApiResponse<OnChainEmote> = {
         ok: true,
         data: {
-          elements: [mockEmote, { ...mockEmote, id: 'test-emote-id-2', tokenId: '457' }],
+          elements: [
+            mockGroupedEmote,
+            {
+              ...mockGroupedEmote,
+              urn: 'urn:decentraland:matic:collections-v1:test:emote2',
+              individualData: [
+                {
+                  id: 'test-emote-id-2',
+                  tokenId: '457',
+                  transferredAt: 1234567890000,
+                  price: 200
+                }
+              ]
+            }
+          ],
           total: 2,
-          totalItems: 2,
           page: 1,
           pages: 1,
           limit: MARKETPLACE_API_BATCH_SIZE
@@ -343,8 +409,8 @@ describe('marketplace-api-fetcher', () => {
       const result = await marketplaceApiFetcher.getAllEmotesByOwner('0x123')
 
       expect(result).toHaveLength(2)
-      expect(result[0].id).toBe('test-emote-id')
-      expect(result[1].id).toBe('test-emote-id-2')
+      expect(result[0].individualData[0].id).toBe('test-emote-id')
+      expect(result[1].individualData[0].id).toBe('test-emote-id-2')
     })
   })
 

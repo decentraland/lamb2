@@ -1,28 +1,35 @@
 import { AppComponents, Name } from '../../types'
 import { fetchAllNames as fetchAllNamesFromGraph } from './fetch-names'
 import { PaginatedElementsResult } from '../../adapters/elements-fetcher'
-import { fetchNamesWithSmartPagination } from './smart-pagination-helper'
 
 /**
- * Fetches all names for a user with fallback logic:
- * 1. Try marketplace-api first (with automatic pagination)
+ * Fetches names for a user with fallback logic:
+ * 1. Try marketplace-api first
  * 2. If it fails, fallback to TheGraph
  */
-export async function fetchAllNamesWithFallback(
+export async function fetchNamesWithFallback(
   components: Pick<AppComponents, 'theGraph' | 'marketplaceApiFetcher' | 'logs'>,
-  owner: string
-): Promise<Name[]> {
+  owner: string,
+  limit?: number,
+  offset?: number
+): Promise<PaginatedElementsResult<Name>> {
   const { marketplaceApiFetcher, theGraph, logs } = components
   const logger = logs.getLogger('fetch-names-with-fallback')
 
   try {
-    logger.debug('Attempting to fetch names from marketplace-api', { owner })
-    const profileNames = await marketplaceApiFetcher.getAllNamesByOwner(owner)
+    logger.debug('Attempting to fetch names from marketplace-api', { owner, limit: limit || 100, offset: offset || 0 })
+    const result = await marketplaceApiFetcher.getNamesByOwner(owner, limit || 100, offset || 0)
     logger.debug('Successfully fetched names from marketplace-api', {
       owner,
-      count: profileNames.length
+      limit: limit || 100,
+      offset: offset || 0,
+      returned: result.data.length,
+      total: result.total
     })
-    return profileNames
+    return {
+      elements: result.data,
+      totalAmount: result.total
+    }
   } catch (error) {
     logger.warn('Failed to fetch names from marketplace-api, falling back to TheGraph', {
       owner,
@@ -30,12 +37,21 @@ export async function fetchAllNamesWithFallback(
     })
 
     try {
-      const names = await fetchAllNamesFromGraph({ theGraph }, owner)
+      const allNames = await fetchAllNamesFromGraph({ theGraph }, owner)
+      const actualLimit = limit || allNames.length
+      const actualOffset = offset || 0
+      const elements = allNames.slice(actualOffset, actualOffset + actualLimit)
       logger.debug('Successfully fetched names from TheGraph fallback', {
         owner,
-        count: names.length
+        limit: actualLimit,
+        offset: actualOffset,
+        returned: elements.length,
+        total: allNames.length
       })
-      return names
+      return {
+        elements,
+        totalAmount: allNames.length
+      }
     } catch (fallbackError) {
       logger.error('Failed to fetch names from both marketplace-api and TheGraph', {
         owner,
@@ -48,62 +64,40 @@ export async function fetchAllNamesWithFallback(
 }
 
 /**
- * Fetches paginated names for a user with fallback logic:
- * 1. Try marketplace-api first (using direct pagination)
- * 2. If it fails, fallback to TheGraph (load all and paginate locally)
+ * Fetches ALL names for a user (used only for profiles that need complete ownership data)
+ * Makes multiple paginated calls to get every single name owned by the user
  */
-export async function fetchNamesPaginatedWithFallback(
+export async function fetchAllNamesForProfile(
   components: Pick<AppComponents, 'theGraph' | 'marketplaceApiFetcher' | 'logs'>,
-  owner: string,
-  limit: number,
-  offset: number
-): Promise<PaginatedElementsResult<Name>> {
+  owner: string
+): Promise<Name[]> {
   const { marketplaceApiFetcher, theGraph, logs } = components
-  const logger = logs.getLogger('fetch-names-paginated-with-fallback')
+  const logger = logs.getLogger('fetch-all-names-for-profile')
 
   try {
-    logger.debug('Attempting to fetch paginated names using smart pagination', { owner, limit, offset })
-    const result = await fetchNamesWithSmartPagination(marketplaceApiFetcher, owner, limit, offset, logger)
-    logger.debug('Successfully fetched paginated names using smart pagination', {
+    logger.debug('Attempting to fetch ALL names from marketplace-api for profile', { owner })
+    const result = await marketplaceApiFetcher.getAllNamesByOwner(owner)
+    logger.debug('Successfully fetched ALL names from marketplace-api for profile', {
       owner,
-      limit,
-      offset,
-      returned: result.elements.length,
-      totalUniqueItems: result.totalUniqueItems,
-      pagesProcessed: result.pagesProcessed
+      count: result.length
     })
-    return {
-      elements: result.elements,
-      totalAmount: result.totalAmount
-    }
+    return result
   } catch (error) {
-    logger.warn('Failed to fetch paginated names from marketplace-api, falling back to TheGraph', {
+    logger.warn('Failed to fetch ALL names from marketplace-api, falling back to TheGraph', {
       owner,
-      limit,
-      offset,
       error: error instanceof Error ? error.message : 'Unknown error'
     })
 
     try {
-      const allNames = await fetchAllNamesFromGraph({ theGraph }, owner)
-      const totalAmount = allNames.length
-      const elements = allNames.slice(offset, offset + limit)
-      logger.debug('Successfully fetched names from TheGraph fallback (paginated locally)', {
+      const result = await fetchAllNamesFromGraph({ theGraph }, owner)
+      logger.debug('Successfully fetched ALL names from TheGraph fallback for profile', {
         owner,
-        limit,
-        offset,
-        returned: elements.length,
-        total: totalAmount
+        count: result.length
       })
-      return {
-        elements,
-        totalAmount
-      }
+      return result
     } catch (fallbackError) {
-      logger.error('Failed to fetch names from both marketplace-api and TheGraph', {
+      logger.error('Failed to fetch ALL names from both marketplace-api and TheGraph', {
         owner,
-        limit,
-        offset,
         marketplaceError: error instanceof Error ? error.message : 'Unknown error',
         graphError: fallbackError instanceof Error ? fallbackError.message : 'Unknown error'
       })

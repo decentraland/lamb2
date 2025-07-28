@@ -7,15 +7,15 @@ export type ProfileWearable = {
   id: string
   tokenId: string
   category: WearableCategory
-  transferredAt: number
+  transferredAt: string
   name: string
   rarity: string
-  price?: number
+  price?: string
   individualData: Array<{
     id: string
     tokenId: string
-    transferredAt: number
-    price: number
+    transferredAt: string
+    price: string
   }>
   amount: number
   minTransferredAt: number
@@ -30,12 +30,12 @@ export type ProfileEmote = {
   transferredAt: number
   name: string
   rarity: string
-  price?: number
+  price?: string
   individualData: Array<{
     id: string
     tokenId: string
-    transferredAt: number
-    price: number
+    transferredAt: string
+    price: string
   }>
   amount: number
   minTransferredAt: number
@@ -46,7 +46,7 @@ export type ProfileName = {
   name: string
   contractAddress: string
   tokenId: string
-  price?: number
+  price?: string
 }
 
 /**
@@ -63,16 +63,16 @@ function groupProfileItemsByURN<
     const individualData = {
       id: profileItem.urn + ':' + profileItem.tokenId,
       tokenId: profileItem.tokenId,
-      transferredAt: profileItem.transferredAt,
-      price: profileItem.price || 0
+      transferredAt: String(profileItem.transferredAt),
+      price: String(profileItem.price || 0)
     }
 
     if (itemsByURN.has(profileItem.urn)) {
       const itemFromMap = itemsByURN.get(profileItem.urn)!
       itemFromMap.individualData.push(individualData)
       itemFromMap.amount = itemFromMap.amount + 1
-      itemFromMap.minTransferredAt = Math.min(profileItem.transferredAt, itemFromMap.minTransferredAt)
-      itemFromMap.maxTransferredAt = Math.max(profileItem.transferredAt, itemFromMap.maxTransferredAt)
+      itemFromMap.minTransferredAt = Math.min(Number(profileItem.transferredAt), Number(itemFromMap.minTransferredAt))
+      itemFromMap.maxTransferredAt = Math.max(Number(profileItem.transferredAt), Number(itemFromMap.maxTransferredAt))
     } else {
       itemsByURN.set(profileItem.urn, {
         urn: profileItem.urn,
@@ -81,8 +81,8 @@ function groupProfileItemsByURN<
         amount: 1,
         name: profileItem.name,
         category: profileItem.category as TCategory,
-        minTransferredAt: profileItem.transferredAt,
-        maxTransferredAt: profileItem.transferredAt
+        minTransferredAt: Number(profileItem.transferredAt),
+        maxTransferredAt: Number(profileItem.transferredAt)
       })
     }
   })

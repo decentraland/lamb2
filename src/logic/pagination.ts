@@ -1,5 +1,5 @@
 import { InvalidRequestError, Pagination } from '../types'
-import { PaginatedElementsFetcher } from '../adapters/elements-fetcher'
+import { ElementsFetcher } from '../adapters/elements-fetcher'
 
 export function paginationObject(url: URL, maxPageSize: number = 1000): Pagination {
   const pageSize = url.searchParams.has('pageSize') ? parseInt(url.searchParams.get('pageSize')!, 10) : 100
@@ -45,7 +45,7 @@ export async function fetchAndPaginate<T>(
  * Falls back to local filtering/sorting if the fetcher returns unsorted results
  */
 export async function fetchAndPaginateWithFetcher<T>(
-  fetcher: PaginatedElementsFetcher<T>,
+  fetcher: ElementsFetcher<T>,
   address: string,
   pagination: Pagination,
   filter: (element: T) => boolean = noFilteringFilter,

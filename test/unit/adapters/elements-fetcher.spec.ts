@@ -1,12 +1,12 @@
-import { createLogComponent } from "@well-known-components/logger"
-import { createElementsFetcherComponent } from "../../../src/adapters/elements-fetcher"
+import { createLogComponent } from '@well-known-components/logger'
+import { createElementsFetcherComponent } from '../../../src/adapters/elements-fetcher'
 
 it('when fetch successes, it returns the elements', async () => {
   const logs = await createLogComponent({})
   const expectedElements = [1, 2, 3]
   const expectedAddress = 'anAddress'
   const fetcher = createElementsFetcherComponent<number>({ logs }, async (address: string) => {
-    return expectedElements
+    return { elements: expectedElements, totalAmount: expectedElements.length }
   })
   const elements = await fetcher.fetchOwnedElements(expectedAddress)
 
@@ -24,7 +24,8 @@ it('it fetches the elements for the specified address', async () => {
     addressb: elementsB
   }
   const fetcher = createElementsFetcherComponent<number>({ logs }, async (address: string) => {
-    return elementsByAddress[address]
+    const elements = elementsByAddress[address]
+    return { elements, totalAmount: elements.length }
   })
 
   expect(await fetcher.fetchOwnedElements(addressA)).toEqual(elementsA)
@@ -35,12 +36,12 @@ it('when fetches fail and there is no stale value, it throws error', async () =>
   const logs = await createLogComponent({})
   const expectedAddress = 'anAddress'
   const fetcher = createElementsFetcherComponent<number>({ logs }, async (address: string) => {
-
     throw new Error('an error happenned')
   })
 
-  await expect(fetcher.fetchOwnedElements(expectedAddress)).rejects.toThrowError(`Cannot fetch elements for ${expectedAddress}`)
-
+  await expect(fetcher.fetchOwnedElements(expectedAddress)).rejects.toThrowError(
+    `Cannot fetch elements for ${expectedAddress}`
+  )
 })
 
 it('result is cached (no case sensitive)', async () => {
@@ -50,12 +51,29 @@ it('result is cached (no case sensitive)', async () => {
   const fetcher = createElementsFetcherComponent<number>({ logs }, async (address: string) => {
     if (i === 0) {
       i++
-      return [0]
+      return { elements: [0], totalAmount: 1 }
     }
-    return [1]
+    return { elements: [1], totalAmount: 1 }
   })
 
   expect(await fetcher.fetchOwnedElements(expectedAddress)).toEqual([0])
   expect(await fetcher.fetchOwnedElements(expectedAddress.toUpperCase())).toEqual([0])
+})
 
+it('fetchOwnedElementsPaginated works correctly', async () => {
+  const logs = await createLogComponent({})
+  const allElements = [1, 2, 3, 4, 5]
+  const fetcher = createElementsFetcherComponent<number>(
+    { logs },
+    async (address: string, limit?: number, offset?: number) => {
+      const actualLimit = limit || allElements.length
+      const actualOffset = offset || 0
+      const elements = allElements.slice(actualOffset, actualOffset + actualLimit)
+      return { elements, totalAmount: allElements.length }
+    }
+  )
+
+  const result = await fetcher.fetchOwnedElementsPaginated('address', 2, 1)
+  expect(result.elements).toEqual([2, 3])
+  expect(result.totalAmount).toEqual(5)
 })
