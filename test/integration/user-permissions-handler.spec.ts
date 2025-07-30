@@ -1,11 +1,11 @@
-import { OperatorFromQuery } from '../../src/logic/fetch-elements/fetch-operators'
+import { OperatorFromQuery } from '../../src/logic/fetch-elements/fetch-permissions'
 import { Operator } from '../../src/types'
 import { test } from '../components'
 import { generateOperators } from '../data/operators'
 import { generateRandomAddress } from '../helpers'
 
 // NOTE: each test generates a new wallet to avoid matches on cache
-test('operators-handler: GET /users/:address/operators should', function ({ components }) {
+test('user-permissions-handler: GET /users/:address/permissions should', function ({ components }) {
   let randomAddress: string
 
   beforeEach(() => {
@@ -18,7 +18,7 @@ test('operators-handler: GET /users/:address/operators should', function ({ comp
     })
 
     it('should return 200 and empty array', async () => {
-      const r = await components.localFetch.fetch(`/users/${randomAddress}/operators`)
+      const r = await components.localFetch.fetch(`/users/${randomAddress}/permissions`)
 
       expect(r.status).toBe(200)
       expect(await r.json()).toEqual({
@@ -39,7 +39,7 @@ test('operators-handler: GET /users/:address/operators should', function ({ comp
     })
 
     it('should return 200 ok and return the single operator available', async () => {
-      const r = await components.localFetch.fetch(`/users/${randomAddress}/operators`)
+      const r = await components.localFetch.fetch(`/users/${randomAddress}/permissions`)
 
       expect(r.status).toBe(200)
       const response = await r.json()
@@ -58,7 +58,7 @@ test('operators-handler: GET /users/:address/operators should', function ({ comp
       })
 
       it('should return 2 operators and paginate them correctly (page 1, size 2, total 5)', async () => {
-        const r = await components.localFetch.fetch(`/users/${randomAddress}/operators?pageSize=2&pageNum=1`)
+        const r = await components.localFetch.fetch(`/users/${randomAddress}/permissions?pageSize=2&pageNum=1`)
 
         expect(r.status).toBe(200)
         expect(await r.json()).toEqual({
@@ -70,7 +70,7 @@ test('operators-handler: GET /users/:address/operators should', function ({ comp
       })
 
       it('should return 2 operators and paginate them correctly (page 2, size 2, total 5)', async () => {
-        const r = await components.localFetch.fetch(`/users/${randomAddress}/operators?pageSize=2&pageNum=2`)
+        const r = await components.localFetch.fetch(`/users/${randomAddress}/permissions?pageSize=2&pageNum=2`)
 
         expect(r.status).toBe(200)
         expect(await r.json()).toEqual({
@@ -82,7 +82,7 @@ test('operators-handler: GET /users/:address/operators should', function ({ comp
       })
 
       it('should return 1 operator and paginate them correctly (page 3, size 2, total 5)', async () => {
-        const r = await components.localFetch.fetch(`/users/${randomAddress}/operators?pageSize=2&pageNum=3`)
+        const r = await components.localFetch.fetch(`/users/${randomAddress}/permissions?pageSize=2&pageNum=3`)
 
         expect(r.status).toBe(200)
         expect(await r.json()).toEqual({
@@ -94,7 +94,7 @@ test('operators-handler: GET /users/:address/operators should', function ({ comp
       })
 
       it('should return multiples operators from cache on second call for the same address', async () => {
-        const r = await components.localFetch.fetch(`/users/${randomAddress}/operators?pageSize=5&pageNum=1`)
+        const r = await components.localFetch.fetch(`/users/${randomAddress}/permissions?pageSize=5&pageNum=1`)
         const rBody = await r.json()
 
         expect(r.status).toBe(200)
@@ -105,7 +105,7 @@ test('operators-handler: GET /users/:address/operators should', function ({ comp
           totalAmount: 5
         })
 
-        const r2 = await components.localFetch.fetch(`/users/${randomAddress}/operators?pageSize=5&pageNum=1`)
+        const r2 = await components.localFetch.fetch(`/users/${randomAddress}/permissions?pageSize=5&pageNum=1`)
         expect(r2.status).toBe(r.status)
         expect(await r2.json()).toEqual(rBody)
         expect(components.theGraph.landSubgraph.query).toHaveBeenCalledTimes(1)
@@ -119,7 +119,7 @@ test('operators-handler: GET /users/:address/operators should', function ({ comp
     })
 
     it('should return 502 and error message when operators cannot be fetched', async () => {
-      const r = await components.localFetch.fetch(`/users/${randomAddress}/operators`)
+      const r = await components.localFetch.fetch(`/users/${randomAddress}/permissions`)
       const data = await r.json()
       expect(r.status).toBe(502)
       expect(data.error).toEqual('The requested items cannot be fetched right now')

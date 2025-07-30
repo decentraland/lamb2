@@ -34,7 +34,7 @@ export type OperatorQueryResult = {
   parcels: OperatorFromQuery[]
 }
 
-export async function fetchAllOperators(
+export async function fetchAllPermissions(
   components: Pick<AppComponents, 'theGraph'>,
   updateOperator: string
 ): Promise<Operator[]> {

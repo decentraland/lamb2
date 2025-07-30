@@ -64,7 +64,7 @@ export type BaseComponents = {
   entitiesFetcher: EntitiesFetcher
   namesFetcher: ElementsFetcher<Name>
   landsFetcher: ElementsFetcher<LAND>
-  operatorsFetcher: ElementsFetcher<Operator>
+  permissionsFetcher: ElementsFetcher<Operator>
   parcelRightsFetcher: ParcelRightsFetcher
   resourcesStatusCheck: IResourcesStatusComponent
   status: IStatusComponent

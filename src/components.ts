@@ -40,7 +40,7 @@ import { createThirdPartyContractRegistry } from './ports/ownership-checker/thir
 import { createThirdPartyItemChecker } from './ports/ownership-checker/third-party-item-checker'
 import { createParcelRightsComponent } from './adapters/parcel-rights-fetcher'
 import { fetchNameOwner } from './logic/fetch-elements/fetch-name-owner'
-import { fetchAllOperators } from './logic/fetch-elements/fetch-operators'
+import { fetchAllPermissions } from './logic/fetch-elements/fetch-permissions'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -97,8 +97,8 @@ export async function initComponents(
   )
   const namesFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllNames({ theGraph }, address))
   const landsFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllLANDs({ theGraph }, address))
-  const operatorsFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllOperators({ theGraph }, address)
+  const permissionsFetcher = createElementsFetcherComponent({ logs }, async (address) =>
+    fetchAllPermissions({ theGraph }, address)
   )
 
   const resourcesStatusCheck = createResourcesStatusComponent({ logs })
@@ -197,7 +197,7 @@ export async function initComponents(
     emotesFetcher,
     namesFetcher,
     landsFetcher,
-    operatorsFetcher,
+    permissionsFetcher,
     parcelRightsFetcher,
     thirdPartyProvidersGraphFetcher,
     thirdPartyProvidersStorage,

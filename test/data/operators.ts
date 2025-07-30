@@ -1,4 +1,4 @@
-import { OperatorFromQuery } from '../../src/logic/fetch-elements/fetch-operators'
+import { OperatorFromQuery } from '../../src/logic/fetch-elements/fetch-permissions'
 
 export function generateOperators(quantity: number): OperatorFromQuery[] {
   const generatedOperators: OperatorFromQuery[] = []
