@@ -152,7 +152,7 @@ export async function initComponents(
 
   const nameOwnerFetcher = createElementsFetcherComponent({ logs }, async (name) => {
     const result = await fetchNameOwner({ theGraph }, name)
-    return [result]
+    return result ? [result] : []
   })
 
   const profiles = await createProfilesComponent({

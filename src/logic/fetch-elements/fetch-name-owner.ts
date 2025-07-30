@@ -23,8 +23,8 @@ export async function fetchNameOwner(
   components: Pick<AppComponents, 'theGraph'>,
   name: string
 ): Promise<{
-  owner: string
+  owner: string | null
 }> {
   const result = await components.theGraph.ensSubgraph.query<NameOwnerFromQuery>(QUERY_NAME_OWNER, { name })
-  return { owner: result.nfts[0].owner.address }
+  return { owner: result.nfts[0]?.owner.address || null }
 }

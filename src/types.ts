@@ -287,5 +287,5 @@ export type TypedEntity<T> = Omit<Entity, 'metadata'> & {
 }
 
 export type NameOwner = {
-  owner: string
+  owner: string | null
 }
