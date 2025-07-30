@@ -76,6 +76,7 @@ export type BaseComponents = {
   alchemyNftFetcher: AlchemyNftFetcher
   l1ThirdPartyItemChecker: ThirdPartyItemChecker
   l2ThirdPartyItemChecker: ThirdPartyItemChecker
+  nameOwnerFetcher: ElementsFetcher<NameOwner>
 }
 
 // components used in runtime
@@ -283,4 +284,8 @@ export type WearableSorting = BaseWearableSorting & OnChainWearableSorting & Thi
 
 export type TypedEntity<T> = Omit<Entity, 'metadata'> & {
   metadata?: T
+}
+
+export type NameOwner = {
+  owner: string
 }
