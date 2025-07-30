@@ -6,13 +6,7 @@ export async function nameOwnerHandler(
   const { name } = context.params
   const { nameOwnerFetcher } = context.components
 
-  if (!name.endsWith('.dcl.eth')) {
-    return {
-      status: 404
-    }
-  }
-
-  const dclName = name.split('.dcl')[0]
+  const dclName = name.endsWith('.dcl.eth') ? name.split('.dcl')[0] : name
 
   const page = await nameOwnerFetcher.fetchOwnedElements(dclName)
   if (page.length === 0 || !page[0].owner) {
