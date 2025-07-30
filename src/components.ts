@@ -39,6 +39,7 @@ import { createAlchemyNftFetcher } from './adapters/alchemy-nft-fetcher'
 import { createThirdPartyContractRegistry } from './ports/ownership-checker/third-party-contract-registry'
 import { createThirdPartyItemChecker } from './ports/ownership-checker/third-party-item-checker'
 import { createParcelRightsComponent } from './adapters/parcel-rights-fetcher'
+import { fetchNameOwner } from './logic/fetch-elements/fetch-name-owner'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -149,6 +150,11 @@ export async function initComponents(
 
   const alchemyNftFetcher = await createAlchemyNftFetcher({ config, logs, fetch })
 
+  const nameOwnerFetcher = createElementsFetcherComponent({ logs }, async (name) => {
+    const result = await fetchNameOwner({ theGraph }, name)
+    return result ? [result] : []
+  })
+
   const profiles = await createProfilesComponent({
     alchemyNftFetcher,
     metrics,
@@ -201,6 +207,7 @@ export async function initComponents(
     profiles,
     alchemyNftFetcher,
     l1ThirdPartyItemChecker,
-    l2ThirdPartyItemChecker
+    l2ThirdPartyItemChecker,
+    nameOwnerFetcher
   }
 }
