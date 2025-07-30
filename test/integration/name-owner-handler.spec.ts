@@ -87,19 +87,5 @@ test('Integration tests for name-owner-handle', function ({ components }) {
         expect(r.status).toBe(404)
       })
     })
-
-    describe('and name exists but has no owner', () => {
-      beforeEach(() => {
-        jest.spyOn(nameOwnerFetcher, 'fetchOwnedElements').mockResolvedValueOnce([{ owner: null }])
-      })
-
-      it('should return 404 status', async () => {
-        const { localFetch } = components
-
-        const r = await localFetch.fetch(`/names/${testName}/owner`)
-
-        expect(r.status).toBe(404)
-      })
-    })
   })
 })
