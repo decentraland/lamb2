@@ -1,6 +1,6 @@
 import { fetchAllPermissions, OperatorFromQuery } from '../../../../src/logic/fetch-elements/fetch-permissions'
 import { THE_GRAPH_PAGE_SIZE } from '../../../../src/logic/fetch-elements/fetch-elements'
-import { generateOperators } from '../../../data/operators'
+import { generatePermissions } from '../../../data/operators'
 
 describe('fetch-user-permissions', () => {
   const mockTheGraph = {
@@ -43,7 +43,7 @@ describe('fetch-user-permissions', () => {
 
     describe('and there is a single permission', () => {
       beforeEach(() => {
-        permissions = generateOperators(1)
+        permissions = generatePermissions(1)
         mockTheGraph.landSubgraph.query.mockResolvedValueOnce({ parcels: permissions })
       })
 
@@ -76,11 +76,11 @@ describe('fetch-user-permissions', () => {
 
     describe('and there are multiple permissions', () => {
       beforeEach(() => {
-        permissions = generateOperators(2)
+        permissions = generatePermissions(2)
         mockTheGraph.landSubgraph.query.mockResolvedValueOnce({ parcels: permissions })
       })
 
-      it('should return all operators available since they fit in a single page', async () => {
+      it('should return all permissions available since they fit in a single page', async () => {
         const result = await fetchAllPermissions({ theGraph: mockTheGraph } as any, '0x123')
 
         expect(result).toEqual([
@@ -109,8 +109,8 @@ describe('fetch-user-permissions', () => {
           beforeEach(() => {
             jest.resetAllMocks()
 
-            firstPage = generateOperators(THE_GRAPH_PAGE_SIZE) // Full page to trigger pagination
-            secondPage = generateOperators(1)
+            firstPage = generatePermissions(THE_GRAPH_PAGE_SIZE) // Full page to trigger pagination
+            secondPage = generatePermissions(1)
 
             mockTheGraph.landSubgraph.query
               .mockResolvedValueOnce({ parcels: firstPage })
