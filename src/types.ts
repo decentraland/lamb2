@@ -64,6 +64,7 @@ export type BaseComponents = {
   entitiesFetcher: EntitiesFetcher
   namesFetcher: ElementsFetcher<Name>
   landsFetcher: ElementsFetcher<LAND>
+  landsPermissionsFetcher: ElementsFetcher<LandPermission>
   parcelRightsFetcher: ParcelRightsFetcher
   resourcesStatusCheck: IResourcesStatusComponent
   status: IStatusComponent
@@ -181,6 +182,14 @@ export type LAND = {
   description?: string
   price?: number
   image?: string
+}
+
+export type LandPermission = {
+  id: string
+  x: string
+  y: string
+  owner: string
+  updateOperator: string
 }
 
 export type PaginatedResponse<T> = {
