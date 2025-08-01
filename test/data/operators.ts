@@ -1,9 +1,9 @@
 import { OperatorFromQuery } from '../../src/logic/fetch-elements/fetch-permissions'
 
-export function generateOperators(quantity: number): OperatorFromQuery[] {
-  const generatedOperators: OperatorFromQuery[] = []
+export function generatePermissions(quantity: number): OperatorFromQuery[] {
+  const generatedPermissions: OperatorFromQuery[] = []
   for (let i = 0; i < quantity; i++) {
-    generatedOperators.push({
+    generatedPermissions.push({
       id: 'id-' + i,
       x: i.toString(),
       y: (i * 2).toString(),
@@ -14,5 +14,5 @@ export function generateOperators(quantity: number): OperatorFromQuery[] {
     })
   }
 
-  return generatedOperators
+  return generatedPermissions
 }
