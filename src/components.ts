@@ -97,7 +97,7 @@ export async function initComponents(
   )
   const namesFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllNames({ theGraph }, address))
   const landsFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllLANDs({ theGraph }, address))
-  const permissionsFetcher = createElementsFetcherComponent({ logs }, async (address) =>
+  const landsPermissionsFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllPermissions({ theGraph }, address)
   )
 
@@ -197,7 +197,7 @@ export async function initComponents(
     emotesFetcher,
     namesFetcher,
     landsFetcher,
-    permissionsFetcher,
+    landsPermissionsFetcher,
     parcelRightsFetcher,
     thirdPartyProvidersGraphFetcher,
     thirdPartyProvidersStorage,

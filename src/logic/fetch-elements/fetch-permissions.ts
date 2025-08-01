@@ -1,4 +1,4 @@
-import { AppComponents, Operator } from '../../types'
+import { AppComponents, LandPermission } from '../../types'
 import { THE_GRAPH_PAGE_SIZE } from './fetch-elements'
 
 const QUERY_OPERATORS: string = `
@@ -37,8 +37,8 @@ export type OperatorQueryResult = {
 export async function fetchAllPermissions(
   components: Pick<AppComponents, 'theGraph'>,
   updateOperator: string
-): Promise<Operator[]> {
-  const elements: Operator[] = []
+): Promise<LandPermission[]> {
+  const elements: LandPermission[] = []
   let skip = 0
   let hasMore = true
 

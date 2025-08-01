@@ -64,7 +64,7 @@ export type BaseComponents = {
   entitiesFetcher: EntitiesFetcher
   namesFetcher: ElementsFetcher<Name>
   landsFetcher: ElementsFetcher<LAND>
-  permissionsFetcher: ElementsFetcher<Operator>
+  landsPermissionsFetcher: ElementsFetcher<LandPermission>
   parcelRightsFetcher: ParcelRightsFetcher
   resourcesStatusCheck: IResourcesStatusComponent
   status: IStatusComponent
@@ -184,7 +184,7 @@ export type LAND = {
   image?: string
 }
 
-export type Operator = {
+export type LandPermission = {
   id: string
   x: string
   y: string
