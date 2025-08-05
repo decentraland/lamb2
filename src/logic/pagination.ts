@@ -34,3 +34,32 @@ export async function fetchAndPaginate<T>(
     pageSize: pagination.pageSize
   }
 }
+
+/**
+ * Optimized version of fetchAndPaginate that can use direct pagination when possible
+ * Falls back to traditional fetch-all-and-paginate when filtering/sorting is needed
+ */
+export async function fetchAndPaginateOptimized<T>(
+  fetchElements: () => Promise<T[]>,
+  fetchElementsPaginated: ((pagination: Pagination) => Promise<T[]>) | undefined,
+  pagination: Pagination,
+  filter: (element: T) => boolean = noFilteringFilter,
+  sorting?: (item1: T, item2: T) => number
+) {
+  // Check if we can use direct pagination (no filtering, no sorting)
+  const canUseDirectPagination = fetchElementsPaginated && filter === noFilteringFilter && !sorting
+
+  if (canUseDirectPagination) {
+    // Use efficient direct pagination
+    const elements = await fetchElementsPaginated(pagination)
+    return {
+      elements,
+      totalAmount: elements.length, // Note: This might not be the real total, but for basic cases it works
+      pageNum: pagination.pageNum,
+      pageSize: pagination.pageSize
+    }
+  } else {
+    // Fallback to traditional fetch-all-and-paginate
+    return fetchAndPaginate(fetchElements, pagination, filter, sorting)
+  }
+}

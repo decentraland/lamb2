@@ -1,5 +1,5 @@
-import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
-import { HandlerContextWithPath, Name } from '../../types'
+import { paginationObject } from '../../logic/pagination'
+import { HandlerContextWithPath } from '../../types'
 import { NamesPaginated } from '@dcl/catalyst-api-specs/lib/client'
 
 export async function namesHandler(
@@ -9,11 +9,24 @@ export async function namesHandler(
   const { namesFetcher } = context.components
   const pagination = paginationObject(context.url, Number.MAX_VALUE)
 
-  const page = await fetchAndPaginate<Name>(() => namesFetcher.fetchOwnedElements(address), pagination)
+  const { elements, totalAmount } = await namesFetcher.fetchOwnedElements(address, pagination)
+  const page = {
+    elements,
+    totalAmount,
+    pageNum: pagination.pageNum,
+    pageSize: pagination.pageSize
+  }
+  // Convert price from number to string for API compatibility
+  const elementsWithStringPrice = page.elements.map((name) => ({
+    ...name,
+    price: name.price !== undefined ? String(name.price) : undefined
+  }))
+
   return {
     status: 200,
     body: {
-      ...page
+      ...page,
+      elements: elementsWithStringPrice
     }
   }
 }

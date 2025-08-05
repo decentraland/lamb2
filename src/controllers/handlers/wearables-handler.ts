@@ -1,9 +1,8 @@
 import { Entity, WearableDefinition } from '@dcl/schemas'
-import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
-import { createSorting } from '../../logic/sorting'
+import { paginationObject } from '../../logic/pagination'
 import { HandlerContextWithPath, InvalidRequestError, OnChainWearable, OnChainWearableResponse } from '../../types'
-import { createFilters } from './items-commons'
 import { GetWearables200 } from '@dcl/catalyst-api-specs/lib/client'
+import { ElementsFilters } from '../../adapters/elements-fetcher'
 
 function mapItemToItemResponse(
   item: OnChainWearable,
@@ -13,13 +12,39 @@ function mapItemToItemResponse(
   return {
     urn: item.urn,
     amount: item.individualData.length,
-    individualData: item.individualData,
+    individualData: item.individualData.map((data) => ({
+      ...data,
+      transferredAt: data.transferredAt.toString(), // Convert transferredAt to string for API compatibility
+      price: data.price.toString() // Convert price to string for API compatibility
+    })),
     name: item.name,
     category: item.category,
     rarity: item.rarity,
     definition,
     entity
   }
+}
+
+function extractFiltersFromURL(url: URL): ElementsFilters {
+  const filters: ElementsFilters = {}
+
+  if (url.searchParams.has('category')) {
+    filters.category = url.searchParams.get('category')!
+  }
+  if (url.searchParams.has('rarity')) {
+    filters.rarity = url.searchParams.get('rarity')!
+  }
+  if (url.searchParams.has('name')) {
+    filters.name = url.searchParams.get('name')!
+  }
+  if (url.searchParams.has('orderBy')) {
+    filters.orderBy = url.searchParams.get('orderBy')!
+  }
+  if (url.searchParams.has('direction')) {
+    filters.direction = url.searchParams.get('direction')!
+  }
+
+  return filters
 }
 
 export async function wearablesHandler(
@@ -33,19 +58,20 @@ export async function wearablesHandler(
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
   const includeEntities = context.url.searchParams.has('includeEntities')
   const pagination = paginationObject(context.url, Number.MAX_VALUE)
-  const filter = createFilters(context.url)
-  const sorting = createSorting(context.url)
+  const filters = extractFiltersFromURL(context.url)
 
   if (includeDefinitions && includeEntities) {
     throw new InvalidRequestError('Cannot use includeEntities and includeDefinitions together')
   }
 
-  const page = await fetchAndPaginate<OnChainWearable>(
-    () => wearablesFetcher.fetchOwnedElements(address),
-    pagination,
-    filter,
-    sorting
-  )
+  // Use direct pagination from marketplace API with filters
+  const { elements, totalAmount } = await wearablesFetcher.fetchOwnedElements(address, pagination, filters)
+  const page = {
+    elements,
+    totalAmount,
+    pageNum: pagination.pageNum,
+    pageSize: pagination.pageSize
+  }
 
   const results: OnChainWearableResponse[] = []
   const wearables = page.elements

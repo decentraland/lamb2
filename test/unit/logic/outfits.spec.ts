@@ -50,22 +50,28 @@ test('when all wearables and names are owned, outfits entity is not modified', f
       .spyOn(components.content, 'fetchEntitiesByPointers')
       .mockResolvedValue([outfitsEntity])
 
-    components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([{ name: 'perro' }])
+    components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+      elements: [{ name: 'perro' }],
+      totalAmount: 1
+    })
 
-    components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([
-      {
-        urn: 'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
-        individualData: [{ tokenId: '123' }]
-      },
-      {
-        urn: 'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2',
-        individualData: [{ tokenId: '123' }]
-      },
-      {
-        urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet',
-        individualData: [{ tokenId: '123' }]
-      }
-    ])
+    components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+      elements: [
+        {
+          urn: 'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
+          individualData: [{ tokenId: '123' }]
+        },
+        {
+          urn: 'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2',
+          individualData: [{ tokenId: '123' }]
+        },
+        {
+          urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet',
+          individualData: [{ tokenId: '123' }]
+        }
+      ],
+      totalAmount: 3
+    })
 
     const outfits = await getOutfits(components, 'address')
 
@@ -116,10 +122,14 @@ test('when some wearables are not owned, the outfits with those wearables are re
       content: []
     }
     jest.spyOn(components.content, 'fetchEntitiesByPointers').mockResolvedValue([outfitsEntity])
-    components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([])
-    components.wearablesFetcher.fetchOwnedElements = jest
-      .fn()
-      .mockResolvedValue([{ urn: ownedWearable, individualData: [{ tokenId: '123' }] }])
+    components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+      elements: [],
+      totalAmount: 0
+    })
+    components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+      elements: [{ urn: ownedWearable, individualData: [{ tokenId: '123' }] }],
+      totalAmount: 1
+    })
 
     const outfits = await getOutfits(components, 'address')
     expect(outfits.metadata.outfits).toEqual([outfitWithOwnedWearables])
@@ -158,14 +168,20 @@ test('when some names are not owned, extra outfits and not owned names are remov
     const address = 'address'
 
     jest.spyOn(components.content, 'fetchEntitiesByPointers').mockResolvedValue([outfitsEntity])
-    components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(ownedNames.map((name) => ({ name })))
+    components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+      elements: ownedNames.map((name) => ({ name })),
+      totalAmount: ownedNames.length
+    })
 
-    components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([
-      {
-        urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet',
-        individualData: [{ tokenId: '123' }]
-      }
-    ])
+    components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+      elements: [
+        {
+          urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet',
+          individualData: [{ tokenId: '123' }]
+        }
+      ],
+      totalAmount: 1
+    })
 
     const outfits = await getOutfits(components, address)
     expect(outfits.metadata.outfits).toEqual([outfitSlot1, outfitExtraSlot5, outfitExtraSlot6])

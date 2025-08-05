@@ -15,7 +15,7 @@ import {
   createEmoteDefinitionsFetcherComponent,
   createWearableDefinitionsFetcherComponent
 } from './adapters/definitions-fetcher'
-import { createElementsFetcherComponent } from './adapters/elements-fetcher'
+import { createElementsFetcherComponent, createLegacyElementsFetcherComponent } from './adapters/elements-fetcher'
 import { createEntitiesFetcherComponent } from './adapters/entities-fetcher'
 import { createNameDenylistFetcher } from './adapters/name-denylist-fetcher'
 import { createPOIsFetcher } from './adapters/pois-fetcher'
@@ -36,6 +36,7 @@ import { createThirdPartyProvidersStorage } from './logic/third-party-providers-
 import { createProfilesComponent } from './adapters/profiles'
 import { IFetchComponent } from '@well-known-components/interfaces'
 import { createAlchemyNftFetcher } from './adapters/alchemy-nft-fetcher'
+import { createMarketplaceApiFetcher } from './adapters/marketplace-api-fetcher'
 import { createThirdPartyContractRegistry } from './ports/ownership-checker/third-party-contract-registry'
 import { createThirdPartyItemChecker } from './ports/ownership-checker/third-party-item-checker'
 import { createParcelRightsComponent } from './adapters/parcel-rights-fetcher'
@@ -78,23 +79,34 @@ export async function initComponents(
 
   const entitiesFetcher = await createEntitiesFetcherComponent({ config, logs, content })
 
+  // Create marketplace API fetcher for primary data source
+  const marketplaceApiFetcher = await createMarketplaceApiFetcher({ config, fetch, logs })
+
   const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent({
     config,
     logs,
     content,
     contentServerUrl
   })
-  const baseWearablesFetcher = createElementsFetcherComponent<BaseWearable>({ logs }, async (_address) =>
-    fetchAllBaseWearables({ entitiesFetcher })
+  const baseWearablesFetcher = createElementsFetcherComponent<BaseWearable>({ logs }, async (_address) => {
+    const elements = await fetchAllBaseWearables({ entitiesFetcher })
+    return { elements, totalAmount: elements.length }
+  })
+  const wearablesFetcher = createElementsFetcherComponent({ logs }, async (address, pagination) =>
+    fetchAllWearables({ theGraph, logs, marketplaceApiFetcher }, address, pagination)
   )
-  const wearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllWearables({ theGraph }, address)
+
+  const emotesFetcher = createElementsFetcherComponent({ logs }, async (address, pagination) =>
+    fetchAllEmotes({ theGraph, logs, marketplaceApiFetcher }, address, pagination)
   )
-  const emotesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllEmotes({ theGraph }, address)
+
+  const namesFetcher = createElementsFetcherComponent({ logs }, async (address, pagination) =>
+    fetchAllNames({ theGraph, logs, marketplaceApiFetcher }, address, pagination)
   )
-  const namesFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllNames({ theGraph }, address))
-  const landsFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllLANDs({ theGraph }, address))
+
+  const landsFetcher = createLegacyElementsFetcherComponent({ logs }, async (address) =>
+    fetchAllLANDs({ theGraph }, address)
+  )
 
   const resourcesStatusCheck = createResourcesStatusComponent({ logs })
   const status = await createStatusComponent({ logs, fetch })
@@ -140,12 +152,13 @@ export async function initComponents(
     logs,
     thirdPartyProvidersGraphFetcher
   })
-  const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllThirdPartyWearables(
+  const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) => {
+    const elements = await fetchAllThirdPartyWearables(
       { alchemyNftFetcher, contentServerUrl, thirdPartyProvidersStorage, fetch, logs, entitiesFetcher, metrics },
       address
     )
-  )
+    return { elements, totalAmount: elements.length }
+  })
 
   const alchemyNftFetcher = await createAlchemyNftFetcher({ config, logs, fetch })
 

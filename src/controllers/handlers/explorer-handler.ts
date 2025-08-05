@@ -50,7 +50,7 @@ async function fetchCombinedElements(
   address: string
 ): Promise<MixedWearable[]> {
   async function fetchBaseWearables() {
-    const elements = await components.baseWearablesFetcher.fetchOwnedElements(address)
+    const { elements } = await components.baseWearablesFetcher.fetchOwnedElements(address)
     const urns = elements.map((e) => e.urn)
     const entities = await components.entitiesFetcher.fetchEntities(urns)
 
@@ -71,7 +71,7 @@ async function fetchCombinedElements(
   }
 
   async function fetchOnChainWearables(): Promise<MixedOnChainWearable[]> {
-    const elements = await components.wearablesFetcher.fetchOwnedElements(address)
+    const { elements } = await components.wearablesFetcher.fetchOwnedElements(address)
     const entities = await components.entitiesFetcher.fetchEntities(elements.map((e) => e.urn))
     const result: MixedOnChainWearable[] = []
     for (let i = 0; i < elements.length; ++i) {
@@ -80,18 +80,46 @@ async function fetchCombinedElements(
       if (!entity) {
         continue
       }
-      result.push({
-        type: 'on-chain',
-        ...wearable,
-        entity
-      })
+      // Handle both OnChainWearable and WearableFromQuery formats
+      const isWearableFromQuery = 'item' in wearable && 'metadata' in wearable
+
+      if (isWearableFromQuery) {
+        // Convert WearableFromQuery to OnChainWearable format
+        const wearableFromQuery = wearable as any
+        result.push({
+          type: 'on-chain',
+          urn: wearableFromQuery.urn,
+          amount: 1,
+          individualData: [
+            {
+              id: `${wearableFromQuery.urn}:${wearableFromQuery.tokenId}`,
+              tokenId: wearableFromQuery.tokenId,
+              transferredAt: wearableFromQuery.transferredAt,
+              price: wearableFromQuery.item.price
+            }
+          ],
+          rarity: wearableFromQuery.item.rarity,
+          category: wearableFromQuery.metadata.wearable.category,
+          name: wearableFromQuery.metadata.wearable.name,
+          minTransferredAt: wearableFromQuery.transferredAt,
+          maxTransferredAt: wearableFromQuery.transferredAt,
+          entity
+        })
+      } else {
+        // Standard OnChainWearable format
+        result.push({
+          type: 'on-chain',
+          ...wearable,
+          entity
+        })
+      }
     }
     return result
   }
 
   async function fetchThirdPartyWearables(thirdPartyCollectionId: string[]): Promise<MixedThirdPartyWearable[]> {
     if (thirdPartyCollectionId.length === 0) {
-      const elements = await components.thirdPartyWearablesFetcher.fetchOwnedElements(address)
+      const { elements } = await components.thirdPartyWearablesFetcher.fetchOwnedElements(address)
       return elements.map(
         (wearable: ThirdPartyWearable): MixedThirdPartyWearable => ({
           type: 'third-party',
