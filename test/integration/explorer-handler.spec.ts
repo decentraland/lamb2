@@ -296,6 +296,141 @@ testWithComponents(() => {
       totalAmount: 2
     })
   })
+
+  it('return compact wearables when compact parameter is true', async () => {
+    const { content, fetch, localFetch, theGraph, baseWearablesFetcher, contentServerUrl, alchemyNftFetcher } =
+      components
+    const baseWearables = generateBaseWearables(2)
+    const onChainWearables = generateWearables(2)
+    const thirdPartyWearables = generateThirdPartyWearables(2)
+    const entities = generateWearableEntities([
+      ...baseWearables.map((wearable) => wearable.urn),
+      ...onChainWearables.map((wearable) => wearable.urn),
+      ...thirdPartyWearables.map((wearable) => wearable.urn.decentraland)
+    ])
+
+    alchemyNftFetcher.getNFTsForOwner = jest
+      .fn()
+      .mockResolvedValue(thirdPartyWearables.map((wearable) => wearable.urn.decentraland))
+    baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(baseWearables)
+    content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
+      pointers.map((pointer) => entities.find((def) => def.id === pointer))
+    )
+    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: onChainWearables.slice(0, 5) })
+    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: onChainWearables.slice(5, 10) })
+    fetch.fetch = jest.fn().mockImplementation((url) => {
+      if (url.includes('test-collection')) {
+        return {
+          ok: true,
+          json: () => ({
+            entities: generateWearableEntities(thirdPartyWearables.map((wearable) => wearable.urn.decentraland))
+          })
+        }
+      } else {
+        return { ok: true, json: () => ({ entities: [] }) }
+      }
+    })
+
+    const wallet = generateRandomAddress()
+    const r = await localFetch.fetch(`/explorer/${wallet}/wearables?compact=true`)
+
+    expect(r.status).toBe(200)
+    const response = await r.json()
+
+    expect(response).toMatchObject({
+      pageNum: 1,
+      pageSize: 100,
+      totalAmount: baseWearables.length + onChainWearables.length + thirdPartyWearables.length
+    })
+
+    // Verify all elements have compact structure (no type field, simplified entity)
+    expect(response.elements).toHaveLength(6)
+    response.elements.forEach((element: any) => {
+      // Compact response should not have a type field
+      expect(element.type).toBeUndefined()
+      expect(element.entity).toBeDefined()
+      expect(element.entity.id).toBeDefined()
+      expect(element.entity.metadata).toBeDefined()
+      expect(element.entity.metadata.id).toBeDefined()
+      expect(element.entity.metadata.data).toBeDefined()
+      expect(element.entity.metadata.data.category).toBeDefined()
+      expect(element.entity.metadata.data.representations).toBeDefined()
+      expect(element.entity.metadata.thumbnail).toBeDefined()
+
+      // Rarity is only available for on-chain wearables
+      if (element.entity.id.startsWith('urn-')) {
+        // On-chain wearables should have rarity
+        expect(element.rarity).toBeDefined()
+        expect(element.rarity).toBe('unique')
+      } else {
+        // Base wearables and third-party wearables don't have rarity
+        expect(element.rarity).toBeUndefined()
+      }
+
+      // Verify representations are simplified to only include bodyShapes
+      element.entity.metadata.data.representations.forEach((representation: any) => {
+        expect(representation.bodyShapes).toBeDefined()
+        expect(representation.bodyShapes).toBeInstanceOf(Array)
+        // Should not have other properties like contents, etc.
+        expect(Object.keys(representation)).toEqual(['bodyShapes'])
+      })
+    })
+
+    // Test with compact=false to ensure it returns normal format
+    const r2 = await localFetch.fetch(`/explorer/${wallet}/wearables?compact=false`)
+    expect(r2.status).toBe(200)
+    const response2 = await r2.json()
+
+    response2.elements.forEach((element: any) => {
+      expect(element.type).toBeDefined()
+      expect(['base-wearable', 'on-chain', 'third-party']).toContain(element.type)
+    })
+  })
+
+  it('handle compact parameter with different values correctly', async () => {
+    const { content, fetch, localFetch, theGraph, baseWearablesFetcher, contentServerUrl, alchemyNftFetcher } =
+      components
+    const baseWearables = generateBaseWearables(1)
+    const entities = generateWearableEntities(baseWearables.map((wearable) => wearable.urn))
+
+    baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(baseWearables)
+    content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
+      pointers.map((pointer) => entities.find((def) => def.id === pointer))
+    )
+    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+    alchemyNftFetcher.getNFTsForOwner = jest.fn().mockResolvedValue([])
+    fetch.fetch = jest.fn().mockImplementation(() => {
+      return { ok: true, json: () => ({ assets: [] }) }
+    })
+
+    const wallet = generateRandomAddress()
+
+    // Test with compact=true (case insensitive)
+    const r1 = await localFetch.fetch(`/explorer/${wallet}/wearables?compact=TRUE`)
+    expect(r1.status).toBe(200)
+    const response1 = await r1.json()
+    expect(response1.elements[0].type).toBeUndefined()
+    expect(response1.elements[0].entity).toBeDefined()
+
+    // Test with compact=false (case insensitive)
+    const r2 = await localFetch.fetch(`/explorer/${wallet}/wearables?compact=FALSE`)
+    expect(r2.status).toBe(200)
+    const response2 = await r2.json()
+    expect(response2.elements[0].type).toBe('base-wearable')
+
+    // Test without compact parameter (should default to false)
+    const r3 = await localFetch.fetch(`/explorer/${wallet}/wearables`)
+    expect(r3.status).toBe(200)
+    const response3 = await r3.json()
+    expect(response3.elements[0].type).toBe('base-wearable')
+
+    // Test with invalid compact value (should default to false)
+    const r4 = await localFetch.fetch(`/explorer/${wallet}/wearables?compact=invalid`)
+    expect(r4.status).toBe(200)
+    const response4 = await r4.json()
+    expect(response4.elements[0].type).toBe('base-wearable')
+  })
 })
 
 function convertToMixedBaseWearableResponse(

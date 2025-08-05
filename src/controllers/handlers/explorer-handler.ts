@@ -30,10 +30,15 @@ type MixedThirdPartyWearable = ThirdPartyWearable & {
   type: 'third-party'
 }
 
+type CompactWearable = Pick<
+  (MixedBaseWearable | MixedOnChainWearable | MixedThirdPartyWearable)['entity'],
+  'id' | 'metadata'
+>
+
 export type MixedWearable = (MixedBaseWearable | MixedOnChainWearable | MixedThirdPartyWearable) &
   Partial<Pick<OnChainWearable, 'rarity'>>
 
-export type MixedWearableResponse = Omit<MixedWearable, 'minTransferredAt' | 'maxTransferredAt'>
+export type MixedWearableResponse = Omit<MixedWearable | CompactWearable, 'minTransferredAt' | 'maxTransferredAt'>
 
 async function fetchCombinedElements(
   components: Pick<
@@ -152,6 +157,9 @@ export async function explorerHandler(
   const thirdPartyCollectionIds = context.url.searchParams.has('thirdPartyCollectionId')
     ? context.url.searchParams.getAll('thirdPartyCollectionId')
     : []
+  const compact = context.url.searchParams.has('compact')
+    ? context.url.searchParams.get('compact')!.toLowerCase() === 'true'
+    : false
 
   if (collectionTypes.some((type) => !VALID_COLLECTION_TYPES.includes(type))) {
     throw new InvalidRequestError(`Invalid collection type. Valid types are: ${VALID_COLLECTION_TYPES.join(', ')}.`)
@@ -166,7 +174,36 @@ export async function explorerHandler(
 
   const results: MixedWearableResponse[] = []
   for (const wearable of page.elements) {
-    if (wearable.type === 'on-chain') {
+    if (compact) {
+      const {
+        rarity,
+        entity: {
+          id,
+          content,
+          metadata: {
+            id: collectionId,
+            data: { category, representations },
+            thumbnail
+          }
+        }
+      } = wearable
+      results.push({
+        rarity,
+        entity: {
+          id,
+          metadata: {
+            id: collectionId,
+            data: {
+              category,
+              representations: representations.map(({ bodyShapes }: { bodyShapes: string[] }) => ({
+                bodyShapes
+              }))
+            },
+            thumbnail: content?.find(({ file }: { file: string; hash: string }) => file === thumbnail)?.hash
+          }
+        }
+      })
+    } else if (wearable.type === 'on-chain') {
       const { minTransferredAt, maxTransferredAt, ...clean } = wearable
       results.push({ ...clean })
     } else {
