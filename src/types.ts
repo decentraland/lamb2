@@ -24,6 +24,7 @@ import { CatalystsFetcher } from './adapters/catalysts-fetcher'
 import { DefinitionsFetcher } from './adapters/definitions-fetcher'
 import { ElementsFetcher } from './adapters/elements-fetcher'
 import { EntitiesFetcher } from './adapters/entities-fetcher'
+import { IMarketplaceApiFetcher } from './adapters/marketplace-api-fetcher'
 import { NameDenylistFetcher } from './adapters/name-denylist-fetcher'
 import { POIsFetcher } from './adapters/pois-fetcher'
 import { IResourcesStatusComponent } from './adapters/resource-status'
@@ -52,6 +53,7 @@ export type BaseComponents = {
   content: Pick<ContentClient, 'fetchEntitiesByPointers'>
   contentServerUrl: string
   theGraph: TheGraphComponent
+  marketplaceApiFetcher: IMarketplaceApiFetcher
   ownershipCaches: OwnershipCachesComponent
   baseWearablesFetcher: ElementsFetcher<BaseWearable>
   wearablesFetcher: ElementsFetcher<OnChainWearable>
