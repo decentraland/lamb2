@@ -85,7 +85,7 @@ describe('MarketplaceApiFetcher', () => {
       const result = await fetcher.fetchUserWearables('0xabc123')
 
       expect(mockFetch.fetch).toHaveBeenCalledWith(
-        'https://marketplace-api.com/v1/users/0xabc123/wearables/grouped?limit=100&offset=0',
+        'https://marketplace-api.com/v1/users/0xabc123/wearables/grouped?limit=1000&offset=0',
         expect.objectContaining({
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
@@ -253,7 +253,7 @@ describe('MarketplaceApiFetcher', () => {
       const result = await fetcher.fetchUserEmotes('0xdef456')
 
       expect(mockFetch.fetch).toHaveBeenCalledWith(
-        'https://marketplace-api.com/v1/users/0xdef456/emotes/grouped?limit=100&offset=0',
+        'https://marketplace-api.com/v1/users/0xdef456/emotes/grouped?limit=1000&offset=0',
         expect.any(Object)
       )
 
@@ -314,7 +314,7 @@ describe('MarketplaceApiFetcher', () => {
       const result = await fetcher.fetchUserNames('0x789abc')
 
       expect(mockFetch.fetch).toHaveBeenCalledWith(
-        'https://marketplace-api.com/v1/users/0x789abc/names?limit=100&offset=0',
+        'https://marketplace-api.com/v1/users/0x789abc/names?limit=1000&offset=0',
         expect.any(Object)
       )
 
@@ -351,7 +351,7 @@ describe('MarketplaceApiFetcher', () => {
       await fetcher.fetchUserWearables('0xtest')
 
       expect(mockFetch.fetch).toHaveBeenCalledWith(
-        'https://marketplace-api.com/v1/users/0xtest/wearables/grouped?limit=100&offset=0',
+        'https://marketplace-api.com/v1/users/0xtest/wearables/grouped?limit=1000&offset=0',
         expect.any(Object)
       )
     })
@@ -369,7 +369,7 @@ describe('MarketplaceApiFetcher', () => {
       await fetcher.fetchUserWearables('0xABC123DEF')
 
       expect(mockFetch.fetch).toHaveBeenCalledWith(
-        'https://marketplace-api.com/v1/users/0xabc123def/wearables/grouped?limit=100&offset=0',
+        'https://marketplace-api.com/v1/users/0xabc123def/wearables/grouped?limit=1000&offset=0',
         expect.any(Object)
       )
     })

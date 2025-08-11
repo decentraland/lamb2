@@ -77,6 +77,7 @@ export type BaseComponents = {
   alchemyNftFetcher: AlchemyNftFetcher
   l1ThirdPartyItemChecker: ThirdPartyItemChecker
   l2ThirdPartyItemChecker: ThirdPartyItemChecker
+  marketplaceApiFetcher?: MarketplaceApiFetcher
 }
 
 // components used in runtime

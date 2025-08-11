@@ -1,5 +1,6 @@
-import { AppComponents, LAND } from '../../types'
+import { LAND } from '../../types'
 import { fetchAllNFTs, THE_GRAPH_PAGE_SIZE } from './fetch-elements'
+import { TheGraphComponent } from '../../ports/the-graph'
 
 const QUERY_LANDS: string = `
   query fetchLANDsByOwner($owner: String, $idFrom: ID) {
@@ -57,8 +58,8 @@ export type LANDFromQuery = {
   image?: string
 }
 
-export async function fetchAllLANDs(components: Pick<AppComponents, 'theGraph'>, owner: string): Promise<LAND[]> {
-  return (await fetchAllNFTs<LANDFromQuery>(components.theGraph.ensSubgraph, QUERY_LANDS, owner)).map((land) => {
+export async function fetchLands(theGraph: TheGraphComponent, owner: string): Promise<LAND[]> {
+  return (await fetchAllNFTs<LANDFromQuery>(theGraph.ensSubgraph, QUERY_LANDS, owner)).map((land) => {
     const { name, contractAddress, tokenId, category, parcel, estate, image, activeOrder } = land
     const isParcel = category === 'parcel'
     const x = isParcel ? parcel?.x : undefined

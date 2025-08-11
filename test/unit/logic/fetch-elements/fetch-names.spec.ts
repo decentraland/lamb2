@@ -1,4 +1,4 @@
-import { fetchAllNames, NameFromQuery } from '../../../../src/logic/fetch-elements/fetch-names'
+import { fetchNames, NameFromQuery } from '../../../../src/logic/fetch-elements/fetch-names'
 import { createTheGraphComponentMock } from '../../../mocks/the-graph-mock'
 import { Name } from '../../../../src/types'
 
@@ -15,7 +15,7 @@ const mockLogs = {
 it('the ensSubgraph is queried', async () => {
   const theGraph = createTheGraphComponentMock()
   jest.spyOn(theGraph.ensSubgraph, 'query').mockResolvedValue({ nfts: [] })
-  await fetchAllNames({ theGraph, logs: mockLogs }, 'anOwner')
+  await fetchNames({ theGraph, logs: mockLogs }, 'anOwner')
   expect(theGraph.ensSubgraph.query).toBeCalled()
 })
 
@@ -41,7 +41,7 @@ it('names are mapped correctly', async () => {
   jest.spyOn(theGraph.ensSubgraph, 'query').mockResolvedValue({
     nfts: nftsNames
   })
-  const names = await fetchAllNames({ theGraph, logs: mockLogs }, 'anOwner')
+  const names = await fetchNames({ theGraph, logs: mockLogs }, 'anOwner')
   expect(names).toEqual({
     elements: [
       {

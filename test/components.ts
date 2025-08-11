@@ -14,13 +14,13 @@ import {
 import { createElementsFetcherComponent } from '../src/adapters/elements-fetcher'
 import { createEntitiesFetcherComponent } from '../src/adapters/entities-fetcher'
 import { initComponents as originalInitComponents } from '../src/components'
-import { fetchAllEmotes, fetchAllWearables } from '../src/logic/fetch-elements/fetch-items'
-import { fetchAllNames } from '../src/logic/fetch-elements/fetch-names'
+import { fetchEmotes, fetchWearables } from '../src/logic/fetch-elements/fetch-items'
+import { fetchNames } from '../src/logic/fetch-elements/fetch-names'
 import { fetchAllThirdPartyWearables } from '../src/logic/fetch-elements/fetch-third-party-wearables'
 import { metricDeclarations } from '../src/metrics'
 import { TheGraphComponent } from '../src/ports/the-graph'
 import { main } from '../src/service'
-import { TestComponents } from '../src/types'
+import { TestComponents, ThirdPartyWearable } from '../src/types'
 import { createContentClientMock } from './mocks/content-mock'
 import { createTheGraphComponentMock } from './mocks/the-graph-mock'
 import { createAlchemyNftFetcherMock } from './mocks/alchemy-mock'
@@ -117,33 +117,18 @@ async function initComponents(
     : preConfiguredMarketplaceApiFetcher || createMarketplaceApiFetcherMock()
 
   const content = createContentClientMock()
-  const wearablesFetcher = createElementsFetcherComponent({ logs }, async (address, pagination, filters) => {
-    const result = await fetchAllWearables(
-      { theGraph: theGraphMock, logs, marketplaceApiFetcher },
-      address,
-      pagination,
-      filters
-    )
-    return result
-  })
-  const emotesFetcher = createElementsFetcherComponent({ logs }, async (address, pagination, filters) => {
-    const result = await fetchAllEmotes(
-      { theGraph: theGraphMock, logs, marketplaceApiFetcher },
-      address,
-      pagination,
-      filters
-    )
-    return result
-  })
-  const namesFetcher = createElementsFetcherComponent({ logs }, async (address, pagination, filters) => {
-    const result = await fetchAllNames(
-      { theGraph: theGraphMock, logs, marketplaceApiFetcher },
-      address,
-      pagination,
-      filters
-    )
-    return result
-  })
+  const wearablesFetcher = createElementsFetcherComponent(
+    { logs, theGraph: theGraphMock, marketplaceApiFetcher },
+    fetchWearables
+  )
+  const emotesFetcher = createElementsFetcherComponent(
+    { logs, theGraph: theGraphMock, marketplaceApiFetcher },
+    fetchEmotes
+  )
+  const namesFetcher = createElementsFetcherComponent(
+    { logs, theGraph: theGraphMock, marketplaceApiFetcher },
+    fetchNames
+  )
 
   const entitiesFetcher = await createEntitiesFetcherComponent({ config, logs, content })
 
@@ -164,24 +149,27 @@ async function initComponents(
 
   const alchemyNftFetcher = createAlchemyNftFetcherMock()
   const metrics = createTestMetricsComponent(metricDeclarations)
-  const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) => {
-    const thirdPartyWearables = await fetchAllThirdPartyWearables(
-      {
-        metrics,
-        contentServerUrl,
-        alchemyNftFetcher,
-        thirdPartyProvidersStorage: components.thirdPartyProvidersStorage,
-        fetch,
-        logs,
-        entitiesFetcher
-      },
-      address
-    )
-    return {
-      elements: thirdPartyWearables,
-      totalAmount: thirdPartyWearables.length
+  const thirdPartyWearablesFetcher = createElementsFetcherComponent<ThirdPartyWearable>(
+    { logs, theGraph: theGraphMock, marketplaceApiFetcher },
+    async (_deps, address) => {
+      const thirdPartyWearables = await fetchAllThirdPartyWearables(
+        {
+          metrics,
+          contentServerUrl,
+          alchemyNftFetcher,
+          thirdPartyProvidersStorage: components.thirdPartyProvidersStorage,
+          fetch,
+          logs,
+          entitiesFetcher
+        },
+        address
+      )
+      return {
+        elements: thirdPartyWearables,
+        totalAmount: thirdPartyWearables.length
+      }
     }
-  })
+  )
 
   const result: any = {
     ...components,

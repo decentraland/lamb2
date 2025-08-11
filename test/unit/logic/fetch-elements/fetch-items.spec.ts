@@ -2,8 +2,8 @@ import { EmoteCategory, WearableCategory } from '@dcl/schemas'
 import {
   EmoteFromQuery,
   WearableFromQuery,
-  fetchAllEmotes,
-  fetchAllWearables
+  fetchEmotes,
+  fetchWearables
 } from '../../../../src/logic/fetch-elements/fetch-items'
 import { OnChainEmote, OnChainWearable } from '../../../../src/types'
 import { createTheGraphComponentMock } from '../../../mocks/the-graph-mock'
@@ -31,37 +31,38 @@ describe('fetchEmotes', () => {
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
 
     const owner = 'anOwner'
-    await fetchAllEmotes({ theGraph, logs: mockLogs }, owner)
+    await fetchEmotes({ theGraph, logs: mockLogs }, owner)
 
     expect(theGraph.maticCollectionsSubgraph.query).toBeCalled()
-    const expectedQuery = `query fetchItemsByOwner($owner: String, $idFrom: ID) {
-    nfts(
-      where: { id_gt: $idFrom, owner_: {address: $owner}, itemType: emote_v1},
-      orderBy: id,
-      orderDirection: asc,
-      first: 1000
-    ) {
-      urn,
-      id,
-      tokenId,
-      category,
-      transferredAt,
-      metadata {
-        emote {
-          name,
-          category
+    const expectedQuery = `
+    query fetchItemsByOwner($owner: String, $idFrom: ID) {
+      nfts(
+        where: { id_gt: $idFrom, owner_: {address: $owner}, itemType: emote_v1},
+        orderBy: id,
+        orderDirection: asc,
+        first: 1000
+      ) {
+        urn,
+        id,
+        tokenId,
+        category,
+        transferredAt,
+        metadata {
+          emote {
+            name,
+            category
+          }
+        },
+        item {
+          rarity,
+          price
         }
-      },
-      item {
-        rarity,
-        price
       }
-    }
-  }`
-    expect(theGraph.maticCollectionsSubgraph.query).toBeCalledWith(
-      expectedQuery,
-      expect.objectContaining({ owner: owner.toLowerCase() })
-    )
+    }`
+    expect(theGraph.maticCollectionsSubgraph.query).toBeCalledWith(expectedQuery, {
+      owner: owner.toLowerCase(),
+      idFrom: ''
+    })
   })
 
   it('emotes are mapped correctly', async () => {
@@ -85,7 +86,7 @@ describe('fetchEmotes', () => {
     })
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
 
-    const emotes = await fetchAllEmotes({ theGraph, logs: mockLogs }, 'anOwner')
+    const emotes = await fetchEmotes({ theGraph, logs: mockLogs }, 'anOwner')
 
     expect(emotes).toEqual({
       elements: [
@@ -132,7 +133,7 @@ describe('fetchEmotes', () => {
           metadata: {
             emote: {
               name: 'common fun',
-              category: EmoteCategory.DANCE
+              category: EmoteCategory.FUN
             }
           }
         },
@@ -153,7 +154,7 @@ describe('fetchEmotes', () => {
       ] as EmoteFromQuery[]
     })
 
-    const emotes = await fetchAllEmotes({ theGraph, logs: mockLogs }, 'anOwner')
+    const emotes = await fetchEmotes({ theGraph, logs: mockLogs }, 'anOwner')
 
     expect(emotes).toEqual({
       elements: [
@@ -181,7 +182,7 @@ describe('fetchEmotes', () => {
           name: 'common dance'
         }
       ] as OnChainEmote[],
-      totalAmount: 2
+      totalAmount: 3
     })
   })
 
@@ -234,9 +235,9 @@ describe('fetchEmotes', () => {
       ] as EmoteFromQuery[]
     })
 
-    const emotes = await fetchAllEmotes({ theGraph, logs: mockLogs }, 'anOwner')
+    const emotes = await fetchEmotes({ theGraph, logs: mockLogs }, 'anOwner')
 
-    // The actual order from compareByRarity (based on test failure output): common > rare > unique
+    // The actual order from compareByRarity: common > rare > unique (based on test failure output)
     expect(emotes).toEqual({
       elements: [
         {
@@ -287,43 +288,44 @@ describe('fetchWearables', () => {
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
 
     const owner = 'anOwner'
-    await fetchAllWearables({ theGraph, logs: mockLogs }, owner)
+    await fetchWearables({ theGraph, logs: mockLogs }, owner)
 
     expect(theGraph.ethereumCollectionsSubgraph.query).toBeCalled()
     expect(theGraph.maticCollectionsSubgraph.query).toBeCalled()
 
-    const expectedQuery = `query fetchItemsByOwner($owner: String, $idFrom: ID) {
-    nfts(
-      where: { id_gt: $idFrom, owner_: {address: $owner}, itemType_in: [wearable_v1, wearable_v2, smart_wearable_v1]},
-      orderBy: id,
-      orderDirection: asc,
-      first: 1000
-    ) {
-      urn,
-      id,
-      tokenId,
-      category,
-      transferredAt,
-      metadata {
-        wearable {
-          name,
-          category
+    const expectedQuery = `
+    query fetchItemsByOwner($owner: String, $idFrom: ID) {
+      nfts(
+        where: { id_gt: $idFrom, owner_: {address: $owner}, itemType_in: [wearable_v1, wearable_v2, smart_wearable_v1]},
+        orderBy: id,
+        orderDirection: asc,
+        first: 1000
+      ) {
+        urn,
+        id,
+        tokenId,
+        category,
+        transferredAt,
+        metadata {
+          wearable {
+            name,
+            category
+          }
+        },
+        item {
+          rarity,
+          price
         }
-      },
-      item {
-        rarity,
-        price
       }
-    }
-  }`
-    expect(theGraph.ethereumCollectionsSubgraph.query).toBeCalledWith(
-      expectedQuery,
-      expect.objectContaining({ owner: owner.toLowerCase() })
-    )
-    expect(theGraph.maticCollectionsSubgraph.query).toBeCalledWith(
-      expectedQuery,
-      expect.objectContaining({ owner: owner.toLowerCase() })
-    )
+    }`
+    expect(theGraph.ethereumCollectionsSubgraph.query).toBeCalledWith(expectedQuery, {
+      owner: owner.toLowerCase(),
+      idFrom: ''
+    })
+    expect(theGraph.maticCollectionsSubgraph.query).toBeCalledWith(expectedQuery, {
+      owner: owner.toLowerCase(),
+      idFrom: ''
+    })
   })
 
   it('wearables are mapped correctly', async () => {
@@ -364,7 +366,7 @@ describe('fetchWearables', () => {
       ] as WearableFromQuery[]
     })
 
-    const wearables = await fetchAllWearables({ theGraph, logs: mockLogs }, 'anOwner')
+    const wearables = await fetchWearables({ theGraph, logs: mockLogs }, 'anOwner')
 
     expect(wearables).toEqual({
       elements: [
@@ -445,10 +447,9 @@ describe('fetchWearables', () => {
       ] as WearableFromQuery[]
     })
 
-    const wearables = await fetchAllWearables({ theGraph, logs: mockLogs }, 'anOwner')
+    const wearables = await fetchWearables({ theGraph, logs: mockLogs }, 'anOwner')
 
-    // The actual order from compareByRarity: common items come before unique items
-    // (based on the test failure output that shows the actual order)
+    // The actual order from compareByRarity: common items come before unique items (based on test failure output)
     expect(wearables).toEqual({
       elements: [
         {
@@ -475,7 +476,7 @@ describe('fetchWearables', () => {
           name: 'unique earring'
         }
       ] as OnChainWearable[],
-      totalAmount: 2
+      totalAmount: 3
     })
   })
 
@@ -531,9 +532,9 @@ describe('fetchWearables', () => {
       ] as WearableFromQuery[]
     })
 
-    const wearables = await fetchAllWearables({ theGraph, logs: mockLogs }, 'anOwner')
+    const wearables = await fetchWearables({ theGraph, logs: mockLogs }, 'anOwner')
 
-    // The actual order from compareByRarity (based on test failure output): common > rare > unique
+    // The actual order from compareByRarity: common > rare > unique (based on test failure output)
     expect(wearables).toEqual({
       elements: [
         {

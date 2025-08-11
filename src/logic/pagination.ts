@@ -1,8 +1,13 @@
 import { InvalidRequestError, Pagination } from '../types'
+import { PAGINATION_DEFAULTS } from './pagination-constants'
 
-export function paginationObject(url: URL, maxPageSize: number = 1000): Pagination {
-  const pageSize = url.searchParams.has('pageSize') ? parseInt(url.searchParams.get('pageSize')!, 10) : 100
-  const pageNum = url.searchParams.has('pageNum') ? parseInt(url.searchParams.get('pageNum')!, 10) : 1
+export function paginationObject(url: URL, maxPageSize: number = PAGINATION_DEFAULTS.MAX_PAGE_SIZE): Pagination {
+  const pageSize = url.searchParams.has('pageSize')
+    ? parseInt(url.searchParams.get('pageSize')!, 10)
+    : PAGINATION_DEFAULTS.PAGE_SIZE
+  const pageNum = url.searchParams.has('pageNum')
+    ? parseInt(url.searchParams.get('pageNum')!, 10)
+    : PAGINATION_DEFAULTS.PAGE_NUM
 
   if (pageSize > maxPageSize) {
     throw new InvalidRequestError(`max allowed pageSize is ${maxPageSize}`)

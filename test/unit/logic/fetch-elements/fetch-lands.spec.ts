@@ -1,11 +1,11 @@
 import { createTheGraphComponentMock } from '../../../mocks/the-graph-mock'
 import { LAND } from '../../../../src/types'
-import { fetchAllLANDs, LANDFromQuery } from '../../../../src/logic/fetch-elements/fetch-lands'
+import { fetchLands, LANDFromQuery } from '../../../../src/logic/fetch-elements/fetch-lands'
 
 it('the ensSubgraph is queried', async () => {
   const theGraph = createTheGraphComponentMock()
   jest.spyOn(theGraph.ensSubgraph, 'query').mockResolvedValue({ nfts: [] })
-  await fetchAllLANDs({ theGraph }, 'anOwner')
+  await fetchLands(theGraph, 'anOwner')
   expect(theGraph.ensSubgraph.query).toBeCalled()
 })
 
@@ -45,7 +45,7 @@ it('lands are mapped correctly', async () => {
       }
     ] as LANDFromQuery[]
   })
-  const lands = await fetchAllLANDs({ theGraph }, 'anOwner')
+  const lands = await fetchLands(theGraph, 'anOwner')
   expect(lands).toEqual([
     {
       contractAddress: 'address1',

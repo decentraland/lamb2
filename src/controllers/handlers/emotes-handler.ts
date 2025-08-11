@@ -1,15 +1,9 @@
-import { EmoteDefinition, Entity } from '@dcl/schemas'
-import { paginationObject } from '../../logic/pagination'
 import { HandlerContextWithPath, InvalidRequestError, OnChainEmote, OnChainEmoteResponse } from '../../types'
 import { GetEmotes200 } from '@dcl/catalyst-api-specs/lib/client'
-import { ElementsFilters } from '../../adapters/elements-fetcher'
-import { createSorting } from '../../logic/sorting'
+import { createPaginationAndFilters, mapItemToResponse, fetchDefinitionsAndEntities } from './utils'
+import { PAGINATION_DEFAULTS } from '../../logic/pagination-constants'
 
-function mapItemToItemResponse(
-  item: OnChainEmote,
-  definition: EmoteDefinition | undefined,
-  entity: Entity | undefined
-): OnChainEmoteResponse {
+function mapEmoteToItemResponse(item: OnChainEmote): Omit<OnChainEmoteResponse, 'definition' | 'entity'> {
   return {
     urn: item.urn,
     amount: item.individualData.length,
@@ -20,32 +14,8 @@ function mapItemToItemResponse(
     })),
     name: item.name,
     category: item.category,
-    rarity: item.rarity,
-    definition,
-    entity
+    rarity: item.rarity
   }
-}
-
-function extractFiltersFromURL(url: URL): ElementsFilters {
-  const filters: ElementsFilters = {}
-
-  if (url.searchParams.has('category')) {
-    filters.category = url.searchParams.get('category')!
-  }
-  if (url.searchParams.has('rarity')) {
-    filters.rarity = url.searchParams.get('rarity')!
-  }
-  if (url.searchParams.has('name')) {
-    filters.name = url.searchParams.get('name')!
-  }
-  if (url.searchParams.has('orderBy')) {
-    filters.orderBy = url.searchParams.get('orderBy')!
-  }
-  if (url.searchParams.has('direction')) {
-    filters.direction = url.searchParams.get('direction')!
-  }
-
-  return filters
 }
 
 export async function emotesHandler(
@@ -58,55 +28,43 @@ export async function emotesHandler(
   const { address } = context.params
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
   const includeEntities = context.url.searchParams.has('includeEntities')
-  const pagination = paginationObject(context.url, Number.MAX_VALUE)
-  const filters = extractFiltersFromURL(context.url)
 
   if (includeDefinitions && includeEntities) {
     throw new InvalidRequestError('Cannot use includeEntities and includeDefinitions together')
   }
 
-  // Validate sorting parameters - this will throw InvalidRequestError if invalid
-  if (context.url.searchParams.has('orderBy')) {
-    createSorting(context.url)
-  }
+  // Extract pagination and filters (includes sorting validation)
+  const { pagination, filters } = createPaginationAndFilters(context.url, PAGINATION_DEFAULTS.MAX_PAGE_SIZE)
 
-  // Use direct pagination from marketplace API with filters, but use cache when no explicit pagination or filters
-  const hasExplicitPagination = context.url.searchParams.has('pageSize') || context.url.searchParams.has('pageNum')
-  const hasFilters = Object.keys(filters).length > 0
-  const { elements, totalAmount } =
-    hasExplicitPagination || hasFilters
-      ? await emotesFetcher.fetchOwnedElements(address, pagination, filters)
-      : await emotesFetcher.fetchOwnedElements(address, undefined, undefined)
-  const page = {
+  // Fetch elements (fetcher handles caching transparently)
+  const { elements, totalAmount } = await emotesFetcher.fetchOwnedElements(address, pagination, filters)
+
+  // Fetch definitions and entities if requested
+  const { definitions, entities } = await fetchDefinitionsAndEntities(
     elements,
-    totalAmount, // Now using the real total from marketplace API! 🎉
-    pageNum: pagination.pageNum,
-    pageSize: pagination.pageSize
-  }
+    includeDefinitions,
+    includeEntities,
+    emoteDefinitionsFetcher,
+    entitiesFetcher
+  )
 
-  const results: OnChainEmoteResponse[] = []
-  const emotes = page.elements
-  const definitions = includeDefinitions
-    ? await emoteDefinitionsFetcher.fetchItemsDefinitions(emotes.map((emote) => emote.urn))
-    : []
-
-  const entities = includeEntities ? await entitiesFetcher.fetchEntities(emotes.map((emote) => emote.urn)) : []
-
-  for (let i = 0; i < emotes.length; ++i) {
-    results.push(
-      mapItemToItemResponse(
-        emotes[i],
-        includeDefinitions ? definitions[i] : undefined,
-        includeEntities ? entities[i] : undefined
-      )
+  // Map results
+  const results: OnChainEmoteResponse[] = elements.map((emote, i) =>
+    mapItemToResponse(
+      emote,
+      includeDefinitions ? definitions[i] : undefined,
+      includeEntities ? entities[i] : undefined,
+      mapEmoteToItemResponse
     )
-  }
+  )
 
   return {
     status: 200,
     body: {
-      ...page,
-      elements: results
+      elements: results,
+      totalAmount,
+      pageNum: pagination.pageNum,
+      pageSize: pagination.pageSize
     }
   }
 }

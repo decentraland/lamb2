@@ -137,6 +137,9 @@ describe('marketplace API integration with fallback', () => {
       it('should handle sorting correctly via fallback', async () => {
         const { localFetch } = components
 
+        // Clear cache to ensure fresh API calls
+        components.namesFetcher.clearCache?.()
+
         const response = await localFetch.fetch(`/users/${testAddress}/names?orderBy=name&direction=ASC`)
         expect(response.status).toBe(200)
 
@@ -171,9 +174,24 @@ describe('marketplace API integration with fallback', () => {
       it('should handle missing MARKETPLACE_API_URL gracefully for wearables', async () => {
         const { localFetch } = components
 
+        // Use a unique address to avoid cache hits from previous tests
+        const uniqueTestAddress = '0xB75A89765aC2FC9318623aAE39561a76417c4b6c'
+
+        // Clear jest call histories but preserve mock implementations
+        jest.clearAllMocks()
+
+        // Restore marketplace API to fail state
+        components.marketplaceApiFetcher!.fetchUserWearables = jest
+          .fn()
+          .mockRejectedValue(new Error('Marketplace API not available'))
+
+        // Restore TheGraph mocks after clearing
+        components.theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+        components.theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+
         // The system should work even when marketplace API is not configured
         // and fallback to The Graph automatically
-        const response = await localFetch.fetch(`/users/${testAddress}/wearables`)
+        const response = await localFetch.fetch(`/users/${uniqueTestAddress}/wearables`)
         expect(response.status).toBe(200)
 
         const body = await response.json()
@@ -205,6 +223,15 @@ describe('marketplace API integration with fallback', () => {
 
       it('should handle missing MARKETPLACE_API_URL gracefully for names', async () => {
         const { localFetch } = components
+
+        // Clear any jest call histories to ensure clean state
+        jest.clearAllMocks()
+
+        // Clear cache to ensure fresh API calls
+        components.namesFetcher.clearCache?.()
+
+        // Re-setup TheGraph mocks after clearing
+        components.theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
 
         const response = await localFetch.fetch(`/users/${testAddress}/names`)
         expect(response.status).toBe(200)

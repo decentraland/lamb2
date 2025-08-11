@@ -338,9 +338,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     expect(fetchUserEmotesSpy).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({
-        name: '4',
-        limit: expect.any(Number),
-        offset: expect.any(Number)
+        name: '4'
       })
     )
     expect(response.elements.length).toBe(1)
@@ -383,9 +381,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     expect(fetchUserEmotesSpy).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({
-        category: 'dance',
-        limit: expect.any(Number),
-        offset: expect.any(Number)
+        category: 'dance'
       })
     )
     expect(response.elements.length).toBe(1)
@@ -428,9 +424,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     expect(fetchUserEmotesSpy).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({
-        rarity: 'rare',
-        limit: expect.any(Number),
-        offset: expect.any(Number)
+        rarity: 'rare'
       })
     )
     expect(response.elements.length).toBe(1)
@@ -534,9 +528,7 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
       expect.any(String),
       expect.objectContaining({
         orderBy: 'rarity',
-        direction: 'DESC',
-        limit: expect.any(Number),
-        offset: expect.any(Number)
+        direction: 'DESC'
       })
     )
     expect(response.elements.length).toBe(2)
@@ -611,10 +603,16 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
   it('return an error when emotes cannot be fetched from matic collection', async () => {
     const { localFetch } = components
 
-    // Mock marketplace API to fail with error (no fallback)
+    // Mock marketplace API to fail with error
     components.marketplaceApiFetcher!.fetchUserEmotes = jest
       .fn()
       .mockRejectedValue(new Error('Cannot fetch emotes from marketplace API'))
+
+    // Also mock TheGraph to fail so fallback doesn't work
+    components.theGraph.ethereumCollectionsSubgraph.query = jest
+      .fn()
+      .mockRejectedValue(new Error('TheGraph also failed'))
+    components.theGraph.maticCollectionsSubgraph.query = jest.fn().mockRejectedValue(new Error('TheGraph also failed'))
 
     const wallet = generateRandomAddress()
     const r = await localFetch.fetch(`/users/${wallet}/emotes`)

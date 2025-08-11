@@ -13,6 +13,7 @@ import {
   ThirdPartyWearable
 } from '../../types'
 import { createFilters } from './items-commons'
+import { normalizeWearableFormat } from './utils'
 
 const VALID_COLLECTION_TYPES = ['base-wearable', 'on-chain', 'third-party']
 
@@ -74,45 +75,22 @@ async function fetchCombinedElements(
     const { elements } = await components.wearablesFetcher.fetchOwnedElements(address)
     const entities = await components.entitiesFetcher.fetchEntities(elements.map((e) => e.urn))
     const result: MixedOnChainWearable[] = []
+
     for (let i = 0; i < elements.length; ++i) {
       const wearable = elements[i]
       const entity = entities[i]
       if (!entity) {
         continue
       }
-      // Handle both OnChainWearable and WearableFromQuery formats
-      const isWearableFromQuery = 'item' in wearable && 'metadata' in wearable
 
-      if (isWearableFromQuery) {
-        // Convert WearableFromQuery to OnChainWearable format
-        const wearableFromQuery = wearable as any
-        result.push({
-          type: 'on-chain',
-          urn: wearableFromQuery.urn,
-          amount: 1,
-          individualData: [
-            {
-              id: `${wearableFromQuery.urn}:${wearableFromQuery.tokenId}`,
-              tokenId: wearableFromQuery.tokenId,
-              transferredAt: wearableFromQuery.transferredAt,
-              price: wearableFromQuery.item.price
-            }
-          ],
-          rarity: wearableFromQuery.item.rarity,
-          category: wearableFromQuery.metadata.wearable.category,
-          name: wearableFromQuery.metadata.wearable.name,
-          minTransferredAt: wearableFromQuery.transferredAt,
-          maxTransferredAt: wearableFromQuery.transferredAt,
-          entity
-        })
-      } else {
-        // Standard OnChainWearable format
-        result.push({
-          type: 'on-chain',
-          ...wearable,
-          entity
-        })
-      }
+      // Normalize the wearable format to OnChainWearable
+      const normalizedWearable = normalizeWearableFormat(wearable)
+
+      result.push({
+        type: 'on-chain',
+        ...normalizedWearable,
+        entity
+      })
     }
     return result
   }

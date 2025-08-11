@@ -1,6 +1,6 @@
 import { createLogComponent } from '@well-known-components/logger'
-import { fetchAllWearables, fetchAllEmotes } from '../../../src/logic/fetch-elements/fetch-items'
-import { fetchAllNames } from '../../../src/logic/fetch-elements/fetch-names'
+import { fetchWearables, fetchEmotes } from '../../../src/logic/fetch-elements/fetch-items'
+import { fetchNames } from '../../../src/logic/fetch-elements/fetch-names'
 import { MarketplaceApiFetcher, MarketplaceApiError } from '../../../src/adapters/marketplace-api-fetcher'
 import { WearableCategory, EmoteCategory } from '@dcl/schemas'
 import { TheGraphComponent } from '../../../src/ports/the-graph'
@@ -32,7 +32,7 @@ describe('Fetch Functions with Marketplace API Fallback', () => {
     }
   })
 
-  describe('fetchAllWearables', () => {
+  describe('fetchWearables', () => {
     it('should use marketplace API when available and successful', async () => {
       const mockWearables = [
         {
@@ -53,7 +53,7 @@ describe('Fetch Functions with Marketplace API Fallback', () => {
         total: 1
       })
 
-      const result = await fetchAllWearables(
+      const result = await fetchWearables(
         { theGraph: mockTheGraph, logs: mockLogs, marketplaceApiFetcher: mockMarketplaceApiFetcher },
         '0xtest'
       )
@@ -86,7 +86,7 @@ describe('Fetch Functions with Marketplace API Fallback', () => {
       mockTheGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
       mockTheGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: mockGraphWearables })
 
-      const result = await fetchAllWearables(
+      const result = await fetchWearables(
         { theGraph: mockTheGraph, logs: mockLogs, marketplaceApiFetcher: mockMarketplaceApiFetcher },
         '0xtest'
       )
@@ -118,7 +118,7 @@ describe('Fetch Functions with Marketplace API Fallback', () => {
       mockTheGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: mockGraphWearables })
       mockTheGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
 
-      const result = await fetchAllWearables({ theGraph: mockTheGraph, logs: mockLogs }, '0xtest')
+      const result = await fetchWearables({ theGraph: mockTheGraph, logs: mockLogs }, '0xtest')
 
       expect(mockTheGraph.ethereumCollectionsSubgraph.query).toHaveBeenCalled()
       expect(mockTheGraph.maticCollectionsSubgraph.query).toHaveBeenCalled()
@@ -127,7 +127,7 @@ describe('Fetch Functions with Marketplace API Fallback', () => {
     })
   })
 
-  describe('fetchAllEmotes', () => {
+  describe('fetchEmotes', () => {
     it('should use marketplace API when available and successful', async () => {
       const mockEmotes = [
         {
@@ -148,7 +148,7 @@ describe('Fetch Functions with Marketplace API Fallback', () => {
         total: 1
       })
 
-      const result = await fetchAllEmotes(
+      const result = await fetchEmotes(
         { theGraph: mockTheGraph, logs: mockLogs, marketplaceApiFetcher: mockMarketplaceApiFetcher },
         '0xtest'
       )
@@ -180,7 +180,7 @@ describe('Fetch Functions with Marketplace API Fallback', () => {
 
       mockTheGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: mockGraphEmotes })
 
-      const result = await fetchAllEmotes(
+      const result = await fetchEmotes(
         { theGraph: mockTheGraph, logs: mockLogs, marketplaceApiFetcher: mockMarketplaceApiFetcher },
         '0xtest'
       )
@@ -192,7 +192,7 @@ describe('Fetch Functions with Marketplace API Fallback', () => {
     })
   })
 
-  describe('fetchAllNames', () => {
+  describe('fetchNames', () => {
     it('should use marketplace API when available and successful', async () => {
       const mockNames = [
         {
@@ -209,7 +209,7 @@ describe('Fetch Functions with Marketplace API Fallback', () => {
         total: 1
       })
 
-      const result = await fetchAllNames(
+      const result = await fetchNames(
         { theGraph: mockTheGraph, logs: mockLogs, marketplaceApiFetcher: mockMarketplaceApiFetcher },
         '0xtest'
       )
@@ -236,7 +236,7 @@ describe('Fetch Functions with Marketplace API Fallback', () => {
 
       mockTheGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ nfts: mockGraphNames })
 
-      const result = await fetchAllNames(
+      const result = await fetchNames(
         { theGraph: mockTheGraph, logs: mockLogs, marketplaceApiFetcher: mockMarketplaceApiFetcher },
         '0xtest'
       )
@@ -261,7 +261,7 @@ describe('Fetch Functions with Marketplace API Fallback', () => {
 
       mockTheGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ nfts: mockGraphNames })
 
-      const result = await fetchAllNames({ theGraph: mockTheGraph, logs: mockLogs }, '0xtest')
+      const result = await fetchNames({ theGraph: mockTheGraph, logs: mockLogs }, '0xtest')
 
       expect(mockTheGraph.ensSubgraph.query).toHaveBeenCalled()
       expect(result.elements).toHaveLength(1)
