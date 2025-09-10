@@ -13,6 +13,7 @@ import {
 } from '../src/adapters/definitions-fetcher'
 import { createElementsFetcherComponent } from '../src/adapters/elements-fetcher'
 import { createEntitiesFetcherComponent } from '../src/adapters/entities-fetcher'
+import { createOwnershipCachesComponent } from '../src/ports/ownership-caches'
 import { initComponents as originalInitComponents } from '../src/components'
 import { fetchAllEmotes, fetchAllWearables } from '../src/logic/fetch-elements/fetch-items'
 import { fetchAllThirdPartyWearables } from '../src/logic/fetch-elements/fetch-third-party-wearables'
@@ -128,6 +129,7 @@ async function initComponents(
 
   const alchemyNftFetcher = createAlchemyNftFetcherMock()
   const metrics = createTestMetricsComponent(metricDeclarations)
+  const ownershipCaches = await createOwnershipCachesComponent({ config })
   const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllThirdPartyWearables(
       {
@@ -137,7 +139,8 @@ async function initComponents(
         thirdPartyProvidersStorage: components.thirdPartyProvidersStorage,
         fetch,
         logs,
-        entitiesFetcher
+        entitiesFetcher,
+        ownershipCaches
       },
       address
     )
@@ -148,6 +151,7 @@ async function initComponents(
     alchemyNftFetcher,
     config,
     metrics,
+    ownershipCaches,
     localFetch: await createLocalFetchCompoment(config),
     theGraph: theGraphMock,
     content,

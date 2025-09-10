@@ -147,7 +147,16 @@ export async function initComponents(
   })
   const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllThirdPartyWearables(
-      { alchemyNftFetcher, contentServerUrl, thirdPartyProvidersStorage, fetch, logs, entitiesFetcher, metrics },
+      {
+        alchemyNftFetcher,
+        contentServerUrl,
+        thirdPartyProvidersStorage,
+        fetch,
+        logs,
+        entitiesFetcher,
+        metrics,
+        ownershipCaches
+      },
       address
     )
   )
