@@ -110,9 +110,9 @@ async function initComponents(
     fetchAllEmotes({ theGraph: theGraphMock }, address)
   )
 
-  const entitiesFetcher = await createEntitiesFetcherComponent({ config, logs, content })
-
   const contentServerUrl = 'baseUrl'
+
+  const entitiesFetcher = await createEntitiesFetcherComponent({ config, logs, content, contentServerUrl, fetch })
 
   const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent({
     config,
@@ -138,9 +138,7 @@ async function initComponents(
         alchemyNftFetcher,
         thirdPartyProvidersStorage: components.thirdPartyProvidersStorage,
         fetch,
-        logs,
-        entitiesFetcher,
-        ownershipCaches
+        entitiesFetcher
       },
       address
     )

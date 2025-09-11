@@ -11,37 +11,42 @@ describe('fetchAllThirdPartyWearables', () => {
       jest.spyOn(components.thirdPartyProvidersStorage, 'getAll').mockResolvedValue(getThirdPartyProviders())
       jest.spyOn(components.alchemyNftFetcher, 'getNFTsForOwner').mockResolvedValue(ownedNfts)
       jest.spyOn(components.fetch, 'fetch').mockImplementation(
-        jest.fn(() =>
-          Promise.resolve({
+        jest.fn((url: string) => {
+          // Handle pagination: only page 1 has entities for this single-page collection
+          const isPage1 = url.includes('pageNum=1') || !url.includes('pageNum=')
+
+          return Promise.resolve({
             ok: true,
             json: () =>
               Promise.resolve({
                 total: 1,
-                entities: [
-                  {
-                    id: 'entityIdA',
-                    metadata: {
-                      id: `${providerId}:entityIdA`,
-                      name: 'nameForentityIdA',
-                      data: {
-                        category: WearableCategory.EARRING
-                      },
-                      mappings: {
-                        mainnet: {
-                          '0xa': [
-                            {
-                              type: 'multiple',
-                              ids: ['1', '2']
+                entities: isPage1
+                  ? [
+                      {
+                        id: 'entityIdA',
+                        metadata: {
+                          id: `${providerId}:entityIdA`,
+                          name: 'nameForentityIdA',
+                          data: {
+                            category: WearableCategory.EARRING
+                          },
+                          mappings: {
+                            mainnet: {
+                              '0xa': [
+                                {
+                                  type: 'multiple',
+                                  ids: ['1', '2']
+                                }
+                              ]
                             }
-                          ]
+                          }
                         }
                       }
-                    }
-                  }
-                ]
+                    ]
+                  : [] // Pages 2, 3, etc. should be empty for single-page collections
               })
           })
-        ) as jest.Mock
+        }) as jest.Mock
       )
 
       const wearables = await fetchAllThirdPartyWearables(components, 'anAddress')
@@ -75,6 +80,9 @@ describe('fetchAllThirdPartyWearables', () => {
       jest.spyOn(components.alchemyNftFetcher, 'getNFTsForOwner').mockResolvedValue(ownedNfts)
       jest.spyOn(components.fetch, 'fetch').mockImplementation(
         jest.fn((url: string) => {
+          // Handle pagination: only page 1 has entities for single-page collections
+          const isPage1 = url.includes('pageNum=1') || !url.includes('pageNum=')
+
           if (url.includes(providerId)) {
             return Promise.resolve({
               ok: true,
@@ -84,28 +92,30 @@ describe('fetchAllThirdPartyWearables', () => {
               json: () =>
                 Promise.resolve({
                   total: 1,
-                  entities: [
-                    {
-                      id: 'entityIdA',
-                      metadata: {
-                        id: `${providerId}:entityIdA`,
-                        name: 'nameForentityIdA',
-                        data: {
-                          category: WearableCategory.EARRING
-                        },
-                        mappings: {
-                          mainnet: {
-                            '0xa': [
-                              {
-                                type: 'multiple',
-                                ids: ['1', '2']
+                  entities: isPage1
+                    ? [
+                        {
+                          id: 'entityIdA',
+                          metadata: {
+                            id: `${providerId}:entityIdA`,
+                            name: 'nameForentityIdA',
+                            data: {
+                              category: WearableCategory.EARRING
+                            },
+                            mappings: {
+                              mainnet: {
+                                '0xa': [
+                                  {
+                                    type: 'multiple',
+                                    ids: ['1', '2']
+                                  }
+                                ]
                               }
-                            ]
+                            }
                           }
                         }
-                      }
-                    }
-                  ]
+                      ]
+                    : [] // Pages 2, 3, etc. should be empty
                 })
             } as Response)
           } else if (url.includes(providerId2)) {
@@ -117,28 +127,30 @@ describe('fetchAllThirdPartyWearables', () => {
               json: () =>
                 Promise.resolve({
                   total: 1,
-                  entities: [
-                    {
-                      id: 'entityIdB',
-                      metadata: {
-                        id: `${providerId2}:entityIdB`,
-                        name: 'nameForentityIdB',
-                        data: {
-                          category: WearableCategory.EARRING
-                        },
-                        mappings: {
-                          mainnet: {
-                            '0xb': [
-                              {
-                                type: 'single',
-                                id: '3'
+                  entities: isPage1
+                    ? [
+                        {
+                          id: 'entityIdB',
+                          metadata: {
+                            id: `${providerId2}:entityIdB`,
+                            name: 'nameForentityIdB',
+                            data: {
+                              category: WearableCategory.EARRING
+                            },
+                            mappings: {
+                              mainnet: {
+                                '0xb': [
+                                  {
+                                    type: 'single',
+                                    id: '3'
+                                  }
+                                ]
                               }
-                            ]
+                            }
                           }
                         }
-                      }
-                    }
-                  ]
+                      ]
+                    : [] // Pages 2, 3, etc. should be empty
                 })
             } as Response)
           }
