@@ -42,8 +42,7 @@ export async function createEntitiesFetcherComponent({
   const itemsSize = (await config.getNumber('ITEMS_CACHE_MAX_SIZE')) ?? 10000
   const itemsAge = (await config.getNumber('ITEMS_CACHE_MAX_AGE')) ?? 600000 // 10 minutes by default
 
-  // Collection cache with different TTL (24 hours for collections vs 10 minutes for individual entities)
-  const collectionCacheSize = (await config.getNumber('COLLECTION_CACHE_MAX_SIZE')) ?? 100
+  const collectionCacheSize = (await config.getNumber('COLLECTION_CACHE_MAX_SIZE')) ?? 20
   const collectionCacheAge = (await config.getNumber('COLLECTION_CACHE_MAX_AGE')) ?? 86400000 // 24 hours
 
   const entititesCache = createLowerCaseKeysCache<Entity>({ max: itemsSize, ttl: itemsAge })
