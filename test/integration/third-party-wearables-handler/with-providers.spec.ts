@@ -5,28 +5,30 @@ import { generateRandomAddress } from '../../helpers'
 import { createTheGraphComponentMock } from '../../mocks/the-graph-mock'
 import { convertToThirdPartyWearableResponse } from './convert-to-model-third-party'
 
+// mutable object
+const linkedWearableCollectionProvider = {
+  id: 'urn:decentraland:matic:collections-thirdparty:test-collection',
+  resolver: 'https://decentraland-api.test.com/v1',
+  metadata: {
+    thirdParty: {
+      name: 'test collection',
+      description: 'test collection',
+      contracts: [
+        {
+          network: 'mainnet',
+          address: '0xcontract'
+        }
+      ]
+    }
+  }
+}
+
 // NOTE: each test generates a new wallet to avoid matches on cache
 testWithComponents(() => {
   const theGraphMock = createTheGraphComponentMock()
+
   const resolverResponse = {
-    thirdParties: [
-      {
-        id: 'urn:decentraland:matic:collections-thirdparty:test-collection',
-        resolver: 'https://decentraland-api.test.com/v1',
-        metadata: {
-          thirdParty: {
-            name: 'test collection',
-            description: 'test collection',
-            contracts: [
-              {
-                network: 'mainnet',
-                address: '0xcontract'
-              }
-            ]
-          }
-        }
-      }
-    ]
+    thirdParties: [linkedWearableCollectionProvider]
   }
 
   theGraphMock.thirdPartyRegistrySubgraph.query = jest.fn().mockResolvedValue(resolverResponse)
@@ -36,6 +38,11 @@ testWithComponents(() => {
 })(
   'third-party-wearables-handler: GET /users/:address/third-party-wearables with a single provider should',
   function ({ components }) {
+    beforeEach(() => {
+      // Update collection ID before each test to ensure cache isolation
+      linkedWearableCollectionProvider.id = `urn:decentraland:matic:collections-thirdparty:test-collection-${Math.random().toString(36).substring(7)}`
+    })
+
     it('return empty when no wearables are found', async () => {
       const { localFetch, fetch, alchemyNftFetcher } = components
 
