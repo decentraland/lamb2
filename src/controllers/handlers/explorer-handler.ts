@@ -1,4 +1,4 @@
-import { Entity, Rarity, WearableCategory } from '@dcl/schemas'
+import { Entity, WearableCategory } from '@dcl/schemas'
 import { fetchThirdPartyWearablesFromThirdPartyName } from '../../logic/fetch-elements/fetch-third-party-wearables'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { createCombinedSorting } from '../../logic/sorting'
@@ -15,24 +15,21 @@ import {
   ExplorerWearableEntity
 } from '../../types'
 import { createFilters } from './items-commons'
-
-const BASE_WEARABLE = 'base-wearable'
-const ON_CHAIN = 'on-chain'
-const THIRD_PARTY = 'third-party'
+import { BASE_WEARABLE, ON_CHAIN, THIRD_PARTY } from '../../constants'
 
 const VALID_COLLECTION_TYPES = [BASE_WEARABLE, ON_CHAIN, THIRD_PARTY]
 
-type MixedBaseWearable = Omit<BaseWearable, 'entity'> & {
+export type MixedBaseWearable = Omit<BaseWearable, 'entity'> & {
   type: typeof BASE_WEARABLE
   entity: ExplorerWearableEntity
 }
 
-type MixedOnChainWearable = Omit<OnChainWearable, 'entity'> & {
+export type MixedOnChainWearable = Omit<OnChainWearable, 'entity'> & {
   type: typeof ON_CHAIN
   entity: ExplorerWearableEntity
 }
 
-type MixedThirdPartyWearable = Omit<ThirdPartyWearable, 'entity'> & {
+export type MixedThirdPartyWearable = Omit<ThirdPartyWearable, 'entity'> & {
   type: typeof THIRD_PARTY
   entity: ExplorerWearableEntity
 }
@@ -44,7 +41,7 @@ export type MixedWearableResponse = {
   entity: ExplorerWearableEntity
 }
 
-function buildExplorerEntity(entity: Entity, rarityOverride?: Rarity): ExplorerWearableEntity {
+export function buildExplorerEntity(entity: Entity): ExplorerWearableEntity {
   const thumbnailFile = entity?.metadata?.thumbnail as string | undefined
   const thumbnailHash = entity?.content?.find((c: any) => c.file === thumbnailFile)?.hash
   const metadata = entity?.metadata as any
@@ -58,7 +55,7 @@ function buildExplorerEntity(entity: Entity, rarityOverride?: Rarity): ExplorerW
     thumbnail: thumbnailHash,
     metadata: {
       id: metadata?.id,
-      rarity: rarityOverride ?? metadata?.rarity,
+      rarity: metadata?.rarity,
       data: {
         category: category as WearableCategory,
         representations
@@ -118,7 +115,7 @@ async function fetchCombinedElements(
         acc.push({
           type: ON_CHAIN,
           ...wearable,
-          entity: buildExplorerEntity(entity, (wearable as any).rarity)
+          entity: buildExplorerEntity(entity)
         })
       }
       return acc
