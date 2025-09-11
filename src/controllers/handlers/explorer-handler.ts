@@ -43,8 +43,8 @@ export type MixedWearableResponse = {
 
 export function buildExplorerEntity(entity: Entity): ExplorerWearableEntity {
   const thumbnailFile = entity?.metadata?.thumbnail as string | undefined
-  const thumbnailHash = entity?.content?.find((c: any) => c.file === thumbnailFile)?.hash
-  const metadata = entity?.metadata as any
+  const thumbnailHash = entity?.content?.find((c) => c.file === thumbnailFile)?.hash
+  const metadata = entity?.metadata
   const category: WearableCategory | undefined = metadata?.data?.category
   const representations: ExplorerWearableRepresentation[] = (metadata?.data?.representations || []).map((rep: any) => ({
     bodyShapes: rep.bodyShapes
@@ -126,7 +126,7 @@ async function fetchCombinedElements(
     if (thirdPartyCollectionIds.length === 0) {
       const elements = await components.thirdPartyWearablesFetcher.fetchOwnedElements(address)
       return elements.map((wearable: ThirdPartyWearable): MixedThirdPartyWearable => {
-        const entity = (wearable as any).entity as Entity
+        const entity = wearable.entity
         return {
           type: THIRD_PARTY,
           ...wearable,
@@ -152,7 +152,7 @@ async function fetchCombinedElements(
     )
 
     return allWearables.flat().map((wearable: ThirdPartyWearable): MixedThirdPartyWearable => {
-      const entity = (wearable as any).entity as Entity
+      const entity = wearable.entity
       return {
         type: THIRD_PARTY,
         ...wearable,
@@ -203,7 +203,7 @@ export async function explorerHandler(
     sorting
   )
 
-  const results: MixedWearableResponse[] = page.elements.map((w) => ({ entity: (w as any).entity }))
+  const results: MixedWearableResponse[] = page.elements.map((wearable) => ({ entity: wearable.entity }))
 
   return {
     status: 200,
