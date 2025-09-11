@@ -1,6 +1,6 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { AppComponents } from '../types'
-import { Entity } from '@dcl/schemas'
+import { Entity, Mappings } from '@dcl/schemas'
 import { createLowerCaseKeysCache } from './lowercase-keys-cache'
 import { createLowerCaseKeysMap } from './lowercase-keys-map'
 
@@ -17,7 +17,7 @@ type LinkedWearableAssetEntities = {
  */
 type CollectionEntityReference = {
   entityUrn: string
-  mappings: any
+  mappings: Mappings
 }
 
 type CollectionCacheData = {

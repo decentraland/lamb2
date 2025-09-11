@@ -2,7 +2,7 @@ import { Entity } from '@dcl/schemas'
 import { BlockchainCollectionThirdPartyName, parseUrn } from '@dcl/urn-resolver'
 import { FetcherError } from '../../adapters/elements-fetcher'
 import { AppComponents, ThirdPartyAsset, ThirdPartyProvider, ThirdPartyWearable } from '../../types'
-import { filterByUserNfts, mappingComprehendsEntity } from '../linked-wearables-mapper'
+import { filterByUserNfts, mappingComprehendsUrn } from '../linked-wearables-mapper'
 
 const URN_THIRD_PARTY_NAME_TYPE = 'blockchain-collection-third-party-name'
 const URN_THIRD_PARTY_ASSET_TYPE = 'blockchain-collection-third-party'
@@ -125,12 +125,11 @@ async function _fetchThirdPartyWearables(
 
     const assignedLinkedWearables: Record<string, { individualData: string[]; entity: Entity }> = {}
 
-    // All entities are pre-filtered to match user's NFTs, now build individual NFT assignments
     for (const entity of thirdPartyEntities) {
       const urn = entity.metadata.id
 
       for (const nft of ownedNftUrns) {
-        if (mappingComprehendsEntity(entity.metadata.mappings, nft)) {
+        if (mappingComprehendsUrn(entity.metadata.mappings, nft)) {
           if (assignedLinkedWearables[urn]) {
             assignedLinkedWearables[urn].individualData.push(nft)
           } else {

@@ -1,29 +1,19 @@
-import { ContractNetwork, createMappingsHelper, Entity, Mapping } from '@dcl/schemas'
+import { ContractNetwork, createMappingsHelper, Entity, Mappings } from '@dcl/schemas'
 
 /**
- * Core function to check if mappings match user NFTs.
- * Supports both multiple NFTs (userOwnedNfts) and single NFT (singleNft).
+ * Core function to check if mappings match NFTs URNs.
  */
-function checkMappingsMatch(mappings: any, userOwnedNfts?: string[], singleNft?: string): boolean {
+function checkMappingsMatch(mappings: Mappings, userOwnedNfts: string[]): boolean {
   if (!mappings) {
     return false
   }
 
   const entityMappingHelper = createMappingsHelper(mappings)
 
-  // Single NFT check (for individual assignment)
-  if (singleNft) {
-    const [network, contract, tokenId] = singleNft.split(':')
-    return entityMappingHelper.includesNft(network as ContractNetwork, contract, tokenId)
-  }
-
-  // Multiple NFTs check (for filtering)
-  if (userOwnedNfts) {
-    for (const nft of userOwnedNfts) {
-      const [network, contract, tokenId] = nft.split(':')
-      if (entityMappingHelper.includesNft(network as ContractNetwork, contract, tokenId)) {
-        return true
-      }
+  for (const nft of userOwnedNfts) {
+    const [network, contract, tokenId] = nft.split(':')
+    if (entityMappingHelper.includesNft(network as ContractNetwork, contract, tokenId)) {
+      return true
     }
   }
 
@@ -31,8 +21,8 @@ function checkMappingsMatch(mappings: any, userOwnedNfts?: string[], singleNft?:
 }
 
 /**
- * Filters entities by matching their mappings against user-owned NFTs.
- * Returns entities that the user owns based on NFT mappings.
+ * Filters entities by matching their mappings against URNs.
+ * Returns entities that the user owns based on URNs.
  */
 export function filterByUserNfts(entities: Entity[], userOwnedNfts: string[]): Entity[] {
   const matchingEntities: Entity[] = []
@@ -47,9 +37,8 @@ export function filterByUserNfts(entities: Entity[], userOwnedNfts: string[]): E
 }
 
 /**
- * Checks if a specific NFT matches entity mappings.
- * Used for building individual NFT assignments to entities.
+ * Checks if a specific URN matches entity mappings.
  */
-export function mappingComprehendsEntity(entityMappings: Mapping, nftUrn: string): boolean {
-  return checkMappingsMatch(entityMappings, undefined, nftUrn)
+export function mappingComprehendsUrn(entityMappings: Mappings, urn: string): boolean {
+  return checkMappingsMatch(entityMappings, [urn])
 }
