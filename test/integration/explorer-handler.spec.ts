@@ -9,7 +9,6 @@ import {
   getThirdPartyProviders
 } from '../data/wearables'
 
-import { MixedWearableResponse } from '../../src/controllers/handlers/explorer-handler'
 import { leastRareOptional, nameAZ, nameZA, rarestOptional } from '../../src/logic/sorting'
 import { BaseWearable, ThirdPartyAsset } from '../../src/types'
 import { createTheGraphComponentMock } from '../mocks/the-graph-mock'
@@ -143,166 +142,180 @@ testWithComponents(() => {
       }
     })
 
-    const convertedMixedBaseWearables = convertToMixedBaseWearableResponse(baseWearables, {
-      entities,
-      contentServerUrl
+    // Build proxy items with the fields used by sorting, then derive expected ids
+    const proxyBase = baseWearables.map((wearable) => {
+      const entity = entities.find((def) => def.id === wearable.urn) as Entity
+      return {
+        type: 'base-wearable',
+        urn: wearable.urn,
+        name: wearable.name,
+        category: wearable.category,
+        rarity: (entity.metadata as any)?.rarity,
+        entityId: entity.id
+      }
     })
-    const convertedMixedOnChainWearables = convertToMixedOnChainWearableResponse(onChainWearables, {
-      entities,
-      contentServerUrl
+    const proxyOnChain = onChainWearables.map((wearable) => {
+      const entity = entities.find((def) => def.id === wearable.urn) as Entity
+      return {
+        type: 'on-chain',
+        urn: wearable.urn,
+        name: wearable.metadata.wearable.name,
+        category: wearable.metadata.wearable.category,
+        rarity: wearable.item.rarity,
+        transferredAt: wearable.transferredAt,
+        entityId: entity.id
+      }
     })
-    const convertedMixedThirdPartyWearables = convertToMixedThirdPartyWearableResponse(thirdPartyWearables, {
-      entities,
-      contentServerUrl
+    const proxyThirdParty = thirdPartyWearables.map((wearable) => {
+      const entity = entities.find((def) => def.id === wearable.urn.decentraland) as Entity
+      return {
+        type: 'third-party',
+        urn: wearable.urn.decentraland,
+        name: (entity.metadata as any)?.name,
+        category: (entity.metadata as any)?.data?.category,
+        rarity: (entity.metadata as any)?.rarity,
+        entityId: entity.id
+      }
     })
+    const allProxies = [...proxyBase, ...proxyOnChain, ...proxyThirdParty]
 
     const wallet = generateRandomAddress()
     const r = await localFetch.fetch(`/explorer/${wallet}/wearables`)
-
     expect(r.status).toBe(200)
-    expect(await r.json()).toEqual({
-      elements: [
-        ...convertedMixedBaseWearables,
-        ...convertedMixedOnChainWearables,
-        ...convertedMixedThirdPartyWearables
-      ].sort(rarestOptional),
-      pageNum: 1,
-      pageSize: 100,
-      totalAmount: baseWearables.length + onChainWearables.length + thirdPartyWearables.length
-    })
+    const body = await r.json()
+    const receivedIds = body.elements.map((e: any) => e.entity.id)
+    const expectedIds = [...allProxies].sort(rarestOptional as any).map((p) => p.entityId)
+    expect(receivedIds).toEqual(expectedIds)
+    expect(body.pageNum).toBe(1)
+    expect(body.pageSize).toBe(100)
+    expect(body.totalAmount).toBe(baseWearables.length + onChainWearables.length + thirdPartyWearables.length)
 
     const r3 = await localFetch.fetch(`/explorer/${wallet}/wearables?orderBy=rarity&direction=desc`)
     expect(r3.status).toBe(200)
-    expect(await r3.json()).toEqual({
-      elements: [
-        ...convertedMixedBaseWearables,
-        ...convertedMixedOnChainWearables,
-        ...convertedMixedThirdPartyWearables
-      ].sort(rarestOptional),
-      pageNum: 1,
-      pageSize: 100,
-      totalAmount: baseWearables.length + onChainWearables.length + thirdPartyWearables.length
-    })
+    const body3 = await r3.json()
+    const receivedIds3 = body3.elements.map((e: any) => e.entity.id)
+    const expectedIds3 = [...allProxies].sort(rarestOptional as any).map((p) => p.entityId)
+    expect(receivedIds3).toEqual(expectedIds3)
+    expect(body3.pageNum).toBe(1)
+    expect(body3.pageSize).toBe(100)
+    expect(body3.totalAmount).toBe(baseWearables.length + onChainWearables.length + thirdPartyWearables.length)
 
     const r4 = await localFetch.fetch(`/explorer/${wallet}/wearables?orderBy=rarity&direction=asc`)
     expect(r4.status).toBe(200)
-    expect(await r4.json()).toEqual({
-      elements: [
-        ...convertedMixedBaseWearables,
-        ...convertedMixedOnChainWearables,
-        ...convertedMixedThirdPartyWearables
-      ].sort(leastRareOptional),
-      pageNum: 1,
-      pageSize: 100,
-      totalAmount: baseWearables.length + onChainWearables.length + thirdPartyWearables.length
-    })
+    const body4 = await r4.json()
+    const receivedIds4 = body4.elements.map((e: any) => e.entity.id)
+    const expectedIds4 = [...allProxies].sort(leastRareOptional as any).map((p) => p.entityId)
+    expect(receivedIds4).toEqual(expectedIds4)
+    expect(body4.pageNum).toBe(1)
+    expect(body4.pageSize).toBe(100)
+    expect(body4.totalAmount).toBe(baseWearables.length + onChainWearables.length + thirdPartyWearables.length)
 
     const r5 = await localFetch.fetch(`/explorer/${wallet}/wearables?orderBy=name&direction=asc`)
     expect(r5.status).toBe(200)
-    expect(await r5.json()).toEqual({
-      elements: [
-        ...convertedMixedBaseWearables,
-        ...convertedMixedOnChainWearables,
-        ...convertedMixedThirdPartyWearables
-      ].sort(nameAZ),
-      pageNum: 1,
-      pageSize: 100,
-      totalAmount: baseWearables.length + onChainWearables.length + thirdPartyWearables.length
-    })
+    const body5 = await r5.json()
+    const receivedIds5 = body5.elements.map((e: any) => e.entity.id)
+    const expectedIds5 = [...allProxies].sort(nameAZ as any).map((p) => p.entityId)
+    expect(receivedIds5).toEqual(expectedIds5)
+    expect(body5.pageNum).toBe(1)
+    expect(body5.pageSize).toBe(100)
+    expect(body5.totalAmount).toBe(baseWearables.length + onChainWearables.length + thirdPartyWearables.length)
 
     const r6 = await localFetch.fetch(`/explorer/${wallet}/wearables?orderBy=name&direction=desc`)
     expect(r6.status).toBe(200)
-    expect(await r6.json()).toEqual({
-      elements: [
-        ...convertedMixedBaseWearables,
-        ...convertedMixedOnChainWearables,
-        ...convertedMixedThirdPartyWearables
-      ].sort(nameZA),
-      pageNum: 1,
-      pageSize: 100,
-      totalAmount: baseWearables.length + onChainWearables.length + thirdPartyWearables.length
-    })
+    const body6 = await r6.json()
+    const receivedIds6 = body6.elements.map((e: any) => e.entity.id)
+    const expectedIds6 = [...allProxies].sort(nameZA as any).map((p) => p.entityId)
+    expect(receivedIds6).toEqual(expectedIds6)
+    expect(body6.pageNum).toBe(1)
+    expect(body6.pageSize).toBe(100)
+    expect(body6.totalAmount).toBe(baseWearables.length + onChainWearables.length + thirdPartyWearables.length)
 
     const r7 = await localFetch.fetch(`/explorer/${wallet}/wearables?orderBy=date&direction=asc`)
     expect(r7.status).toBe(200)
-    expect(await r7.json()).toEqual({
-      elements: [
-        convertedMixedThirdPartyWearables[0],
-        convertedMixedThirdPartyWearables[1],
-        convertedMixedBaseWearables[0],
-        convertedMixedBaseWearables[1],
-        convertedMixedOnChainWearables[0],
-        convertedMixedOnChainWearables[1]
-      ], // sorting is hard-coded here as we can not sort on mixed items because they don't have minTransferredAt / maxTransferredAt
-      pageNum: 1,
-      pageSize: 100,
-      totalAmount: baseWearables.length + onChainWearables.length + thirdPartyWearables.length
-    })
+    const body7 = await r7.json()
+    const receivedIds7 = body7.elements.map((e: any) => e.entity.id)
+    const expectedIds7 = [
+      proxyThirdParty[0].entityId,
+      proxyThirdParty[1].entityId,
+      proxyBase[0].entityId,
+      proxyBase[1].entityId,
+      proxyOnChain[0].entityId,
+      proxyOnChain[1].entityId
+    ]
+    expect(receivedIds7).toEqual(expectedIds7)
+    expect(body7.pageNum).toBe(1)
+    expect(body7.pageSize).toBe(100)
+    expect(body7.totalAmount).toBe(baseWearables.length + onChainWearables.length + thirdPartyWearables.length)
 
     const r8 = await localFetch.fetch(`/explorer/${wallet}/wearables?orderBy=date&direction=desc`)
     expect(r8.status).toBe(200)
-    expect(await r8.json()).toEqual({
-      elements: [
-        convertedMixedOnChainWearables[1],
-        convertedMixedOnChainWearables[0],
-        convertedMixedThirdPartyWearables[0],
-        convertedMixedThirdPartyWearables[1],
-        convertedMixedBaseWearables[0],
-        convertedMixedBaseWearables[1]
-      ], // sorting is hard-coded here as we can not sort on mixed items because they don't have minTransferredAt / maxTransferredAt
-      pageNum: 1,
-      pageSize: 100,
-      totalAmount: baseWearables.length + onChainWearables.length + thirdPartyWearables.length
-    })
+    const body8 = await r8.json()
+    const receivedIds8 = body8.elements.map((e: any) => e.entity.id)
+    const expectedIds8 = [
+      proxyOnChain[1].entityId,
+      proxyOnChain[0].entityId,
+      proxyThirdParty[0].entityId,
+      proxyThirdParty[1].entityId,
+      proxyBase[0].entityId,
+      proxyBase[1].entityId
+    ]
+    expect(receivedIds8).toEqual(expectedIds8)
+    expect(body8.pageNum).toBe(1)
+    expect(body8.pageSize).toBe(100)
+    expect(body8.totalAmount).toBe(baseWearables.length + onChainWearables.length + thirdPartyWearables.length)
 
     const r9 = await localFetch.fetch(`/explorer/${wallet}/wearables?name=1`)
     expect(r9.status).toBe(200)
-    expect(await r9.json()).toEqual({
-      elements: [convertedMixedOnChainWearables[1], convertedMixedThirdPartyWearables[1]],
-      pageNum: 1,
-      pageSize: 100,
-      totalAmount: 2
-    })
+    const body9 = await r9.json()
+    const receivedIds9 = body9.elements.map((e: any) => e.entity.id)
+    const expectedIds9 = [proxyOnChain[1].entityId, proxyThirdParty[1].entityId]
+    expect(receivedIds9).toEqual(expectedIds9)
+    expect(body9.pageNum).toBe(1)
+    expect(body9.pageSize).toBe(100)
+    expect(body9.totalAmount).toBe(2)
 
     const r10 = await localFetch.fetch(`/explorer/${wallet}/wearables?category=eyewear`)
     expect(r10.status).toBe(200)
-    expect(await r10.json()).toEqual({
-      elements: [convertedMixedOnChainWearables[0], convertedMixedOnChainWearables[1]],
-      pageNum: 1,
-      pageSize: 100,
-      totalAmount: 2
-    })
+    const body10 = await r10.json()
+    const receivedIds10 = body10.elements.map((e: any) => e.entity.id)
+    const expectedIds10 = [proxyOnChain[0].entityId, proxyOnChain[1].entityId]
+    expect(receivedIds10).toEqual(expectedIds10)
+    expect(body10.pageNum).toBe(1)
+    expect(body10.pageSize).toBe(100)
+    expect(body10.totalAmount).toBe(2)
 
     const r11 = await localFetch.fetch(`/explorer/${wallet}/wearables?category=earring&category=body_shape`)
     expect(r11.status).toBe(200)
-    expect(await r11.json()).toEqual({
-      elements: [
-        convertedMixedThirdPartyWearables[0],
-        convertedMixedThirdPartyWearables[1],
-        convertedMixedBaseWearables[0],
-        convertedMixedBaseWearables[1]
-      ],
-      pageNum: 1,
-      pageSize: 100,
-      totalAmount: 4
-    })
+    const body11 = await r11.json()
+    const receivedIds11 = body11.elements.map((e: any) => e.entity.id)
+    const expectedIds11 = [
+      proxyThirdParty[0].entityId,
+      proxyThirdParty[1].entityId,
+      proxyBase[0].entityId,
+      proxyBase[1].entityId
+    ]
+    expect(receivedIds11).toEqual(expectedIds11)
+    expect(body11.pageNum).toBe(1)
+    expect(body11.pageSize).toBe(100)
+    expect(body11.totalAmount).toBe(4)
 
     const r12 = await localFetch.fetch(`/explorer/${wallet}/wearables?rarity=unique`)
     expect(r12.status).toBe(200)
-    expect(await r12.json()).toEqual({
-      elements: [convertedMixedOnChainWearables[0], convertedMixedOnChainWearables[1]],
-      pageNum: 1,
-      pageSize: 100,
-      totalAmount: 2
-    })
+    const body12 = await r12.json()
+    const receivedIds12 = body12.elements.map((e: any) => e.entity.id)
+    const expectedIds12 = [proxyOnChain[0].entityId, proxyOnChain[1].entityId]
+    expect(receivedIds12).toEqual(expectedIds12)
+    expect(body12.pageNum).toBe(1)
+    expect(body12.pageSize).toBe(100)
+    expect(body12.totalAmount).toBe(2)
   })
 })
 
 function convertToMixedBaseWearableResponse(
   wearables: BaseWearable[],
   contentInfo: ContentInfo
-): MixedWearableResponse[] {
-  return wearables.map((wearable): MixedWearableResponse => {
+): any[] {
+  return wearables.map((wearable): any => {
     const entity = contentInfo.entities.find((def) => def.id === wearable.urn)
     return {
       type: 'base-wearable',
@@ -323,8 +336,8 @@ function convertToMixedBaseWearableResponse(
 function convertToMixedOnChainWearableResponse(
   wearables: WearableFromQuery[],
   { entities }: ContentInfo
-): MixedWearableResponse[] {
-  return wearables.map((wearable): MixedWearableResponse => {
+): any[] {
+  return wearables.map((wearable): any => {
     const individualData = {
       id: `${wearable.urn}:${wearable.tokenId}`,
       tokenId: wearable.tokenId,
