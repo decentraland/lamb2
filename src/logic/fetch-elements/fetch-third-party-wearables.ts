@@ -1,7 +1,8 @@
-import { ContractNetwork, createMappingsHelper, Entity } from '@dcl/schemas'
+import { Entity } from '@dcl/schemas'
 import { BlockchainCollectionThirdPartyName, parseUrn } from '@dcl/urn-resolver'
 import { FetcherError } from '../../adapters/elements-fetcher'
 import { AppComponents, ThirdPartyAsset, ThirdPartyProvider, ThirdPartyWearable } from '../../types'
+import { filterByUserNfts, mappingComprehendsUrn } from '../linked-wearables-mapper'
 
 const URN_THIRD_PARTY_NAME_TYPE = 'blockchain-collection-third-party-name'
 const URN_THIRD_PARTY_ASSET_TYPE = 'blockchain-collection-third-party'
@@ -14,23 +15,23 @@ export type ThirdPartyAssets = {
   next?: string
 }
 
-type LinkedWearableAssetEntities = {
-  total: number
-  entities: Entity[]
-}
-
 async function fetchAssetsRepresentation(
-  { contentServerUrl, fetch }: Pick<AppComponents, 'contentServerUrl' | 'fetch' | 'logs' | 'metrics'>,
-  thirdPartyProvider: ThirdPartyProvider
+  components: Pick<AppComponents, 'contentServerUrl' | 'fetch' | 'entitiesFetcher'>,
+  thirdPartyProvider: ThirdPartyProvider,
+  userOwnedNfts: string[]
 ): Promise<Entity[]> {
-  const urn = await parseUrn(thirdPartyProvider.id)
+  const collectionId = thirdPartyProvider.id
+
+  const urn = await parseUrn(collectionId)
   if (!urn || urn.type !== URN_THIRD_PARTY_NAME_TYPE) {
-    throw new Error(`Couldn't parse linked wearable provider id: ${thirdPartyProvider.id}`)
+    throw new Error(`Couldn't parse linked wearable provider id: ${collectionId}`)
   }
 
-  const response = await fetch.fetch(`${contentServerUrl}/entities/active/collections/${thirdPartyProvider.id}`)
-  const assetsFromThirdPartyCollection: LinkedWearableAssetEntities = await response.json()
-  return assetsFromThirdPartyCollection.entities || []
+  // Fetch all entities with built-in caching and pagination
+  const allEntities = await components.entitiesFetcher.fetchCollectionEntities(collectionId)
+
+  // Filter and return only entities matching user's NFTs
+  return filterByUserNfts(allEntities, userOwnedNfts)
 }
 
 function groupLinkedWearablesByURN(
@@ -63,13 +64,7 @@ function groupLinkedWearablesByURN(
 export async function fetchAllThirdPartyWearables(
   components: Pick<
     AppComponents,
-    | 'alchemyNftFetcher'
-    | 'contentServerUrl'
-    | 'thirdPartyProvidersStorage'
-    | 'fetch'
-    | 'logs'
-    | 'entitiesFetcher'
-    | 'metrics'
+    'alchemyNftFetcher' | 'contentServerUrl' | 'thirdPartyProvidersStorage' | 'fetch' | 'entitiesFetcher' | 'metrics'
   >,
   owner: string
 ): Promise<ThirdPartyWearable[]> {
@@ -81,13 +76,7 @@ export async function fetchAllThirdPartyWearables(
 async function _fetchThirdPartyWearables(
   components: Pick<
     AppComponents,
-    | 'alchemyNftFetcher'
-    | 'contentServerUrl'
-    | 'thirdPartyProvidersStorage'
-    | 'fetch'
-    | 'logs'
-    | 'entitiesFetcher'
-    | 'metrics'
+    'alchemyNftFetcher' | 'contentServerUrl' | 'thirdPartyProvidersStorage' | 'fetch' | 'entitiesFetcher' | 'metrics'
   >,
   owner: string,
   thirdParties: ThirdPartyProvider[]
@@ -109,7 +98,6 @@ async function _fetchThirdPartyWearables(
     )
 
     const ownedNftUrns = await components.alchemyNftFetcher.getNFTsForOwner(owner, thirdPartyContractsByNetwork)
-
     const providersThatReturnedNfts = new Set<string>()
     for (const urn of ownedNftUrns) {
       const [network, contractAddress] = urn.split(':')
@@ -129,25 +117,19 @@ async function _fetchThirdPartyWearables(
 
     const thirdPartyEntities = (
       await Promise.all(
-        providersToCheck.map((provider: ThirdPartyProvider) => fetchAssetsRepresentation(components, provider))
+        providersToCheck.map((provider: ThirdPartyProvider) =>
+          fetchAssetsRepresentation(components, provider, ownedNftUrns)
+        )
       )
     ).flat()
 
     const assignedLinkedWearables: Record<string, { individualData: string[]; entity: Entity }> = {}
+
     for (const entity of thirdPartyEntities) {
       const urn = entity.metadata.id
-      if (!entity.metadata.mappings) {
-        continue
-      }
 
-      /** MappingHelper:
-       * Contains the relation between the NFT token id and the Decentraland asset urn
-       * Multiple token ids can refer to the same asset
-       */
-      const entityMappingHelper = createMappingsHelper(entity.metadata.mappings)
       for (const nft of ownedNftUrns) {
-        const [network, contract, tokenId] = nft.split(':')
-        if (entityMappingHelper.includesNft(network as ContractNetwork, contract, tokenId)) {
+        if (mappingComprehendsUrn(entity.metadata.mappings, nft)) {
           if (assignedLinkedWearables[urn]) {
             assignedLinkedWearables[urn].individualData.push(nft)
           } else {
