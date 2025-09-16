@@ -31,6 +31,7 @@ export type EntitiesFetcher = IBaseComponent & {
 }
 
 const MAX_COLLECTION_PAGE_SIZE = 1000
+const TWENTY_FOUR_HOURS_IN_MS = 24 * 60 * 60 * 1000
 
 export async function createEntitiesFetcherComponent({
   config,
@@ -43,7 +44,7 @@ export async function createEntitiesFetcherComponent({
   const itemsAge = (await config.getNumber('ITEMS_CACHE_MAX_AGE')) ?? 600000 // 10 minutes by default
 
   const collectionCacheSize = (await config.getNumber('COLLECTION_CACHE_MAX_SIZE')) ?? 20
-  const collectionCacheAge = (await config.getNumber('COLLECTION_CACHE_MAX_AGE')) ?? 86400000 // 24 hours
+  const collectionCacheAge = (await config.getNumber('COLLECTION_CACHE_MAX_AGE')) ?? TWENTY_FOUR_HOURS_IN_MS // 24 hours
 
   const entititesCache = createLowerCaseKeysCache<Entity>({ max: itemsSize, ttl: itemsAge })
   const collectionsCache = createLowerCaseKeysCache<CollectionCacheData>({
