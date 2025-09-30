@@ -78,7 +78,8 @@ export async function initComponents(
     contentServerUrl
   })
 
-  const entitiesFetcher = await createEntitiesFetcherComponent({ config, logs, content })
+  // TODO: use content client for collection items fetching. prevent injecting contentServerUrl and fetch components.
+  const entitiesFetcher = await createEntitiesFetcherComponent({ config, logs, content, contentServerUrl, fetch })
 
   const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent({
     config,
@@ -147,7 +148,14 @@ export async function initComponents(
   })
   const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllThirdPartyWearables(
-      { alchemyNftFetcher, contentServerUrl, thirdPartyProvidersStorage, fetch, logs, entitiesFetcher, metrics },
+      {
+        alchemyNftFetcher,
+        contentServerUrl,
+        thirdPartyProvidersStorage,
+        fetch,
+        entitiesFetcher,
+        metrics
+      },
       address
     )
   )
