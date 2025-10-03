@@ -1,4 +1,4 @@
-import { Entity, WearableCategory } from '@dcl/schemas'
+import { Entity } from '@dcl/schemas'
 import { fetchThirdPartyWearablesFromThirdPartyName } from '../../logic/fetch-elements/fetch-third-party-wearables'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { createCombinedSorting } from '../../logic/sorting'
@@ -10,59 +10,30 @@ import {
   InvalidRequestError,
   OnChainWearable,
   PaginatedResponse,
-  ThirdPartyWearable,
-  ExplorerWearableRepresentation,
-  ExplorerWearableEntity
+  ThirdPartyWearable
 } from '../../types'
 import { createFilters } from './items-commons'
-import { BASE_WEARABLE, ON_CHAIN, THIRD_PARTY } from '../../constants'
 
-const VALID_COLLECTION_TYPES = [BASE_WEARABLE, ON_CHAIN, THIRD_PARTY]
+const VALID_COLLECTION_TYPES = ['base-wearable', 'on-chain', 'third-party']
 
-export type MixedBaseWearable = Omit<BaseWearable, 'entity'> & {
-  type: typeof BASE_WEARABLE
-  entity: ExplorerWearableEntity
+type MixedBaseWearable = BaseWearable & {
+  type: 'base-wearable'
+  entity: Entity
 }
 
-export type MixedOnChainWearable = Omit<OnChainWearable, 'entity'> & {
-  type: typeof ON_CHAIN
-  entity: ExplorerWearableEntity
+type MixedOnChainWearable = OnChainWearable & {
+  type: 'on-chain'
+  entity: Entity
 }
 
-export type MixedThirdPartyWearable = Omit<ThirdPartyWearable, 'entity'> & {
-  type: typeof THIRD_PARTY
-  entity: ExplorerWearableEntity
+type MixedThirdPartyWearable = ThirdPartyWearable & {
+  type: 'third-party'
 }
 
 export type MixedWearable = (MixedBaseWearable | MixedOnChainWearable | MixedThirdPartyWearable) &
   Partial<Pick<OnChainWearable, 'rarity'>>
 
-export type MixedWearableResponse = {
-  entity: ExplorerWearableEntity
-}
-
-export function buildExplorerEntity(entity: Entity): ExplorerWearableEntity {
-  const thumbnailFile = entity?.metadata?.thumbnail as string | undefined
-  const thumbnailHash = entity?.content?.find((c) => c.file === thumbnailFile)?.hash
-  const metadata = entity?.metadata
-  const category: WearableCategory | undefined = metadata?.data?.category
-  const representations: ExplorerWearableRepresentation[] = (metadata?.data?.representations || []).map((rep: any) => ({
-    bodyShapes: rep.bodyShapes
-  }))
-
-  return {
-    id: entity.id,
-    thumbnail: thumbnailHash,
-    metadata: {
-      id: metadata?.id,
-      rarity: metadata?.rarity,
-      data: {
-        category: category as WearableCategory,
-        representations
-      }
-    }
-  }
-}
+export type MixedWearableResponse = Omit<MixedWearable, 'minTransferredAt' | 'maxTransferredAt'>
 
 async function fetchCombinedElements(
   components: Pick<
@@ -80,91 +51,81 @@ async function fetchCombinedElements(
 ): Promise<MixedWearable[]> {
   async function fetchBaseWearables() {
     const elements = await components.baseWearablesFetcher.fetchOwnedElements(address)
-    if (!elements.length) {
-      return []
-    }
-
     const urns = elements.map((e) => e.urn)
     const entities = await components.entitiesFetcher.fetchEntities(urns)
 
-    return elements.reduce<MixedBaseWearable[]>((acc, wearable, i) => {
+    const result: MixedBaseWearable[] = []
+    for (let i = 0; i < elements.length; ++i) {
+      const wearable = elements[i]
       const entity = entities[i]
-      if (entity) {
-        acc.push({
-          type: BASE_WEARABLE,
-          ...wearable,
-          entity: buildExplorerEntity(entity)
-        })
+      if (!entity) {
+        continue
       }
-      return acc
-    }, [])
+      result.push({
+        type: 'base-wearable',
+        ...wearable,
+        entity
+      })
+    }
+    return result
   }
 
   async function fetchOnChainWearables(): Promise<MixedOnChainWearable[]> {
     const elements = await components.wearablesFetcher.fetchOwnedElements(address)
-    if (!elements.length) {
-      return []
-    }
-
-    const urns = elements.map((e) => e.urn)
-    const entities = await components.entitiesFetcher.fetchEntities(urns)
-
-    return elements.reduce<MixedOnChainWearable[]>((acc, wearable, i) => {
+    const entities = await components.entitiesFetcher.fetchEntities(elements.map((e) => e.urn))
+    const result: MixedOnChainWearable[] = []
+    for (let i = 0; i < elements.length; ++i) {
+      const wearable = elements[i]
       const entity = entities[i]
-      if (entity) {
-        acc.push({
-          type: ON_CHAIN,
-          ...wearable,
-          entity: buildExplorerEntity(entity)
-        })
+      if (!entity) {
+        continue
       }
-      return acc
-    }, [])
+      result.push({
+        type: 'on-chain',
+        ...wearable,
+        entity
+      })
+    }
+    return result
   }
 
-  async function fetchThirdPartyWearables(thirdPartyCollectionIds: string[]): Promise<MixedThirdPartyWearable[]> {
-    if (thirdPartyCollectionIds.length === 0) {
+  async function fetchThirdPartyWearables(thirdPartyCollectionId: string[]): Promise<MixedThirdPartyWearable[]> {
+    if (thirdPartyCollectionId.length === 0) {
       const elements = await components.thirdPartyWearablesFetcher.fetchOwnedElements(address)
-      return elements.map((wearable: ThirdPartyWearable): MixedThirdPartyWearable => {
-        const entity = wearable.entity
-        return {
-          type: THIRD_PARTY,
-          ...wearable,
-          entity: buildExplorerEntity(entity)
-        }
-      })
+      return elements.map(
+        (wearable: ThirdPartyWearable): MixedThirdPartyWearable => ({
+          type: 'third-party',
+          ...wearable
+        })
+      )
+    } else {
+      const elements = await Promise.all(
+        thirdPartyCollectionId.map(async (thirdPartyCollectionId) => {
+          // Strip the last part (the 6th part) if a collection contract id is specified
+          const collectionIdCleaned = thirdPartyCollectionId.split(':').slice(0, 5).join(':')
+          const urn = await parseUrn(collectionIdCleaned)
+          if (!urn || urn.type !== 'blockchain-collection-third-party-name') {
+            return []
+          }
+
+          return (await fetchThirdPartyWearablesFromThirdPartyName(components, address, urn)).map(
+            (wearable: ThirdPartyWearable): MixedThirdPartyWearable => {
+              return {
+                type: 'third-party',
+                ...wearable
+              }
+            }
+          )
+        })
+      )
+      return elements.flat(1)
     }
-
-    const uniqueCollectionIds = Array.from(new Set(thirdPartyCollectionIds))
-
-    const validUrns = await Promise.all(
-      uniqueCollectionIds.map(async (collectionId) => {
-        const collectionIdCleaned = collectionId.split(':').slice(0, 5).join(':')
-        const urn = await parseUrn(collectionIdCleaned)
-        return urn && urn.type === 'blockchain-collection-third-party-name' ? urn : null
-      })
-    )
-
-    const filteredUrns = validUrns.filter((urn): urn is NonNullable<typeof urn> => urn !== null)
-
-    const allWearables = await Promise.all(
-      filteredUrns.map((urn) => fetchThirdPartyWearablesFromThirdPartyName(components, address, urn))
-    )
-
-    return allWearables.flat().map((wearable: ThirdPartyWearable): MixedThirdPartyWearable => {
-      const entity = wearable.entity
-      return {
-        type: THIRD_PARTY,
-        ...wearable,
-        entity: buildExplorerEntity(entity)
-      }
-    })
   }
 
   const [baseItems, nftItems, thirdPartyItems] = await Promise.all([
-    collectionTypes.includes(BASE_WEARABLE) ? fetchBaseWearables() : [],
-    collectionTypes.includes(ON_CHAIN) ? fetchOnChainWearables() : [],
-    collectionTypes.includes(THIRD_PARTY) ? fetchThirdPartyWearables(thirdPartyCollectionId) : []
+    collectionTypes.includes('base-wearable') ? fetchBaseWearables() : [],
+    collectionTypes.includes('on-chain') ? fetchOnChainWearables() : [],
+    collectionTypes.includes('third-party') ? fetchThirdPartyWearables(thirdPartyCollectionId) : []
   ])
 
   return [...baseItems, ...nftItems, ...thirdPartyItems]
@@ -203,7 +164,15 @@ export async function explorerHandler(
     sorting
   )
 
-  const results: MixedWearableResponse[] = page.elements.map((wearable) => ({ entity: wearable.entity }))
+  const results: MixedWearableResponse[] = []
+  for (const wearable of page.elements) {
+    if (wearable.type === 'on-chain') {
+      const { minTransferredAt, maxTransferredAt, ...clean } = wearable
+      results.push({ ...clean })
+    } else {
+      results.push(wearable)
+    }
+  }
 
   return {
     status: 200,

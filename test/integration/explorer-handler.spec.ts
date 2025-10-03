@@ -9,10 +9,9 @@ import {
   getThirdPartyProviders
 } from '../data/wearables'
 
-import { buildExplorerEntity, MixedBaseWearable, MixedOnChainWearable, MixedThirdPartyWearable } from '../../src/controllers/handlers/explorer-handler'
+import { MixedWearableResponse } from '../../src/controllers/handlers/explorer-handler'
 import { leastRareOptional, nameAZ, nameZA, rarestOptional } from '../../src/logic/sorting'
-import { BaseWearable } from '../../src/types'
-import { BASE_WEARABLE, ON_CHAIN, THIRD_PARTY } from '../../src/constants'
+import { BaseWearable, ThirdPartyAsset } from '../../src/types'
 import { createTheGraphComponentMock } from '../mocks/the-graph-mock'
 import { generateRandomAddress } from '../helpers'
 
@@ -166,7 +165,7 @@ testWithComponents(() => {
         ...convertedMixedBaseWearables,
         ...convertedMixedOnChainWearables,
         ...convertedMixedThirdPartyWearables
-      ].sort(rarestOptional).map((w) => ({ entity: (w as any).entity })),
+      ].sort(rarestOptional),
       pageNum: 1,
       pageSize: 100,
       totalAmount: baseWearables.length + onChainWearables.length + thirdPartyWearables.length
@@ -179,7 +178,7 @@ testWithComponents(() => {
         ...convertedMixedBaseWearables,
         ...convertedMixedOnChainWearables,
         ...convertedMixedThirdPartyWearables
-      ].sort(rarestOptional).map((w) => ({ entity: (w as any).entity })),
+      ].sort(rarestOptional),
       pageNum: 1,
       pageSize: 100,
       totalAmount: baseWearables.length + onChainWearables.length + thirdPartyWearables.length
@@ -192,7 +191,7 @@ testWithComponents(() => {
         ...convertedMixedBaseWearables,
         ...convertedMixedOnChainWearables,
         ...convertedMixedThirdPartyWearables
-      ].sort(leastRareOptional).map((w) => ({ entity: (w as any).entity })),
+      ].sort(leastRareOptional),
       pageNum: 1,
       pageSize: 100,
       totalAmount: baseWearables.length + onChainWearables.length + thirdPartyWearables.length
@@ -205,7 +204,7 @@ testWithComponents(() => {
         ...convertedMixedBaseWearables,
         ...convertedMixedOnChainWearables,
         ...convertedMixedThirdPartyWearables
-      ].sort(nameAZ).map((w) => ({ entity: (w as any).entity })),
+      ].sort(nameAZ),
       pageNum: 1,
       pageSize: 100,
       totalAmount: baseWearables.length + onChainWearables.length + thirdPartyWearables.length
@@ -218,7 +217,7 @@ testWithComponents(() => {
         ...convertedMixedBaseWearables,
         ...convertedMixedOnChainWearables,
         ...convertedMixedThirdPartyWearables
-      ].sort(nameZA).map((w) => ({ entity: (w as any).entity })),
+      ].sort(nameZA),
       pageNum: 1,
       pageSize: 100,
       totalAmount: baseWearables.length + onChainWearables.length + thirdPartyWearables.length
@@ -234,7 +233,7 @@ testWithComponents(() => {
         convertedMixedBaseWearables[1],
         convertedMixedOnChainWearables[0],
         convertedMixedOnChainWearables[1]
-      ].map((w) => ({ entity: (w as any).entity })), // sorting is hard-coded here as we can not sort on mixed items because they don't have minTransferredAt / maxTransferredAt
+      ], // sorting is hard-coded here as we can not sort on mixed items because they don't have minTransferredAt / maxTransferredAt
       pageNum: 1,
       pageSize: 100,
       totalAmount: baseWearables.length + onChainWearables.length + thirdPartyWearables.length
@@ -250,7 +249,7 @@ testWithComponents(() => {
         convertedMixedThirdPartyWearables[1],
         convertedMixedBaseWearables[0],
         convertedMixedBaseWearables[1]
-      ].map((w) => ({ entity: (w as any).entity })), // sorting is hard-coded here as we can not sort on mixed items because they don't have minTransferredAt / maxTransferredAt
+      ], // sorting is hard-coded here as we can not sort on mixed items because they don't have minTransferredAt / maxTransferredAt
       pageNum: 1,
       pageSize: 100,
       totalAmount: baseWearables.length + onChainWearables.length + thirdPartyWearables.length
@@ -259,7 +258,7 @@ testWithComponents(() => {
     const r9 = await localFetch.fetch(`/explorer/${wallet}/wearables?name=1`)
     expect(r9.status).toBe(200)
     expect(await r9.json()).toEqual({
-      elements: [convertedMixedOnChainWearables[1], convertedMixedThirdPartyWearables[1]].map((w) => ({ entity: (w as any).entity })),
+      elements: [convertedMixedOnChainWearables[1], convertedMixedThirdPartyWearables[1]],
       pageNum: 1,
       pageSize: 100,
       totalAmount: 2
@@ -268,7 +267,7 @@ testWithComponents(() => {
     const r10 = await localFetch.fetch(`/explorer/${wallet}/wearables?category=eyewear`)
     expect(r10.status).toBe(200)
     expect(await r10.json()).toEqual({
-      elements: [convertedMixedOnChainWearables[0], convertedMixedOnChainWearables[1]].map((w) => ({ entity: (w as any).entity })),
+      elements: [convertedMixedOnChainWearables[0], convertedMixedOnChainWearables[1]],
       pageNum: 1,
       pageSize: 100,
       totalAmount: 2
@@ -282,7 +281,7 @@ testWithComponents(() => {
         convertedMixedThirdPartyWearables[1],
         convertedMixedBaseWearables[0],
         convertedMixedBaseWearables[1]
-      ].map((w) => ({ entity: (w as any).entity })),
+      ],
       pageNum: 1,
       pageSize: 100,
       totalAmount: 4
@@ -291,7 +290,7 @@ testWithComponents(() => {
     const r12 = await localFetch.fetch(`/explorer/${wallet}/wearables?rarity=unique`)
     expect(r12.status).toBe(200)
     expect(await r12.json()).toEqual({
-      elements: [convertedMixedOnChainWearables[0], convertedMixedOnChainWearables[1]].map((w) => ({ entity: (w as any).entity })),
+      elements: [convertedMixedOnChainWearables[0], convertedMixedOnChainWearables[1]],
       pageNum: 1,
       pageSize: 100,
       totalAmount: 2
@@ -302,11 +301,11 @@ testWithComponents(() => {
 function convertToMixedBaseWearableResponse(
   wearables: BaseWearable[],
   contentInfo: ContentInfo
-): MixedBaseWearable[] {
-  return wearables.map((wearable): MixedBaseWearable => {
+): MixedWearableResponse[] {
+  return wearables.map((wearable): MixedWearableResponse => {
     const entity = contentInfo.entities.find((def) => def.id === wearable.urn)
     return {
-      type: BASE_WEARABLE,
+      type: 'base-wearable',
       urn: wearable.urn,
       amount: 1,
       individualData: [
@@ -316,7 +315,7 @@ function convertToMixedBaseWearableResponse(
       ],
       category: wearable.category,
       name: wearable.name,
-      entity: buildExplorerEntity(entity)
+      entity
     }
   })
 }
@@ -324,8 +323,8 @@ function convertToMixedBaseWearableResponse(
 function convertToMixedOnChainWearableResponse(
   wearables: WearableFromQuery[],
   { entities }: ContentInfo
-): MixedOnChainWearable[] {
-  return wearables.map((wearable): MixedOnChainWearable => {
+): MixedWearableResponse[] {
+  return wearables.map((wearable): MixedWearableResponse => {
     const individualData = {
       id: `${wearable.urn}:${wearable.tokenId}`,
       tokenId: wearable.tokenId,
@@ -336,25 +335,23 @@ function convertToMixedOnChainWearableResponse(
     const entity = entities.find((def) => def.id === wearable.urn)
 
     return {
-      type: ON_CHAIN,
+      type: 'on-chain',
       urn: wearable.urn,
       amount: 1,
       individualData: [individualData],
       rarity,
-      minTransferredAt: wearable.transferredAt,
-      maxTransferredAt: wearable.transferredAt,
       category: wearable.metadata.wearable.category,
       name: wearable.metadata.wearable.name,
-      entity: buildExplorerEntity(entity)
+      entity
     }
   })
 }
 
-function convertToMixedThirdPartyWearableResponse(wearables: any[], { entities }: ContentInfo): MixedThirdPartyWearable[] {
+function convertToMixedThirdPartyWearableResponse(wearables: any[], { entities }: ContentInfo): any[] {
   return wearables.map((wearable): any => {
     const entity = entities.find((def) => def.id === wearable.urn.decentraland)
     return {
-      type: THIRD_PARTY,
+      type: 'third-party',
       urn: wearable.urn.decentraland,
       amount: 1,
       individualData: [
@@ -365,7 +362,7 @@ function convertToMixedThirdPartyWearableResponse(wearables: any[], { entities }
       ],
       category: entity.metadata.data.category,
       name: entity.metadata.name,
-      entity: buildExplorerEntity(entity)
+      entity
     }
   })
 }
