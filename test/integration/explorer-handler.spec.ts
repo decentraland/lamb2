@@ -9,10 +9,9 @@ import {
   getThirdPartyProviders
 } from '../data/wearables'
 
-import { MixedBaseWearable, MixedOnChainWearable, MixedThirdPartyWearable } from '../../src/controllers/handlers/explorer-handler'
+import { MixedWearableResponse, MixedWearableTrimmedResponse } from '../../src/controllers/handlers/explorer-handler'
 import { leastRareOptional, nameAZ, nameZA, rarestOptional } from '../../src/logic/sorting'
-import { BaseWearable } from '../../src/types'
-import { BASE_WEARABLE, ON_CHAIN, THIRD_PARTY } from '../../src/constants'
+import { BaseWearable, ThirdPartyAsset } from '../../src/types'
 import { createTheGraphComponentMock } from '../mocks/the-graph-mock'
 import { generateRandomAddress } from '../helpers'
 
@@ -330,9 +329,9 @@ testWithComponents(() => {
     expect(response.elements).toHaveLength(3)
 
     for (const element of response.elements) {
-      // Verify it has the trimmed structure: only type and entity
-      expect(element).toHaveProperty('type')
+      // Verify it has the trimmed structure: only entity
       expect(element).toHaveProperty('entity')
+      expect(Object.keys(element)).toEqual(['entity'])
 
       // Verify the entity is an ExplorerWearableEntity
       expect(element.entity).toHaveProperty('id')
@@ -349,14 +348,6 @@ testWithComponents(() => {
       expect(element.entity).not.toHaveProperty('pointers')
       expect(element.entity).not.toHaveProperty('timestamp')
       expect(element.entity).not.toHaveProperty('content')
-
-      // Verify it's NOT a full wearable object (should not have these properties)
-      expect(element).not.toHaveProperty('urn')
-      expect(element).not.toHaveProperty('amount')
-      expect(element).not.toHaveProperty('individualData')
-      expect(element).not.toHaveProperty('name')
-      expect(element).not.toHaveProperty('category')
-      expect(element).not.toHaveProperty('rarity')
     }
   })
 
@@ -476,12 +467,10 @@ testWithComponents(() => {
 
     expect(r.status).toBe(200)
     const response = await r.json()
-    expect(response.elements[0]).toHaveProperty('type')
     expect(response.elements[0]).toHaveProperty('entity')
+    expect(Object.keys(response.elements[0])).toEqual(['entity'])
     expect(response.elements[0].entity).toHaveProperty('metadata')
     expect(response.elements[0].entity).not.toHaveProperty('version')
-    expect(response.elements[0]).not.toHaveProperty('urn')
-    expect(response.elements[0]).not.toHaveProperty('amount')
   })
 
   it('sort trimmed responses correctly', async () => {
@@ -510,8 +499,8 @@ testWithComponents(() => {
     expect(response1.elements).toHaveLength(3)
     // Verify all elements have the trimmed structure
     for (const element of response1.elements) {
-      expect(element).toHaveProperty('type')
       expect(element).toHaveProperty('entity')
+      expect(Object.keys(element)).toEqual(['entity'])
       expect(element.entity).toHaveProperty('metadata')
     }
 
@@ -522,8 +511,8 @@ testWithComponents(() => {
     expect(response2.elements).toHaveLength(3)
     // Verify all elements have the trimmed structure
     for (const element of response2.elements) {
-      expect(element).toHaveProperty('type')
       expect(element).toHaveProperty('entity')
+      expect(Object.keys(element)).toEqual(['entity'])
       expect(element.entity).toHaveProperty('metadata')
     }
 
@@ -534,8 +523,8 @@ testWithComponents(() => {
     expect(response3.elements).toHaveLength(3)
     // Verify all elements have the trimmed structure
     for (const element of response3.elements) {
-      expect(element).toHaveProperty('type')
       expect(element).toHaveProperty('entity')
+      expect(Object.keys(element)).toEqual(['entity'])
       expect(element.entity).toHaveProperty('metadata')
     }
   })
@@ -619,11 +608,11 @@ testWithComponents(() => {
 function convertToMixedBaseWearableResponse(
   wearables: BaseWearable[],
   contentInfo: ContentInfo
-): MixedBaseWearable[] {
-  return wearables.map((wearable): MixedBaseWearable => {
+): MixedWearableResponse[] {
+  return wearables.map((wearable): MixedWearableResponse => {
     const entity = contentInfo.entities.find((def) => def.id === wearable.urn)
     return {
-      type: BASE_WEARABLE,
+      type: 'base-wearable',
       urn: wearable.urn,
       amount: 1,
       individualData: [
@@ -641,8 +630,8 @@ function convertToMixedBaseWearableResponse(
 function convertToMixedOnChainWearableResponse(
   wearables: WearableFromQuery[],
   { entities }: ContentInfo
-): MixedOnChainWearable[] {
-  return wearables.map((wearable): MixedOnChainWearable => {
+): MixedWearableResponse[] {
+  return wearables.map((wearable): MixedWearableResponse => {
     const individualData = {
       id: `${wearable.urn}:${wearable.tokenId}`,
       tokenId: wearable.tokenId,
@@ -653,13 +642,11 @@ function convertToMixedOnChainWearableResponse(
     const entity = entities.find((def) => def.id === wearable.urn)
 
     return {
-      type: ON_CHAIN,
+      type: 'on-chain',
       urn: wearable.urn,
       amount: 1,
       individualData: [individualData],
       rarity,
-      minTransferredAt: wearable.transferredAt,
-      maxTransferredAt: wearable.transferredAt,
       category: wearable.metadata.wearable.category,
       name: wearable.metadata.wearable.name,
       entity: entity
@@ -667,11 +654,11 @@ function convertToMixedOnChainWearableResponse(
   })
 }
 
-function convertToMixedThirdPartyWearableResponse(wearables: any[], { entities }: ContentInfo): MixedThirdPartyWearable[] {
-  return wearables.map((wearable): any => {
+function convertToMixedThirdPartyWearableResponse(wearables: any[], { entities }: ContentInfo): MixedWearableResponse[] {
+  return wearables.map((wearable): MixedWearableResponse => {
     const entity = entities.find((def) => def.id === wearable.urn.decentraland)
     return {
-      type: THIRD_PARTY,
+      type: 'third-party',
       urn: wearable.urn.decentraland,
       amount: wearable.amount,
       individualData: [
