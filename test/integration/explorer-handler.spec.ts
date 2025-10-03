@@ -427,7 +427,7 @@ testWithComponents(() => {
     }
   })
 
-  it('handle trimmed parameter edge cases', async () => {
+  it('return full response when trimmed parameter has invalid value', async () => {
     const { content, fetch, localFetch, theGraph, baseWearablesFetcher, contentServerUrl, alchemyNftFetcher } =
       components
     const baseWearables = generateBaseWearables(1)
@@ -435,7 +435,64 @@ testWithComponents(() => {
 
     baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(baseWearables)
     content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
-      pointers.map((pointer) => entities.find((def) => def.id === pointer))
+      pointers.map((pointer) => entities.find((def) => def.id === pointer)).filter((e): e is Entity => e !== undefined)
+    )
+    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+    alchemyNftFetcher.getNFTsForOwner = jest.fn().mockResolvedValue([])
+    fetch.fetch = jest.fn().mockImplementation(() => {
+      return { ok: true, json: () => ({ assets: [] }) }
+    })
+
+    const wallet = generateRandomAddress()
+    const r = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=invalid`)
+
+    expect(r.status).toBe(200)
+    const response = await r.json()
+    expect(response.elements[0]).toHaveProperty('entity')
+    expect(response.elements[0].entity).toHaveProperty('version')
+    expect(response.elements[0].entity).toHaveProperty('metadata')
+  })
+
+  it('return trimmed response when trimmed=1 parameter is provided', async () => {
+    const { content, fetch, localFetch, theGraph, baseWearablesFetcher, contentServerUrl, alchemyNftFetcher } =
+      components
+    const baseWearables = generateBaseWearables(1)
+    const entities = generateWearableEntities(baseWearables.map((wearable) => wearable.urn))
+
+    baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(baseWearables)
+    content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
+      pointers.map((pointer) => entities.find((def) => def.id === pointer)).filter((e): e is Entity => e !== undefined)
+    )
+    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+    alchemyNftFetcher.getNFTsForOwner = jest.fn().mockResolvedValue([])
+    fetch.fetch = jest.fn().mockImplementation(() => {
+      return { ok: true, json: () => ({ assets: [] }) }
+    })
+
+    const wallet = generateRandomAddress()
+    const r = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=1`)
+
+    expect(r.status).toBe(200)
+    const response = await r.json()
+    expect(response.elements[0]).toHaveProperty('type')
+    expect(response.elements[0]).toHaveProperty('entity')
+    expect(response.elements[0].entity).toHaveProperty('metadata')
+    expect(response.elements[0].entity).not.toHaveProperty('version')
+    expect(response.elements[0]).not.toHaveProperty('urn')
+    expect(response.elements[0]).not.toHaveProperty('amount')
+  })
+
+  it('sort trimmed responses correctly', async () => {
+    const { content, fetch, localFetch, theGraph, baseWearablesFetcher, contentServerUrl, alchemyNftFetcher } =
+      components
+    const baseWearables = generateBaseWearables(3)
+    const entities = generateWearableEntities(baseWearables.map((wearable) => wearable.urn))
+
+    baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(baseWearables)
+    content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
+      pointers.map((pointer) => entities.find((def) => def.id === pointer)).filter((e): e is Entity => e !== undefined)
     )
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
@@ -446,43 +503,41 @@ testWithComponents(() => {
 
     const wallet = generateRandomAddress()
 
-    // Test with trimmed=true
-    const r1 = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=true`)
+    // Test sorting by name (ASC) with trimmed responses
+    const r1 = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=true&orderBy=name&direction=asc`)
     expect(r1.status).toBe(200)
     const response1 = await r1.json()
-    expect(response1.elements[0]).toHaveProperty('type')
-    expect(response1.elements[0]).toHaveProperty('entity')
-    expect(response1.elements[0].entity).toHaveProperty('metadata')
-    expect(response1.elements[0].entity).not.toHaveProperty('version')
-    expect(response1.elements[0]).not.toHaveProperty('urn')
-    expect(response1.elements[0]).not.toHaveProperty('amount')
+    expect(response1.elements).toHaveLength(3)
+    // Verify all elements have the trimmed structure
+    for (const element of response1.elements) {
+      expect(element).toHaveProperty('type')
+      expect(element).toHaveProperty('entity')
+      expect(element.entity).toHaveProperty('metadata')
+    }
 
-    // Test with trimmed=false
-    const r2 = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=false`)
+    // Test sorting by rarity (DESC) with trimmed responses
+    const r2 = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=true&orderBy=rarity&direction=desc`)
     expect(r2.status).toBe(200)
     const response2 = await r2.json()
-    expect(response2.elements[0]).toHaveProperty('entity')
-    expect(response2.elements[0].entity).toHaveProperty('version')
-    expect(response2.elements[0].entity).toHaveProperty('metadata')
+    expect(response2.elements).toHaveLength(3)
+    // Verify all elements have the trimmed structure
+    for (const element of response2.elements) {
+      expect(element).toHaveProperty('type')
+      expect(element).toHaveProperty('entity')
+      expect(element.entity).toHaveProperty('metadata')
+    }
 
-    // Test with invalid trimmed value (should default to false)
-    const r3 = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=invalid`)
+    // Test sorting by date (DESC) with trimmed responses
+    const r3 = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=true&orderBy=date&direction=desc`)
     expect(r3.status).toBe(200)
     const response3 = await r3.json()
-    expect(response3.elements[0]).toHaveProperty('entity')
-    expect(response3.elements[0].entity).toHaveProperty('version')
-    expect(response3.elements[0].entity).toHaveProperty('metadata')
-
-    // Test with trimmed=1 (should be treated as truthy)
-    const r4 = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=1`)
-    expect(r4.status).toBe(200)
-    const response4 = await r4.json()
-    expect(response4.elements[0]).toHaveProperty('type')
-    expect(response4.elements[0]).toHaveProperty('entity')
-    expect(response4.elements[0].entity).toHaveProperty('metadata')
-    expect(response4.elements[0].entity).not.toHaveProperty('version')
-    expect(response4.elements[0]).not.toHaveProperty('urn')
-    expect(response4.elements[0]).not.toHaveProperty('amount')
+    expect(response3.elements).toHaveLength(3)
+    // Verify all elements have the trimmed structure
+    for (const element of response3.elements) {
+      expect(element).toHaveProperty('type')
+      expect(element).toHaveProperty('entity')
+      expect(element.entity).toHaveProperty('metadata')
+    }
   })
 
   it('maintain backward compatibility with existing API', async () => {

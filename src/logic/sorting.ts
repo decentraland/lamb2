@@ -1,5 +1,6 @@
 import { SORTED_RARITIES } from './utils'
 import { HasDate, HasName, HasRarity, HasUrn, InvalidRequestError, SortingFunction } from '../types'
+import { MixedWearableResponse, MixedWearableTrimmedResponse } from '../controllers/handlers/explorer-handler'
 
 function byUrn(item1: HasUrn, item2: HasUrn): number {
   return item1.urn.localeCompare(item2.urn)
@@ -145,6 +146,143 @@ export function createCombinedSorting<T extends HasName>(url: URL): SortingFunct
     return oldestOptional
   } else if (sort === 'date' && direction === 'DESC') {
     return newestOptional
+  } else {
+    throw new InvalidRequestError(
+      `Invalid sorting requested: '${sort} ${direction}'. Valid options are '[rarity, name, date] [ASC, DESC]'.`
+    )
+  }
+}
+
+// Type guard to check if an item is a trimmed response
+function isTrimmedResponse(item: MixedWearableResponse): item is MixedWearableTrimmedResponse {
+  return item && typeof item === 'object' && 'entity' in item && !('name' in item)
+}
+
+// Helper function to get URN from either trimmed or non-trimmed response
+function getUrn(item: MixedWearableResponse): string {
+  if (isTrimmedResponse(item)) {
+    return item.entity.id
+  }
+  return (item as any).urn || (item as any).id || ''
+}
+
+// Helper function to get name from either trimmed or non-trimmed response
+function getName(item: MixedWearableResponse): string {
+  if (isTrimmedResponse(item)) {
+    // For trimmed responses, we don't have direct name access
+    // We'll use the entity ID as a fallback for sorting
+    return item.entity.id
+  }
+  return (item as any).name || ''
+}
+
+// Helper function to get rarity from either trimmed or non-trimmed response
+function getRarity(item: MixedWearableResponse): string | undefined {
+  if (isTrimmedResponse(item)) {
+    return item.entity.metadata.rarity
+  }
+  return (item as any).rarity
+}
+
+// Universal sorting functions that work with both trimmed and non-trimmed responses
+export function universalNameAZ(item1: MixedWearableResponse, item2: MixedWearableResponse): number {
+  const name1: string = getName(item1)
+  const name2: string = getName(item2)
+  const result: number = name1.localeCompare(name2)
+  if (result !== 0) {
+    return result
+  }
+
+  // Fallback to URN comparison
+  const urn1: string = getUrn(item1)
+  const urn2: string = getUrn(item2)
+  return urn1.localeCompare(urn2)
+}
+
+export function universalNameZA(item1: MixedWearableResponse, item2: MixedWearableResponse): number {
+  return 0 - universalNameAZ(item1, item2)
+}
+
+export function universalRarest(item1: MixedWearableResponse, item2: MixedWearableResponse): number {
+  const rarity1: string | undefined = getRarity(item1)
+  const rarity2: string | undefined = getRarity(item2)
+
+  if (!rarity1 && !rarity2) {
+    return getUrn(item1).localeCompare(getUrn(item2))
+  } else if (!rarity1) {
+    return 1
+  } else if (!rarity2) {
+    return -1
+  }
+
+  const w1RarityValue: number = SORTED_RARITIES.findIndex((rarity) => rarity === rarity1)
+  const w2RarityValue: number = SORTED_RARITIES.findIndex((rarity) => rarity === rarity2)
+  const result: number = w2RarityValue - w1RarityValue
+
+  if (result !== 0) {
+    return result
+  }
+
+  // Fallback to URN comparison
+  return getUrn(item1).localeCompare(getUrn(item2))
+}
+
+export function universalLeastRare(item1: MixedWearableResponse, item2: MixedWearableResponse): number {
+  return 0 - universalRarest(item1, item2)
+}
+
+// For date sorting, trimmed responses don't have date information
+// So we'll only sort by URN for trimmed responses
+export function universalNewest(item1: MixedWearableResponse, item2: MixedWearableResponse): number {
+  if (isTrimmedResponse(item1) || isTrimmedResponse(item2)) {
+    // For trimmed responses, just sort by URN
+    return getUrn(item1).localeCompare(getUrn(item2))
+  }
+
+  // For non-trimmed responses, use the original date sorting
+  const date1: number = (item1 as any).maxTransferredAt || 0
+  const date2: number = (item2 as any).maxTransferredAt || 0
+  const result: number = date2 - date1
+  if (result !== 0) {
+    return result
+  }
+
+  return getUrn(item1).localeCompare(getUrn(item2))
+}
+
+export function universalOldest(item1: MixedWearableResponse, item2: MixedWearableResponse): number {
+  if (isTrimmedResponse(item1) || isTrimmedResponse(item2)) {
+    // For trimmed responses, just sort by URN
+    return getUrn(item1).localeCompare(getUrn(item2))
+  }
+
+  // For non-trimmed responses, use the original date sorting
+  const date1: number = (item1 as any).minTransferredAt || 0
+  const date2: number = (item2 as any).minTransferredAt || 0
+  const result: number = date1 - date2
+  if (result !== 0) {
+    return result
+  }
+
+  return getUrn(item1).localeCompare(getUrn(item2))
+}
+
+// Universal combined sorting function
+export function createUniversalSorting(url: URL): SortingFunction<MixedWearableResponse> {
+  const { sort, direction }: { sort: string; direction: string } = sortDirectionParams(url)
+
+  if (sort === 'rarity' && direction === 'ASC') {
+    return universalLeastRare
+  } else if (sort === 'rarity' && direction === 'DESC') {
+    return universalRarest
+  } else if (sort === 'name' && direction === 'ASC') {
+    return universalNameAZ
+  } else if (sort === 'name' && direction === 'DESC') {
+    return universalNameZA
+  } else if (sort === 'date' && direction === 'ASC') {
+    return universalOldest
+  } else if (sort === 'date' && direction === 'DESC') {
+    return universalNewest
   } else {
     throw new InvalidRequestError(
       `Invalid sorting requested: '${sort} ${direction}'. Valid options are '[rarity, name, date] [ASC, DESC]'.`
