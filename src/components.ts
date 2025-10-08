@@ -30,7 +30,7 @@ import { metricDeclarations } from './metrics'
 import { createFetchComponent } from './ports/fetch'
 import { createOwnershipCachesComponent } from './ports/ownership-caches'
 import { createTheGraphComponent, TheGraphComponent } from './ports/the-graph'
-import { AppComponents, BaseWearable, ThirdPartyWearable, GlobalContext } from './types'
+import { AppComponents, BaseWearable, GlobalContext } from './types'
 import { createThirdPartyProvidersGraphFetcherComponent } from './adapters/third-party-providers-graph-fetcher'
 import { createThirdPartyProvidersStorage } from './logic/third-party-providers-storage'
 import { createProfilesComponent } from './adapters/profiles'
@@ -40,6 +40,8 @@ import { createMarketplaceApiFetcher } from './adapters/marketplace-api-fetcher'
 import { createThirdPartyContractRegistry } from './ports/ownership-checker/third-party-contract-registry'
 import { createThirdPartyItemChecker } from './ports/ownership-checker/third-party-item-checker'
 import { createParcelRightsComponent } from './adapters/parcel-rights-fetcher'
+import { fetchNameOwner } from './logic/fetch-elements/fetch-name-owner'
+import { fetchAllPermissions } from './logic/fetch-elements/fetch-permissions'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -77,7 +79,8 @@ export async function initComponents(
     contentServerUrl
   })
 
-  const entitiesFetcher = await createEntitiesFetcherComponent({ config, logs, content })
+  // TODO: use content client for collection items fetching. prevent injecting contentServerUrl and fetch components.
+  const entitiesFetcher = await createEntitiesFetcherComponent({ config, logs, content, contentServerUrl, fetch })
 
   // Create marketplace API fetcher for primary data source
   const marketplaceApiFetcher = await createMarketplaceApiFetcher({ config, fetch, logs })
@@ -103,6 +106,11 @@ export async function initComponents(
   const namesFetcher = createElementsFetcherComponent({ logs, theGraph, marketplaceApiFetcher }, fetchNames)
 
   const landsFetcher = createLegacyElementsFetcherComponent({ logs }, async (address) => fetchLands(theGraph, address))
+
+  const landsPermissionsFetcher = createElementsFetcherComponent({ logs, theGraph }, async (_deps, address) => {
+    const elements = await fetchAllPermissions({ theGraph }, address)
+    return { elements, totalAmount: elements.length }
+  })
 
   const resourcesStatusCheck = createResourcesStatusComponent({ logs })
   const status = await createStatusComponent({ logs, fetch })
@@ -148,11 +156,12 @@ export async function initComponents(
     logs,
     thirdPartyProvidersGraphFetcher
   })
-  const thirdPartyWearablesFetcher = createElementsFetcherComponent<ThirdPartyWearable>(
+
+  const thirdPartyWearablesFetcher = createElementsFetcherComponent(
     { logs, theGraph, marketplaceApiFetcher },
     async (_deps, address) => {
       const elements = await fetchAllThirdPartyWearables(
-        { alchemyNftFetcher, contentServerUrl, thirdPartyProvidersStorage, fetch, logs, entitiesFetcher, metrics },
+        { alchemyNftFetcher, contentServerUrl, thirdPartyProvidersStorage, fetch, entitiesFetcher, metrics },
         address
       )
       return { elements, totalAmount: elements.length }
@@ -160,6 +169,11 @@ export async function initComponents(
   )
 
   const alchemyNftFetcher = await createAlchemyNftFetcher({ config, logs, fetch })
+
+  const nameOwnerFetcher = createElementsFetcherComponent({ logs, theGraph }, async (_deps, name) => {
+    const { owner } = await fetchNameOwner({ theGraph }, name)
+    return { elements: owner ? [{ owner }] : [], totalAmount: owner ? 1 : 0 }
+  })
 
   const profiles = await createProfilesComponent({
     alchemyNftFetcher,
@@ -199,6 +213,7 @@ export async function initComponents(
     emotesFetcher,
     namesFetcher,
     landsFetcher,
+    landsPermissionsFetcher,
     parcelRightsFetcher,
     thirdPartyProvidersGraphFetcher,
     thirdPartyProvidersStorage,
@@ -214,6 +229,7 @@ export async function initComponents(
     alchemyNftFetcher,
     l1ThirdPartyItemChecker,
     l2ThirdPartyItemChecker,
-    marketplaceApiFetcher
+    marketplaceApiFetcher,
+    nameOwnerFetcher
   }
 }

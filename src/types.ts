@@ -65,6 +65,7 @@ export type BaseComponents = {
   entitiesFetcher: EntitiesFetcher
   namesFetcher: ElementsFetcher<Name>
   landsFetcher: LegacyElementsFetcher<LAND>
+  landsPermissionsFetcher: ElementsFetcher<LandPermission>
   parcelRightsFetcher: ParcelRightsFetcher
   resourcesStatusCheck: IResourcesStatusComponent
   status: IStatusComponent
@@ -78,6 +79,7 @@ export type BaseComponents = {
   l1ThirdPartyItemChecker: ThirdPartyItemChecker
   l2ThirdPartyItemChecker: ThirdPartyItemChecker
   marketplaceApiFetcher?: MarketplaceApiFetcher
+  nameOwnerFetcher: ElementsFetcher<NameOwner>
 }
 
 // components used in runtime
@@ -183,6 +185,14 @@ export type LAND = {
   description?: string
   price?: string
   image?: string
+}
+
+export type LandPermission = {
+  id: string
+  x: string
+  y: string
+  owner: string
+  updateOperator: string
 }
 
 export type PaginatedResponse<T> = {
@@ -301,4 +311,27 @@ export type WearableSorting = BaseWearableSorting & OnChainWearableSorting & Thi
 
 export type TypedEntity<T> = Omit<Entity, 'metadata'> & {
   metadata?: T
+}
+
+export type NameOwner = {
+  owner: string | null
+}
+
+export type ExplorerWearableRepresentation = {
+  bodyShapes: string[]
+}
+
+export type ExplorerWearableMetadata = {
+  id: string
+  rarity?: Rarity
+  data: {
+    category: WearableCategory
+    representations: ExplorerWearableRepresentation[]
+  }
+}
+
+export type ExplorerWearableEntity = {
+  id: string
+  thumbnail?: string
+  metadata: ExplorerWearableMetadata
 }

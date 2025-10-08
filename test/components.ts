@@ -13,6 +13,7 @@ import {
 } from '../src/adapters/definitions-fetcher'
 import { createElementsFetcherComponent } from '../src/adapters/elements-fetcher'
 import { createEntitiesFetcherComponent } from '../src/adapters/entities-fetcher'
+import { createOwnershipCachesComponent } from '../src/ports/ownership-caches'
 import { initComponents as originalInitComponents } from '../src/components'
 import { fetchEmotes, fetchWearables } from '../src/logic/fetch-elements/fetch-items'
 import { fetchNames } from '../src/logic/fetch-elements/fetch-names'
@@ -130,9 +131,9 @@ async function initComponents(
     fetchNames
   )
 
-  const entitiesFetcher = await createEntitiesFetcherComponent({ config, logs, content })
-
   const contentServerUrl = 'baseUrl'
+
+  const entitiesFetcher = await createEntitiesFetcherComponent({ config, logs, content, contentServerUrl, fetch })
 
   const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent({
     config,
@@ -159,7 +160,6 @@ async function initComponents(
           alchemyNftFetcher,
           thirdPartyProvidersStorage: components.thirdPartyProvidersStorage,
           fetch,
-          logs,
           entitiesFetcher
         },
         address
@@ -171,11 +171,14 @@ async function initComponents(
     }
   )
 
+  const ownershipCaches = await createOwnershipCachesComponent({ config })
+
   const result: any = {
     ...components,
     alchemyNftFetcher,
     config,
     metrics,
+    ownershipCaches,
     localFetch: await createLocalFetchCompoment(config),
     theGraph: theGraphMock,
     content,
