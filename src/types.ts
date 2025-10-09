@@ -55,6 +55,7 @@ export type BaseComponents = {
   ownershipCaches: OwnershipCachesComponent
   baseWearablesFetcher: ElementsFetcher<BaseWearable>
   wearablesFetcher: ElementsFetcher<OnChainWearable>
+  smartWearablesFetcher: ElementsFetcher<OnChainWearable>
   thirdPartyProvidersGraphFetcher: ThirdPartyProvidersGraphFetcher
   thirdPartyProvidersStorage: ThirdPartyProvidersStorage
   thirdPartyWearablesFetcher: ElementsFetcher<ThirdPartyWearable>

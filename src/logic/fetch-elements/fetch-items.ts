@@ -40,11 +40,22 @@ function groupItemsByURN<
   return Array.from(itemsByURN.values())
 }
 
-type ItemCategory = 'wearable' | 'emote'
+type ItemCategory = 'wearable' | 'emote' | 'smartWearable'
 
 function createQueryForCategory(category: ItemCategory) {
-  const itemTypeFilter =
-    category === 'wearable' ? `itemType_in: [wearable_v1, wearable_v2, smart_wearable_v1]` : `itemType: emote_v1`
+  let itemTypeFilter: string
+  switch (category) {
+    case 'wearable':
+      itemTypeFilter = `itemType_in: [wearable_v1, wearable_v2, smart_wearable_v1]`
+      break
+    case 'smartWearable':
+      itemTypeFilter = `itemType: smart_wearable_v1`
+      break
+    default:
+      itemTypeFilter = `itemType: emote_v1`
+      break
+  }
+
   return `query fetchItemsByOwner($owner: String, $idFrom: ID) {
     nfts(
       where: { id_gt: $idFrom, owner_: {address: $owner}, ${itemTypeFilter}},
@@ -58,7 +69,7 @@ function createQueryForCategory(category: ItemCategory) {
       category,
       transferredAt,
       metadata {
-        ${category} {
+        ${category === 'smartWearable' ? 'wearable' : category} {
           name,
           category
         }
@@ -73,7 +84,8 @@ function createQueryForCategory(category: ItemCategory) {
 
 const QUERIES: Record<ItemCategory, string> = {
   emote: createQueryForCategory('emote'),
-  wearable: createQueryForCategory('wearable')
+  wearable: createQueryForCategory('wearable'),
+  smartWearable: createQueryForCategory('smartWearable')
 }
 
 type ItemFromQuery = {
@@ -139,6 +151,26 @@ export async function fetchAllWearables(
   )
   return groupItemsByURN<WearableFromQuery, WearableFromQuery['metadata']['wearable']>(
     ethereumWearables.concat(maticWearables),
+    (wearable) => wearable.metadata.wearable
+  ).sort(compareByRarity)
+}
+
+export async function fetchAllSmartWearables(
+  components: Pick<AppComponents, 'theGraph'>,
+  owner: string
+): Promise<OnChainWearable[]> {
+  const ethereumSmartWearables = await fetchAllNFTs<WearableFromQuery>(
+    components.theGraph.ethereumCollectionsSubgraph,
+    QUERIES['smartWearable'],
+    owner
+  )
+  const maticSmartWearables = await fetchAllNFTs<WearableFromQuery>(
+    components.theGraph.maticCollectionsSubgraph,
+    QUERIES['smartWearable'],
+    owner
+  )
+  return groupItemsByURN<WearableFromQuery, WearableFromQuery['metadata']['wearable']>(
+    ethereumSmartWearables.concat(maticSmartWearables),
     (wearable) => wearable.metadata.wearable
   ).sort(compareByRarity)
 }

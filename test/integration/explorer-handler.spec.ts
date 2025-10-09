@@ -6,6 +6,8 @@ import {
   generateThirdPartyWearables,
   generateWearableEntities,
   generateWearables,
+  generateSmartWearables,
+  generateSmartWearableEntities,
   getThirdPartyProviders
 } from '../data/wearables'
 
@@ -602,6 +604,191 @@ testWithComponents(() => {
       expect(element).not.toHaveProperty('minTransferredAt')
       expect(element).not.toHaveProperty('maxTransferredAt')
     }
+  })
+
+  it('return only smart wearables when smartWearables=true parameter is provided', async () => {
+    const { content, fetch, localFetch, theGraph, baseWearablesFetcher, contentServerUrl, alchemyNftFetcher } =
+      components
+    const baseWearables = generateBaseWearables(2)
+    const smartWearables = generateSmartWearables(3) // Generate 3 smart wearables
+    const thirdPartyWearables = generateThirdPartyWearables(2)
+
+    // Create entities for all wearables
+    const allEntities = [
+      ...generateWearableEntities(baseWearables.map((wearable) => wearable.urn)),
+      ...generateSmartWearableEntities(smartWearables.map((wearable) => wearable.urn)),
+      ...generateWearableEntities(thirdPartyWearables.map((wearable) => wearable.urn.decentraland))
+    ]
+
+    alchemyNftFetcher.getNFTsForOwner = jest
+      .fn()
+      .mockResolvedValue(thirdPartyWearables.map((wearable) => wearable.urn.decentraland))
+    baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(baseWearables)
+    content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
+      pointers.map((pointer) => allEntities.find((def) => def.id === pointer))
+    )
+    // Return the smart wearables
+    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: smartWearables })
+    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+    fetch.fetch = jest.fn().mockImplementation((url) => {
+      if (url.includes('test-collection')) {
+        return {
+          ok: true,
+          json: () => ({
+            entities: allEntities.filter(entity =>
+              thirdPartyWearables.some(w => w.urn.decentraland === entity.id)
+            )
+          })
+        }
+      } else {
+        return { ok: true, json: () => ({ entities: [] }) }
+      }
+    })
+
+    const wallet = generateRandomAddress()
+    const r = await localFetch.fetch(`/explorer/${wallet}/wearables?smartWearables=true`)
+
+    expect(r.status).toBe(200)
+    const response = await r.json()
+
+    // Verify response structure
+    expect(response).toHaveProperty('elements')
+    expect(response).toHaveProperty('pageNum', 1)
+    expect(response).toHaveProperty('pageSize', 100)
+    expect(response).toHaveProperty('totalAmount', 3) // Should be 3 smart wearables
+
+    // Verify that only smart wearables are returned
+    expect(response.elements).toHaveLength(3)
+    for (const element of response.elements) {
+      expect(element).toHaveProperty('type', 'on-chain')
+      expect(element).toHaveProperty('urn')
+      expect(element).toHaveProperty('entity')
+      // Verify the entity has .js files
+      expect(element.entity.content.some((content: any) => content.file.endsWith('.js'))).toBe(true)
+    }
+  })
+
+  it('return only smart wearables when smartWearables=1 parameter is provided', async () => {
+    const { content, fetch, localFetch, theGraph, baseWearablesFetcher, contentServerUrl, alchemyNftFetcher } =
+      components
+    const baseWearables = generateBaseWearables(2)
+    const smartWearables = generateSmartWearables(3) // Generate 3 smart wearables
+    const thirdPartyWearables = generateThirdPartyWearables(2)
+
+    // Create entities for all wearables
+    const allEntities = [
+      ...generateWearableEntities(baseWearables.map((wearable) => wearable.urn)),
+      ...generateSmartWearableEntities(smartWearables.map((wearable) => wearable.urn)),
+      ...generateWearableEntities(thirdPartyWearables.map((wearable) => wearable.urn.decentraland))
+    ]
+
+    alchemyNftFetcher.getNFTsForOwner = jest
+      .fn()
+      .mockResolvedValue(thirdPartyWearables.map((wearable) => wearable.urn.decentraland))
+    baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(baseWearables)
+    content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
+      pointers.map((pointer) => allEntities.find((def) => def.id === pointer))
+    )
+    // Return the smart wearables
+    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: smartWearables })
+    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+    fetch.fetch = jest.fn().mockImplementation((url) => {
+      if (url.includes('test-collection')) {
+        return {
+          ok: true,
+          json: () => ({
+            entities: allEntities.filter(entity =>
+              thirdPartyWearables.some(w => w.urn.decentraland === entity.id)
+            )
+          })
+        }
+      } else {
+        return { ok: true, json: () => ({ entities: [] }) }
+      }
+    })
+
+    const wallet = generateRandomAddress()
+    const r = await localFetch.fetch(`/explorer/${wallet}/wearables?smartWearables=1`)
+
+    expect(r.status).toBe(200)
+    const response = await r.json()
+
+    // Verify response structure
+    expect(response).toHaveProperty('elements')
+    expect(response).toHaveProperty('pageNum', 1)
+    expect(response).toHaveProperty('pageSize', 100)
+    expect(response).toHaveProperty('totalAmount', 3) // Should be 3 smart wearables
+
+    // Verify that only smart wearables are returned
+    expect(response.elements).toHaveLength(3)
+    for (const element of response.elements) {
+      expect(element).toHaveProperty('type', 'on-chain')
+      expect(element).toHaveProperty('urn')
+      expect(element).toHaveProperty('entity')
+      // Verify the entity has .js files
+      expect(element.entity.content.some((content: any) => content.file.endsWith('.js'))).toBe(true)
+    }
+  })
+
+  it('return all wearables when smartWearables=0, false, or not provided', async () => {
+    const { content, fetch, localFetch, theGraph, baseWearablesFetcher, contentServerUrl, alchemyNftFetcher } =
+      components
+    const baseWearables = generateBaseWearables(2)
+    const onChainWearables = generateWearables(3)
+    const smartWearables = generateSmartWearables(2)
+    const thirdPartyWearables = generateThirdPartyWearables(2)
+    const entities = [
+      ...generateWearableEntities(baseWearables.map((wearable) => wearable.urn)),
+      ...generateWearableEntities(onChainWearables.map((wearable) => wearable.urn)),
+      ...generateSmartWearableEntities(smartWearables.map((wearable) => wearable.urn)),
+      ...generateWearableEntities(thirdPartyWearables.map((wearable) => wearable.urn.decentraland))
+    ]
+
+    alchemyNftFetcher.getNFTsForOwner = jest
+      .fn()
+      .mockResolvedValue(thirdPartyWearables.map((wearable) => wearable.urn.decentraland))
+    baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(baseWearables)
+    content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
+      pointers.map((pointer) => entities.find((def) => def.id === pointer))
+    )
+    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: onChainWearables })
+    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: smartWearables })
+    fetch.fetch = jest.fn().mockImplementation((url) => {
+      if (url.includes('test-collection')) {
+        return {
+          ok: true,
+          json: () => ({
+            entities: generateWearableEntities(thirdPartyWearables.map((wearable) => wearable.urn.decentraland))
+          })
+        }
+      } else {
+        return { ok: true, json: () => ({ entities: [] }) }
+      }
+    })
+
+    const wallet = generateRandomAddress()
+
+    // Test with smartWearables=false
+    const r1 = await localFetch.fetch(`/explorer/${wallet}/wearables?smartWearables=false`)
+    expect(r1.status).toBe(200)
+    const response1 = await r1.json()
+
+    // Test with smartWearables=0
+    const r2 = await localFetch.fetch(`/explorer/${wallet}/wearables?smartWearables=0`)
+    expect(r2.status).toBe(200)
+    const response2 = await r2.json()
+
+    // Test without smartWearables parameter
+    const r3 = await localFetch.fetch(`/explorer/${wallet}/wearables`)
+    expect(r3.status).toBe(200)
+    const response3 = await r3.json()
+
+    // All responses should be identical and include all wearables
+    expect(response1).toEqual(response2)
+    expect(response2).toEqual(response3)
+    expect(response1.totalAmount).toBe(baseWearables.length + onChainWearables.length + smartWearables.length + thirdPartyWearables.length)
+    expect(response1.elements).toHaveLength(9)
+
   })
 })
 

@@ -49,13 +49,15 @@ async function fetchCombinedElements(
     | 'fetch'
     | 'baseWearablesFetcher'
     | 'wearablesFetcher'
+    | 'smartWearablesFetcher'
     | 'entitiesFetcher'
     | 'thirdPartyWearablesFetcher'
     | 'thirdPartyProvidersStorage'
   >,
   collectionTypes: string[],
   thirdPartyCollectionId: string[],
-  address: string
+  address: string,
+  smartWearablesOnly: boolean = false
 ): Promise<MixedWearable[]> {
   async function fetchBaseWearables() {
     const elements = await components.baseWearablesFetcher.fetchOwnedElements(address)
@@ -80,7 +82,10 @@ async function fetchCombinedElements(
   }
 
   async function fetchOnChainWearables(): Promise<MixedOnChainWearable[]> {
-    const elements = await components.wearablesFetcher.fetchOwnedElements(address)
+    const elements = smartWearablesOnly
+      ? await components.smartWearablesFetcher.fetchOwnedElements(address)
+      : await components.wearablesFetcher.fetchOwnedElements(address)
+
     if (!elements.length) {
       return []
     }
@@ -154,6 +159,7 @@ export async function explorerHandler(
     | 'fetch'
     | 'baseWearablesFetcher'
     | 'wearablesFetcher'
+    | 'smartWearablesFetcher'
     | 'thirdPartyWearablesFetcher'
     | 'entitiesFetcher'
     | 'thirdPartyProvidersStorage',
@@ -172,13 +178,15 @@ export async function explorerHandler(
     : []
   const trimmedParam = context.url.searchParams.get('trimmed')
   const isTrimmed = trimmedParam === 'true' || trimmedParam === '1'
+  const smartWearablesOnly = context.url.searchParams.get('smartWearables') === 'true'
 
   if (collectionTypes.some((type) => !VALID_COLLECTION_TYPES.includes(type))) {
     throw new InvalidRequestError(`Invalid collection type. Valid types are: ${VALID_COLLECTION_TYPES.join(', ')}.`)
   }
 
   const page = await fetchAndPaginate<MixedWearable>(
-    () => fetchCombinedElements(context.components, collectionTypes, thirdPartyCollectionIds, address),
+    () =>
+      fetchCombinedElements(context.components, collectionTypes, thirdPartyCollectionIds, address, smartWearablesOnly),
     pagination,
     filter,
     sorting

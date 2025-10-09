@@ -53,6 +53,30 @@ export function generateWearables(quantity: number): WearableFromQuery[] {
   return generatedWearables
 }
 
+export function generateSmartWearables(quantity: number): WearableFromQuery[] {
+  const generatedWearables = []
+  for (let i = 0; i < quantity; i++) {
+    generatedWearables.push({
+      urn: 'smart-urn-' + i,
+      id: 'smart-id-' + i,
+      tokenId: 'smart-tokenId-' + i,
+      category: 'wearable',
+      transferredAt: Date.now() - TWO_DAYS + i,
+      metadata: {
+        wearable: {
+          name: 'smart-name-' + i,
+          category: WearableCategory.EYEWEAR
+        }
+      },
+      item: {
+        rarity: 'unique',
+        price: 200 + i
+      }
+    })
+  }
+  return generatedWearables
+}
+
 const imageFileNameFor = (urn: string) => `imageFor${urn}`
 const thumbnailNameFor = (urn: string) => `thumbnailFor${urn}`
 
@@ -108,6 +132,23 @@ export function generateWearableEntity(urn: string): Entity {
 
 export function generateWearableEntities(urns: string[]): Entity[] {
   return urns.map(generateWearableEntity)
+}
+
+export function generateSmartWearableEntity(urn: string): Entity {
+  return {
+    ...generateWearableEntity(urn),
+    content: [
+      ...generateWearableEntity(urn).content,
+      {
+        file: 'script.js',
+        hash: 'smart-wearable-hash'
+      }
+    ]
+  }
+}
+
+export function generateSmartWearableEntities(urns: string[]): Entity[] {
+  return urns.map(generateSmartWearableEntity)
 }
 
 export function generateThirdPartyWearableEntity(urn: string): Entity {
