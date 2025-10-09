@@ -83,7 +83,7 @@ async function fetchCombinedElements(
 
   async function fetchOnChainWearables(): Promise<MixedOnChainWearable[]> {
     const elements = smartWearablesOnly
-      ? await components.smartWearablesFetcher.fetchOwnedElements(address)
+      ? await components.wearablesFetcher.fetchOwnedElements(address, { smartWearablesOnly: true })
       : await components.wearablesFetcher.fetchOwnedElements(address)
 
     if (!elements.length) {
@@ -146,9 +146,11 @@ async function fetchCombinedElements(
   }
 
   const [baseItems, nftItems, thirdPartyItems] = await Promise.all([
-    collectionTypes.includes(BASE_WEARABLE) ? fetchBaseWearables() : [],
-    collectionTypes.includes(ON_CHAIN) ? fetchOnChainWearables() : [],
-    collectionTypes.includes(THIRD_PARTY) ? fetchThirdPartyWearables(thirdPartyCollectionId) : []
+    smartWearablesOnly || !collectionTypes.includes(BASE_WEARABLE) ? Promise.resolve([]) : fetchBaseWearables(),
+    collectionTypes.includes(ON_CHAIN) ? fetchOnChainWearables() : Promise.resolve([]),
+    smartWearablesOnly || !collectionTypes.includes(THIRD_PARTY)
+      ? Promise.resolve([])
+      : fetchThirdPartyWearables(thirdPartyCollectionId)
   ])
 
   return [...baseItems, ...nftItems, ...thirdPartyItems]

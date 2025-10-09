@@ -90,8 +90,8 @@ export async function initComponents(
   const baseWearablesFetcher = createElementsFetcherComponent<BaseWearable>({ logs }, async (_address) =>
     fetchAllBaseWearables({ entitiesFetcher })
   )
-  const wearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllWearables({ theGraph }, address)
+  const wearablesFetcher = createElementsFetcherComponent({ logs }, async (address, options) =>
+    fetchAllWearables({ theGraph }, address, options)
   )
   const smartWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllSmartWearables({ theGraph }, address)

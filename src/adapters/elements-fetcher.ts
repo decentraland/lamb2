@@ -7,8 +7,12 @@ export type ElementsResult<T> = {
   totalAmount: number
 }
 
+export type FetchOptions = {
+  smartWearablesOnly?: boolean
+}
+
 export type ElementsFetcher<T> = IBaseComponent & {
-  fetchOwnedElements(address: string): Promise<T[]>
+  fetchOwnedElements(address: string, options?: FetchOptions): Promise<T[]>
 }
 
 export class FetcherError extends Error {
@@ -20,7 +24,7 @@ export class FetcherError extends Error {
 
 export function createElementsFetcherComponent<T>(
   { logs }: Pick<AppComponents, 'logs'>,
-  fetchAllOwnedElements: (address: string) => Promise<T[]>
+  fetchAllOwnedElements: (address: string, options?: FetchOptions) => Promise<T[]>
 ): ElementsFetcher<T> {
   const logger = logs.getLogger('elements-fetcher')
 
@@ -38,9 +42,25 @@ export function createElementsFetcherComponent<T>(
     }
   })
 
+  const smartWearablesCache = createLowerCaseKeysCache<T[]>({
+    max: 10000,
+    ttl: 600000, // 10 minutes
+    fetchMethod: async function (address: string, staleValue: T[] | undefined) {
+      try {
+        const es = await fetchAllOwnedElements(address, { smartWearablesOnly: true })
+        return es
+      } catch (err: any) {
+        logger.error(err)
+        return staleValue
+      }
+    }
+  })
+
   return {
-    async fetchOwnedElements(address: string) {
-      const allElements = await cache.fetch(address)
+    async fetchOwnedElements(address: string, options?: FetchOptions) {
+      const smartWearablesOnly = options?.smartWearablesOnly ?? false
+      const selectedCache = smartWearablesOnly ? smartWearablesCache : cache
+      const allElements = await selectedCache.fetch(address)
 
       if (allElements) {
         return allElements

@@ -137,16 +137,20 @@ export async function fetchAllEmotes(
 
 export async function fetchAllWearables(
   components: Pick<AppComponents, 'theGraph'>,
-  owner: string
+  owner: string,
+  options?: { smartWearablesOnly?: boolean }
 ): Promise<OnChainWearable[]> {
+  const smartWearablesOnly = options?.smartWearablesOnly ?? false
+  const queryType = smartWearablesOnly ? 'smartWearable' : 'wearable'
+
   const ethereumWearables = await fetchAllNFTs<WearableFromQuery>(
     components.theGraph.ethereumCollectionsSubgraph,
-    QUERIES['wearable'],
+    QUERIES[queryType],
     owner
   )
   const maticWearables = await fetchAllNFTs<WearableFromQuery>(
     components.theGraph.maticCollectionsSubgraph,
-    QUERIES['wearable'],
+    QUERIES[queryType],
     owner
   )
   return groupItemsByURN<WearableFromQuery, WearableFromQuery['metadata']['wearable']>(

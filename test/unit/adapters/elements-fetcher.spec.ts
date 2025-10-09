@@ -5,7 +5,7 @@ it('when fetch successes, it returns the elements', async () => {
   const logs = await createLogComponent({})
   const expectedElements = [1, 2, 3]
   const expectedAddress = 'anAddress'
-  const fetcher = createElementsFetcherComponent<number>({ logs }, async (address: string) => {
+  const fetcher = createElementsFetcherComponent<number>({ logs }, async (address: string, options?: { smartWearablesOnly?: boolean }) => {
     return expectedElements
   })
   const elements = await fetcher.fetchOwnedElements(expectedAddress)
@@ -23,7 +23,7 @@ it('it fetches the elements for the specified address', async () => {
     addressa: elementsA,
     addressb: elementsB
   }
-  const fetcher = createElementsFetcherComponent<number>({ logs }, async (address: string) => {
+  const fetcher = createElementsFetcherComponent<number>({ logs }, async (address: string, options?: { smartWearablesOnly?: boolean }) => {
     return elementsByAddress[address]
   })
 
@@ -34,7 +34,7 @@ it('it fetches the elements for the specified address', async () => {
 it('when fetches fail and there is no stale value, it throws error', async () => {
   const logs = await createLogComponent({})
   const expectedAddress = 'anAddress'
-  const fetcher = createElementsFetcherComponent<number>({ logs }, async (address: string) => {
+  const fetcher = createElementsFetcherComponent<number>({ logs }, async (address: string, options?: { smartWearablesOnly?: boolean }) => {
 
     throw new Error('an error happenned')
   })
@@ -47,7 +47,7 @@ it('result is cached (no case sensitive)', async () => {
   const logs = await createLogComponent({})
   const expectedAddress = 'anAddress'
   let i = 0
-  const fetcher = createElementsFetcherComponent<number>({ logs }, async (address: string) => {
+  const fetcher = createElementsFetcherComponent<number>({ logs }, async (address: string, options?: { smartWearablesOnly?: boolean }) => {
     if (i === 0) {
       i++
       return [0]
@@ -58,4 +58,19 @@ it('result is cached (no case sensitive)', async () => {
   expect(await fetcher.fetchOwnedElements(expectedAddress)).toEqual([0])
   expect(await fetcher.fetchOwnedElements(expectedAddress.toUpperCase())).toEqual([0])
 
+})
+
+it('when smartWearablesOnly is true, it uses separate cache', async () => {
+  const logs = await createLogComponent({})
+  const expectedAddress = 'anAddress'
+  const regularElements = [1, 2, 3]
+  const smartWearableElements = [4, 5, 6]
+
+  const fetcher = createElementsFetcherComponent<number>({ logs }, async (address: string, options?: { smartWearablesOnly?: boolean }) => {
+    return options?.smartWearablesOnly ? smartWearableElements : regularElements
+  })
+
+  expect(await fetcher.fetchOwnedElements(expectedAddress)).toEqual(regularElements)
+  expect(await fetcher.fetchOwnedElements(expectedAddress, { smartWearablesOnly: true })).toEqual(smartWearableElements)
+  expect(await fetcher.fetchOwnedElements(expectedAddress)).toEqual(regularElements)
 })
