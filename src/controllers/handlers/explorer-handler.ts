@@ -178,7 +178,8 @@ export async function explorerHandler(
     : []
   const trimmedParam = context.url.searchParams.get('trimmed')
   const isTrimmed = trimmedParam === 'true' || trimmedParam === '1'
-  const smartWearablesOnly = context.url.searchParams.get('smartWearables') === 'true'
+  const isSmartWearableParam = context.url.searchParams.get('isSmartWearable')
+  const smartWearablesOnly = isSmartWearableParam === 'true' || isSmartWearableParam === '1'
 
   if (collectionTypes.some((type) => !VALID_COLLECTION_TYPES.includes(type))) {
     throw new InvalidRequestError(`Invalid collection type. Valid types are: ${VALID_COLLECTION_TYPES.join(', ')}.`)

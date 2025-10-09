@@ -606,7 +606,7 @@ testWithComponents(() => {
     }
   })
 
-  it('return only smart wearables when smartWearables=true parameter is provided', async () => {
+  it('return only smart wearables when isSmartWearable=true parameter is provided', async () => {
     const { content, fetch, localFetch, theGraph, baseWearablesFetcher, contentServerUrl, alchemyNftFetcher } =
       components
     const baseWearables = generateBaseWearables(2)
@@ -646,7 +646,7 @@ testWithComponents(() => {
     })
 
     const wallet = generateRandomAddress()
-    const r = await localFetch.fetch(`/explorer/${wallet}/wearables?smartWearables=true`)
+    const r = await localFetch.fetch(`/explorer/${wallet}/wearables?isSmartWearable=true`)
 
     expect(r.status).toBe(200)
     const response = await r.json()
@@ -668,7 +668,7 @@ testWithComponents(() => {
     }
   })
 
-  it('return only smart wearables when smartWearables=1 parameter is provided', async () => {
+  it('return only smart wearables when isSmartWearable=1 parameter is provided', async () => {
     const { content, fetch, localFetch, theGraph, baseWearablesFetcher, contentServerUrl, alchemyNftFetcher } =
       components
     const baseWearables = generateBaseWearables(2)
@@ -708,7 +708,7 @@ testWithComponents(() => {
     })
 
     const wallet = generateRandomAddress()
-    const r = await localFetch.fetch(`/explorer/${wallet}/wearables?smartWearables=1`)
+    const r = await localFetch.fetch(`/explorer/${wallet}/wearables?isSmartWearable=1`)
 
     expect(r.status).toBe(200)
     const response = await r.json()
@@ -730,7 +730,7 @@ testWithComponents(() => {
     }
   })
 
-  it('return all wearables when smartWearables=0, false, or not provided', async () => {
+  it('return all wearables when isSmartWearable=0, false, or not provided', async () => {
     const { content, fetch, localFetch, theGraph, baseWearablesFetcher, contentServerUrl, alchemyNftFetcher } =
       components
     const baseWearables = generateBaseWearables(2)
@@ -768,17 +768,17 @@ testWithComponents(() => {
 
     const wallet = generateRandomAddress()
 
-    // Test with smartWearables=false
-    const r1 = await localFetch.fetch(`/explorer/${wallet}/wearables?smartWearables=false`)
+    // Test with isSmartWearables=false
+    const r1 = await localFetch.fetch(`/explorer/${wallet}/wearables?isSmartWearable=false`)
     expect(r1.status).toBe(200)
     const response1 = await r1.json()
 
-    // Test with smartWearables=0
-    const r2 = await localFetch.fetch(`/explorer/${wallet}/wearables?smartWearables=0`)
+    // Test with isSmartWearables=0
+    const r2 = await localFetch.fetch(`/explorer/${wallet}/wearables?isSmartWearable=0`)
     expect(r2.status).toBe(200)
     const response2 = await r2.json()
 
-    // Test without smartWearables parameter
+    // Test without isSmartWearables parameter
     const r3 = await localFetch.fetch(`/explorer/${wallet}/wearables`)
     expect(r3.status).toBe(200)
     const response3 = await r3.json()
