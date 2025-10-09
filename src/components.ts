@@ -22,7 +22,7 @@ import { createPOIsFetcher } from './adapters/pois-fetcher'
 import { createResourcesStatusComponent } from './adapters/resource-status'
 import { createStatusComponent } from './adapters/status'
 import { fetchAllBaseWearables } from './logic/fetch-elements/fetch-base-items'
-import { fetchAllEmotes, fetchAllWearables, fetchAllSmartWearables } from './logic/fetch-elements/fetch-items'
+import { fetchAllEmotes, fetchAllWearables } from './logic/fetch-elements/fetch-items'
 import { fetchAllLANDs } from './logic/fetch-elements/fetch-lands'
 import { fetchAllNames } from './logic/fetch-elements/fetch-names'
 import { fetchAllThirdPartyWearables } from './logic/fetch-elements/fetch-third-party-wearables'
@@ -93,9 +93,7 @@ export async function initComponents(
   const wearablesFetcher = createElementsFetcherComponent({ logs }, async (address, options) =>
     fetchAllWearables({ theGraph }, address, options)
   )
-  const smartWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllSmartWearables({ theGraph }, address)
-  )
+
   const emotesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
     fetchAllEmotes({ theGraph }, address)
   )
@@ -201,7 +199,6 @@ export async function initComponents(
     ownershipCaches,
     baseWearablesFetcher,
     wearablesFetcher,
-    smartWearablesFetcher,
     wearableDefinitionsFetcher,
     emoteDefinitionsFetcher,
     entitiesFetcher,

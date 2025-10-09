@@ -158,23 +158,3 @@ export async function fetchAllWearables(
     (wearable) => wearable.metadata.wearable
   ).sort(compareByRarity)
 }
-
-export async function fetchAllSmartWearables(
-  components: Pick<AppComponents, 'theGraph'>,
-  owner: string
-): Promise<OnChainWearable[]> {
-  const ethereumSmartWearables = await fetchAllNFTs<WearableFromQuery>(
-    components.theGraph.ethereumCollectionsSubgraph,
-    QUERIES['smartWearable'],
-    owner
-  )
-  const maticSmartWearables = await fetchAllNFTs<WearableFromQuery>(
-    components.theGraph.maticCollectionsSubgraph,
-    QUERIES['smartWearable'],
-    owner
-  )
-  return groupItemsByURN<WearableFromQuery, WearableFromQuery['metadata']['wearable']>(
-    ethereumSmartWearables.concat(maticSmartWearables),
-    (wearable) => wearable.metadata.wearable
-  ).sort(compareByRarity)
-}

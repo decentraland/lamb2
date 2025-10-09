@@ -49,7 +49,6 @@ async function fetchCombinedElements(
     | 'fetch'
     | 'baseWearablesFetcher'
     | 'wearablesFetcher'
-    | 'smartWearablesFetcher'
     | 'entitiesFetcher'
     | 'thirdPartyWearablesFetcher'
     | 'thirdPartyProvidersStorage'
@@ -161,7 +160,6 @@ export async function explorerHandler(
     | 'fetch'
     | 'baseWearablesFetcher'
     | 'wearablesFetcher'
-    | 'smartWearablesFetcher'
     | 'thirdPartyWearablesFetcher'
     | 'entitiesFetcher'
     | 'thirdPartyProvidersStorage',
