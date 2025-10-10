@@ -1,8 +1,8 @@
-import { Entity, WearableCategory } from '@dcl/schemas'
+import { Entity } from '@dcl/schemas'
 import { fetchThirdPartyWearablesFromThirdPartyName } from '../../logic/fetch-elements/fetch-third-party-wearables'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { createCombinedSorting } from '../../logic/sorting'
-import { parseUrn } from '../../logic/utils'
+import { ExplorerWearableEntity, parseUrn, buildTrimmedEntity } from '../../logic/utils'
 import {
   AppComponents,
   BaseWearable,
@@ -10,12 +10,13 @@ import {
   InvalidRequestError,
   OnChainWearable,
   PaginatedResponse,
-  ThirdPartyWearable,
-  ExplorerWearableEntity,
-  ExplorerWearableRepresentation
+  ThirdPartyWearable
 } from '../../types'
 import { createFilters } from './items-commons'
-import { BASE_WEARABLE, ON_CHAIN, THIRD_PARTY } from '../../constants'
+
+export const BASE_WEARABLE = 'base-wearable'
+export const ON_CHAIN = 'on-chain'
+export const THIRD_PARTY = 'third-party'
 
 const VALID_COLLECTION_TYPES = ['base-wearable', 'on-chain', 'third-party']
 
@@ -40,29 +41,6 @@ export type MixedWearableResponse = Omit<MixedWearable, 'minTransferredAt' | 'ma
 
 export type MixedWearableTrimmedResponse = {
   entity: ExplorerWearableEntity
-}
-
-export function buildExplorerEntity(entity: Entity): ExplorerWearableEntity {
-  const thumbnailFile = entity?.metadata?.thumbnail as string | undefined
-  const thumbnailHash = entity?.content?.find((c) => c.file === thumbnailFile)?.hash
-  const metadata = entity?.metadata
-  const category: WearableCategory | undefined = metadata?.data?.category
-  const representations: ExplorerWearableRepresentation[] = (metadata?.data?.representations || []).map((rep: any) => ({
-    bodyShapes: rep.bodyShapes
-  }))
-
-  return {
-    id: entity.id,
-    thumbnail: thumbnailHash,
-    metadata: {
-      id: metadata?.id,
-      rarity: metadata?.rarity,
-      data: {
-        category: category as WearableCategory,
-        representations
-      }
-    }
-  }
 }
 
 async function fetchCombinedElements(
@@ -208,7 +186,7 @@ export async function explorerHandler(
 
   if (isTrimmed) {
     const results: MixedWearableTrimmedResponse[] = page.elements.map((wearable) => ({
-      entity: buildExplorerEntity(wearable.entity)
+      entity: buildTrimmedEntity(wearable.entity)
     }))
 
     return {

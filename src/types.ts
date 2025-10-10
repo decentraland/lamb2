@@ -317,22 +317,3 @@ export type TypedEntity<T> = Omit<Entity, 'metadata'> & {
 export type NameOwner = {
   owner: string | null
 }
-
-export type ExplorerWearableRepresentation = {
-  bodyShapes: string[]
-}
-
-export type ExplorerWearableMetadata = {
-  id: string
-  rarity?: Rarity
-  data: {
-    category: WearableCategory
-    representations: ExplorerWearableRepresentation[]
-  }
-}
-
-export type ExplorerWearableEntity = {
-  id: string
-  thumbnail?: string
-  metadata: ExplorerWearableMetadata
-}
