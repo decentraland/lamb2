@@ -160,6 +160,7 @@ export type ThirdPartyWearable = {
   amount: number
   individualData: {
     id: string
+    tokenId?: string
   }[]
   name: string
   category: WearableCategory

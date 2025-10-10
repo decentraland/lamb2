@@ -147,7 +147,7 @@ testWithComponents(() => {
     })
     // Fix: Mock wearablesFetcher to return the on-chain wearables
     wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
-      elements: onChainWearables,
+      elements: convertWearablesToOnChain(onChainWearables),
       totalAmount: onChainWearables.length
     })
     content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
@@ -309,7 +309,7 @@ testWithComponents(() => {
   })
 
   it('return trimmed response when trimmed=true parameter is provided', async () => {
-    const { content, fetch, localFetch, theGraph, baseWearablesFetcher, contentServerUrl, alchemyNftFetcher } =
+    const { content, fetch, localFetch, theGraph, baseWearablesFetcher, wearablesFetcher, alchemyNftFetcher } =
       components
     const baseWearables = generateBaseWearables(1)
     const onChainWearables = generateWearables(1)
@@ -323,7 +323,14 @@ testWithComponents(() => {
     alchemyNftFetcher.getNFTsForOwner = jest
       .fn()
       .mockResolvedValue(thirdPartyWearables.map((wearable) => wearable.urn.decentraland))
-    baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(baseWearables)
+    baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+      elements: baseWearables,
+      totalAmount: baseWearables.length
+    })
+    wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+      elements: onChainWearables,
+      totalAmount: onChainWearables.length
+    })
     content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
       pointers.map((pointer) => entities.find((def) => def.id === pointer)).filter((e): e is Entity => e !== undefined)
     )
@@ -384,7 +391,7 @@ testWithComponents(() => {
   })
 
   it('return non-trimmed response when trimmed=false or not provided', async () => {
-    const { content, fetch, localFetch, theGraph, baseWearablesFetcher, contentServerUrl, alchemyNftFetcher } =
+    const { content, fetch, localFetch, theGraph, baseWearablesFetcher, wearablesFetcher, alchemyNftFetcher } =
       components
     const baseWearables = generateBaseWearables(1)
     const onChainWearables = generateWearables(1)
@@ -398,7 +405,14 @@ testWithComponents(() => {
     alchemyNftFetcher.getNFTsForOwner = jest
       .fn()
       .mockResolvedValue(thirdPartyWearables.map((wearable) => wearable.urn.decentraland))
-    baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(baseWearables)
+    baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+      elements: baseWearables,
+      totalAmount: baseWearables.length
+    })
+    wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+      elements: convertWearablesToOnChain(onChainWearables),
+      totalAmount: onChainWearables.length
+    })
     content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
       pointers.map((pointer) => entities.find((def) => def.id === pointer)).filter((e): e is Entity => e !== undefined)
     )
@@ -451,12 +465,19 @@ testWithComponents(() => {
   })
 
   it('return full response when trimmed parameter has invalid value', async () => {
-    const { content, fetch, localFetch, theGraph, baseWearablesFetcher, contentServerUrl, alchemyNftFetcher } =
+    const { content, fetch, localFetch, theGraph, baseWearablesFetcher, wearablesFetcher, alchemyNftFetcher } =
       components
     const baseWearables = generateBaseWearables(1)
     const entities = generateWearableEntities(baseWearables.map((wearable) => wearable.urn))
 
-    baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(baseWearables)
+    baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+      elements: baseWearables,
+      totalAmount: baseWearables.length
+    })
+    wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+      elements: [],
+      totalAmount: 0
+    })
     content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
       pointers.map((pointer) => entities.find((def) => def.id === pointer)).filter((e): e is Entity => e !== undefined)
     )
@@ -478,12 +499,19 @@ testWithComponents(() => {
   })
 
   it('return trimmed response when trimmed=1 parameter is provided', async () => {
-    const { content, fetch, localFetch, theGraph, baseWearablesFetcher, contentServerUrl, alchemyNftFetcher } =
+    const { content, fetch, localFetch, theGraph, baseWearablesFetcher, wearablesFetcher, alchemyNftFetcher } =
       components
     const baseWearables = generateBaseWearables(1)
     const entities = generateWearableEntities(baseWearables.map((wearable) => wearable.urn))
 
-    baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(baseWearables)
+    baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+      elements: baseWearables,
+      totalAmount: baseWearables.length
+    })
+    wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+      elements: [],
+      totalAmount: 0
+    })
     content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
       pointers.map((pointer) => entities.find((def) => def.id === pointer)).filter((e): e is Entity => e !== undefined)
     )
@@ -506,12 +534,19 @@ testWithComponents(() => {
   })
 
   it('sort trimmed responses correctly', async () => {
-    const { content, fetch, localFetch, theGraph, baseWearablesFetcher, contentServerUrl, alchemyNftFetcher } =
+    const { content, fetch, localFetch, theGraph, baseWearablesFetcher, wearablesFetcher, alchemyNftFetcher } =
       components
     const baseWearables = generateBaseWearables(3)
     const entities = generateWearableEntities(baseWearables.map((wearable) => wearable.urn))
 
-    baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(baseWearables)
+    baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+      elements: baseWearables,
+      totalAmount: baseWearables.length
+    })
+    wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+      elements: [],
+      totalAmount: 0
+    })
     content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
       pointers.map((pointer) => entities.find((def) => def.id === pointer)).filter((e): e is Entity => e !== undefined)
     )
@@ -562,7 +597,7 @@ testWithComponents(() => {
   })
 
   it('maintain backward compatibility with existing API', async () => {
-    const { content, fetch, localFetch, theGraph, baseWearablesFetcher, contentServerUrl, alchemyNftFetcher } =
+    const { content, fetch, localFetch, theGraph, baseWearablesFetcher, wearablesFetcher, alchemyNftFetcher } =
       components
     const baseWearables = generateBaseWearables(2)
     const onChainWearables = generateWearables(2)
@@ -576,7 +611,14 @@ testWithComponents(() => {
     alchemyNftFetcher.getNFTsForOwner = jest
       .fn()
       .mockResolvedValue(thirdPartyWearables.map((wearable) => wearable.urn.decentraland))
-    baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(baseWearables)
+    baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+      elements: baseWearables,
+      totalAmount: baseWearables.length
+    })
+    wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+      elements: convertWearablesToOnChain(onChainWearables),
+      totalAmount: onChainWearables.length
+    })
     content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
       pointers.map((pointer) => entities.find((def) => def.id === pointer))
     )
@@ -659,6 +701,26 @@ function convertToMixedBaseWearableResponse(
   })
 }
 
+function convertWearablesToOnChain(wearables: WearableFromQuery[]): any[] {
+  return wearables.map((wearable) => ({
+    urn: wearable.urn,
+    amount: 1,
+    individualData: [
+      {
+        id: `${wearable.urn}:${wearable.tokenId}`,
+        tokenId: wearable.tokenId,
+        transferredAt: wearable.transferredAt,
+        price: wearable.item.price
+      }
+    ],
+    name: wearable.metadata.wearable.name,
+    rarity: wearable.item.rarity,
+    minTransferredAt: wearable.transferredAt,
+    maxTransferredAt: wearable.transferredAt,
+    category: wearable.metadata.wearable.category
+  }))
+}
+
 function convertToMixedOnChainWearableResponse(
   wearables: WearableFromQuery[],
   { entities }: ContentInfo
@@ -698,7 +760,8 @@ function convertToMixedThirdPartyWearableResponse(
       amount: wearable.amount,
       individualData: [
         {
-          id: wearable.id
+          id: `${wearable.urn.decentraland}:${wearable.urn.tokenId}`,
+          tokenId: wearable.urn.tokenId
         }
       ],
       category: entity.metadata.data.category,

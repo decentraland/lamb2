@@ -191,7 +191,7 @@ function mapApiNameToName(apiName: MarketplaceApiName): Name {
     name: apiName.name,
     contractAddress: apiName.contractAddress,
     tokenId: apiName.tokenId,
-    price: apiName.price
+    ...(apiName.price !== undefined && apiName.price !== null ? { price: apiName.price } : {})
   }
 }
 
