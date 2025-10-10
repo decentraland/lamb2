@@ -9,6 +9,7 @@ import {
   GetThirdPartyWearables200,
   ThirdPartyIntegrations
 } from '@dcl/catalyst-api-specs/lib/client'
+import { shouldBypassCache } from '../../logic/cache'
 
 function createFilter(url: URL): (item: ThirdPartyWearable) => boolean {
   const categories = url.searchParams.has('category') ? url.searchParams.getAll('category') : []
@@ -43,8 +44,12 @@ export async function thirdPartyWearablesHandler(
   const filter = createFilter(context.url)
   const sorting = createBaseSorting(context.url)
 
+  // Check if we should bypass cache
+  // Headers supported: X-Bypass-Cache: true or Cache-Control: no-cache
+  const bypassCache = shouldBypassCache(context.request)
+
   const page = await fetchAndPaginate<ThirdPartyWearable>(
-    () => thirdPartyWearablesFetcher.fetchOwnedElements(address),
+    () => thirdPartyWearablesFetcher.fetchOwnedElements(address, bypassCache),
     pagination,
     filter,
     sorting

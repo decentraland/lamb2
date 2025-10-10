@@ -8,7 +8,7 @@ export type ElementsResult<T> = {
 }
 
 export type ElementsFetcher<T> = IBaseComponent & {
-  fetchOwnedElements(address: string): Promise<T[]>
+  fetchOwnedElements(address: string, bypassCache?: boolean): Promise<T[]>
 }
 
 export class FetcherError extends Error {
@@ -39,7 +39,11 @@ export function createElementsFetcherComponent<T>(
   })
 
   return {
-    async fetchOwnedElements(address: string) {
+    async fetchOwnedElements(address: string, bypassCache = false) {
+      if (bypassCache) {
+        return await fetchAllOwnedElements(address)
+      }
+
       const allElements = await cache.fetch(address)
 
       if (allElements) {

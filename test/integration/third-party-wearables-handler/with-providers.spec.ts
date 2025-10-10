@@ -347,5 +347,52 @@ testWithComponents(() => {
       expect(firstJson.totalAmount).toBe(secondJson.totalAmount)
       expect(firstJson.elements.length).toBe(secondJson.elements.length)
     })
+
+    describe('when X-Bypass-Cache header is sent', () => {
+      let wallet: string
+      let fixedCollectionId: string
+      let wearables: any[]
+      let urns: string[]
+      let entities: any[]
+
+      beforeEach(() => {
+        wallet = generateRandomAddress()
+        fixedCollectionId = `urn:decentraland:matic:collections-thirdparty:bypass-test-${Date.now()}`
+        linkedWearableCollectionProvider.id = fixedCollectionId
+        wearables = generateThirdPartyWearables(3)
+        urns = wearables.map((w) => w.urn.decentraland)
+        entities = generateWearableEntities(urns)
+      })
+
+      it('should bypass cache and fetch fresh data', async () => {
+        const { localFetch, fetch, content, alchemyNftFetcher } = components
+
+        // Create persistent mocks that return same data
+        alchemyNftFetcher.getNFTsForOwner = jest.fn().mockResolvedValue(urns)
+        fetch.fetch = jest.fn().mockResolvedValue({
+          ok: true,
+          json: () => ({ total: entities.length, entities })
+        })
+        content.fetchEntitiesByPointers = jest.fn().mockResolvedValue(entities)
+
+        // First call - populate cache
+        const r1 = await localFetch.fetch(`/users/${wallet}/third-party-wearables`)
+        expect(r1.status).toBe(200)
+
+        // Second call without bypass - should use cache (Alchemy not called again)
+        const r2 = await localFetch.fetch(`/users/${wallet}/third-party-wearables`)
+        expect(r2.status).toBe(200)
+        expect(alchemyNftFetcher.getNFTsForOwner).toHaveBeenCalledTimes(1)
+
+        // Third call with bypass header - should bypass cache and call Alchemy again
+        const r3 = await localFetch.fetch(`/users/${wallet}/third-party-wearables`, {
+          headers: { 'X-Bypass-Cache': 'true' }
+        })
+        expect(r3.status).toBe(200)
+
+        // Verify Alchemy was called twice (once for first call, once for bypass)
+        expect(alchemyNftFetcher.getNFTsForOwner).toHaveBeenCalledTimes(2)
+      })
+    })
   }
 )

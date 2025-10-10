@@ -1,34 +1,45 @@
-import { fillCacheWithRecentlyCheckedWearables, getCachedNFTsAndPendingCheckNFTs } from "../../src/logic/cache"
+import {
+  fillCacheWithRecentlyCheckedWearables,
+  getCachedNFTsAndPendingCheckNFTs,
+  shouldBypassCache
+} from '../../src/logic/cache'
 import LRU from 'lru-cache'
+import { Request } from 'node-fetch'
 
-
-describe("cache unit tests", () => {
-  describe("getCachedNFTsAndPendingCheckNFTs", () => {
-    it("must return empty maps when empty map and cache are passed", async () => {
-      const { nftsToCheckByAddress, cachedOwnedNFTsByAddress } = getCachedNFTsAndPendingCheckNFTs(new Map(), new LRU({ max: 10, ttl: 10}))
+describe('cache unit tests', () => {
+  describe('getCachedNFTsAndPendingCheckNFTs', () => {
+    it('must return empty maps when empty map and cache are passed', async () => {
+      const { nftsToCheckByAddress, cachedOwnedNFTsByAddress } = getCachedNFTsAndPendingCheckNFTs(
+        new Map(),
+        new LRU({ max: 10, ttl: 10 })
+      )
       expect(nftsToCheckByAddress.size).toEqual(0)
       expect(cachedOwnedNFTsByAddress.size).toEqual(0)
     })
-    it("must return no cached elements when the cache is empty", async () => {
-      const ownedNFTsByAddress = new Map([
-        ['0x1', ['nft1', 'nft2']]
-      ])
-      const { nftsToCheckByAddress, cachedOwnedNFTsByAddress } = getCachedNFTsAndPendingCheckNFTs(ownedNFTsByAddress, new LRU({ max: 10, ttl: 10}))
+    it('must return no cached elements when the cache is empty', async () => {
+      const ownedNFTsByAddress = new Map([['0x1', ['nft1', 'nft2']]])
+      const { nftsToCheckByAddress, cachedOwnedNFTsByAddress } = getCachedNFTsAndPendingCheckNFTs(
+        ownedNFTsByAddress,
+        new LRU({ max: 10, ttl: 10 })
+      )
       expect(nftsToCheckByAddress).toEqual(ownedNFTsByAddress)
       expect(cachedOwnedNFTsByAddress.size).toEqual(0)
     })
 
-    it("must return as cached the nfts that are already cached", async () => {
+    it('must return as cached the nfts that are already cached', async () => {
       const ownedNFTsByAddress = new Map([
         ['0x1', ['nft1', 'nft2']],
         ['0x2', ['nft1', 'nft2']]
       ])
-      const cache = new LRU<string, Map<string, boolean>>({ max: 10, ttl: 10})
+      const cache = new LRU<string, Map<string, boolean>>({ max: 10, ttl: 10 })
       cache.set('0x1', new Map([['nft1', true]]))
       cache.set('0x2', new Map([['nft2', true]]))
-      
-      const { nftsToCheckByAddress, cachedOwnedNFTsByAddress } = getCachedNFTsAndPendingCheckNFTs(ownedNFTsByAddress, cache)
-      
+
+      const { nftsToCheckByAddress, cachedOwnedNFTsByAddress } = getCachedNFTsAndPendingCheckNFTs(
+        ownedNFTsByAddress,
+        cache
+      )
+
       expect(nftsToCheckByAddress.size).toEqual(2)
       expect(nftsToCheckByAddress.has('0x1')).toBe(true)
       expect(nftsToCheckByAddress.get('0x1')).toEqual(['nft2'])
@@ -41,17 +52,32 @@ describe("cache unit tests", () => {
       expect(cachedOwnedNFTsByAddress.get('0x2')).toEqual(['nft2'])
     })
 
-    it("must return ignore the nfts that are cached as false", async () => {
+    it('must return ignore the nfts that are cached as false', async () => {
       const ownedNFTsByAddress = new Map([
         ['0x1', ['nft1', 'nft2']],
         ['0x2', ['nft1', 'nft2']]
       ])
-      const cache = new LRU<string, Map<string, boolean>>({ max: 10, ttl: 10})
-      cache.set('0x1', new Map([['nft1', true], ['nft2', false]]))
-      cache.set('0x2', new Map([['nft1', false], ['nft2', true]]))
-      
-      const { nftsToCheckByAddress, cachedOwnedNFTsByAddress } = getCachedNFTsAndPendingCheckNFTs(ownedNFTsByAddress, cache)
-      
+      const cache = new LRU<string, Map<string, boolean>>({ max: 10, ttl: 10 })
+      cache.set(
+        '0x1',
+        new Map([
+          ['nft1', true],
+          ['nft2', false]
+        ])
+      )
+      cache.set(
+        '0x2',
+        new Map([
+          ['nft1', false],
+          ['nft2', true]
+        ])
+      )
+
+      const { nftsToCheckByAddress, cachedOwnedNFTsByAddress } = getCachedNFTsAndPendingCheckNFTs(
+        ownedNFTsByAddress,
+        cache
+      )
+
       expect(nftsToCheckByAddress.size).toEqual(0)
       expect(cachedOwnedNFTsByAddress.size).toEqual(2)
       expect(cachedOwnedNFTsByAddress.has('0x1')).toBe(true)
@@ -61,12 +87,12 @@ describe("cache unit tests", () => {
     })
   })
 
-  describe("fillCacheWithRecentlyCheckedWearables", () => {
-    it("must do nothing to the cache if the checked nfts map is empty", async () => {
-      const cache = new LRU<string, Map<string, boolean>>({ max: 10, ttl: 10})
+  describe('fillCacheWithRecentlyCheckedWearables', () => {
+    it('must do nothing to the cache if the checked nfts map is empty', async () => {
+      const cache = new LRU<string, Map<string, boolean>>({ max: 10, ttl: 10 })
       cache.set('0x1', new Map([['nft1', true]]))
       cache.set('0x2', new Map([['nft2', false]]))
-      
+
       fillCacheWithRecentlyCheckedWearables(new Map(), new Map(), cache)
 
       expect(Array.from(cache.keys()).length).toEqual(2)
@@ -78,9 +104,9 @@ describe("cache unit tests", () => {
       expect(cache.get('0x2').get('nft2')).toBe(false)
     })
 
-    it("must set to false in the cache every nft that is found in the checked map but is not in the ownership map", async () => {
-      const cache = new LRU<string, Map<string, boolean>>({ max: 10, ttl: 10})
-      
+    it('must set to false in the cache every nft that is found in the checked map but is not in the ownership map', async () => {
+      const cache = new LRU<string, Map<string, boolean>>({ max: 10, ttl: 10 })
+
       const checkedNFTsByAddress = new Map([
         ['0x1', ['nft1', 'nft2']],
         ['0x2', ['nft1', 'nft2']]
@@ -100,9 +126,9 @@ describe("cache unit tests", () => {
       expect(cache.get('0x2').get('nft2')).toBe(false)
     })
 
-    it("must set to true in the cache every nft that is found in both maps, and to false the ones that are not in the ownership map", async () => {
-      const cache = new LRU<string, Map<string, boolean>>({ max: 10, ttl: 10})
-      
+    it('must set to true in the cache every nft that is found in both maps, and to false the ones that are not in the ownership map', async () => {
+      const cache = new LRU<string, Map<string, boolean>>({ max: 10, ttl: 10 })
+
       const checkedNFTsByAddress = new Map([
         ['0x1', ['nft1', 'nft2']],
         ['0x2', ['nft1', 'nft2']]
@@ -126,8 +152,8 @@ describe("cache unit tests", () => {
       expect(cache.get('0x2').get('nft2')).toBe(true)
     })
 
-    it("must not alter values from other existing addresses in the cache", async () => {
-      const cache = new LRU<string, Map<string, boolean>>({ max: 10, ttl: 10})
+    it('must not alter values from other existing addresses in the cache', async () => {
+      const cache = new LRU<string, Map<string, boolean>>({ max: 10, ttl: 10 })
       cache.set('0x3', new Map([['nft3', true]]))
 
       const checkedNFTsByAddress = new Map([
@@ -156,31 +182,26 @@ describe("cache unit tests", () => {
       expect(cache.get('0x3').get('nft3')).toBe(true)
     })
 
-    it("must override the values of the cache if the address and nft matches", async () => {
-      const cache = new LRU<string, Map<string, boolean>>({ max: 10, ttl: 10})
+    it('must override the values of the cache if the address and nft matches', async () => {
+      const cache = new LRU<string, Map<string, boolean>>({ max: 10, ttl: 10 })
       cache.set('0x1', new Map([['nft1', true]]))
-  
-      const checkedNFTsByAddress = new Map([
-        ['0x1', ['nft1']],
-      ])
+
+      const checkedNFTsByAddress = new Map([['0x1', ['nft1']]])
       fillCacheWithRecentlyCheckedWearables(checkedNFTsByAddress, new Map(), cache)
-  
+
       expect(Array.from(cache.keys()).length).toEqual(1)
       expect(cache.has('0x1')).toBe(true)
       expect(cache.get('0x1').has('nft1')).toBe(true)
       expect(cache.get('0x1').get('nft1')).toBe(false)
-      
     })
 
     it("must not override the values if the address and nft matches doesn't match", async () => {
-      const cache = new LRU<string, Map<string, boolean>>({ max: 10, ttl: 10})
+      const cache = new LRU<string, Map<string, boolean>>({ max: 10, ttl: 10 })
       cache.set('0x1', new Map([['nft1', true]]))
-  
-      const checkedNFTsByAddress = new Map([
-        ['0x2', ['nft1']],
-      ])
+
+      const checkedNFTsByAddress = new Map([['0x2', ['nft1']]])
       fillCacheWithRecentlyCheckedWearables(checkedNFTsByAddress, new Map(), cache)
-  
+
       expect(Array.from(cache.keys()).length).toEqual(2)
       expect(cache.has('0x1')).toBe(true)
       expect(cache.get('0x1').has('nft1')).toBe(true)
@@ -191,20 +212,66 @@ describe("cache unit tests", () => {
     })
 
     it("must not override the values if the address matches but the nfts doesn't, it should add them", async () => {
-      const cache = new LRU<string, Map<string, boolean>>({ max: 10, ttl: 10})
+      const cache = new LRU<string, Map<string, boolean>>({ max: 10, ttl: 10 })
       cache.set('0x1', new Map([['nft1', true]]))
-  
-      const checkedNFTsByAddress = new Map([
-        ['0x1', ['nft2']],
-      ])
+
+      const checkedNFTsByAddress = new Map([['0x1', ['nft2']]])
       fillCacheWithRecentlyCheckedWearables(checkedNFTsByAddress, new Map(), cache)
-  
+
       expect(Array.from(cache.keys()).length).toEqual(1)
       expect(cache.has('0x1')).toBe(true)
       expect(cache.get('0x1').has('nft1')).toBe(true)
       expect(cache.get('0x1').get('nft1')).toBe(true)
       expect(cache.get('0x1').has('nft2')).toBe(true)
       expect(cache.get('0x1').get('nft2')).toBe(false)
+    })
+  })
+
+  describe('shouldBypassCache', () => {
+    it('should return true when X-Bypass-Cache header is set to true', () => {
+      const request = new Request('http://localhost', {
+        headers: { 'X-Bypass-Cache': 'true' }
+      })
+
+      expect(shouldBypassCache(request)).toBe(true)
+    })
+
+    it('should return true when X-Bypass-Cache header is set to 1', () => {
+      const request = new Request('http://localhost', {
+        headers: { 'X-Bypass-Cache': '1' }
+      })
+
+      expect(shouldBypassCache(request)).toBe(true)
+    })
+
+    it('should return true when Cache-Control header is set to no-cache', () => {
+      const request = new Request('http://localhost', {
+        headers: { 'Cache-Control': 'no-cache' }
+      })
+
+      expect(shouldBypassCache(request)).toBe(true)
+    })
+
+    it('should return true when Cache-Control header is set to no-store', () => {
+      const request = new Request('http://localhost', {
+        headers: { 'Cache-Control': 'no-store' }
+      })
+
+      expect(shouldBypassCache(request)).toBe(true)
+    })
+
+    it('should return false when X-Bypass-Cache header is set to false', () => {
+      const request = new Request('http://localhost', {
+        headers: { 'X-Bypass-Cache': 'false' }
+      })
+
+      expect(shouldBypassCache(request)).toBe(false)
+    })
+
+    it('should return false when no bypass headers are present', () => {
+      const request = new Request('http://localhost')
+
+      expect(shouldBypassCache(request)).toBe(false)
     })
   })
 })

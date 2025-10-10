@@ -116,6 +116,40 @@ test('names-handler: GET /users/:address/names should', function ({ components }
     expect(theGraph.ensSubgraph.query).toHaveBeenCalledTimes(1)
   })
 
+  describe('when X-Bypass-Cache header is sent', () => {
+    let wallet: string
+    let names: any[]
+    let updatedNames: any[]
+
+    beforeEach(() => {
+      wallet = generateRandomAddress()
+      names = generateNames(2)
+      updatedNames = generateNames(3)
+    })
+
+    it('should bypass cache and fetch fresh data', async () => {
+      const { localFetch, theGraph } = components
+
+      // First call - populate cache
+      theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: names })
+
+      const r1 = await localFetch.fetch(`/users/${wallet}/names`)
+      expect(r1.status).toBe(200)
+      const body1 = await r1.json()
+      expect(body1.elements).toHaveLength(2)
+
+      // Second call with bypass header - should fetch fresh data
+      theGraph.ensSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: updatedNames })
+
+      const r2 = await localFetch.fetch(`/users/${wallet}/names`, {
+        headers: { 'X-Bypass-Cache': 'true' }
+      })
+      expect(r2.status).toBe(200)
+      const body2 = await r2.json()
+      expect(body2.elements).toHaveLength(3)
+    })
+  })
+
   it('return an error when names cannot be fetched', async () => {
     const { localFetch, theGraph } = components
 
