@@ -318,7 +318,10 @@ describe('fetchThirdPartyWearablesFromThirdPartyName', () => {
           entity: {} as any
         }
       ]
-      jest.spyOn(components.thirdPartyWearablesFetcher, 'fetchOwnedElements').mockResolvedValue(mockWearables)
+      jest.spyOn(components.thirdPartyWearablesFetcher, 'fetchOwnedElements').mockResolvedValue({
+        elements: mockWearables,
+        totalAmount: mockWearables.length
+      })
       jest.spyOn(components.thirdPartyProvidersStorage, 'get').mockResolvedValue({
         id: 'test-provider',
         resolver: 'resolver',
@@ -338,7 +341,10 @@ describe('fetchThirdPartyWearablesFromThirdPartyName', () => {
 
     beforeEach(() => {
       thirdPartyName = { thirdPartyName: 'nonexistent-provider' } as any
-      jest.spyOn(components.thirdPartyWearablesFetcher, 'fetchOwnedElements').mockResolvedValue([])
+      jest.spyOn(components.thirdPartyWearablesFetcher, 'fetchOwnedElements').mockResolvedValue({
+        elements: [],
+        totalAmount: 0
+      })
       jest.spyOn(components.thirdPartyProvidersStorage, 'get').mockResolvedValue(null)
     })
 
@@ -376,7 +382,10 @@ describe('fetchThirdPartyWearablesFromThirdPartyName', () => {
           entity: {} as any
         }
       ]
-      jest.spyOn(components.thirdPartyWearablesFetcher, 'fetchOwnedElements').mockResolvedValue(mockWearables)
+      jest.spyOn(components.thirdPartyWearablesFetcher, 'fetchOwnedElements').mockResolvedValue({
+        elements: mockWearables,
+        totalAmount: mockWearables.length
+      })
       jest.spyOn(components.thirdPartyProvidersStorage, 'get').mockResolvedValue({
         id: 'correct-provider',
         resolver: 'resolver',
@@ -397,7 +406,10 @@ describe('fetchThirdPartyWearablesFromThirdPartyName', () => {
 
     beforeEach(() => {
       thirdPartyName = { thirdPartyName: 'test-provider' } as any
-      jest.spyOn(components.thirdPartyWearablesFetcher, 'fetchOwnedElements').mockResolvedValue(null)
+      jest.spyOn(components.thirdPartyWearablesFetcher, 'fetchOwnedElements').mockResolvedValue({
+        elements: null as any,
+        totalAmount: 0
+      })
       jest.spyOn(components.thirdPartyProvidersStorage, 'get').mockResolvedValue({
         id: 'test-provider',
         resolver: 'resolver',

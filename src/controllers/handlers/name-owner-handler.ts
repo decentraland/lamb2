@@ -8,8 +8,8 @@ export async function nameOwnerHandler(
 
   const dclName = name.endsWith('.dcl.eth') ? name.split('.dcl')[0] : name
 
-  const page = await nameOwnerFetcher.fetchOwnedElements(dclName)
-  if (page.length === 0 || !page[0].owner) {
+  const { elements } = await nameOwnerFetcher.fetchOwnedElements(dclName)
+  if (elements.length === 0 || !elements[0].owner) {
     return {
       status: 404
     }
@@ -17,6 +17,6 @@ export async function nameOwnerHandler(
 
   return {
     status: 200,
-    body: page[0]
+    body: elements[0]
   }
 }

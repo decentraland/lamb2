@@ -164,7 +164,7 @@ export async function fetchThirdPartyWearablesFromThirdPartyName(
 ): Promise<ThirdPartyWearable[]> {
   const results: ThirdPartyWearable[] = []
 
-  const allWearables = await components.thirdPartyWearablesFetcher.fetchOwnedElements(address)
+  const { elements: allWearables } = await components.thirdPartyWearablesFetcher.fetchOwnedElements(address)
 
   if (allWearables) {
     for (const wearable of allWearables) {

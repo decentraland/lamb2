@@ -1,7 +1,7 @@
 import LRU, { LRUCache } from 'lru-cache'
 
 // eslint-disable-next-line @typescript-eslint/ban-types
-export type LowercaseKeysCache<V extends {}> = Pick<LRU<string, V>, 'get' | 'set' | 'has' | 'fetch'>
+export type LowercaseKeysCache<V extends {}> = Pick<LRU<string, V>, 'get' | 'set' | 'has' | 'fetch' | 'clear'>
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export function createLowerCaseKeysCache<V extends {}>(
@@ -24,6 +24,9 @@ export function createLowerCaseKeysCache<V extends {}>(
     async fetch(...args: Parameters<LowercaseKeysCache<V>['fetch']>) {
       args[0] = args[0].toLowerCase()
       return cache.fetch(...args)
+    },
+    clear() {
+      return cache.clear()
     }
   }
 }
