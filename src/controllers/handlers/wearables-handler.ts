@@ -4,6 +4,7 @@ import { createSorting } from '../../logic/sorting'
 import { HandlerContextWithPath, InvalidRequestError, OnChainWearable, OnChainWearableResponse } from '../../types'
 import { createFilters } from './items-commons'
 import { GetWearables200 } from '@dcl/catalyst-api-specs/lib/client'
+import { shouldBypassCache } from '../../logic/cache'
 
 function mapItemToItemResponse(
   item: OnChainWearable,
@@ -36,12 +37,16 @@ export async function wearablesHandler(
   const filter = createFilters(context.url)
   const sorting = createSorting(context.url)
 
+  // Check if we should bypass cache
+  // Headers supported: X-Bypass-Cache: true or Cache-Control: no-cache
+  const bypassCache = shouldBypassCache(context.request)
+
   if (includeDefinitions && includeEntities) {
     throw new InvalidRequestError('Cannot use includeEntities and includeDefinitions together')
   }
 
   const page = await fetchAndPaginate<OnChainWearable>(
-    () => wearablesFetcher.fetchOwnedElements(address),
+    () => wearablesFetcher.fetchOwnedElements(address, bypassCache),
     pagination,
     filter,
     sorting

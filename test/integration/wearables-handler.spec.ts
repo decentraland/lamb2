@@ -339,6 +339,42 @@ test('wearables-handler: GET /users/:address/wearables should', function ({ comp
     expect(theGraph.maticCollectionsSubgraph.query).toHaveBeenCalledTimes(1)
   })
 
+  describe('when X-Bypass-Cache header is sent', () => {
+    let wallet: string
+    let wearables: any[]
+    let updatedWearables: any[]
+
+    beforeEach(() => {
+      wallet = generateRandomAddress()
+      wearables = generateWearables(2)
+      updatedWearables = generateWearables(3)
+    })
+
+    it('should bypass cache and fetch fresh data', async () => {
+      const { localFetch, theGraph } = components
+
+      // First call - populate cache
+      theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: wearables })
+      theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
+
+      const r1 = await localFetch.fetch(`/users/${wallet}/wearables`)
+      expect(r1.status).toBe(200)
+      const body1 = await r1.json()
+      expect(body1.elements).toHaveLength(2)
+
+      // Second call with bypass header - should fetch fresh data
+      theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: updatedWearables })
+      theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
+
+      const r2 = await localFetch.fetch(`/users/${wallet}/wearables`, {
+        headers: { 'X-Bypass-Cache': 'true' }
+      })
+      expect(r2.status).toBe(200)
+      const body2 = await r2.json()
+      expect(body2.elements).toHaveLength(3)
+    })
+  })
+
   it('return wearables filtering by name', async () => {
     const { localFetch, theGraph } = components
     const wearables = generateWearables(17)

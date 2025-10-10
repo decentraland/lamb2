@@ -1,5 +1,6 @@
 import { HandlerContextWithPath, InvalidRequestError, NotFoundError } from '../../types'
 import { Profile } from '@dcl/catalyst-api-specs/lib/client'
+import { shouldBypassCache } from '../../logic/cache'
 
 export async function profilesHandler(
   context: Pick<HandlerContextWithPath<'profiles', '/profiles'>, 'components' | 'request'>
@@ -23,6 +24,14 @@ export async function profilesHandler(
         modifiedSince = isNaN(timestamp) ? undefined : timestamp
       } catch (e) {}
     }
+  }
+
+  // Check if we should bypass cache
+  // Headers supported: X-Bypass-Cache: true or Cache-Control: no-cache
+  const bypassCache = shouldBypassCache(request)
+  if (bypassCache) {
+    // Force fresh data by setting modifiedSince to now
+    modifiedSince = Date.now()
   }
 
   const profiles = await components.profiles.getProfiles(body.ids, modifiedSince)

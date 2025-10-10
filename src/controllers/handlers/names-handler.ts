@@ -1,6 +1,7 @@
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { HandlerContextWithPath, Name } from '../../types'
 import { NamesPaginated } from '@dcl/catalyst-api-specs/lib/client'
+import { shouldBypassCache } from '../../logic/cache'
 
 export async function namesHandler(
   context: HandlerContextWithPath<'namesFetcher' | 'logs', '/users/:address/names'>
@@ -9,7 +10,11 @@ export async function namesHandler(
   const { namesFetcher } = context.components
   const pagination = paginationObject(context.url, Number.MAX_VALUE)
 
-  const page = await fetchAndPaginate<Name>(() => namesFetcher.fetchOwnedElements(address), pagination)
+  // Check if we should bypass cache
+  // Headers supported: X-Bypass-Cache: true or Cache-Control: no-cache
+  const bypassCache = shouldBypassCache(context.request)
+
+  const page = await fetchAndPaginate<Name>(() => namesFetcher.fetchOwnedElements(address, bypassCache), pagination)
   return {
     status: 200,
     body: {

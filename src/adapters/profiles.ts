@@ -118,12 +118,15 @@ export async function createProfilesComponent(
 
           isDefaultProfile || thirdPartyWearablesOwnershipChecker.addNFTsForAddress(ethAddress, wearables)
 
+          // If ifModifiedSinceTimestamp is provided, it means we want fresh data (like a cache bypass)
+          const bypassCache = !!ifModifiedSinceTimestamp
+
           const [ownedWearables, ownedEmotes, ownedNames] = isDefaultProfile
             ? [[], [], []]
             : await Promise.all([
-                wearablesFetcher.fetchOwnedElements(ethAddress),
-                emotesFetcher.fetchOwnedElements(ethAddress),
-                namesFetcher.fetchOwnedElements(ethAddress),
+                wearablesFetcher.fetchOwnedElements(ethAddress, bypassCache),
+                emotesFetcher.fetchOwnedElements(ethAddress, bypassCache),
+                namesFetcher.fetchOwnedElements(ethAddress, bypassCache),
                 thirdPartyWearablesOwnershipChecker.checkNFTsOwnership()
               ])
 
