@@ -47,6 +47,7 @@ export type ElementsFilters = {
   name?: string
   orderBy?: string
   direction?: string
+  itemType?: string
 }
 
 export type LegacyElementsFetcher<T> = IBaseComponent & {

@@ -55,7 +55,8 @@ async function fetchCombinedElements(
   >,
   collectionTypes: string[],
   thirdPartyCollectionId: string[],
-  address: string
+  address: string,
+  isSmartWearable: boolean = false
 ): Promise<MixedWearable[]> {
   async function fetchBaseWearables() {
     const { elements } = await components.baseWearablesFetcher.fetchOwnedElements(address)
@@ -80,7 +81,9 @@ async function fetchCombinedElements(
   }
 
   async function fetchOnChainWearables(): Promise<MixedOnChainWearable[]> {
-    const { elements } = await components.wearablesFetcher.fetchOwnedElements(address)
+    const { elements } = await components.wearablesFetcher.fetchOwnedElements(address, undefined, {
+      itemType: isSmartWearable ? 'smartWearable' : 'wearable'
+    })
     if (!elements.length) {
       return []
     }
@@ -141,9 +144,9 @@ async function fetchCombinedElements(
   }
 
   const [baseItems, nftItems, thirdPartyItems] = await Promise.all([
-    collectionTypes.includes(BASE_WEARABLE) ? fetchBaseWearables() : [],
+    isSmartWearable ? [] : collectionTypes.includes(BASE_WEARABLE) ? fetchBaseWearables() : [],
     collectionTypes.includes(ON_CHAIN) ? fetchOnChainWearables() : [],
-    collectionTypes.includes(THIRD_PARTY) ? fetchThirdPartyWearables(thirdPartyCollectionId) : []
+    isSmartWearable ? [] : collectionTypes.includes(THIRD_PARTY) ? fetchThirdPartyWearables(thirdPartyCollectionId) : []
   ])
 
   return [...baseItems, ...nftItems, ...thirdPartyItems]
@@ -172,13 +175,15 @@ export async function explorerHandler(
     : []
   const trimmedParam = context.url.searchParams.get('trimmed')
   const isTrimmed = trimmedParam === 'true' || trimmedParam === '1'
+  const isSmartWearableParam = context.url.searchParams.get('isSmartWearable')
+  const isSmartWearable = isSmartWearableParam === 'true' || isSmartWearableParam === '1'
 
   if (collectionTypes.some((type) => !VALID_COLLECTION_TYPES.includes(type))) {
     throw new InvalidRequestError(`Invalid collection type. Valid types are: ${VALID_COLLECTION_TYPES.join(', ')}.`)
   }
 
   const page = await fetchAndPaginate<MixedWearable>(
-    () => fetchCombinedElements(context.components, collectionTypes, thirdPartyCollectionIds, address),
+    () => fetchCombinedElements(context.components, collectionTypes, thirdPartyCollectionIds, address, isSmartWearable),
     pagination,
     filter,
     sorting

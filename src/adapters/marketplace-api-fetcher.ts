@@ -93,6 +93,9 @@ export type MarketplaceApiParams = {
   // Sorting
   orderBy?: string
   direction?: string
+
+  // Item type
+  itemType?: string
 }
 
 /**
@@ -244,6 +247,9 @@ export async function createMarketplaceApiFetcher(
     if (params.direction) {
       queryParams.set('direction', params.direction)
     }
+    if (params.itemType && params.itemType === 'smartWearable') {
+      queryParams.set('itemType', 'smart_wearable_v1')
+    }
 
     const queryString = queryParams.toString()
     return queryString ? `${baseEndpoint}?${queryString}` : baseEndpoint
@@ -295,9 +301,7 @@ export async function createMarketplaceApiFetcher(
     const PAGE_SIZE = 1000
 
     while (hasMore) {
-      const endpoint = `${baseEndpoint}${baseEndpoint.includes('?') ? '&' : '?'}limit=${PAGE_SIZE}&offset=${
-        (page - 1) * PAGE_SIZE
-      }`
+      const endpoint = `${baseEndpoint}${baseEndpoint.includes('?') ? '&' : '?'}limit=${PAGE_SIZE}&offset=${(page - 1) * PAGE_SIZE}`
       const response = await makeApiRequest<MarketplaceApiResponse<T>>(endpoint)
 
       allItems.push(...response.data.elements)
@@ -317,7 +321,6 @@ export async function createMarketplaceApiFetcher(
     try {
       const baseEndpoint = `/v1/users/${address.toLowerCase()}/wearables/grouped`
       const endpoint = buildEndpointWithParams(baseEndpoint, params)
-
       let groupedWearables: MarketplaceApiGroupedWearable[]
       let total: number | undefined
 
@@ -334,7 +337,7 @@ export async function createMarketplaceApiFetcher(
         total = response.data.total
       } else {
         // Fallback to fetching all pages when no pagination specified
-        groupedWearables = await fetchAllPages<MarketplaceApiGroupedWearable>(baseEndpoint)
+        groupedWearables = await fetchAllPages<MarketplaceApiGroupedWearable>(endpoint)
         total = groupedWearables.length // For fallback, total is the actual count
       }
 

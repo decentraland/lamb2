@@ -38,6 +38,11 @@ export function buildMarketplaceApiParams(
     params.direction = filters.direction
   }
 
+  // Item type
+  if (filters?.itemType) {
+    params.itemType = filters.itemType
+  }
+
   return params
 }
 
@@ -185,7 +190,9 @@ export async function fetchWearables(
     },
     async () => {
       // TheGraph fallback implementation
-      const wearableQueryBuilder = createItemQueryBuilder('wearable')
+      const wearableQueryBuilder = createItemQueryBuilder(
+        filters?.itemType === 'smartWearable' ? 'smartWearable' : 'wearable'
+      )
 
       const [ethereumResult, maticResult] = await Promise.all([
         fetchNFTsPaginated<WearableFromQuery>(
