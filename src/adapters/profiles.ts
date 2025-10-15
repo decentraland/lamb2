@@ -118,14 +118,18 @@ export async function createProfilesComponent(
 
           isDefaultProfile || thirdPartyWearablesOwnershipChecker.addNFTsForAddress(ethAddress, wearables)
 
-          const [ownedWearables, ownedEmotes, ownedNames] = isDefaultProfile
-            ? [[], [], []]
+          const [wearablesResult, emotesResult, namesResult] = isDefaultProfile
+            ? [{ elements: [] }, { elements: [] }, { elements: [] }]
             : await Promise.all([
                 wearablesFetcher.fetchOwnedElements(ethAddress),
                 emotesFetcher.fetchOwnedElements(ethAddress),
                 namesFetcher.fetchOwnedElements(ethAddress),
                 thirdPartyWearablesOwnershipChecker.checkNFTsOwnership()
               ])
+
+          const ownedWearables = wearablesResult.elements
+          const ownedEmotes = emotesResult.elements
+          const ownedNames = namesResult.elements
 
           const thirdPartyWearables = isDefaultProfile
             ? []

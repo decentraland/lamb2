@@ -14,7 +14,7 @@ export function generateLANDs(quantity: number): LANDFromQuery[] {
       parcel: isParcel ? parcelInfoFor(i) : undefined,
       estate: isParcel ? undefined : estateInfoFor(i),
       activeOrder: {
-        price: i
+        price: String(i)
       }
     })
   }

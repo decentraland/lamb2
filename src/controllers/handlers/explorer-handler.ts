@@ -58,7 +58,7 @@ async function fetchCombinedElements(
   address: string
 ): Promise<MixedWearable[]> {
   async function fetchBaseWearables() {
-    const elements = await components.baseWearablesFetcher.fetchOwnedElements(address)
+    const { elements } = await components.baseWearablesFetcher.fetchOwnedElements(address)
     if (!elements.length) {
       return []
     }
@@ -80,7 +80,7 @@ async function fetchCombinedElements(
   }
 
   async function fetchOnChainWearables(): Promise<MixedOnChainWearable[]> {
-    const elements = await components.wearablesFetcher.fetchOwnedElements(address)
+    const { elements } = await components.wearablesFetcher.fetchOwnedElements(address)
     if (!elements.length) {
       return []
     }
@@ -103,7 +103,7 @@ async function fetchCombinedElements(
 
   async function fetchThirdPartyWearables(thirdPartyCollectionIds: string[]): Promise<MixedThirdPartyWearable[]> {
     if (thirdPartyCollectionIds.length === 0) {
-      const elements = await components.thirdPartyWearablesFetcher.fetchOwnedElements(address)
+      const { elements } = await components.thirdPartyWearablesFetcher.fetchOwnedElements(address)
       return elements.map((wearable: ThirdPartyWearable): MixedThirdPartyWearable => {
         const entity = wearable.entity
         return {

@@ -1,24 +1,20 @@
-import { EmoteDefinition, Entity } from '@dcl/schemas'
-import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
-import { createSorting } from '../../logic/sorting'
 import { HandlerContextWithPath, InvalidRequestError, OnChainEmote, OnChainEmoteResponse } from '../../types'
-import { createFilters } from './items-commons'
 import { GetEmotes200 } from '@dcl/catalyst-api-specs/lib/client'
+import { createPaginationAndFilters, mapItemToResponse, fetchDefinitionsAndEntities } from './utils'
+import { PAGINATION_DEFAULTS } from '../../logic/pagination-constants'
 
-function mapItemToItemResponse(
-  item: OnChainEmote,
-  definition: EmoteDefinition | undefined,
-  entity: Entity | undefined
-): OnChainEmoteResponse {
+function mapEmoteToItemResponse(item: OnChainEmote): Omit<OnChainEmoteResponse, 'definition' | 'entity'> {
   return {
     urn: item.urn,
     amount: item.individualData.length,
-    individualData: item.individualData,
+    individualData: item.individualData.map((data) => ({
+      ...data,
+      transferredAt: data.transferredAt.toString(), // Convert transferredAt to string for API compatibility
+      price: data.price.toString() // Convert price to string for API compatibility
+    })),
     name: item.name,
     category: item.category,
-    rarity: item.rarity,
-    definition,
-    entity
+    rarity: item.rarity
   }
 }
 
@@ -32,44 +28,43 @@ export async function emotesHandler(
   const { address } = context.params
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
   const includeEntities = context.url.searchParams.has('includeEntities')
-  const pagination = paginationObject(context.url, Number.MAX_VALUE)
-  const filter = createFilters(context.url)
-  const sorting = createSorting(context.url)
 
   if (includeDefinitions && includeEntities) {
     throw new InvalidRequestError('Cannot use includeEntities and includeDefinitions together')
   }
 
-  const page = await fetchAndPaginate<OnChainEmote>(
-    () => emotesFetcher.fetchOwnedElements(address),
-    pagination,
-    filter,
-    sorting
+  // Extract pagination and filters (includes sorting validation)
+  const { pagination, filters } = createPaginationAndFilters(context.url, PAGINATION_DEFAULTS.MAX_PAGE_SIZE)
+
+  // Fetch elements (fetcher handles caching transparently)
+  const { elements, totalAmount } = await emotesFetcher.fetchOwnedElements(address, pagination, filters)
+
+  // Fetch definitions and entities if requested
+  const { definitions, entities } = await fetchDefinitionsAndEntities(
+    elements,
+    includeDefinitions,
+    includeEntities,
+    emoteDefinitionsFetcher,
+    entitiesFetcher
   )
 
-  const results: OnChainEmoteResponse[] = []
-  const emotes = page.elements
-  const definitions = includeDefinitions
-    ? await emoteDefinitionsFetcher.fetchItemsDefinitions(emotes.map((emote) => emote.urn))
-    : []
-
-  const entities = includeEntities ? await entitiesFetcher.fetchEntities(emotes.map((emote) => emote.urn)) : []
-
-  for (let i = 0; i < emotes.length; ++i) {
-    results.push(
-      mapItemToItemResponse(
-        emotes[i],
-        includeDefinitions ? definitions[i] : undefined,
-        includeEntities ? entities[i] : undefined
-      )
+  // Map results
+  const results: OnChainEmoteResponse[] = elements.map((emote, i) =>
+    mapItemToResponse(
+      emote,
+      includeDefinitions ? definitions[i] : undefined,
+      includeEntities ? entities[i] : undefined,
+      mapEmoteToItemResponse
     )
-  }
+  )
 
   return {
     status: 200,
     body: {
-      ...page,
-      elements: results
+      elements: results,
+      totalAmount,
+      pageNum: pagination.pageNum,
+      pageSize: pagination.pageSize
     }
   }
 }

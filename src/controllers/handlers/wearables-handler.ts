@@ -1,24 +1,20 @@
-import { Entity, WearableDefinition } from '@dcl/schemas'
-import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
-import { createSorting } from '../../logic/sorting'
 import { HandlerContextWithPath, InvalidRequestError, OnChainWearable, OnChainWearableResponse } from '../../types'
-import { createFilters } from './items-commons'
 import { GetWearables200 } from '@dcl/catalyst-api-specs/lib/client'
+import { createPaginationAndFilters, mapItemToResponse, fetchDefinitionsAndEntities } from './utils'
+import { PAGINATION_DEFAULTS } from '../../logic/pagination-constants'
 
-function mapItemToItemResponse(
-  item: OnChainWearable,
-  definition: WearableDefinition | undefined,
-  entity: Entity | undefined
-): OnChainWearableResponse {
+function mapWearableToItemResponse(item: OnChainWearable): Omit<OnChainWearableResponse, 'definition' | 'entity'> {
   return {
     urn: item.urn,
     amount: item.individualData.length,
-    individualData: item.individualData,
+    individualData: item.individualData.map((data) => ({
+      ...data,
+      transferredAt: data.transferredAt.toString(), // Convert transferredAt to string for API compatibility
+      price: data.price.toString() // Convert price to string for API compatibility
+    })),
     name: item.name,
     category: item.category,
-    rarity: item.rarity,
-    definition,
-    entity
+    rarity: item.rarity
   }
 }
 
@@ -32,45 +28,43 @@ export async function wearablesHandler(
   const { address } = context.params
   const includeDefinitions = context.url.searchParams.has('includeDefinitions')
   const includeEntities = context.url.searchParams.has('includeEntities')
-  const pagination = paginationObject(context.url, Number.MAX_VALUE)
-  const filter = createFilters(context.url)
-  const sorting = createSorting(context.url)
 
   if (includeDefinitions && includeEntities) {
     throw new InvalidRequestError('Cannot use includeEntities and includeDefinitions together')
   }
 
-  const page = await fetchAndPaginate<OnChainWearable>(
-    () => wearablesFetcher.fetchOwnedElements(address),
-    pagination,
-    filter,
-    sorting
+  // Extract pagination and filters (includes sorting validation)
+  const { pagination, filters } = createPaginationAndFilters(context.url, PAGINATION_DEFAULTS.MAX_PAGE_SIZE)
+
+  // Fetch elements (fetcher handles caching transparently)
+  const { elements, totalAmount } = await wearablesFetcher.fetchOwnedElements(address, pagination, filters)
+
+  // Fetch definitions and entities if requested
+  const { definitions, entities } = await fetchDefinitionsAndEntities(
+    elements,
+    includeDefinitions,
+    includeEntities,
+    wearableDefinitionsFetcher,
+    entitiesFetcher
   )
 
-  const results: OnChainWearableResponse[] = []
-  const wearables = page.elements
-  const definitions: (WearableDefinition | undefined)[] = includeDefinitions
-    ? await wearableDefinitionsFetcher.fetchItemsDefinitions(wearables.map((wearable) => wearable.urn))
-    : []
-
-  const entities: (Entity | undefined)[] = includeEntities
-    ? await entitiesFetcher.fetchEntities(wearables.map((wearable) => wearable.urn))
-    : []
-
-  for (let i = 0; i < wearables.length; ++i) {
-    const result = mapItemToItemResponse(
-      wearables[i],
+  // Map results
+  const results: OnChainWearableResponse[] = elements.map((wearable, i) =>
+    mapItemToResponse(
+      wearable,
       includeDefinitions ? definitions[i] : undefined,
-      includeEntities ? entities[i] : undefined
+      includeEntities ? entities[i] : undefined,
+      mapWearableToItemResponse
     )
-    results.push(result)
-  }
+  )
 
   return {
     status: 200,
     body: {
-      ...page,
-      elements: results
+      elements: results,
+      totalAmount,
+      pageNum: pagination.pageNum,
+      pageSize: pagination.pageSize
     }
   }
 }

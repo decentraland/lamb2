@@ -15,16 +15,16 @@ import {
   createEmoteDefinitionsFetcherComponent,
   createWearableDefinitionsFetcherComponent
 } from './adapters/definitions-fetcher'
-import { createElementsFetcherComponent } from './adapters/elements-fetcher'
+import { createElementsFetcherComponent, createLegacyElementsFetcherComponent } from './adapters/elements-fetcher'
 import { createEntitiesFetcherComponent } from './adapters/entities-fetcher'
 import { createNameDenylistFetcher } from './adapters/name-denylist-fetcher'
 import { createPOIsFetcher } from './adapters/pois-fetcher'
 import { createResourcesStatusComponent } from './adapters/resource-status'
 import { createStatusComponent } from './adapters/status'
-import { fetchAllBaseWearables } from './logic/fetch-elements/fetch-base-items'
-import { fetchAllEmotes, fetchAllWearables } from './logic/fetch-elements/fetch-items'
-import { fetchAllLANDs } from './logic/fetch-elements/fetch-lands'
-import { fetchAllNames } from './logic/fetch-elements/fetch-names'
+import { fetchBaseWearables } from './logic/fetch-elements/fetch-base-items'
+import { fetchEmotes, fetchWearables } from './logic/fetch-elements/fetch-items'
+import { fetchLands } from './logic/fetch-elements/fetch-lands'
+import { fetchNames } from './logic/fetch-elements/fetch-names'
 import { fetchAllThirdPartyWearables } from './logic/fetch-elements/fetch-third-party-wearables'
 import { metricDeclarations } from './metrics'
 import { createFetchComponent } from './ports/fetch'
@@ -36,6 +36,7 @@ import { createThirdPartyProvidersStorage } from './logic/third-party-providers-
 import { createProfilesComponent } from './adapters/profiles'
 import { IFetchComponent } from '@well-known-components/interfaces'
 import { createAlchemyNftFetcher } from './adapters/alchemy-nft-fetcher'
+import { createMarketplaceApiFetcher } from './adapters/marketplace-api-fetcher'
 import { createThirdPartyContractRegistry } from './ports/ownership-checker/third-party-contract-registry'
 import { createThirdPartyItemChecker } from './ports/ownership-checker/third-party-item-checker'
 import { createParcelRightsComponent } from './adapters/parcel-rights-fetcher'
@@ -81,26 +82,35 @@ export async function initComponents(
   // TODO: use content client for collection items fetching. prevent injecting contentServerUrl and fetch components.
   const entitiesFetcher = await createEntitiesFetcherComponent({ config, logs, content, contentServerUrl, fetch })
 
+  // Create marketplace API fetcher for primary data source
+  const marketplaceApiFetcher = await createMarketplaceApiFetcher({ config, fetch, logs })
+
   const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent({
     config,
     logs,
     content,
     contentServerUrl
   })
-  const baseWearablesFetcher = createElementsFetcherComponent<BaseWearable>({ logs }, async (_address) =>
-    fetchAllBaseWearables({ entitiesFetcher })
+  const baseWearablesFetcher = createElementsFetcherComponent<BaseWearable>(
+    { logs, theGraph, marketplaceApiFetcher },
+    async (_deps, _address) => {
+      const elements = await fetchBaseWearables({ entitiesFetcher })
+      return { elements, totalAmount: elements.length }
+    }
   )
-  const wearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllWearables({ theGraph }, address)
-  )
-  const emotesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllEmotes({ theGraph }, address)
-  )
-  const namesFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllNames({ theGraph }, address))
-  const landsFetcher = createElementsFetcherComponent({ logs }, async (address) => fetchAllLANDs({ theGraph }, address))
-  const landsPermissionsFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllPermissions({ theGraph }, address)
-  )
+
+  const wearablesFetcher = createElementsFetcherComponent({ logs, theGraph, marketplaceApiFetcher }, fetchWearables)
+
+  const emotesFetcher = createElementsFetcherComponent({ logs, theGraph, marketplaceApiFetcher }, fetchEmotes)
+
+  const namesFetcher = createElementsFetcherComponent({ logs, theGraph, marketplaceApiFetcher }, fetchNames)
+
+  const landsFetcher = createLegacyElementsFetcherComponent({ logs }, async (address) => fetchLands(theGraph, address))
+
+  const landsPermissionsFetcher = createElementsFetcherComponent({ logs, theGraph }, async (_deps, address) => {
+    const elements = await fetchAllPermissions({ theGraph }, address)
+    return { elements, totalAmount: elements.length }
+  })
 
   const resourcesStatusCheck = createResourcesStatusComponent({ logs })
   const status = await createStatusComponent({ logs, fetch })
@@ -146,25 +156,23 @@ export async function initComponents(
     logs,
     thirdPartyProvidersGraphFetcher
   })
-  const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllThirdPartyWearables(
-      {
-        alchemyNftFetcher,
-        contentServerUrl,
-        thirdPartyProvidersStorage,
-        fetch,
-        entitiesFetcher,
-        metrics
-      },
-      address
-    )
+
+  const thirdPartyWearablesFetcher = createElementsFetcherComponent(
+    { logs, theGraph, marketplaceApiFetcher },
+    async (_deps, address) => {
+      const elements = await fetchAllThirdPartyWearables(
+        { alchemyNftFetcher, contentServerUrl, thirdPartyProvidersStorage, fetch, entitiesFetcher, metrics },
+        address
+      )
+      return { elements, totalAmount: elements.length }
+    }
   )
 
   const alchemyNftFetcher = await createAlchemyNftFetcher({ config, logs, fetch })
 
-  const nameOwnerFetcher = createElementsFetcherComponent({ logs }, async (name) => {
-    const result = await fetchNameOwner({ theGraph }, name)
-    return result ? [result] : []
+  const nameOwnerFetcher = createElementsFetcherComponent({ logs, theGraph }, async (_deps, name) => {
+    const { owner } = await fetchNameOwner({ theGraph }, name)
+    return { elements: owner ? [{ owner }] : [], totalAmount: owner ? 1 : 0 }
   })
 
   const profiles = await createProfilesComponent({
@@ -221,6 +229,7 @@ export async function initComponents(
     alchemyNftFetcher,
     l1ThirdPartyItemChecker,
     l2ThirdPartyItemChecker,
+    marketplaceApiFetcher,
     nameOwnerFetcher
   }
 }

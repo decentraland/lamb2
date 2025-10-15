@@ -24,7 +24,10 @@ test('Integration tests for name-owner-handle', function ({ components }) {
       mockResult = {
         owner: ownerAddress
       }
-      jest.spyOn(nameOwnerFetcher, 'fetchOwnedElements').mockResolvedValueOnce([mockResult])
+      jest.spyOn(nameOwnerFetcher, 'fetchOwnedElements').mockResolvedValueOnce({
+        elements: [mockResult],
+        totalAmount: 1
+      })
     })
 
     it('should return 200 status with owner information', async () => {
@@ -51,7 +54,10 @@ test('Integration tests for name-owner-handle', function ({ components }) {
       mockResult = {
         owner: ownerAddress
       }
-      jest.spyOn(nameOwnerFetcher, 'fetchOwnedElements').mockResolvedValueOnce([mockResult])
+      jest.spyOn(nameOwnerFetcher, 'fetchOwnedElements').mockResolvedValueOnce({
+        elements: [mockResult],
+        totalAmount: 1
+      })
     })
 
     it('should return 200 status with owner information', async () => {
@@ -76,7 +82,10 @@ test('Integration tests for name-owner-handle', function ({ components }) {
 
     describe('and no results are found', () => {
       beforeEach(() => {
-        jest.spyOn(nameOwnerFetcher, 'fetchOwnedElements').mockResolvedValueOnce([])
+        jest.spyOn(nameOwnerFetcher, 'fetchOwnedElements').mockResolvedValueOnce({
+          elements: [],
+          totalAmount: 0
+        })
       })
 
       it('should return 404 status', async () => {

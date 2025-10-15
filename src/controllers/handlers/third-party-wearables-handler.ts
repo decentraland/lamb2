@@ -44,7 +44,10 @@ export async function thirdPartyWearablesHandler(
   const sorting = createBaseSorting(context.url)
 
   const page = await fetchAndPaginate<ThirdPartyWearable>(
-    () => thirdPartyWearablesFetcher.fetchOwnedElements(address),
+    async () => {
+      const { elements } = await thirdPartyWearablesFetcher.fetchOwnedElements(address)
+      return elements
+    },
     pagination,
     filter,
     sorting
