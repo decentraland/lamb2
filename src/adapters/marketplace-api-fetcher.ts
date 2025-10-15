@@ -5,26 +5,22 @@ import { OnChainWearable, OnChainEmote, Name, AppComponents } from '../types'
 /**
  * Marketplace API response types matching the marketplace-server API
  */
-export type MarketplaceApiWearable = {
+type MarketplaceApiBaseData = {
   urn: string
   id: string
   tokenId: string
-  category: WearableCategory
   transferredAt: string | null
   name: string
   rarity: string
   price?: number
 }
 
-export type MarketplaceApiEmote = {
-  urn: string
-  id: string
-  tokenId: string
+export type MarketplaceApiWearable = MarketplaceApiBaseData & {
+  category: WearableCategory
+}
+
+export type MarketplaceApiEmote = MarketplaceApiBaseData & {
   category: EmoteCategory
-  transferredAt: string | null
-  name: string
-  rarity: string
-  price?: number
 }
 
 export type MarketplaceApiName = {
@@ -34,35 +30,21 @@ export type MarketplaceApiName = {
   price?: number
 }
 
-export type MarketplaceApiGroupedWearable = {
+type MarketplaceApiGroupedBaseData = {
   urn: string
   amount: number
-  individualData: Array<{
-    id: string
-    tokenId: string
-    transferredAt: string
-    price: string
-  }>
+  individualData: Array<MarketplaceApiBaseData>
   name: string
   rarity: string
   minTransferredAt: number
   maxTransferredAt: number
+}
+
+export type MarketplaceApiGroupedWearable = MarketplaceApiGroupedBaseData & {
   category: WearableCategory
 }
 
-export type MarketplaceApiGroupedEmote = {
-  urn: string
-  amount: number
-  individualData: Array<{
-    id: string
-    tokenId: string
-    transferredAt: string
-    price: string
-  }>
-  name: string
-  rarity: string
-  minTransferredAt: number
-  maxTransferredAt: number
+export type MarketplaceApiGroupedEmote = MarketplaceApiGroupedBaseData & {
   category: EmoteCategory
 }
 
