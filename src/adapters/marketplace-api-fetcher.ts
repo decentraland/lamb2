@@ -33,7 +33,12 @@ export type MarketplaceApiName = {
 type MarketplaceApiGroupedBaseData = {
   urn: string
   amount: number
-  individualData: Array<MarketplaceApiBaseData>
+  individualData: Array<{
+    id: string
+    tokenId: string
+    transferredAt: string
+    price: string
+  }>
   name: string
   rarity: string
   minTransferredAt: number
