@@ -99,19 +99,18 @@ export async function getOutfits(
   const names = await namesFetcher.fetchOwnedElements(ethAddress)
 
   const normalOutfitsWithOwnedWearables = fullyOwnedOutfits.filter((outfit) => outfit.slot <= 4)
-  const extraOutfitsWithOwnedWearables = fullyOwnedOutfits.filter((outfit) => outfit.slot > 4)
-  const extraOutfitsWithOwnedWearablesAndNames = extraOutfitsWithOwnedWearables.slice(0, names.length)
+  // Include extra outfits if there user owns any name
+  const extraOutfitsWithOwnedWearables = names.length > 0 ? fullyOwnedOutfits.filter((outfit) => outfit.slot > 4) : []
 
-  const outfitsWithWearablesInLowerCase = [
-    ...normalOutfitsWithOwnedWearables,
-    ...extraOutfitsWithOwnedWearablesAndNames
-  ].map((outfit) => ({
-    ...outfit,
-    outfit: {
-      ...outfit.outfit,
-      wearables: outfit.outfit.wearables.map((wearable) => wearable.toLowerCase())
-    }
-  }))
+  const outfitsWithWearablesInLowerCase = [...normalOutfitsWithOwnedWearables, ...extraOutfitsWithOwnedWearables].map(
+    (outfit) => ({
+      ...outfit,
+      outfit: {
+        ...outfit.outfit,
+        wearables: outfit.outfit.wearables.map((wearable) => wearable.toLowerCase())
+      }
+    })
+  )
 
   return {
     ...outfitsEntity,
