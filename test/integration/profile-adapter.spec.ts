@@ -701,3 +701,146 @@ test('integration tests for profile adapter', function ({ components, stubCompon
     ])
   })
 })
+
+test('integration tests for profile adapter: cache bypass behavior', function ({ components, stubComponents }) {
+  describe('when ifModifiedSinceTimestamp is provided', () => {
+    let addresses: string[]
+    let ifModifiedSince: number
+
+    beforeEach(() => {
+      addresses = ['0x4']
+      ifModifiedSince = Date.now()
+    })
+
+    it('should pass bypassCache=true to fetchers', async () => {
+      const {
+        alchemyNftFetcher,
+        entitiesFetcher,
+        metrics,
+        config,
+        contentServerUrl,
+        ownershipCaches,
+        thirdPartyProvidersStorage,
+        logs,
+        wearablesFetcher,
+        emotesFetcher,
+        namesFetcher,
+        l1ThirdPartyItemChecker,
+        l2ThirdPartyItemChecker
+      } = components
+      const { theGraph, content, fetch } = stubComponents
+
+      const profileEntity = {
+        ...profileEntityFull,
+        pointers: addresses, // Use the correct address
+        timestamp: ifModifiedSince + 1000 // Newer than ifModifiedSince
+      }
+
+      content.fetchEntitiesByPointers.withArgs(addresses).resolves([profileEntity])
+
+      theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+      theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+      theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+
+      // Spy on fetchers to verify bypassCache parameter
+      const wearablesSpy = jest.spyOn(wearablesFetcher, 'fetchOwnedElements')
+      const emotesSpy = jest.spyOn(emotesFetcher, 'fetchOwnedElements')
+      const namesSpy = jest.spyOn(namesFetcher, 'fetchOwnedElements')
+
+      const profilesComponent = await createProfilesComponent({
+        alchemyNftFetcher,
+        entitiesFetcher,
+        metrics,
+        content,
+        contentServerUrl,
+        theGraph,
+        config,
+        fetch,
+        ownershipCaches,
+        l1ThirdPartyItemChecker,
+        l2ThirdPartyItemChecker,
+        thirdPartyProvidersStorage,
+        logs,
+        wearablesFetcher,
+        emotesFetcher,
+        namesFetcher
+      })
+
+      await profilesComponent.getProfiles(addresses, ifModifiedSince)
+
+      // Verify that fetchers were called with bypassCache=true
+      expect(wearablesSpy).toHaveBeenCalledWith('0x4', true)
+      expect(emotesSpy).toHaveBeenCalledWith('0x4', true)
+      expect(namesSpy).toHaveBeenCalledWith('0x4', true)
+    })
+  })
+
+  describe('when ifModifiedSinceTimestamp is not provided', () => {
+    let addresses: string[]
+
+    beforeEach(() => {
+      addresses = ['0x5']
+    })
+
+    it('should pass bypassCache=false to fetchers', async () => {
+      const {
+        alchemyNftFetcher,
+        entitiesFetcher,
+        metrics,
+        config,
+        contentServerUrl,
+        ownershipCaches,
+        thirdPartyProvidersStorage,
+        logs,
+        wearablesFetcher,
+        emotesFetcher,
+        namesFetcher,
+        l1ThirdPartyItemChecker,
+        l2ThirdPartyItemChecker
+      } = components
+      const { theGraph, content, fetch } = stubComponents
+
+      const profileEntity = {
+        ...profileEntityFull,
+        pointers: addresses // Use the correct address
+      }
+
+      content.fetchEntitiesByPointers.withArgs(addresses).resolves([profileEntity])
+
+      theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+      theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+      theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+
+      // Spy on fetchers to verify bypassCache parameter
+      const wearablesSpy = jest.spyOn(wearablesFetcher, 'fetchOwnedElements')
+      const emotesSpy = jest.spyOn(emotesFetcher, 'fetchOwnedElements')
+      const namesSpy = jest.spyOn(namesFetcher, 'fetchOwnedElements')
+
+      const profilesComponent = await createProfilesComponent({
+        alchemyNftFetcher,
+        entitiesFetcher,
+        metrics,
+        content,
+        contentServerUrl,
+        theGraph,
+        config,
+        fetch,
+        ownershipCaches,
+        l1ThirdPartyItemChecker,
+        l2ThirdPartyItemChecker,
+        thirdPartyProvidersStorage,
+        logs,
+        wearablesFetcher,
+        emotesFetcher,
+        namesFetcher
+      })
+
+      await profilesComponent.getProfiles(addresses) // No ifModifiedSince
+
+      // Verify that fetchers were called with bypassCache=false
+      expect(wearablesSpy).toHaveBeenCalledWith('0x5', false)
+      expect(emotesSpy).toHaveBeenCalledWith('0x5', false)
+      expect(namesSpy).toHaveBeenCalledWith('0x5', false)
+    })
+  })
+})

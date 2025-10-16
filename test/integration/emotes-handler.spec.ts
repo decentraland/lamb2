@@ -194,6 +194,40 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
     expect(theGraph.maticCollectionsSubgraph.query).toHaveBeenCalledTimes(1)
   })
 
+  describe('when X-Bypass-Cache header is sent', () => {
+    let wallet: string
+    let emotes: any[]
+    let updatedEmotes: any[]
+
+    beforeEach(() => {
+      wallet = generateRandomAddress()
+      emotes = generateEmotes(2)
+      updatedEmotes = generateEmotes(3)
+    })
+
+    it('should bypass cache and fetch fresh data', async () => {
+      const { localFetch, theGraph } = components
+
+      // First call - populate cache
+      theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
+
+      const r1 = await localFetch.fetch(`/users/${wallet}/emotes`)
+      expect(r1.status).toBe(200)
+      const body1 = await r1.json()
+      expect(body1.elements).toHaveLength(2)
+
+      // Second call with bypass header - should fetch fresh data
+      theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: updatedEmotes })
+
+      const r2 = await localFetch.fetch(`/users/${wallet}/emotes`, {
+        headers: { 'X-Bypass-Cache': 'true' }
+      })
+      expect(r2.status).toBe(200)
+      const body2 = await r2.json()
+      expect(body2.elements).toHaveLength(3)
+    })
+  })
+
   it('return emotes filtering by name', async () => {
     const { localFetch, theGraph } = components
     const emotes = generateEmotes(17)

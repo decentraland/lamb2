@@ -1,15 +1,46 @@
 import LRU from 'lru-cache'
+import { Request } from 'node-fetch'
+
+/**
+ * Checks if the request has the bypass cache header
+ * Supports both X-Bypass-Cache header and Cache-Control: no-cache
+ */
+export function shouldBypassCache(request: Request): boolean {
+  // Check for X-Bypass-Cache header
+  const bypassHeader = request.headers.get('x-bypass-cache')
+  if (bypassHeader === 'true' || bypassHeader === '1') {
+    return true
+  }
+
+  // Check for Cache-Control: no-cache
+  const cacheControl = request.headers.get('cache-control')
+  if (cacheControl && (cacheControl.includes('no-cache') || cacheControl.includes('no-store'))) {
+    return true
+  }
+
+  return false
+}
 
 /*
  * Reads the provided map and returns those nfts that are cached and those that are unknown.
  * The cache must be {adress -> {nft -> isOwned} }.
+ * If bypassCache is true, returns all NFTs as pending check.
  */
 export function getCachedNFTsAndPendingCheckNFTs(
   ownedNFTsByAddress: Map<string, string[]>,
-  cache: LRU<string, Map<string, boolean>>
+  cache: LRU<string, Map<string, boolean>>,
+  bypassCache = false
 ) {
   const nftsToCheckByAddress: Map<string, string[]> = new Map()
   const cachedOwnedNFTsByAddress: Map<string, string[]> = new Map()
+
+  // If bypassing cache, return all NFTs as pending check
+  if (bypassCache) {
+    return {
+      nftsToCheckByAddress: ownedNFTsByAddress,
+      cachedOwnedNFTsByAddress
+    }
+  }
 
   for (const [address, nfts] of ownedNFTsByAddress.entries()) {
     if (cache.has(address)) {
