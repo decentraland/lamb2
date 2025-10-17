@@ -1,5 +1,5 @@
 import { ISubgraphComponent } from '@well-known-components/thegraph-component'
-import { ElementsFilters } from '../../adapters/elements-fetcher'
+import { ElementsFilters, ItemType } from '../../adapters/elements-fetcher'
 
 interface NFT {
   id: string
@@ -188,7 +188,7 @@ async function fetchAllNFTsUpTo<E extends NFT>(
 /**
  * Creates a query builder for items (wearables/emotes)
  */
-export function createItemQueryBuilder(category: 'wearable' | 'emote' | 'smartWearable') {
+export function createItemQueryBuilder(category: ItemType) {
   let itemTypeFilter: string
 
   if (category === 'smartWearable') {

@@ -43,6 +43,10 @@ export type MixedWearableTrimmedResponse = {
   entity: ExplorerWearableEntity
 }
 
+export type WearableFilters = {
+  isSmartWearable: boolean
+}
+
 async function fetchCombinedElements(
   components: Pick<
     AppComponents,
@@ -56,7 +60,7 @@ async function fetchCombinedElements(
   collectionTypes: string[],
   thirdPartyCollectionId: string[],
   address: string,
-  isSmartWearable: boolean = false
+  filters: WearableFilters = { isSmartWearable: false }
 ): Promise<MixedWearable[]> {
   async function fetchBaseWearables() {
     const { elements } = await components.baseWearablesFetcher.fetchOwnedElements(address)
@@ -82,7 +86,7 @@ async function fetchCombinedElements(
 
   async function fetchOnChainWearables(): Promise<MixedOnChainWearable[]> {
     const { elements } = await components.wearablesFetcher.fetchOwnedElements(address, undefined, {
-      itemType: isSmartWearable ? 'smartWearable' : 'wearable'
+      itemType: filters.isSmartWearable ? 'smartWearable' : 'wearable'
     })
     if (!elements.length) {
       return []
@@ -144,9 +148,13 @@ async function fetchCombinedElements(
   }
 
   const [baseItems, nftItems, thirdPartyItems] = await Promise.all([
-    isSmartWearable ? [] : collectionTypes.includes(BASE_WEARABLE) ? fetchBaseWearables() : [],
+    filters.isSmartWearable ? [] : collectionTypes.includes(BASE_WEARABLE) ? fetchBaseWearables() : [],
     collectionTypes.includes(ON_CHAIN) ? fetchOnChainWearables() : [],
-    isSmartWearable ? [] : collectionTypes.includes(THIRD_PARTY) ? fetchThirdPartyWearables(thirdPartyCollectionId) : []
+    filters.isSmartWearable
+      ? []
+      : collectionTypes.includes(THIRD_PARTY)
+        ? fetchThirdPartyWearables(thirdPartyCollectionId)
+        : []
   ])
 
   return [...baseItems, ...nftItems, ...thirdPartyItems]
@@ -183,7 +191,8 @@ export async function explorerHandler(
   }
 
   const page = await fetchAndPaginate<MixedWearable>(
-    () => fetchCombinedElements(context.components, collectionTypes, thirdPartyCollectionIds, address, isSmartWearable),
+    () =>
+      fetchCombinedElements(context.components, collectionTypes, thirdPartyCollectionIds, address, { isSmartWearable }),
     pagination,
     filter,
     sorting

@@ -1,6 +1,7 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { WearableCategory, EmoteCategory } from '@dcl/schemas'
 import { OnChainWearable, OnChainEmote, Name, AppComponents } from '../types'
+import { ItemType } from './elements-fetcher'
 
 /**
  * Marketplace API response types matching the marketplace-server API
@@ -82,7 +83,7 @@ export type MarketplaceApiParams = {
   direction?: string
 
   // Item type
-  itemType?: string
+  itemType?: ItemType
 }
 
 /**

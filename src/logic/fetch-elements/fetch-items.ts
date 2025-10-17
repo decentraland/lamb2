@@ -1,7 +1,7 @@
 import { EmoteCategory, WearableCategory } from '@dcl/schemas'
 import { Item, OnChainEmote, OnChainWearable, Pagination } from '../../types'
 import { MarketplaceApiParams } from '../../adapters/marketplace-api-fetcher'
-import { ElementsFilters, ElementsFetcherDependencies } from '../../adapters/elements-fetcher'
+import { ElementsFilters, ElementsFetcherDependencies, ItemType } from '../../adapters/elements-fetcher'
 
 import { fetchNFTsPaginated, createItemQueryBuilder } from './graph-pagination'
 import { compareByRarity } from '../sorting'
@@ -190,9 +190,7 @@ export async function fetchWearables(
     },
     async () => {
       // TheGraph fallback implementation
-      const wearableQueryBuilder = createItemQueryBuilder(
-        filters?.itemType === 'smartWearable' ? 'smartWearable' : 'wearable'
-      )
+      const wearableQueryBuilder = createItemQueryBuilder((filters?.itemType || 'wearable') as ItemType)
 
       const [ethereumResult, maticResult] = await Promise.all([
         fetchNFTsPaginated<WearableFromQuery>(

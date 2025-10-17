@@ -41,13 +41,15 @@ export type ElementsResult<T> = {
   totalAmount: number
 }
 
+export type ItemType = 'wearable' | 'emote' | 'smartWearable'
+
 export type ElementsFilters = {
   category?: string
   rarity?: string
   name?: string
   orderBy?: string
   direction?: string
-  itemType?: string
+  itemType?: ItemType
 }
 
 export type LegacyElementsFetcher<T> = IBaseComponent & {
