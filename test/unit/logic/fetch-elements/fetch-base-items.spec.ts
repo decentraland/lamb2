@@ -1,4 +1,4 @@
-import { fetchAllBaseWearables } from '../../../../src/logic/fetch-elements/fetch-base-items'
+import { fetchBaseWearables } from '../../../../src/logic/fetch-elements/fetch-base-items'
 import { EntitiesFetcher } from '../../../../src/adapters/entities-fetcher'
 import { generateWearableEntities } from '../../../data/wearables'
 
@@ -11,7 +11,7 @@ describe('fetchBaseWearables', () => {
       fetchCollectionEntities: jest.fn() // no-op: not needed for base wearables
     }
 
-    const baseWearables = await fetchAllBaseWearables({ entitiesFetcher })
+    const baseWearables = await fetchBaseWearables({ entitiesFetcher })
     expect(baseWearables.length).toBe(282)
   })
 })

@@ -92,20 +92,23 @@ test('when getting outfits', function ({ components }) {
 
     describe('and the user owns all wearables in normal slots', () => {
       beforeEach(() => {
-        components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([
-          {
-            urn: 'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
-            individualData: [{ tokenId: '123' }]
-          },
-          {
-            urn: 'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2',
-            individualData: [{ tokenId: '123' }]
-          },
-          {
-            urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet',
-            individualData: [{ tokenId: '123' }]
-          }
-        ])
+        components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+          elements: [
+            {
+              urn: 'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
+              individualData: [{ tokenId: '123' }]
+            },
+            {
+              urn: 'urn:decentraland:matic:collections-v2:0x04e7f74e73e951c61edd80910e46c3fece5ebe80:2',
+              individualData: [{ tokenId: '123' }]
+            },
+            {
+              urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet',
+              individualData: [{ tokenId: '123' }]
+            }
+          ],
+          totalAmount: 3
+        })
 
         outfitsEntity.metadata.outfits.push(
           createOutfit(1, [
@@ -124,7 +127,10 @@ test('when getting outfits', function ({ components }) {
       describe('and the user owns names', () => {
         beforeEach(() => {
           outfitsEntity.metadata.namesForExtraSlots.push('perro')
-          components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([{ name: 'perro' }])
+          components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+            elements: [{ name: 'perro' }],
+            totalAmount: 1
+          })
         })
 
         it('should return both normal and extra outfits with wearables in lowercase', async () => {
@@ -148,7 +154,10 @@ test('when getting outfits', function ({ components }) {
 
       describe('and the user does not own names', () => {
         beforeEach(() => {
-          components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([])
+          components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+            elements: [],
+            totalAmount: 0
+          })
         })
 
         it('should return only normal slots and exclude extra slots', async () => {
@@ -185,10 +194,14 @@ test('when getting outfits', function ({ components }) {
           createOutfit(2, ownedOutfitWearables)
         )
 
-        components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([])
-        components.wearablesFetcher.fetchOwnedElements = jest
-          .fn()
-          .mockResolvedValue([{ urn: ownedWearable, individualData: [{ tokenId: '123' }] }])
+        components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+          elements: [],
+          totalAmount: 0
+        })
+        components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+          elements: [{ urn: ownedWearable, individualData: [{ tokenId: '123' }] }],
+          totalAmount: 1
+        })
       })
 
       it('should return only outfits where all wearables are owned', async () => {
@@ -220,13 +233,19 @@ test('when getting outfits', function ({ components }) {
             createOutfit(9, outfitWearables)
           )
 
-          components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue(ownedNames.map((name) => ({ name })))
-          components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([
-            {
-              urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet',
-              individualData: [{ tokenId: '123' }]
-            }
-          ])
+          components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+            elements: ownedNames.map((name) => ({ name })),
+            totalAmount: ownedNames.length
+          })
+          components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+            elements: [
+              {
+                urn: 'urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet',
+                individualData: [{ tokenId: '123' }]
+              }
+            ],
+            totalAmount: 1
+          })
         })
 
         it('should return all extra slots when the user owns at least one name', async () => {
@@ -253,8 +272,14 @@ test('when getting outfits', function ({ components }) {
           ])
         )
 
-        components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([])
-        components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([])
+        components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+          elements: [],
+          totalAmount: 0
+        })
+        components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+          elements: [],
+          totalAmount: 0
+        })
       })
 
       it('should include the outfit without checking ownership', async () => {
@@ -274,8 +299,14 @@ test('when getting outfits', function ({ components }) {
           createOutfit(1, ['urn:decentraland:base-avatars:eyebrows_00', 'urn:decentraland:base-avatars:eyes_00'])
         )
 
-        components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([])
-        components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([])
+        components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+          elements: [],
+          totalAmount: 0
+        })
+        components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+          elements: [],
+          totalAmount: 0
+        })
       })
 
       it('should include the outfit without checking ownership', async () => {
@@ -299,13 +330,19 @@ test('when getting outfits', function ({ components }) {
           ])
         )
 
-        components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([])
-        components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([
-          {
-            urn: 'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
-            individualData: [{ tokenId: '123' }]
-          }
-        ])
+        components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+          elements: [],
+          totalAmount: 0
+        })
+        components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+          elements: [
+            {
+              urn: 'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
+              individualData: [{ tokenId: '123' }]
+            }
+          ],
+          totalAmount: 1
+        })
       })
 
       it('should include the outfit when all on-chain wearables are owned', async () => {
@@ -332,8 +369,14 @@ test('when getting outfits', function ({ components }) {
 
           outfitsEntity.metadata.outfits.push(createOutfit(1, thirdPartyWearables))
 
-          components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([])
-          components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([])
+          components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+            elements: [],
+            totalAmount: 0
+          })
+          components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+            elements: [],
+            totalAmount: 0
+          })
 
           // Clear the TPW cache to avoid interference
           components.ownershipCaches.tpwCache.clear()
@@ -360,8 +403,14 @@ test('when getting outfits', function ({ components }) {
 
           outfitsEntity.metadata.outfits.push(createOutfit(1, [notOwnedWearable]))
 
-          components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([])
-          components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([])
+          components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+            elements: [],
+            totalAmount: 0
+          })
+          components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+            elements: [],
+            totalAmount: 0
+          })
 
           // Clear the TPW cache to avoid interference
           components.ownershipCaches.tpwCache.clear()
@@ -390,13 +439,19 @@ test('when getting outfits', function ({ components }) {
 
           outfitsEntity.metadata.outfits.push(createOutfit(1, mixedWearables))
 
-          components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([])
-          components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue([
-            {
-              urn: 'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
-              individualData: [{ tokenId: '123' }]
-            }
-          ])
+          components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+            elements: [],
+            totalAmount: 0
+          })
+          components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+            elements: [
+              {
+                urn: 'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
+                individualData: [{ tokenId: '123' }]
+              }
+            ],
+            totalAmount: 1
+          })
 
           // Clear the TPW cache to avoid interference
           components.ownershipCaches.tpwCache.clear()

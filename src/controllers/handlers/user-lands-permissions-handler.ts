@@ -12,10 +12,10 @@ export async function userLandsPermissionsHandler(
   const { landsPermissionsFetcher } = context.components
   const pagination = paginationObject(context.url, Number.MAX_VALUE)
 
-  const page = await fetchAndPaginate<LandPermission>(
-    () => landsPermissionsFetcher.fetchOwnedElements(address),
-    pagination
-  )
+  const page = await fetchAndPaginate<LandPermission>(async () => {
+    const { elements } = await landsPermissionsFetcher.fetchOwnedElements(address)
+    return elements
+  }, pagination)
   return {
     status: 200,
     body: {

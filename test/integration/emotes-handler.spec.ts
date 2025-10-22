@@ -3,17 +3,43 @@ import { extractEmoteDefinitionFromEntity } from '../../src/adapters/definitions
 import { EmoteFromQuery } from '../../src/logic/fetch-elements/fetch-items'
 import { leastRare, nameAZ, nameZA, rarest } from '../../src/logic/sorting'
 import { SORTED_RARITIES } from '../../src/logic/utils'
-import { OnChainEmoteResponse } from '../../src/types'
+import { OnChainEmoteResponse, OnChainEmote } from '../../src/types'
 import { test } from '../components'
 import { generateEmoteContentDefinitions, generateEmotes } from '../data/emotes'
 import { generateRandomAddress } from '../helpers'
 
 // NOTE: each test generates a new wallet to avoid matches on cache
+
+// Helper function to convert EmoteFromQuery to OnChainEmote format
+function convertEmoteToOnChainEmote(emote: EmoteFromQuery): OnChainEmote {
+  return {
+    urn: emote.urn,
+    amount: 1,
+    individualData: [
+      {
+        id: `${emote.urn}:${emote.tokenId}`,
+        tokenId: emote.tokenId,
+        transferredAt: emote.transferredAt,
+        price: emote.item.price
+      }
+    ],
+    name: emote.metadata.emote.name,
+    rarity: emote.item.rarity,
+    minTransferredAt: emote.transferredAt,
+    maxTransferredAt: emote.transferredAt,
+    category: emote.metadata.emote.category
+  }
+}
+
 test('emotes-handler: GET /users/:address/emotes should', function ({ components }) {
   it('return empty when no emotes are found', async () => {
-    const { localFetch, theGraph } = components
+    const { localFetch } = components
 
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
+    // Mock marketplace API with no emotes
+    components.marketplaceApiFetcher!.fetchUserEmotes = jest.fn().mockResolvedValue({
+      emotes: [],
+      total: 0
+    })
 
     const r = await localFetch.fetch(`/users/${generateRandomAddress()}/emotes`)
 
@@ -27,9 +53,14 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
   })
 
   it('return empty when no emotes are found with includeDefinitions set', async () => {
-    const { localFetch, theGraph, content } = components
+    const { localFetch, content } = components
 
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: [] })
+    // Mock marketplace API with no emotes
+    components.marketplaceApiFetcher!.fetchUserEmotes = jest.fn().mockResolvedValue({
+      emotes: [],
+      total: 0
+    })
+
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce([])
 
     const r = await localFetch.fetch(`/users/${generateRandomAddress()}/emotes?includeDefinitions`)
@@ -44,10 +75,14 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
   })
 
   it('return a emote from matic collection', async () => {
-    const { localFetch, theGraph } = components
+    const { localFetch } = components
     const emotes = generateEmotes(1)
 
-    jest.spyOn(theGraph.maticCollectionsSubgraph, 'query').mockResolvedValueOnce({ nfts: emotes })
+    // Mock marketplace API with single emote
+    components.marketplaceApiFetcher!.fetchUserEmotes = jest.fn().mockResolvedValue({
+      emotes: emotes.map(convertEmoteToOnChainEmote),
+      total: 1
+    })
 
     const r = await localFetch.fetch(`/users/${generateRandomAddress()}/emotes`)
 
@@ -61,11 +96,16 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
   })
 
   it('return emotes with includeDefinitions set', async () => {
-    const { localFetch, theGraph, content, contentServerUrl } = components
+    const { localFetch, content, contentServerUrl } = components
     const emotes = generateEmotes(1)
     const definitions = generateEmoteContentDefinitions(emotes.map((emote) => emote.urn))
 
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
+    // Mock marketplace API with single emote
+    components.marketplaceApiFetcher!.fetchUserEmotes = jest.fn().mockResolvedValue({
+      emotes: emotes.map(convertEmoteToOnChainEmote),
+      total: 1
+    })
+
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
 
     const r = await localFetch.fetch(`/users/${generateRandomAddress()}/emotes?includeDefinitions`)
@@ -80,11 +120,16 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
   })
 
   it('return emotes with includeEntities set', async () => {
-    const { localFetch, theGraph, content, contentServerUrl } = components
+    const { localFetch, content, contentServerUrl } = components
     const emotes = generateEmotes(1)
     const definitions = generateEmoteContentDefinitions(emotes.map((emote) => emote.urn))
 
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
+    // Mock marketplace API with single emote
+    components.marketplaceApiFetcher!.fetchUserEmotes = jest.fn().mockResolvedValue({
+      emotes: emotes.map(convertEmoteToOnChainEmote),
+      total: 1
+    })
+
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
 
     const r = await localFetch.fetch(`/users/${generateRandomAddress()}/emotes?includeEntities`)
@@ -99,13 +144,19 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
   })
 
   it('return a emote with definition and another one without definition', async () => {
-    const { localFetch, theGraph, content, contentServerUrl } = components
+    const { localFetch, content, contentServerUrl } = components
     const emotes = generateEmotes(2)
     const definitions = generateEmoteContentDefinitions([emotes[0].urn])
 
     // modify emote urn to avoid cache hit
     emotes[1] = { ...emotes[1], urn: 'anotherUrn' }
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
+
+    // Mock marketplace API with emotes in expected order (sorted by rarest by default)
+    components.marketplaceApiFetcher!.fetchUserEmotes = jest.fn().mockResolvedValue({
+      emotes: [emotes[1], emotes[0]].map(convertEmoteToOnChainEmote),
+      total: 2
+    })
+
     content.fetchEntitiesByPointers = jest.fn().mockResolvedValueOnce(definitions)
 
     const r = await localFetch.fetch(`/users/${generateRandomAddress()}/emotes?includeDefinitions`)
@@ -120,10 +171,14 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
   })
 
   it('return emotes 2 and paginate them correctly (page 1, size 2, total 5)', async () => {
-    const { localFetch, theGraph } = components
+    const { localFetch } = components
     const emotes = generateEmotes(5)
 
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
+    // Mock marketplace API to return paginated results directly (like wearables-handler)
+    const fetchUserEmotesSpy = jest.spyOn(components.marketplaceApiFetcher!, 'fetchUserEmotes').mockResolvedValue({
+      emotes: [emotes[0], emotes[1]].map(convertEmoteToOnChainEmote), // Only first 2 emotes for page 1
+      total: 5
+    })
 
     const r = await localFetch.fetch(`/users/${generateRandomAddress()}/emotes?pageSize=2&pageNum=1`)
 
@@ -134,13 +189,26 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
       pageSize: 2,
       totalAmount: 5
     })
+
+    // Verify marketplace API was called with correct pagination
+    expect(fetchUserEmotesSpy).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        limit: 2,
+        offset: 0
+      })
+    )
   })
 
   it('return emotes 2 and paginate them correctly (page 2, size 2, total 5)', async () => {
-    const { localFetch, theGraph } = components
+    const { localFetch } = components
     const emotes = generateEmotes(5)
 
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
+    // Mock marketplace API to return paginated results for page 2
+    const fetchUserEmotesSpy = jest.spyOn(components.marketplaceApiFetcher!, 'fetchUserEmotes').mockResolvedValue({
+      emotes: [emotes[2], emotes[3]].map(convertEmoteToOnChainEmote), // Emotes 2-3 for page 2
+      total: 5
+    })
 
     const r = await localFetch.fetch(`/users/${generateRandomAddress()}/emotes?pageSize=2&pageNum=2`)
 
@@ -151,13 +219,26 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
       pageSize: 2,
       totalAmount: 5
     })
+
+    // Verify marketplace API was called with correct pagination for page 2
+    expect(fetchUserEmotesSpy).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        limit: 2,
+        offset: 2
+      })
+    )
   })
 
   it('return emotes 2 and paginate them correctly (page 3, size 2, total 5)', async () => {
-    const { localFetch, theGraph } = components
+    const { localFetch } = components
     const emotes = generateEmotes(5)
 
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
+    // Mock marketplace API to return paginated results for page 3
+    const fetchUserEmotesSpy = jest.spyOn(components.marketplaceApiFetcher!, 'fetchUserEmotes').mockResolvedValue({
+      emotes: [emotes[4]].map(convertEmoteToOnChainEmote), // Only emote 4 for page 3
+      total: 5
+    })
 
     const r = await localFetch.fetch(`/users/${generateRandomAddress()}/emotes?pageSize=2&pageNum=3`)
 
@@ -168,150 +249,190 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
       pageSize: 2,
       totalAmount: 5
     })
+
+    // Verify marketplace API was called with correct pagination for page 3
+    expect(fetchUserEmotesSpy).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        limit: 2,
+        offset: 4
+      })
+    )
   })
 
   it('return emotes from cache on second call for the same address (case insensitive)', async () => {
-    const { localFetch, theGraph } = components
+    const { localFetch } = components
     const emotes = generateEmotes(7)
     const wallet = generateRandomAddress()
 
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
+    // Mock marketplace API to be case-insensitive and track calls
+    const fetchUserEmotesSpy = jest.spyOn(components.marketplaceApiFetcher!, 'fetchUserEmotes')
+    let callCount = 0
+    fetchUserEmotesSpy.mockImplementation(async (address: string) => {
+      callCount++
+      // Normalize to lowercase for comparison
+      const normalizedAddress = address.toLowerCase()
+      const expectedAddress = wallet.toLowerCase()
 
-    const r = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=7&pageNum=1`)
+      if (normalizedAddress === expectedAddress) {
+        return {
+          emotes: emotes.map(convertEmoteToOnChainEmote),
+          total: 7
+        }
+      }
+      throw new Error(`Unexpected address: ${address}`)
+    })
+
+    const r = await localFetch.fetch(`/users/${wallet}/emotes`)
     const rBody = await r.json()
 
     expect(r.status).toBe(200)
     expect(rBody).toEqual({
       elements: convertToDataModel(emotes),
       pageNum: 1,
-      pageSize: 7,
+      pageSize: 100,
       totalAmount: 7
     })
 
-    const r2 = await localFetch.fetch(`/users/${wallet.toUpperCase()}/emotes?pageSize=7&pageNum=1`)
+    const r2 = await localFetch.fetch(`/users/${wallet.toUpperCase()}/emotes`)
     expect(r2.status).toBe(r.status)
     expect(await r2.json()).toEqual(rBody)
-    expect(theGraph.maticCollectionsSubgraph.query).toHaveBeenCalledTimes(1)
+
+    // Verify marketplace API was only called once due to cache (case insensitive)
+    expect(callCount).toBe(1)
   })
 
   it('return emotes filtering by name', async () => {
-    const { localFetch, theGraph } = components
-    const emotes = generateEmotes(17)
-    const wallet = generateRandomAddress()
+    const { localFetch } = components
 
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
-
-    const r = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=20&pageNum=1&name=4`)
-
-    const rBody = await r.json()
-    expect(r.status).toBe(200)
-    expect(rBody).toEqual({
-      elements: [convertToDataModel(emotes)[14], convertToDataModel(emotes)[4]],
-      pageNum: 1,
-      pageSize: 20,
-      totalAmount: 2
+    // Mock marketplace API with emotes that match the name filter (following wearables-handler pattern)
+    const fetchUserEmotesSpy = jest.spyOn(components.marketplaceApiFetcher!, 'fetchUserEmotes').mockResolvedValue({
+      emotes: [
+        {
+          urn: 'urn:decentraland:matic:collections:0x123:4',
+          amount: 1,
+          individualData: [
+            {
+              id: 'urn:decentraland:matic:collections:0x123:4:1',
+              tokenId: '1',
+              transferredAt: Date.now(),
+              price: 100
+            }
+          ],
+          name: 'emote 4',
+          rarity: 'uncommon',
+          minTransferredAt: Date.now(),
+          maxTransferredAt: Date.now(),
+          category: EmoteCategory.DANCE
+        }
+      ],
+      total: 1
     })
+
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/emotes?name=4`)
+
+    expect(r.status).toBe(200)
+    const response = await r.json()
+
+    // Verify marketplace API was called with name filter
+    expect(fetchUserEmotesSpy).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        name: '4'
+      })
+    )
+    expect(response.elements.length).toBe(1)
+    expect(response.elements[0].name).toBe('emote 4')
   })
 
   it('return emotes filtering by category', async () => {
-    const { localFetch, theGraph } = components
-    const emotes = generateEmotes(17).map((w, i) => ({
-      ...w,
-      metadata: {
-        emote: {
-          name: 'name-' + i,
-          category: i % 2 === 0 ? EmoteCategory.FUN : EmoteCategory.DANCE
+    const { localFetch } = components
+
+    // Mock marketplace API with emotes that match the category filter (following wearables-handler pattern)
+    const fetchUserEmotesSpy = jest.spyOn(components.marketplaceApiFetcher!, 'fetchUserEmotes').mockResolvedValue({
+      emotes: [
+        {
+          urn: 'urn:decentraland:matic:collections:0x456:1',
+          amount: 1,
+          individualData: [
+            {
+              id: 'urn:decentraland:matic:collections:0x456:1:1',
+              tokenId: '1',
+              transferredAt: Date.now(),
+              price: 200
+            }
+          ],
+          name: 'Cool Dance',
+          rarity: 'rare',
+          minTransferredAt: Date.now(),
+          maxTransferredAt: Date.now(),
+          category: EmoteCategory.DANCE
         }
-      }
-    }))
+      ],
+      total: 1
+    })
 
-    const wallet = generateRandomAddress()
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/emotes?category=dance`)
 
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
-
-    const r = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=20&pageNum=1&category=${EmoteCategory.FUN}`)
     expect(r.status).toBe(200)
-    expect(await r.json()).toEqual({
-      elements: [...convertToDataModel(emotes).filter((w, i) => i % 2 === 0)].sort(rarest),
-      pageNum: 1,
-      pageSize: 20,
-      totalAmount: 9
-    })
+    const response = await r.json()
 
-    const r2 = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=20&pageNum=1&category=${EmoteCategory.DANCE}`)
-    expect(r2.status).toBe(200)
-    expect(await r2.json()).toEqual({
-      elements: [...convertToDataModel(emotes).filter((w, i) => i % 2 === 1)].sort(rarest),
-      pageNum: 1,
-      pageSize: 20,
-      totalAmount: 8
-    })
-
-    const r3 = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=20&pageNum=1&category=${EmoteCategory.HORROR}`)
-    expect(r3.status).toBe(200)
-    expect(await r3.json()).toEqual({
-      elements: [],
-      pageNum: 1,
-      pageSize: 20,
-      totalAmount: 0
-    })
-
-    const r4 = await localFetch.fetch(
-      `/users/${wallet}/emotes?pageSize=20&pageNum=1&category=${EmoteCategory.FUN}&category=${EmoteCategory.DANCE}`
+    // Verify marketplace API was called with category filter
+    expect(fetchUserEmotesSpy).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        category: 'dance'
+      })
     )
-    expect(r4.status).toBe(200)
-    expect(await r4.json()).toEqual({
-      elements: [...convertToDataModel(emotes)].sort(rarest),
-      pageNum: 1,
-      pageSize: 20,
-      totalAmount: 17
-    })
+    expect(response.elements.length).toBe(1)
+    expect(response.elements[0].category).toBe(EmoteCategory.DANCE)
   })
 
   it('return emotes filtering by rarity', async () => {
-    const { localFetch, theGraph } = components
-    const emotes = generateEmotes(17).map((w, i) => ({
-      ...w,
-      item: {
-        ...w.item,
-        rarity: i % 2 === 0 ? 'rare' : 'mythic'
-      }
-    }))
+    const { localFetch } = components
 
-    const wallet = generateRandomAddress()
+    // Mock marketplace API with emotes that match the rarity filter (following wearables-handler pattern)
+    const fetchUserEmotesSpy = jest.spyOn(components.marketplaceApiFetcher!, 'fetchUserEmotes').mockResolvedValue({
+      emotes: [
+        {
+          urn: 'urn:decentraland:matic:collections:0x789:1',
+          amount: 1,
+          individualData: [
+            {
+              id: 'urn:decentraland:matic:collections:0x789:1:1',
+              tokenId: '1',
+              transferredAt: Date.now(),
+              price: 300
+            }
+          ],
+          name: 'Rare Emote',
+          rarity: 'rare',
+          minTransferredAt: Date.now(),
+          maxTransferredAt: Date.now(),
+          category: EmoteCategory.FUN
+        }
+      ],
+      total: 1
+    })
 
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/emotes?rarity=rare`)
 
-    const r = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=20&pageNum=1&rarity=rare`)
     expect(r.status).toBe(200)
-    expect(await r.json()).toEqual({
-      elements: [...convertToDataModel(emotes).filter((w, i) => i % 2 === 0)].sort(rarest),
-      pageNum: 1,
-      pageSize: 20,
-      totalAmount: 9
-    })
+    const response = await r.json()
 
-    const r2 = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=20&pageNum=1&rarity=mythic`)
-    expect(r2.status).toBe(200)
-    expect(await r2.json()).toEqual({
-      elements: [...convertToDataModel(emotes).filter((w, i) => i % 2 === 1)].sort(rarest),
-      pageNum: 1,
-      pageSize: 20,
-      totalAmount: 8
-    })
-
-    const r3 = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=20&pageNum=1&rarity=unique`)
-    expect(r3.status).toBe(200)
-    expect(await r3.json()).toEqual({
-      elements: [],
-      pageNum: 1,
-      pageSize: 20,
-      totalAmount: 0
-    })
+    // Verify marketplace API was called with rarity filter
+    expect(fetchUserEmotesSpy).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        rarity: 'rare'
+      })
+    )
+    expect(response.elements.length).toBe(1)
+    expect(response.elements[0].rarity).toBe('rare')
   })
 
   it('return emotes sorted by newest / oldest', async () => {
-    const { localFetch, theGraph } = components
+    const { localFetch } = components
     const emotes = generateEmotes(17).map((w, i) => ({
       ...w,
       transferredAt: w.transferredAt + i
@@ -319,7 +440,20 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
 
     const wallet = generateRandomAddress()
 
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
+    // Mock marketplace API to return sorted emotes (newest first for DESC)
+    const fetchUserEmotesSpy = jest.spyOn(components.marketplaceApiFetcher!, 'fetchUserEmotes')
+
+    // First call: newest first (DESC order)
+    fetchUserEmotesSpy.mockResolvedValueOnce({
+      emotes: [...emotes].reverse().map(convertEmoteToOnChainEmote),
+      total: 17
+    })
+
+    // Second call: oldest first (ASC order)
+    fetchUserEmotesSpy.mockResolvedValueOnce({
+      emotes: emotes.map(convertEmoteToOnChainEmote),
+      total: 17
+    })
 
     const r = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=20&pageNum=1&orderBy=date&direction=DESC`)
     expect(r.status).toBe(200)
@@ -341,45 +475,89 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
   })
 
   it('return emotes sorted by rarest / least_rare', async () => {
-    const { localFetch, theGraph } = components
-    const emotes = generateEmotes(17).map((w, i) => ({
-      ...w,
-      item: {
-        ...w.item,
-        rarity: SORTED_RARITIES[i % SORTED_RARITIES.length]
-      }
-    }))
+    const { localFetch } = components
 
-    const wallet = generateRandomAddress()
+    // Mock marketplace API with sorted emotes (following wearables-handler pattern)
+    const fetchUserEmotesSpy = jest.spyOn(components.marketplaceApiFetcher!, 'fetchUserEmotes').mockResolvedValue({
+      emotes: [
+        {
+          urn: 'urn:decentraland:matic:collections:0x111:2',
+          amount: 1,
+          individualData: [
+            {
+              id: 'urn:decentraland:matic:collections:0x111:2:1',
+              tokenId: '1',
+              transferredAt: Date.now(),
+              price: 300
+            }
+          ],
+          name: 'Epic Emote',
+          rarity: 'epic',
+          minTransferredAt: Date.now(),
+          maxTransferredAt: Date.now(),
+          category: EmoteCategory.FUN
+        },
+        {
+          urn: 'urn:decentraland:matic:collections:0x111:1',
+          amount: 1,
+          individualData: [
+            {
+              id: 'urn:decentraland:matic:collections:0x111:1:1',
+              tokenId: '1',
+              transferredAt: Date.now(),
+              price: 150
+            }
+          ],
+          name: 'Common Emote',
+          rarity: 'common',
+          minTransferredAt: Date.now(),
+          maxTransferredAt: Date.now(),
+          category: EmoteCategory.DANCE
+        }
+      ],
+      total: 2
+    })
 
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
+    const r = await localFetch.fetch(`/users/${generateRandomAddress()}/emotes?orderBy=rarity&direction=DESC`)
 
-    const r = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=20&pageNum=1&orderBy=rarity&direction=DESC`)
     expect(r.status).toBe(200)
-    expect(await r.json()).toEqual({
-      elements: [...convertToDataModel(emotes)].sort(rarest),
-      pageNum: 1,
-      pageSize: 20,
-      totalAmount: 17
-    })
+    const response = await r.json()
 
-    const r2 = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=20&pageNum=1&orderBy=rarity&direction=ASC`)
-    expect(r2.status).toBe(200)
-    expect(await r2.json()).toEqual({
-      elements: [...convertToDataModel(emotes)].sort(leastRare),
-      pageNum: 1,
-      pageSize: 20,
-      totalAmount: 17
-    })
+    // Verify marketplace API was called with sorting params
+    expect(fetchUserEmotesSpy).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        orderBy: 'rarity',
+        direction: 'DESC'
+      })
+    )
+    expect(response.elements.length).toBe(2)
+    expect(response.elements[0].rarity).toBe('epic')
+    expect(response.elements[1].rarity).toBe('common')
   })
 
   it('return emotes sorted by name_a_z / name_z_a', async () => {
-    const { localFetch, theGraph } = components
+    const { localFetch } = components
     const emotes = generateEmotes(17)
 
     const wallet = generateRandomAddress()
 
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
+    // Mock marketplace API to return sorted emotes
+    const fetchUserEmotesSpy = jest.spyOn(components.marketplaceApiFetcher!, 'fetchUserEmotes')
+
+    // First call: name A-Z (ASC order)
+    const nameAZSorted = [...emotes].sort((a, b) => a.metadata.emote.name.localeCompare(b.metadata.emote.name))
+    fetchUserEmotesSpy.mockResolvedValueOnce({
+      emotes: nameAZSorted.map(convertEmoteToOnChainEmote),
+      total: 17
+    })
+
+    // Second call: name Z-A (DESC order)
+    const nameZASorted = [...emotes].sort((a, b) => b.metadata.emote.name.localeCompare(a.metadata.emote.name))
+    fetchUserEmotesSpy.mockResolvedValueOnce({
+      emotes: nameZASorted.map(convertEmoteToOnChainEmote),
+      total: 17
+    })
 
     const r = await localFetch.fetch(`/users/${wallet}/emotes?pageSize=20&pageNum=1&orderBy=name&direction=ASC`)
     expect(r.status).toBe(200)
@@ -401,8 +579,9 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
   })
 
   it('return an error when invalid sorting spec requested', async () => {
-    const { localFetch, theGraph } = components
+    const { localFetch } = components
 
+    // Don't mock anything - validation should fail before any external calls
     const addressString = generateRandomAddress()
     const r = await localFetch.fetch(`/users/${addressString}/emotes?orderBy=saraza`)
 
@@ -422,11 +601,18 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
   })
 
   it('return an error when emotes cannot be fetched from matic collection', async () => {
-    const { localFetch, theGraph } = components
+    const { localFetch } = components
 
-    theGraph.maticCollectionsSubgraph.query = jest
+    // Mock marketplace API to fail with error
+    components.marketplaceApiFetcher!.fetchUserEmotes = jest
       .fn()
-      .mockRejectedValueOnce(new Error(`GraphQL Error: Invalid response. Errors:\n- some error. Provider: matic`))
+      .mockRejectedValue(new Error('Cannot fetch emotes from marketplace API'))
+
+    // Also mock TheGraph to fail so fallback doesn't work
+    components.theGraph.ethereumCollectionsSubgraph.query = jest
+      .fn()
+      .mockRejectedValue(new Error('TheGraph also failed'))
+    components.theGraph.maticCollectionsSubgraph.query = jest.fn().mockRejectedValue(new Error('TheGraph also failed'))
 
     const wallet = generateRandomAddress()
     const r = await localFetch.fetch(`/users/${wallet}/emotes`)
@@ -439,13 +625,19 @@ test('emotes-handler: GET /users/:address/emotes should', function ({ components
   })
 
   it('return a generic error when an unexpected error occurs (definitions cannot be fetched)', async () => {
-    const { localFetch, theGraph, content } = components
+    const { localFetch, content } = components
     const emotes = generateEmotes(2)
 
     // modify emote urn to avoid cache hit
     emotes[1] = { ...emotes[1], urn: 'anotherUrn' }
 
-    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValueOnce({ nfts: emotes })
+    // Mock marketplace API successfully
+    components.marketplaceApiFetcher!.fetchUserEmotes = jest.fn().mockResolvedValue({
+      emotes: [emotes[1], emotes[0]].map(convertEmoteToOnChainEmote),
+      total: 2
+    })
+
+    // Mock content service to fail when fetching definitions
     content.fetchEntitiesByPointers = jest.fn().mockRejectedValueOnce(new Error(`Cannot fetch definitions`))
 
     const r = await localFetch.fetch(`/users/${generateRandomAddress()}/emotes?includeDefinitions`)
@@ -469,8 +661,8 @@ function convertToDataModel(emotes: EmoteFromQuery[], contentInfo?: ContentInfo)
     const individualData = {
       id: `${emote.urn}:${emote.tokenId}`,
       tokenId: emote.tokenId,
-      transferredAt: emote.transferredAt,
-      price: emote.item.price
+      transferredAt: String(emote.transferredAt),
+      price: String(emote.item.price)
     }
     const rarity = emote.item.rarity
     const entity = contentInfo?.definitions.find((def) => def.id === emote.urn)

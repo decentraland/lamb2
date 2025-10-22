@@ -15,15 +15,17 @@ import { createElementsFetcherComponent } from '../src/adapters/elements-fetcher
 import { createEntitiesFetcherComponent } from '../src/adapters/entities-fetcher'
 import { createOwnershipCachesComponent } from '../src/ports/ownership-caches'
 import { initComponents as originalInitComponents } from '../src/components'
-import { fetchAllEmotes, fetchAllWearables } from '../src/logic/fetch-elements/fetch-items'
+import { fetchEmotes, fetchWearables } from '../src/logic/fetch-elements/fetch-items'
+import { fetchNames } from '../src/logic/fetch-elements/fetch-names'
 import { fetchAllThirdPartyWearables } from '../src/logic/fetch-elements/fetch-third-party-wearables'
 import { metricDeclarations } from '../src/metrics'
 import { TheGraphComponent } from '../src/ports/the-graph'
 import { main } from '../src/service'
-import { TestComponents } from '../src/types'
+import { TestComponents, ThirdPartyWearable } from '../src/types'
 import { createContentClientMock } from './mocks/content-mock'
 import { createTheGraphComponentMock } from './mocks/the-graph-mock'
 import { createAlchemyNftFetcherMock } from './mocks/alchemy-mock'
+import { createMarketplaceApiFetcherMock } from './mocks/marketplace-api-mock'
 
 /**
  * Behaves like Jest "describe" function, used to describe a test for a
@@ -42,6 +44,8 @@ export function testWithComponents(
     fetchComponent?: IFetchComponent
     theGraphComponent?: TheGraphComponent
     config?: IConfigComponent
+    marketplaceApiFetcher?: any
+    noMarketplaceApi?: boolean
   }
 ) {
   const preConfiguredComponents = preConfigureComponents()
@@ -51,7 +55,9 @@ export function testWithComponents(
       initComponents(
         preConfiguredComponents.fetchComponent,
         preConfiguredComponents.theGraphComponent,
-        preConfiguredComponents.config
+        preConfiguredComponents.config,
+        preConfiguredComponents.marketplaceApiFetcher,
+        preConfiguredComponents.noMarketplaceApi
       )
   })
 }
@@ -59,7 +65,9 @@ export function testWithComponents(
 async function initComponents(
   fetchComponent?: IFetchComponent,
   theGraphComponent?: TheGraphComponent,
-  mockConfig?: IConfigComponent
+  mockConfig?: IConfigComponent,
+  preConfiguredMarketplaceApiFetcher?: any,
+  noMarketplaceApi?: boolean
 ): Promise<TestComponents> {
   const defaultFetchConfig = defaultServerConfig()
   const config =
@@ -72,7 +80,8 @@ async function initComponents(
       ARCHIPELAGO_URL: 'https://peer.decentraland.org/archipelago',
       COMMIT_HASH: 'commit_hash',
       CURRENT_VERSION: 'version',
-      HTTP_SERVER_PORT: '7272'
+      HTTP_SERVER_PORT: '7272',
+      MARKETPLACE_API_URL: 'https://marketplace-api-test.com' // Enable marketplace API for tests
     })
   const fetch = fetchComponent ? fetchComponent : await createLocalFetchCompoment(config)
   const theGraphMock = theGraphComponent ? theGraphComponent : createTheGraphComponentMock()
@@ -102,12 +111,24 @@ async function initComponents(
 
   const logs = await createLogComponent({})
 
+  // Create marketplace API fetcher for tests (use mock by default, can be overridden in individual tests)
+  // If noMarketplaceApi flag is true, don't provide marketplace API (use The Graph directly)
+  const marketplaceApiFetcher = noMarketplaceApi
+    ? undefined
+    : preConfiguredMarketplaceApiFetcher || createMarketplaceApiFetcherMock()
+
   const content = createContentClientMock()
-  const wearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllWearables({ theGraph: theGraphMock }, address)
+  const wearablesFetcher = createElementsFetcherComponent(
+    { logs, theGraph: theGraphMock, marketplaceApiFetcher },
+    fetchWearables
   )
-  const emotesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllEmotes({ theGraph: theGraphMock }, address)
+  const emotesFetcher = createElementsFetcherComponent(
+    { logs, theGraph: theGraphMock, marketplaceApiFetcher },
+    fetchEmotes
+  )
+  const namesFetcher = createElementsFetcherComponent(
+    { logs, theGraph: theGraphMock, marketplaceApiFetcher },
+    fetchNames
   )
 
   const contentServerUrl = 'baseUrl'
@@ -129,22 +150,30 @@ async function initComponents(
 
   const alchemyNftFetcher = createAlchemyNftFetcherMock()
   const metrics = createTestMetricsComponent(metricDeclarations)
-  const ownershipCaches = await createOwnershipCachesComponent({ config })
-  const thirdPartyWearablesFetcher = createElementsFetcherComponent({ logs }, async (address) =>
-    fetchAllThirdPartyWearables(
-      {
-        metrics,
-        contentServerUrl,
-        alchemyNftFetcher,
-        thirdPartyProvidersStorage: components.thirdPartyProvidersStorage,
-        fetch,
-        entitiesFetcher
-      },
-      address
-    )
+  const thirdPartyWearablesFetcher = createElementsFetcherComponent<ThirdPartyWearable>(
+    { logs, theGraph: theGraphMock, marketplaceApiFetcher },
+    async (_deps, address) => {
+      const thirdPartyWearables = await fetchAllThirdPartyWearables(
+        {
+          metrics,
+          contentServerUrl,
+          alchemyNftFetcher,
+          thirdPartyProvidersStorage: components.thirdPartyProvidersStorage,
+          fetch,
+          entitiesFetcher
+        },
+        address
+      )
+      return {
+        elements: thirdPartyWearables,
+        totalAmount: thirdPartyWearables.length
+      }
+    }
   )
 
-  return {
+  const ownershipCaches = await createOwnershipCachesComponent({ config })
+
+  const result: any = {
     ...components,
     alchemyNftFetcher,
     config,
@@ -157,8 +186,16 @@ async function initComponents(
     wearablesFetcher,
     entitiesFetcher,
     emotesFetcher,
+    namesFetcher,
     wearableDefinitionsFetcher,
     emoteDefinitionsFetcher,
     thirdPartyWearablesFetcher
   }
+
+  // Only add marketplace API fetcher if it's not undefined
+  if (marketplaceApiFetcher) {
+    result.marketplaceApiFetcher = marketplaceApiFetcher
+  }
+
+  return result
 }

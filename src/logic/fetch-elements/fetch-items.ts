@@ -1,7 +1,50 @@
 import { EmoteCategory, WearableCategory } from '@dcl/schemas'
-import { AppComponents, Item, OnChainEmote, OnChainWearable } from '../../types'
+import { Item, OnChainEmote, OnChainWearable, Pagination } from '../../types'
+import { MarketplaceApiParams } from '../../adapters/marketplace-api-fetcher'
+import { ElementsFilters, ElementsFetcherDependencies, ItemType } from '../../adapters/elements-fetcher'
+
+import { fetchNFTsPaginated, createItemQueryBuilder } from './graph-pagination'
 import { compareByRarity } from '../sorting'
-import { THE_GRAPH_PAGE_SIZE, fetchAllNFTs } from './fetch-elements'
+import { fetchWithMarketplaceFallback } from '../api-with-fallback'
+
+export function buildMarketplaceApiParams(
+  filters?: ElementsFilters,
+  pagination?: Pick<Pagination, 'pageNum' | 'pageSize'>
+): MarketplaceApiParams {
+  const params: MarketplaceApiParams = {}
+
+  // Pagination
+  if (pagination) {
+    params.limit = pagination.pageSize
+    params.offset = (pagination.pageNum - 1) * pagination.pageSize
+  }
+
+  // Filtering
+  if (filters?.category) {
+    params.category = filters.category
+  }
+  if (filters?.rarity) {
+    params.rarity = filters.rarity
+  }
+  if (filters?.name) {
+    params.name = filters.name
+  }
+
+  // Sorting
+  if (filters?.orderBy) {
+    params.orderBy = filters.orderBy
+  }
+  if (filters?.direction) {
+    params.direction = filters.direction
+  }
+
+  // Item type
+  if (filters?.itemType) {
+    params.itemType = filters.itemType
+  }
+
+  return params
+}
 
 function groupItemsByURN<
   T extends WearableFromQuery | EmoteFromQuery,
@@ -42,40 +85,6 @@ function groupItemsByURN<
 
 type ItemCategory = 'wearable' | 'emote'
 
-function createQueryForCategory(category: ItemCategory) {
-  const itemTypeFilter =
-    category === 'wearable' ? `itemType_in: [wearable_v1, wearable_v2, smart_wearable_v1]` : `itemType: emote_v1`
-  return `query fetchItemsByOwner($owner: String, $idFrom: ID) {
-    nfts(
-      where: { id_gt: $idFrom, owner_: {address: $owner}, ${itemTypeFilter}},
-      orderBy: id,
-      orderDirection: asc,
-      first: ${THE_GRAPH_PAGE_SIZE}
-    ) {
-      urn,
-      id,
-      tokenId,
-      category,
-      transferredAt,
-      metadata {
-        ${category} {
-          name,
-          category
-        }
-      },
-      item {
-        rarity,
-        price
-      }
-    }
-  }`
-}
-
-const QUERIES: Record<ItemCategory, string> = {
-  emote: createQueryForCategory('emote'),
-  wearable: createQueryForCategory('wearable')
-}
-
 type ItemFromQuery = {
   urn: string
   id: string
@@ -108,37 +117,105 @@ export type EmoteFromQuery = ItemFromQuery & {
   }
 }
 
-export async function fetchAllEmotes(
-  components: Pick<AppComponents, 'theGraph'>,
-  owner: string
-): Promise<OnChainEmote[]> {
-  const emotes = await fetchAllNFTs<EmoteFromQuery>(
-    components.theGraph.maticCollectionsSubgraph,
-    QUERIES['emote'],
-    owner
+export async function fetchEmotes(
+  dependencies: ElementsFetcherDependencies,
+  owner: string,
+  pagination?: { pageSize: number; pageNum: number },
+  filters?: ElementsFilters
+): Promise<{ elements: OnChainEmote[]; totalAmount: number }> {
+  const { marketplaceApiFetcher, theGraph, logs } = dependencies
+
+  // Build marketplace API params from filters if available, otherwise just pagination
+  const apiParams: MarketplaceApiParams | undefined =
+    filters || pagination ? buildMarketplaceApiParams(filters, pagination) : undefined
+
+  return fetchWithMarketplaceFallback(
+    { marketplaceApiFetcher, theGraph, logs },
+    'emotes',
+    async () => {
+      const { emotes, total } = await marketplaceApiFetcher!.fetchUserEmotes(owner, apiParams)
+      const sortedEmotes = emotes.sort(compareByRarity)
+
+      return {
+        elements: sortedEmotes,
+        totalAmount: total || sortedEmotes.length
+      }
+    },
+    async () => {
+      // TheGraph fallback implementation
+      // There are no emotes on Ethereum, only on Polygon
+      const emoteQueryBuilder = createItemQueryBuilder('emote')
+
+      const maticResult = await fetchNFTsPaginated<EmoteFromQuery>(
+        theGraph.maticCollectionsSubgraph,
+        emoteQueryBuilder,
+        owner,
+        pagination,
+        filters
+      )
+
+      const emotesGrouped = groupItemsByURN(maticResult.elements, (item) => item.metadata.emote)
+
+      return {
+        elements: emotesGrouped,
+        totalAmount: maticResult.totalAmount
+      }
+    }
   )
-  return groupItemsByURN<EmoteFromQuery, EmoteFromQuery['metadata']['emote']>(
-    emotes,
-    (emote) => emote.metadata.emote
-  ).sort(compareByRarity)
 }
 
-export async function fetchAllWearables(
-  components: Pick<AppComponents, 'theGraph'>,
-  owner: string
-): Promise<OnChainWearable[]> {
-  const ethereumWearables = await fetchAllNFTs<WearableFromQuery>(
-    components.theGraph.ethereumCollectionsSubgraph,
-    QUERIES['wearable'],
-    owner
+export async function fetchWearables(
+  dependencies: ElementsFetcherDependencies,
+  owner: string,
+  pagination?: { pageSize: number; pageNum: number },
+  filters?: ElementsFilters
+): Promise<{ elements: OnChainWearable[]; totalAmount: number }> {
+  const { marketplaceApiFetcher, theGraph, logs } = dependencies
+
+  // Build marketplace API params from filters if available, otherwise just pagination
+  const apiParams: MarketplaceApiParams | undefined =
+    filters || pagination ? buildMarketplaceApiParams(filters, pagination) : undefined
+
+  return fetchWithMarketplaceFallback(
+    { marketplaceApiFetcher, theGraph, logs },
+    'wearables',
+    async () => {
+      const { wearables, total } = await marketplaceApiFetcher!.fetchUserWearables(owner, apiParams)
+      const sortedWearables = wearables.sort(compareByRarity)
+
+      return {
+        elements: sortedWearables,
+        totalAmount: total || sortedWearables.length
+      }
+    },
+    async () => {
+      // TheGraph fallback implementation
+      const wearableQueryBuilder = createItemQueryBuilder((filters?.itemType || 'wearable') as ItemType)
+
+      const [ethereumResult, maticResult] = await Promise.all([
+        fetchNFTsPaginated<WearableFromQuery>(
+          theGraph.ethereumCollectionsSubgraph,
+          wearableQueryBuilder,
+          owner,
+          pagination,
+          filters
+        ),
+        fetchNFTsPaginated<WearableFromQuery>(
+          theGraph.maticCollectionsSubgraph,
+          wearableQueryBuilder,
+          owner,
+          pagination,
+          filters
+        )
+      ])
+
+      const allWearables = [...ethereumResult.elements, ...maticResult.elements]
+      const wearables = groupItemsByURN(allWearables, (item) => item.metadata.wearable)
+
+      return {
+        elements: wearables,
+        totalAmount: ethereumResult.totalAmount + maticResult.totalAmount
+      }
+    }
   )
-  const maticWearables = await fetchAllNFTs<WearableFromQuery>(
-    components.theGraph.maticCollectionsSubgraph,
-    QUERIES['wearable'],
-    owner
-  )
-  return groupItemsByURN<WearableFromQuery, WearableFromQuery['metadata']['wearable']>(
-    ethereumWearables.concat(maticWearables),
-    (wearable) => wearable.metadata.wearable
-  ).sort(compareByRarity)
 }

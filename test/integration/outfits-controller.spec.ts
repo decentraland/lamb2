@@ -4,7 +4,7 @@ import { testWithComponents } from '../components'
 import { createConfigComponent } from '@well-known-components/env-config-provider'
 
 testWithComponents(() => {
-  return {}
+  return { noMarketplaceApi: true } // No marketplace API - use The Graph directly
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
   it('return outfits when all wearables are owned', async () => {
     const { localFetch } = components
@@ -197,7 +197,8 @@ testWithComponents(() => {
   })
 
   return {
-    config
+    config,
+    noMarketplaceApi: true // No marketplace API - use The Graph directly
   }
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
   it('return and extends outfits when all wearables are owned and ERC-721 is disabled', async () => {
@@ -423,7 +424,8 @@ testWithComponents(() => {
   })
 
   return {
-    config
+    config,
+    noMarketplaceApi: true // No marketplace API - use The Graph directly
   }
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
   it('return extended outfits when all extended wearables are owned', async () => {
@@ -605,7 +607,7 @@ testWithComponents(() => {
 })
 
 testWithComponents(() => {
-  return {}
+  return { noMarketplaceApi: true } // No marketplace API - use The Graph directly
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
   it('remove outfit when wearables are not owned', async () => {
     const { localFetch } = components
@@ -800,7 +802,8 @@ testWithComponents(() => {
   })
 
   return {
-    config
+    config,
+    noMarketplaceApi: true // No marketplace API - use The Graph directly
   }
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
   it('return complete outfits when its contain base wearables and an owned wearable', async () => {
@@ -1034,7 +1037,8 @@ testWithComponents(() => {
   })
 
   return {
-    config
+    config,
+    noMarketplaceApi: true // No marketplace API - use The Graph directly
   }
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
   it('return complete outfit without extensions when outfit comes extended from content-server but ERC-721 standard is disabled', async () => {
@@ -1276,7 +1280,8 @@ testWithComponents(() => {
   })
 
   return {
-    config
+    config,
+    noMarketplaceApi: true // No marketplace API - use The Graph directly
   }
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
   it('return complete extended outfit when outfit comes extended from content-server', async () => {

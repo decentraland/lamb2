@@ -43,6 +43,10 @@ export type MixedWearableTrimmedResponse = {
   entity: ExplorerWearableEntity
 }
 
+export type WearableFilters = {
+  isSmartWearable: boolean
+}
+
 async function fetchCombinedElements(
   components: Pick<
     AppComponents,
@@ -55,10 +59,11 @@ async function fetchCombinedElements(
   >,
   collectionTypes: string[],
   thirdPartyCollectionId: string[],
-  address: string
+  address: string,
+  filters: WearableFilters = { isSmartWearable: false }
 ): Promise<MixedWearable[]> {
   async function fetchBaseWearables() {
-    const elements = await components.baseWearablesFetcher.fetchOwnedElements(address)
+    const { elements } = await components.baseWearablesFetcher.fetchOwnedElements(address)
     if (!elements.length) {
       return []
     }
@@ -80,7 +85,9 @@ async function fetchCombinedElements(
   }
 
   async function fetchOnChainWearables(): Promise<MixedOnChainWearable[]> {
-    const elements = await components.wearablesFetcher.fetchOwnedElements(address)
+    const { elements } = await components.wearablesFetcher.fetchOwnedElements(address, undefined, {
+      itemType: filters.isSmartWearable ? 'smartWearable' : 'wearable'
+    })
     if (!elements.length) {
       return []
     }
@@ -103,7 +110,7 @@ async function fetchCombinedElements(
 
   async function fetchThirdPartyWearables(thirdPartyCollectionIds: string[]): Promise<MixedThirdPartyWearable[]> {
     if (thirdPartyCollectionIds.length === 0) {
-      const elements = await components.thirdPartyWearablesFetcher.fetchOwnedElements(address)
+      const { elements } = await components.thirdPartyWearablesFetcher.fetchOwnedElements(address)
       return elements.map((wearable: ThirdPartyWearable): MixedThirdPartyWearable => {
         const entity = wearable.entity
         return {
@@ -141,9 +148,13 @@ async function fetchCombinedElements(
   }
 
   const [baseItems, nftItems, thirdPartyItems] = await Promise.all([
-    collectionTypes.includes(BASE_WEARABLE) ? fetchBaseWearables() : [],
+    filters.isSmartWearable ? [] : collectionTypes.includes(BASE_WEARABLE) ? fetchBaseWearables() : [],
     collectionTypes.includes(ON_CHAIN) ? fetchOnChainWearables() : [],
-    collectionTypes.includes(THIRD_PARTY) ? fetchThirdPartyWearables(thirdPartyCollectionId) : []
+    filters.isSmartWearable
+      ? []
+      : collectionTypes.includes(THIRD_PARTY)
+        ? fetchThirdPartyWearables(thirdPartyCollectionId)
+        : []
   ])
 
   return [...baseItems, ...nftItems, ...thirdPartyItems]
@@ -172,13 +183,16 @@ export async function explorerHandler(
     : []
   const trimmedParam = context.url.searchParams.get('trimmed')
   const isTrimmed = trimmedParam === 'true' || trimmedParam === '1'
+  const isSmartWearableParam = context.url.searchParams.get('isSmartWearable')
+  const isSmartWearable = isSmartWearableParam === 'true' || isSmartWearableParam === '1'
 
   if (collectionTypes.some((type) => !VALID_COLLECTION_TYPES.includes(type))) {
     throw new InvalidRequestError(`Invalid collection type. Valid types are: ${VALID_COLLECTION_TYPES.join(', ')}.`)
   }
 
   const page = await fetchAndPaginate<MixedWearable>(
-    () => fetchCombinedElements(context.components, collectionTypes, thirdPartyCollectionIds, address),
+    () =>
+      fetchCombinedElements(context.components, collectionTypes, thirdPartyCollectionIds, address, { isSmartWearable }),
     pagination,
     filter,
     sorting

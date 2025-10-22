@@ -3,7 +3,7 @@ import { TheGraphComponent } from '../../src/ports/the-graph'
 import { QueryGraph } from '../../src/types'
 
 const createMockSubgraphComponent = (mock?: QueryGraph): ISubgraphComponent => ({
-  query: mock ?? (jest.fn() as jest.MockedFunction<QueryGraph>)
+  query: mock ?? jest.fn()
 })
 
 export function createTheGraphComponentMock(): TheGraphComponent {

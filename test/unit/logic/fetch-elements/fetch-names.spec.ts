@@ -1,11 +1,21 @@
-import { fetchAllNames, NameFromQuery } from '../../../../src/logic/fetch-elements/fetch-names'
+import { fetchNames, NameFromQuery } from '../../../../src/logic/fetch-elements/fetch-names'
 import { createTheGraphComponentMock } from '../../../mocks/the-graph-mock'
 import { Name } from '../../../../src/types'
+
+const mockLogs = {
+  getLogger: () => ({
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    log: jest.fn()
+  })
+}
 
 it('the ensSubgraph is queried', async () => {
   const theGraph = createTheGraphComponentMock()
   jest.spyOn(theGraph.ensSubgraph, 'query').mockResolvedValue({ nfts: [] })
-  await fetchAllNames({ theGraph }, 'anOwner')
+  await fetchNames({ theGraph, logs: mockLogs }, 'anOwner')
   expect(theGraph.ensSubgraph.query).toBeCalled()
 })
 
@@ -31,18 +41,21 @@ it('names are mapped correctly', async () => {
   jest.spyOn(theGraph.ensSubgraph, 'query').mockResolvedValue({
     nfts: nftsNames
   })
-  const names = await fetchAllNames({ theGraph }, 'anOwner')
-  expect(names).toEqual([
-    {
-      name: 'name1',
-      contractAddress: 'address1',
-      tokenId: 'tokenId1',
-      price: 100
-    },
-    {
-      name: 'name2',
-      contractAddress: 'address2',
-      tokenId: 'tokenId2'
-    }
-  ] as Name[])
+  const names = await fetchNames({ theGraph, logs: mockLogs }, 'anOwner')
+  expect(names).toEqual({
+    elements: [
+      {
+        name: 'name1',
+        contractAddress: 'address1',
+        tokenId: 'tokenId1',
+        price: 100
+      },
+      {
+        name: 'name2',
+        contractAddress: 'address2',
+        tokenId: 'tokenId2'
+      }
+    ],
+    totalAmount: 2
+  })
 })

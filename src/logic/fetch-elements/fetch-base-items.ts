@@ -287,7 +287,7 @@ export const BASE_WEARABLES: WearableId[] = [
   'urn:decentraland:off-chain:base-avatars:emerald_ring'
 ]
 
-export async function fetchAllBaseWearables({
+export async function fetchBaseWearables({
   entitiesFetcher
 }: Pick<AppComponents, 'entitiesFetcher'>): Promise<BaseWearable[]> {
   const entities = await entitiesFetcher.fetchEntities(BASE_WEARABLES)

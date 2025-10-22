@@ -22,7 +22,7 @@ import { ContentClient } from 'dcl-catalyst-client'
 import { HTTPProvider } from 'eth-connect'
 import { CatalystsFetcher } from './adapters/catalysts-fetcher'
 import { DefinitionsFetcher } from './adapters/definitions-fetcher'
-import { ElementsFetcher } from './adapters/elements-fetcher'
+import { ElementsFetcher, LegacyElementsFetcher } from './adapters/elements-fetcher'
 import { EntitiesFetcher } from './adapters/entities-fetcher'
 import { NameDenylistFetcher } from './adapters/name-denylist-fetcher'
 import { POIsFetcher } from './adapters/pois-fetcher'
@@ -37,6 +37,7 @@ import { IProfilesComponent } from './adapters/profiles'
 import { AlchemyNftFetcher } from './adapters/alchemy-nft-fetcher'
 import { ThirdPartyItemChecker } from './ports/ownership-checker/third-party-item-checker'
 import { ParcelRightsFetcher } from './adapters/parcel-rights-fetcher'
+import { MarketplaceApiFetcher } from './adapters/marketplace-api-fetcher'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -63,7 +64,7 @@ export type BaseComponents = {
   wearableDefinitionsFetcher: DefinitionsFetcher<WearableDefinition>
   entitiesFetcher: EntitiesFetcher
   namesFetcher: ElementsFetcher<Name>
-  landsFetcher: ElementsFetcher<LAND>
+  landsFetcher: LegacyElementsFetcher<LAND>
   landsPermissionsFetcher: ElementsFetcher<LandPermission>
   parcelRightsFetcher: ParcelRightsFetcher
   resourcesStatusCheck: IResourcesStatusComponent
@@ -77,6 +78,7 @@ export type BaseComponents = {
   alchemyNftFetcher: AlchemyNftFetcher
   l1ThirdPartyItemChecker: ThirdPartyItemChecker
   l2ThirdPartyItemChecker: ThirdPartyItemChecker
+  marketplaceApiFetcher?: MarketplaceApiFetcher
   nameOwnerFetcher: ElementsFetcher<NameOwner>
 }
 
@@ -89,6 +91,7 @@ export type AppComponents = BaseComponents & {
 export type TestComponents = BaseComponents & {
   // A fetch component that only hits the test server
   localFetch: IFetchComponent
+  marketplaceApiFetcher?: MarketplaceApiFetcher
 }
 
 // this type simplifies the typings of http handlers
@@ -131,8 +134,8 @@ export type Item<C extends WearableCategory | EmoteCategory> = {
   individualData: {
     id: string
     tokenId: string
-    transferredAt: number
-    price: number
+    transferredAt: number | string
+    price: number | string
   }[]
   name: string
   rarity: string
@@ -157,6 +160,7 @@ export type ThirdPartyWearable = {
   amount: number
   individualData: {
     id: string
+    tokenId?: string
   }[]
   name: string
   category: WearableCategory
@@ -180,7 +184,7 @@ export type LAND = {
   x?: string
   y?: string
   description?: string
-  price?: number
+  price?: string
   image?: string
 }
 
@@ -252,12 +256,27 @@ export type ThirdPartyAsset = {
   }
 }
 
-export type OnChainWearableResponse = Omit<OnChainWearable, 'minTransferredAt' | 'maxTransferredAt'> & {
+export type OnChainWearableResponse = Omit<
+  OnChainWearable,
+  'minTransferredAt' | 'maxTransferredAt' | 'individualData'
+> & {
+  individualData: {
+    id: string
+    tokenId: string
+    transferredAt: string // API expects transferredAt as string
+    price: string // API expects price as string
+  }[]
   definition?: WearableDefinition
   entity?: Entity
 }
 
-export type OnChainEmoteResponse = Omit<OnChainEmote, 'minTransferredAt' | 'maxTransferredAt'> & {
+export type OnChainEmoteResponse = Omit<OnChainEmote, 'minTransferredAt' | 'maxTransferredAt' | 'individualData'> & {
+  individualData: {
+    id: string
+    tokenId: string
+    transferredAt: string // API expects transferredAt as string
+    price: string // API expects price as string
+  }[]
   definition?: EmoteDefinition
   entity?: Entity
 }
