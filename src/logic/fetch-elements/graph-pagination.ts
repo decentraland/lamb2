@@ -1,5 +1,5 @@
 import { ISubgraphComponent } from '@well-known-components/thegraph-component'
-import { ElementsFilters } from '../../adapters/elements-fetcher'
+import { ElementsFilters, ItemType } from '../../adapters/elements-fetcher'
 
 interface NFT {
   id: string
@@ -188,9 +188,16 @@ async function fetchAllNFTsUpTo<E extends NFT>(
 /**
  * Creates a query builder for items (wearables/emotes)
  */
-export function createItemQueryBuilder(category: 'wearable' | 'emote') {
-  const itemTypeFilter =
-    category === 'wearable' ? `itemType_in: [wearable_v1, wearable_v2, smart_wearable_v1]` : `itemType: emote_v1`
+export function createItemQueryBuilder(category: ItemType) {
+  let itemTypeFilter: string
+
+  if (category === 'smartWearable') {
+    itemTypeFilter = `itemType: smart_wearable_v1`
+  } else if (category === 'emote') {
+    itemTypeFilter = `itemType: emote_v1`
+  } else if (category === 'wearable') {
+    itemTypeFilter = `itemType_in: [wearable_v1, wearable_v2, smart_wearable_v1]`
+  }
 
   return (filters: string, orderBy: string, orderDirection: string, first: number) => `
     query fetchItemsByOwner($owner: String, $idFrom: ID) {
@@ -206,7 +213,7 @@ export function createItemQueryBuilder(category: 'wearable' | 'emote') {
         category,
         transferredAt,
         metadata {
-          ${category} {
+          ${['wearable', 'smartWearable'].includes(category) ? 'wearable' : category} {
             name,
             category
           }
