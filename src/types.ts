@@ -214,12 +214,14 @@ export type WalletLandPermission = {
   x: string
   y: string
   permissions: PermissionType[] // Can have multiple permission types
+  isOwner: boolean // True if the queried user is the direct owner of the parcel/estate
+  isEstateOwner: boolean // True if the queried user owns the estate containing this parcel
   estate?: {
     // Present if parcel is in an estate
     id: string
     size: number
   }
-  directOwner: string // The actual NFT owner address
+  directOwner: string // The actual NFT owner address (for parcels) or estate owner (for estate parcels)
 }
 
 export type PaginatedResponse<T> = {

@@ -11,6 +11,8 @@ type ParcelPermissionAccumulator = {
   permissions: Set<PermissionType>
   estate?: { id: string; size: number }
   directOwner: string
+  isOwner: boolean
+  isEstateOwner: boolean
 }
 
 /**
@@ -213,9 +215,22 @@ export async function fetchUserLandsPermissions(
     const key = createParcelKey(x, y)
     const existing = parcelMap.get(key)
 
+    // Determine if this permission makes the user an owner
+    const isOwnerPermission = permissionType === 'owner'
+    const isEstateOwnerPermission = permissionType === 'estateOwner'
+
     if (existing) {
       // Add permission type to existing entry
       existing.permissions.add(permissionType)
+
+      // Update ownership flags (use OR logic - if any permission grants ownership, set true)
+      if (isOwnerPermission) {
+        existing.isOwner = true
+      }
+      if (isEstateOwnerPermission) {
+        existing.isEstateOwner = true
+      }
+
       // Update estate info if provided and not already set
       if (estate && !existing.estate) {
         existing.estate = estate
@@ -227,7 +242,9 @@ export async function fetchUserLandsPermissions(
         y,
         permissions: new Set([permissionType]),
         estate,
-        directOwner: parcelOwner
+        directOwner: parcelOwner,
+        isOwner: isOwnerPermission,
+        isEstateOwner: isEstateOwnerPermission
       })
     }
   }
@@ -308,6 +325,8 @@ export async function fetchUserLandsPermissions(
     x: acc.x,
     y: acc.y,
     permissions: Array.from(acc.permissions).sort(), // Sort for consistent ordering
+    isOwner: acc.isOwner,
+    isEstateOwner: acc.isEstateOwner,
     estate: acc.estate,
     directOwner: acc.directOwner
   }))
