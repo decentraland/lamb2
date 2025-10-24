@@ -66,6 +66,7 @@ export type BaseComponents = {
   namesFetcher: ElementsFetcher<Name>
   landsFetcher: LegacyElementsFetcher<LAND>
   landsPermissionsFetcher: ElementsFetcher<LandPermission>
+  walletPermissionsFetcher: ElementsFetcher<WalletLandPermission>
   parcelRightsFetcher: ParcelRightsFetcher
   resourcesStatusCheck: IResourcesStatusComponent
   status: IStatusComponent
@@ -194,6 +195,31 @@ export type LandPermission = {
   y: string
   owner: string
   updateOperator: string
+}
+
+/**
+ * Permission types that a wallet can have for a parcel
+ */
+export type PermissionType =
+  | 'owner' // Direct parcel ownership
+  | 'estateOwner' // Ownership via estate
+  | 'updateOperator' // Parcel-level update operator
+  | 'estateUpdateOperator' // Estate-level update operator
+  | 'updateManager' // Address-level update manager
+
+/**
+ * Comprehensive land permission with all permission types tracked
+ */
+export type WalletLandPermission = {
+  x: string
+  y: string
+  permissions: PermissionType[] // Can have multiple permission types
+  estate?: {
+    // Present if parcel is in an estate
+    id: string
+    size: number
+  }
+  directOwner: string // The actual NFT owner address
 }
 
 export type PaginatedResponse<T> = {
