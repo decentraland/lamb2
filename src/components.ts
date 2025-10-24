@@ -42,6 +42,7 @@ import { createThirdPartyItemChecker } from './ports/ownership-checker/third-par
 import { createParcelRightsComponent } from './adapters/parcel-rights-fetcher'
 import { fetchNameOwner } from './logic/fetch-elements/fetch-name-owner'
 import { fetchAllPermissions } from './logic/fetch-elements/fetch-permissions'
+import { fetchUserLandsPermissions } from './logic/fetch-elements/fetch-user-lands-permissions'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -109,6 +110,11 @@ export async function initComponents(
 
   const landsPermissionsFetcher = createElementsFetcherComponent({ logs, theGraph }, async (_deps, address) => {
     const elements = await fetchAllPermissions({ theGraph }, address)
+    return { elements, totalAmount: elements.length }
+  })
+
+  const walletPermissionsFetcher = createElementsFetcherComponent({ logs, theGraph }, async (_deps, address) => {
+    const elements = await fetchUserLandsPermissions({ theGraph, logs }, address)
     return { elements, totalAmount: elements.length }
   })
 
@@ -214,6 +220,7 @@ export async function initComponents(
     namesFetcher,
     landsFetcher,
     landsPermissionsFetcher,
+    walletPermissionsFetcher,
     parcelRightsFetcher,
     thirdPartyProvidersGraphFetcher,
     thirdPartyProvidersStorage,
