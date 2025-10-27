@@ -371,27 +371,42 @@ test('user-permissions-handler: GET /users/:address/permissions should', functio
 
   describe('when the address has mixed case', () => {
     let mixedCaseAddress: string
-    let graphResult: any
 
     beforeEach(() => {
       mixedCaseAddress = '0xAbCdEf1234567890AbCdEf1234567890AbCdEf12'
-      graphResult = createOwnerGraphResult(mixedCaseAddress.toLowerCase(), 1)
-      components.theGraph.landSubgraph.query = jest.fn().mockResolvedValueOnce(graphResult)
     })
 
-    it('should normalize address to lowercase and return results', async () => {
-      const r = await components.localFetch.fetch(`/users/${mixedCaseAddress}/permissions`)
+    describe('and the endpoint is called', () => {
+      let graphResult: any
 
-      expect(r.status).toBe(200)
-      const response = await r.json()
-      expect(response.elements).toHaveLength(1)
+      beforeEach(() => {
+        graphResult = createOwnerGraphResult(mixedCaseAddress.toLowerCase(), 1)
+        components.theGraph.landSubgraph.query = jest.fn().mockResolvedValueOnce(graphResult)
+      })
+
+      it('should normalize address to lowercase and return results', async () => {
+        const r = await components.localFetch.fetch(`/users/${mixedCaseAddress}/permissions`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+        expect(response.elements).toHaveLength(1)
+      })
     })
 
-    it('should call the graph with lowercase address', async () => {
-      await components.localFetch.fetch(`/users/${mixedCaseAddress}/permissions`)
+    describe('and the graph query is called', () => {
+      let graphResult: any
 
-      expect(components.theGraph.landSubgraph.query).toHaveBeenCalledWith(expect.any(String), {
-        address: mixedCaseAddress.toLowerCase()
+      beforeEach(() => {
+        graphResult = createOwnerGraphResult(mixedCaseAddress.toLowerCase(), 1)
+        components.theGraph.landSubgraph.query = jest.fn().mockResolvedValueOnce(graphResult)
+      })
+
+      it('should call the graph with lowercase address', async () => {
+        await components.localFetch.fetch(`/users/${mixedCaseAddress}/permissions`)
+
+        expect(components.theGraph.landSubgraph.query).toHaveBeenCalledWith(expect.any(String), {
+          address: mixedCaseAddress.toLowerCase()
+        })
       })
     })
   })
