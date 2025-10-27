@@ -66,7 +66,7 @@ export type BaseComponents = {
   namesFetcher: ElementsFetcher<Name>
   landsFetcher: LegacyElementsFetcher<LAND>
   landsPermissionsFetcher: ElementsFetcher<LandPermission>
-  walletPermissionsFetcher: ElementsFetcher<WalletLandPermission>
+  userPermissionsFetcher: ElementsFetcher<WalletLandPermission>
   parcelRightsFetcher: ParcelRightsFetcher
   resourcesStatusCheck: IResourcesStatusComponent
   status: IStatusComponent
@@ -213,7 +213,7 @@ export type PermissionType =
 export type WalletLandPermission = {
   x: string
   y: string
-  permissions: PermissionType[] // Can have multiple permission types
+  permissions: PermissionType[]
   estate?: {
     // Present if parcel is in an estate
     id: string

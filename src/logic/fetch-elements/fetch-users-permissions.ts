@@ -67,9 +67,6 @@ type QueryResult = {
 
 /**
  * Comprehensive GraphQL query that retrieves all authorization types for a user
- * Based on validated query from GRAPH_QUERY_DISCOVERY.md
- *
- * Note: The subgraph entity is called 'wallet' but we alias it as 'user' for semantic consistency
  */
 const QUERY_USER_PERMISSIONS = `
 query GetAllUserPermissions($address: String!) {
@@ -185,8 +182,6 @@ export async function fetchUserLandsPermissions(
   const { theGraph, logs } = components
   const logger = logs.getLogger('fetch-user-lands-permissions')
 
-  // CRITICAL: Normalize address to lowercase (required by The Graph)
-  // Verified in GRAPH_QUERY_DISCOVERY.md - Test 7: mixed case returns no results
   const address = owner.toLowerCase()
 
   logger.info(`Fetching comprehensive land permissions for user: ${address}`)
@@ -196,7 +191,6 @@ export async function fetchUserLandsPermissions(
     address
   })
 
-  // Accumulator map: parcel key -> permission data
   const parcelMap = new Map<ParcelKey, ParcelPermissionAccumulator>()
 
   /**
@@ -207,7 +201,6 @@ export async function fetchUserLandsPermissions(
     const existing = parcelMap.get(key)
 
     if (existing) {
-      // Add permission type to existing entry
       existing.permissions.add(permissionType)
 
       // Update estate info if provided and not already set
@@ -215,7 +208,6 @@ export async function fetchUserLandsPermissions(
         existing.estate = estate
       }
     } else {
-      // Create new entry
       parcelMap.set(key, {
         x,
         y,
@@ -227,7 +219,6 @@ export async function fetchUserLandsPermissions(
 
   // 1. Process direct parcel ownership
   if (result.user?.parcels) {
-    logger.debug(`Found ${result.user.parcels.length} directly owned parcels`)
     for (const parcel of result.user.parcels) {
       addParcel(parcel.x, parcel.y, 'owner')
     }
@@ -235,7 +226,6 @@ export async function fetchUserLandsPermissions(
 
   // 2. Process estate ownership (parcels within owned estates)
   if (result.user?.estates) {
-    logger.debug(`Found ${result.user.estates.length} directly owned estates`)
     for (const estate of result.user.estates) {
       // Filter out empty estates (size: 0)
       if (estate.size > 0 && estate.parcels) {
@@ -247,7 +237,6 @@ export async function fetchUserLandsPermissions(
   }
 
   // 3. Process parcel-level UpdateOperator permissions
-  logger.debug(`Found ${result.updateOperatorParcels.length} parcels with UpdateOperator`)
   for (const parcel of result.updateOperatorParcels) {
     addParcel(
       parcel.x,
@@ -258,7 +247,6 @@ export async function fetchUserLandsPermissions(
   }
 
   // 4. Process estate-level UpdateOperator permissions
-  logger.debug(`Found ${result.updateOperatorEstates.length} estates with UpdateOperator`)
   for (const estate of result.updateOperatorEstates) {
     if (estate.size > 0 && estate.parcels) {
       for (const parcel of estate.parcels) {
@@ -268,9 +256,7 @@ export async function fetchUserLandsPermissions(
   }
 
   // 5. Process UpdateManager authorizations (address-level)
-  logger.debug(`Found ${result.updateManagerAuthorizations.length} UpdateManager authorizations`)
   for (const auth of result.updateManagerAuthorizations) {
-    // Process owner's parcels
     if (auth.owner.parcels) {
       for (const parcel of auth.owner.parcels) {
         addParcel(
@@ -294,7 +280,6 @@ export async function fetchUserLandsPermissions(
     }
   }
 
-  // Convert accumulator to final result array
   const permissions: WalletLandPermission[] = Array.from(parcelMap.values()).map((acc) => ({
     x: acc.x,
     y: acc.y,
