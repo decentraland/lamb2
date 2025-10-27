@@ -42,7 +42,7 @@ import { createThirdPartyItemChecker } from './ports/ownership-checker/third-par
 import { createParcelRightsComponent } from './adapters/parcel-rights-fetcher'
 import { fetchNameOwner } from './logic/fetch-elements/fetch-name-owner'
 import { fetchAllPermissions } from './logic/fetch-elements/fetch-permissions'
-import { fetchUserLandsPermissions } from './logic/fetch-elements/fetch-user-lands-permissions'
+import { fetchUserLandsPermissions } from './logic/fetch-elements/fetch-wallet-permissions'
 
 // Initialize all the components of the app
 export async function initComponents(
