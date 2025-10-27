@@ -370,16 +370,12 @@ test('user-permissions-handler: GET /users/:address/permissions should', functio
   })
 
   describe('when the address has mixed case', () => {
-    let mixedCaseAddress: string
-
-    beforeEach(() => {
-      mixedCaseAddress = '0xAbCdEf1234567890AbCdEf1234567890AbCdEf12'
-    })
-
     describe('and the endpoint is called', () => {
+      let mixedCaseAddress: string
       let graphResult: any
 
       beforeEach(() => {
+        mixedCaseAddress = '0xAbCdEf1234567890AbCdEf1234567890AbCdEf12'
         graphResult = createOwnerGraphResult(mixedCaseAddress.toLowerCase(), 1)
         components.theGraph.landSubgraph.query = jest.fn().mockResolvedValueOnce(graphResult)
       })
@@ -394,9 +390,11 @@ test('user-permissions-handler: GET /users/:address/permissions should', functio
     })
 
     describe('and the graph query is called', () => {
+      let mixedCaseAddress: string
       let graphResult: any
 
       beforeEach(() => {
+        mixedCaseAddress = '0xCcDdEe9876543210CcDdEe9876543210CcDdEe98'
         graphResult = createOwnerGraphResult(mixedCaseAddress.toLowerCase(), 1)
         components.theGraph.landSubgraph.query = jest.fn().mockResolvedValueOnce(graphResult)
       })
