@@ -10,9 +10,6 @@ type ParcelPermissionAccumulator = {
   y: string
   permissions: Set<PermissionType>
   estate?: { id: string; size: number }
-  directOwner: string
-  isOwner: boolean
-  isEstateOwner: boolean
 }
 
 /**
@@ -192,7 +189,7 @@ export async function fetchUserLandsPermissions(
   // Verified in GRAPH_QUERY_DISCOVERY.md - Test 7: mixed case returns no results
   const address = owner.toLowerCase()
 
-  logger.debug(`Fetching comprehensive land permissions for user: ${address}`)
+  logger.info(`Fetching comprehensive land permissions for user: ${address}`)
 
   // Execute the comprehensive query
   const result = await theGraph.landSubgraph.query<QueryResult>(QUERY_USER_PERMISSIONS, {
@@ -205,31 +202,13 @@ export async function fetchUserLandsPermissions(
   /**
    * Helper to add or update a parcel in the accumulator
    */
-  function addParcel(
-    x: string,
-    y: string,
-    permissionType: PermissionType,
-    parcelOwner: string,
-    estate?: { id: string; size: number }
-  ) {
+  function addParcel(x: string, y: string, permissionType: PermissionType, estate?: { id: string; size: number }) {
     const key = createParcelKey(x, y)
     const existing = parcelMap.get(key)
-
-    // Determine if this permission makes the user an owner
-    const isOwnerPermission = permissionType === 'owner'
-    const isEstateOwnerPermission = permissionType === 'estateOwner'
 
     if (existing) {
       // Add permission type to existing entry
       existing.permissions.add(permissionType)
-
-      // Update ownership flags (use OR logic - if any permission grants ownership, set true)
-      if (isOwnerPermission) {
-        existing.isOwner = true
-      }
-      if (isEstateOwnerPermission) {
-        existing.isEstateOwner = true
-      }
 
       // Update estate info if provided and not already set
       if (estate && !existing.estate) {
@@ -241,54 +220,55 @@ export async function fetchUserLandsPermissions(
         x,
         y,
         permissions: new Set([permissionType]),
-        estate,
-        directOwner: parcelOwner,
-        isOwner: isOwnerPermission,
-        isEstateOwner: isEstateOwnerPermission
+        estate
       })
     }
   }
 
   // 1. Process direct parcel ownership
   if (result.user?.parcels) {
+    logger.debug(`Found ${result.user.parcels.length} directly owned parcels`)
     for (const parcel of result.user.parcels) {
-      addParcel(parcel.x, parcel.y, 'owner', address)
+      addParcel(parcel.x, parcel.y, 'owner')
     }
   }
 
   // 2. Process estate ownership (parcels within owned estates)
   if (result.user?.estates) {
+    logger.debug(`Found ${result.user.estates.length} directly owned estates`)
     for (const estate of result.user.estates) {
       // Filter out empty estates (size: 0)
       if (estate.size > 0 && estate.parcels) {
         for (const parcel of estate.parcels) {
-          addParcel(parcel.x, parcel.y, 'estateOwner', address, { id: estate.id, size: estate.size })
+          addParcel(parcel.x, parcel.y, 'estateOwner', { id: estate.id, size: estate.size })
         }
       }
     }
   }
 
   // 3. Process parcel-level UpdateOperator permissions
+  logger.debug(`Found ${result.updateOperatorParcels.length} parcels with UpdateOperator`)
   for (const parcel of result.updateOperatorParcels) {
     addParcel(
       parcel.x,
       parcel.y,
       'updateOperator',
-      parcel.owner.id,
       parcel.estate ? { id: parcel.estate.id, size: parcel.estate.size } : undefined
     )
   }
 
   // 4. Process estate-level UpdateOperator permissions
+  logger.debug(`Found ${result.updateOperatorEstates.length} estates with UpdateOperator`)
   for (const estate of result.updateOperatorEstates) {
     if (estate.size > 0 && estate.parcels) {
       for (const parcel of estate.parcels) {
-        addParcel(parcel.x, parcel.y, 'estateUpdateOperator', estate.owner.id, { id: estate.id, size: estate.size })
+        addParcel(parcel.x, parcel.y, 'estateUpdateOperator', { id: estate.id, size: estate.size })
       }
     }
   }
 
   // 5. Process UpdateManager authorizations (address-level)
+  logger.debug(`Found ${result.updateManagerAuthorizations.length} UpdateManager authorizations`)
   for (const auth of result.updateManagerAuthorizations) {
     // Process owner's parcels
     if (auth.owner.parcels) {
@@ -297,7 +277,6 @@ export async function fetchUserLandsPermissions(
           parcel.x,
           parcel.y,
           'updateManager',
-          'unknown', // Owner is the grantor, not directly available in this nested structure
           parcel.estate ? { id: parcel.estate.id, size: parcel.estate.size } : undefined
         )
       }
@@ -308,7 +287,7 @@ export async function fetchUserLandsPermissions(
       for (const estate of auth.owner.estates) {
         if (estate.size > 0 && estate.parcels) {
           for (const parcel of estate.parcels) {
-            addParcel(parcel.x, parcel.y, 'updateManager', 'unknown', { id: estate.id, size: estate.size })
+            addParcel(parcel.x, parcel.y, 'updateManager', { id: estate.id, size: estate.size })
           }
         }
       }
@@ -320,13 +299,10 @@ export async function fetchUserLandsPermissions(
     x: acc.x,
     y: acc.y,
     permissions: Array.from(acc.permissions).sort(), // Sort for consistent ordering
-    isOwner: acc.isOwner,
-    isEstateOwner: acc.isEstateOwner,
-    estate: acc.estate,
-    directOwner: acc.directOwner
+    estate: acc.estate
   }))
 
-  logger.debug(`Returning ${permissions.length} unique parcels with permissions for user ${address}`)
+  logger.info(`Returning ${permissions.length} unique parcels with permissions for user ${address}`)
 
   return permissions
 }
