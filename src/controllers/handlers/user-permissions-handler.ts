@@ -16,17 +16,17 @@ import { HandlerContextWithPath, WalletLandPermission } from '../../types'
  * - pageNum: number - Page number
  */
 export async function userPermissionsHandler(
-  context: HandlerContextWithPath<'walletPermissionsFetcher', '/users/:address/permissions'>
+  context: HandlerContextWithPath<'userPermissionsFetcher', '/users/:address/permissions'>
 ): Promise<{
   status: 200
   body: { elements: WalletLandPermission[]; totalAmount: number; pageNum: number; pageSize: number }
 }> {
   const { address } = context.params
-  const { walletPermissionsFetcher } = context.components
+  const { userPermissionsFetcher } = context.components
   const pagination = paginationObject(context.url, Number.MAX_VALUE)
 
   const page = await fetchAndPaginate<WalletLandPermission>(async () => {
-    const { elements } = await walletPermissionsFetcher.fetchOwnedElements(address)
+    const { elements } = await userPermissionsFetcher.fetchOwnedElements(address)
     return elements
   }, pagination)
 
