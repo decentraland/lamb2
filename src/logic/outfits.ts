@@ -1,5 +1,5 @@
 import { Outfit, Outfits } from '@dcl/schemas'
-import { AppComponents, OnChainWearable, TypedEntity } from '../types'
+import { AppComponents, TypedEntity } from '../types'
 import { splitUrnAndTokenId } from './utils'
 import { createTPWOwnershipChecker } from '../ports/ownership-checker/tpw-ownership-checker'
 
@@ -42,7 +42,8 @@ export async function getOutfits(
   const { metadata } = outfitsEntity
 
   // Outfits containing all wearables owned
-  const ownedWearables: OnChainWearable[] = await wearablesFetcher.fetchOwnedElements(ethAddress)
+  const ownedWearablesResult = await wearablesFetcher.fetchOwnedElements(ethAddress)
+  const ownedWearables = ownedWearablesResult?.elements || []
 
   const fullyOwnedOutfits: { slot: number; outfit: Outfit }[] = []
 
@@ -96,22 +97,23 @@ export async function getOutfits(
     }
   }
 
-  const names = await namesFetcher.fetchOwnedElements(ethAddress)
+  // Outfits containing all names owned
+  const ownedNamesResult = await namesFetcher.fetchOwnedElements(ethAddress)
+  const names = ownedNamesResult?.elements || []
 
   const normalOutfitsWithOwnedWearables = fullyOwnedOutfits.filter((outfit) => outfit.slot <= 4)
-  const extraOutfitsWithOwnedWearables = fullyOwnedOutfits.filter((outfit) => outfit.slot > 4)
-  const extraOutfitsWithOwnedWearablesAndNames = extraOutfitsWithOwnedWearables.slice(0, names.length)
+  // Include extra outfits if there user owns any name
+  const extraOutfitsWithOwnedWearables = names.length > 0 ? fullyOwnedOutfits.filter((outfit) => outfit.slot > 4) : []
 
-  const outfitsWithWearablesInLowerCase = [
-    ...normalOutfitsWithOwnedWearables,
-    ...extraOutfitsWithOwnedWearablesAndNames
-  ].map((outfit) => ({
-    ...outfit,
-    outfit: {
-      ...outfit.outfit,
-      wearables: outfit.outfit.wearables.map((wearable) => wearable.toLowerCase())
-    }
-  }))
+  const outfitsWithWearablesInLowerCase = [...normalOutfitsWithOwnedWearables, ...extraOutfitsWithOwnedWearables].map(
+    (outfit) => ({
+      ...outfit,
+      outfit: {
+        ...outfit.outfit,
+        wearables: outfit.outfit.wearables.map((wearable) => wearable.toLowerCase())
+      }
+    })
+  )
 
   return {
     ...outfitsEntity,

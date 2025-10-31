@@ -19,6 +19,10 @@ import { outfitsHandler } from './handlers/outfits-handler'
 import { getCatalystServersHandler } from './handlers/catalyst-servers-handler'
 import { getNameDenylistHandler } from './handlers/get-name-denylist-handler'
 import { getPOIsHandler } from './handlers/get-pois-handler'
+import { parcelPermissionsHandler } from './handlers/parcel-permissions-handler'
+import { parcelOperatorsHandler } from './handlers/parcel-operators-handler'
+import { nameOwnerHandler } from './handlers/name-owner-handler'
+import { userLandsPermissionsHandler } from './handlers/user-lands-permissions-handler'
 
 // We return the entire router because it will be easier to test than a whole server
 export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContext>> {
@@ -32,8 +36,11 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
   router.get('/users/:address/third-party-wearables/:collectionId', thirdPartyCollectionWearablesHandler)
   router.get('/third-party-integrations', thirdPartyIntegrationsHandler)
   router.get('/users/:address/emotes', emotesHandler)
+  router.get('/names/:name/owner', nameOwnerHandler)
   router.get('/users/:address/names', namesHandler)
+  router.get('/users/:address/parcels/:x/:y/permissions', parcelPermissionsHandler)
   router.get('/users/:address/lands', landsHandler)
+  router.get('/users/:address/lands-permissions', userLandsPermissionsHandler)
   router.post('/profiles', profilesHandler)
   router.get('/profiles/:id', profileHandler)
   router.get('/nfts/collections', allCollectionsHandler)
@@ -41,10 +48,8 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
   router.get('/contracts/servers', getCatalystServersHandler)
   router.get('/contracts/pois', getPOIsHandler)
   router.get('/contracts/denylisted-names', getNameDenylistHandler)
-
-  /* internal */
   router.get('/explorer/:address/wearables', explorerHandler)
-  /* end internal */
+  router.get('/parcels/:x/:y/operators', parcelOperatorsHandler)
 
   return router
 }

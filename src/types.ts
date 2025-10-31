@@ -22,7 +22,7 @@ import { ContentClient } from 'dcl-catalyst-client'
 import { HTTPProvider } from 'eth-connect'
 import { CatalystsFetcher } from './adapters/catalysts-fetcher'
 import { DefinitionsFetcher } from './adapters/definitions-fetcher'
-import { ElementsFetcher } from './adapters/elements-fetcher'
+import { ElementsFetcher, LegacyElementsFetcher } from './adapters/elements-fetcher'
 import { EntitiesFetcher } from './adapters/entities-fetcher'
 import { NameDenylistFetcher } from './adapters/name-denylist-fetcher'
 import { POIsFetcher } from './adapters/pois-fetcher'
@@ -36,6 +36,8 @@ import { ThirdPartyProvidersStorage } from './logic/third-party-providers-storag
 import { IProfilesComponent } from './adapters/profiles'
 import { AlchemyNftFetcher } from './adapters/alchemy-nft-fetcher'
 import { ThirdPartyItemChecker } from './ports/ownership-checker/third-party-item-checker'
+import { ParcelRightsFetcher } from './adapters/parcel-rights-fetcher'
+import { MarketplaceApiFetcher } from './adapters/marketplace-api-fetcher'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -62,7 +64,9 @@ export type BaseComponents = {
   wearableDefinitionsFetcher: DefinitionsFetcher<WearableDefinition>
   entitiesFetcher: EntitiesFetcher
   namesFetcher: ElementsFetcher<Name>
-  landsFetcher: ElementsFetcher<LAND>
+  landsFetcher: LegacyElementsFetcher<LAND>
+  landsPermissionsFetcher: ElementsFetcher<LandPermission>
+  parcelRightsFetcher: ParcelRightsFetcher
   resourcesStatusCheck: IResourcesStatusComponent
   status: IStatusComponent
   l1Provider: HTTPProvider
@@ -74,6 +78,8 @@ export type BaseComponents = {
   alchemyNftFetcher: AlchemyNftFetcher
   l1ThirdPartyItemChecker: ThirdPartyItemChecker
   l2ThirdPartyItemChecker: ThirdPartyItemChecker
+  marketplaceApiFetcher?: MarketplaceApiFetcher
+  nameOwnerFetcher: ElementsFetcher<NameOwner>
 }
 
 // components used in runtime
@@ -85,6 +91,7 @@ export type AppComponents = BaseComponents & {
 export type TestComponents = BaseComponents & {
   // A fetch component that only hits the test server
   localFetch: IFetchComponent
+  marketplaceApiFetcher?: MarketplaceApiFetcher
 }
 
 // this type simplifies the typings of http handlers
@@ -127,8 +134,8 @@ export type Item<C extends WearableCategory | EmoteCategory> = {
   individualData: {
     id: string
     tokenId: string
-    transferredAt: number
-    price: number
+    transferredAt: number | string
+    price: number | string
   }[]
   name: string
   rarity: string
@@ -153,6 +160,7 @@ export type ThirdPartyWearable = {
   amount: number
   individualData: {
     id: string
+    tokenId?: string
   }[]
   name: string
   category: WearableCategory
@@ -176,8 +184,16 @@ export type LAND = {
   x?: string
   y?: string
   description?: string
-  price?: number
+  price?: string
   image?: string
+}
+
+export type LandPermission = {
+  id: string
+  x: string
+  y: string
+  owner: string
+  updateOperator: string
 }
 
 export type PaginatedResponse<T> = {
@@ -200,6 +216,12 @@ export class InvalidRequestError extends Error {
 export class NotFoundError extends Error {
   constructor(message: string) {
     super(message)
+    Error.captureStackTrace(this, this.constructor)
+  }
+}
+export class ParcelOrStateNotFoundError extends Error {
+  constructor(x: number, y: number) {
+    super(`Parcel or estate rights not found for x: ${x}, y: ${y}`)
     Error.captureStackTrace(this, this.constructor)
   }
 }
@@ -234,12 +256,27 @@ export type ThirdPartyAsset = {
   }
 }
 
-export type OnChainWearableResponse = Omit<OnChainWearable, 'minTransferredAt' | 'maxTransferredAt'> & {
+export type OnChainWearableResponse = Omit<
+  OnChainWearable,
+  'minTransferredAt' | 'maxTransferredAt' | 'individualData'
+> & {
+  individualData: {
+    id: string
+    tokenId: string
+    transferredAt: string // API expects transferredAt as string
+    price: string // API expects price as string
+  }[]
   definition?: WearableDefinition
   entity?: Entity
 }
 
-export type OnChainEmoteResponse = Omit<OnChainEmote, 'minTransferredAt' | 'maxTransferredAt'> & {
+export type OnChainEmoteResponse = Omit<OnChainEmote, 'minTransferredAt' | 'maxTransferredAt' | 'individualData'> & {
+  individualData: {
+    id: string
+    tokenId: string
+    transferredAt: string // API expects transferredAt as string
+    price: string // API expects price as string
+  }[]
   definition?: EmoteDefinition
   entity?: Entity
 }
@@ -275,4 +312,8 @@ export type WearableSorting = BaseWearableSorting & OnChainWearableSorting & Thi
 
 export type TypedEntity<T> = Omit<Entity, 'metadata'> & {
   metadata?: T
+}
+
+export type NameOwner = {
+  owner: string | null
 }
