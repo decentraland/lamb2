@@ -1,0 +1,1109 @@
+openapi: 3.0.3
+info:
+  title: Catalyst Lambdas v2 API
+  version: 2.0.0
+  description: |
+    ## Overview
+
+    The Lambdas v2 service is a new implementation that replaces the previous lambdas service bundle associated with Catalyst nodes.
+    This service provides a comprehensive API for interacting with Catalyst Content Servers, assisting in the resolution of entities
+    and assets for any Decentraland client.
+
+    ### About This Service
+
+    Lambdas v2 (lamb2) is part of the Catalyst bundle of services and is currently deployed as part of the Catalyst nodes that power
+    the Decentraland network. This modern implementation provides improved performance, maintainability, and scalability over the
+    original lambdas service.
+
+    ### Key Features
+
+    - **User Assets**: Retrieve wearables, emotes, names, and lands owned by Ethereum addresses
+    - **Profiles**: Fetch and manage user profiles with versioning support
+    - **Third-Party Integrations**: Support for third-party wearables and collections
+    - **NFT Collections**: Query all available NFT collections across L1 and L2
+    - **Contracts**: Access catalyst servers, POIs, and name denylists
+    - **Outfits**: Retrieve outfit configurations and validate ownership
+
+    ### Related Resources
+
+    - [GitHub Repository](https://github.com/decentraland/lamb2)
+    - [Catalyst Owner](https://github.com/decentraland/catalyst-owner)
+    - [Catalyst Content Server](https://github.com/decentraland/catalyst)
+    - [Full Catalyst API Documentation](https://decentraland.github.io/catalyst-api-specs)
+
+  contact:
+    name: Decentraland Foundation
+    url: https://decentraland.org
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+  - url: https://peer.decentraland.org/lambdas
+    description: Production - Main Decentraland network
+  - url: https://peer-testing.decentraland.org/lambdas
+    description: Staging - Testing environment
+  - url: https://peer.decentraland.zone/lambdas
+    description: Development - Development environment
+
+security: [] # Public API - No authentication required
+
+tags:
+  - name: Health
+    description: Service health and status endpoints
+  - name: Users
+    description: User-owned assets including wearables, emotes, names, and lands
+  - name: Profiles
+    description: User profile management and retrieval
+  - name: NFT Collections
+    description: Query available NFT collections
+  - name: Third-Party
+    description: Third-party wearables and integrations
+  - name: Outfits
+    description: Outfit configuration and validation
+  - name: Contracts
+    description: On-chain contract data including servers, POIs, and denylists
+  - name: Internal
+    description: Internal endpoints for explorer and other services
+
+paths:
+  /status:
+    get:
+      tags:
+        - Health
+      summary: Get service status
+      description: Returns the current service status including version and commit hash
+      operationId: getStatus
+      responses:
+        "200":
+          description: Service status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Status"
+
+  /about:
+    get:
+      tags:
+        - Health
+      summary: Get detailed service information
+      description: |
+        Returns comprehensive information about the Catalyst node including health status of all services
+        (content, lambdas, comms), network configuration, and whether the node is accepting users
+      operationId: getAbout
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/About"
+        "503":
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/About"
+
+  /users/{address}/wearables:
+    get:
+      tags:
+        - Users
+      summary: Get user's wearables
+      description: |
+        Retrieves all on-chain wearables owned by a specific Ethereum address. Supports pagination, filtering
+        by category/rarity/name, and sorting. Optionally includes definitions or entity metadata.
+      operationId: getUserWearables
+      parameters:
+        - $ref: "#/components/parameters/AddressParam"
+        - $ref: "#/components/parameters/PageNum"
+        - $ref: "#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/Category"
+        - $ref: "#/components/parameters/Rarity"
+        - $ref: "#/components/parameters/Name"
+        - $ref: "#/components/parameters/OrderBy"
+        - $ref: "#/components/parameters/Direction"
+        - $ref: "#/components/parameters/IncludeDefinitions"
+        - $ref: "#/components/parameters/IncludeEntities"
+      responses:
+        "200":
+          description: List of user's wearables
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WearablesPaginated"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /users/{address}/emotes:
+    get:
+      tags:
+        - Users
+      summary: Get user's emotes
+      description: |
+        Retrieves all on-chain emotes owned by a specific Ethereum address. Supports pagination, filtering
+        by category/rarity/name, and sorting. Optionally includes definitions or entity metadata.
+      operationId: getUserEmotes
+      parameters:
+        - $ref: "#/components/parameters/AddressParam"
+        - $ref: "#/components/parameters/PageNum"
+        - $ref: "#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/Category"
+        - $ref: "#/components/parameters/Rarity"
+        - $ref: "#/components/parameters/Name"
+        - $ref: "#/components/parameters/OrderBy"
+        - $ref: "#/components/parameters/Direction"
+        - $ref: "#/components/parameters/IncludeDefinitions"
+        - $ref: "#/components/parameters/IncludeEntities"
+      responses:
+        "200":
+          description: List of user's emotes
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmotesPaginated"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /users/{address}/names:
+    get:
+      tags:
+        - Users
+      summary: Get user's names
+      description: Retrieves all Decentraland names (ENS-like) owned by a specific Ethereum address
+      operationId: getUserNames
+      parameters:
+        - $ref: "#/components/parameters/AddressParam"
+        - $ref: "#/components/parameters/PageNum"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: List of user's names
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NamesPaginated"
+
+  /users/{address}/lands:
+    get:
+      tags:
+        - Users
+      summary: Get user's lands
+      description: Retrieves all LAND and Estate NFTs owned by a specific Ethereum address
+      operationId: getUserLands
+      parameters:
+        - $ref: "#/components/parameters/AddressParam"
+        - $ref: "#/components/parameters/PageNum"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: List of user's lands
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LandsPaginated"
+
+  /users/{address}/third-party-wearables:
+    get:
+      tags:
+        - Third-Party
+      summary: Get user's third-party wearables
+      description: |
+        Retrieves all third-party wearables owned by a specific Ethereum address. Third-party wearables
+        are items from external collections integrated with Decentraland.
+      operationId: getUserThirdPartyWearables
+      parameters:
+        - $ref: "#/components/parameters/AddressParam"
+        - $ref: "#/components/parameters/PageNum"
+        - $ref: "#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/Category"
+        - $ref: "#/components/parameters/Name"
+        - $ref: "#/components/parameters/IncludeDefinitions"
+      responses:
+        "200":
+          description: List of user's third-party wearables
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThirdPartyWearablesPaginated"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /users/{address}/third-party-wearables/{collectionId}:
+    get:
+      tags:
+        - Third-Party
+      summary: Get user's third-party wearables from a specific collection
+      description: |
+        Retrieves third-party wearables owned by a user from a specific collection identified by URN
+      operationId: getUserThirdPartyCollectionWearables
+      parameters:
+        - $ref: "#/components/parameters/AddressParam"
+        - name: collectionId
+          in: path
+          required: true
+          description: The URN of the third-party collection
+          schema:
+            type: string
+            example: "urn:decentraland:matic:collections-thirdparty:third-party-name"
+        - $ref: "#/components/parameters/PageNum"
+        - $ref: "#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/IncludeDefinitions"
+      responses:
+        "200":
+          description: List of user's third-party wearables from collection
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThirdPartyWearablesPaginated"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /third-party-integrations:
+    get:
+      tags:
+        - Third-Party
+      summary: Get all third-party integrations
+      description: Returns a list of all available third-party integrations and their metadata
+      operationId: getThirdPartyIntegrations
+      responses:
+        "200":
+          description: List of third-party integrations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThirdPartyIntegrations"
+
+  /profiles:
+    post:
+      tags:
+        - Profiles
+      summary: Get multiple profiles
+      description: |
+        Retrieves multiple user profiles by their IDs (Ethereum addresses). Supports conditional requests
+        using If-Modified-Since header to avoid unnecessary data transfer.
+      operationId: getProfiles
+      parameters:
+        - name: If-Modified-Since
+          in: header
+          required: false
+          description: Only return profiles modified after this timestamp (HTTP date format)
+          schema:
+            type: string
+            example: "Wed, 21 Oct 2015 07:28:00 GMT"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - ids
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+                  description: Array of Ethereum addresses (profile IDs)
+                  example: ["0x1234...", "0x5678..."]
+      responses:
+        "200":
+          description: List of profiles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Profile"
+        "304":
+          description: Not modified - no profiles were updated since If-Modified-Since timestamp
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /profiles/{id}:
+    get:
+      tags:
+        - Profiles
+      summary: Get a single profile
+      description: Retrieves a user profile by their ID (Ethereum address)
+      operationId: getProfile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The Ethereum address of the profile
+          schema:
+            type: string
+            example: "0x1234567890abcdef1234567890abcdef12345678"
+      responses:
+        "200":
+          description: Profile found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /nfts/collections:
+    get:
+      tags:
+        - NFT Collections
+      summary: Get all NFT collections
+      description: |
+        Returns all available NFT collections from both L1 (Ethereum) and L2 (Polygon) networks,
+        including base wearables and emotes
+      operationId: getAllCollections
+      responses:
+        "200":
+          description: List of all collections
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Collections"
+
+  /outfits/{id}:
+    get:
+      tags:
+        - Outfits
+      summary: Get outfit by ID
+      description: |
+        Retrieves an outfit configuration and validates that the owner possesses all required items
+      operationId: getOutfit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The outfit ID (Ethereum address)
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Outfit entity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Entity"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /contracts/servers:
+    get:
+      tags:
+        - Contracts
+      summary: Get catalyst servers
+      description: Returns the list of catalyst servers from the DAO contract
+      operationId: getCatalystServers
+      responses:
+        "200":
+          description: List of catalyst servers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Servers"
+
+  /contracts/pois:
+    get:
+      tags:
+        - Contracts
+      summary: Get Points of Interest
+      description: Returns the list of POIs (Points of Interest) from the DAO contract
+      operationId: getPOIs
+      responses:
+        "200":
+          description: List of POIs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/POIs"
+
+  /contracts/denylisted-names:
+    get:
+      tags:
+        - Contracts
+      summary: Get denylisted names
+      description: Returns the list of names that are not allowed in Decentraland
+      operationId: getDenylistedNames
+      responses:
+        "200":
+          description: List of denylisted names
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DenylistedNames"
+
+  /explorer/{address}/wearables:
+    get:
+      tags:
+        - Internal
+      summary: Get combined wearables for explorer
+      description: |
+        Internal endpoint that combines base wearables, on-chain wearables, and third-party wearables
+        in a single response. Used by the Decentraland Explorer.
+      operationId: getExplorerWearables
+      parameters:
+        - $ref: "#/components/parameters/AddressParam"
+        - $ref: "#/components/parameters/PageNum"
+        - $ref: "#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/Category"
+        - $ref: "#/components/parameters/Rarity"
+        - $ref: "#/components/parameters/Name"
+        - $ref: "#/components/parameters/OrderBy"
+        - $ref: "#/components/parameters/Direction"
+        - name: collectionType
+          in: query
+          required: false
+          description: Filter by collection type (can be specified multiple times)
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [base-wearable, on-chain, third-party]
+          style: form
+          explode: true
+        - name: thirdPartyCollectionId
+          in: query
+          required: false
+          description: Filter by third-party collection ID (can be specified multiple times)
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+      responses:
+        "200":
+          description: Combined list of wearables
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MixedWearablesPaginated"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+components:
+  parameters:
+    AddressParam:
+      name: address
+      in: path
+      required: true
+      description: Ethereum address (0x-prefixed)
+      schema:
+        type: string
+        pattern: "^0x[a-fA-F0-9]{40}$"
+        example: "0x1234567890abcdef1234567890abcdef12345678"
+
+    PageNum:
+      name: pageNum
+      in: query
+      required: false
+      description: Page number (1-indexed)
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    PageSize:
+      name: pageSize
+      in: query
+      required: false
+      description: Number of items per page (max 1000)
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 100
+
+    Category:
+      name: category
+      in: query
+      required: false
+      description: Filter by category (can be specified multiple times)
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+
+    Rarity:
+      name: rarity
+      in: query
+      required: false
+      description: Filter by rarity
+      schema:
+        type: string
+        enum: [common, uncommon, rare, epic, legendary, mythic, unique]
+
+    Name:
+      name: name
+      in: query
+      required: false
+      description: Filter by name (case-insensitive substring match)
+      schema:
+        type: string
+
+    OrderBy:
+      name: orderBy
+      in: query
+      required: false
+      description: Sort field
+      schema:
+        type: string
+        enum: [date, rarity, name]
+        default: rarity
+
+    Direction:
+      name: direction
+      in: query
+      required: false
+      description: Sort direction
+      schema:
+        type: string
+        enum: [ASC, DESC]
+        default: DESC
+
+    IncludeDefinitions:
+      name: includeDefinitions
+      in: query
+      required: false
+      description: Include item definitions in response
+      schema:
+        type: boolean
+        default: false
+
+    IncludeEntities:
+      name: includeEntities
+      in: query
+      required: false
+      description: Include entity metadata in response (cannot be used with includeDefinitions)
+      schema:
+        type: boolean
+        default: false
+
+  schemas:
+    Status:
+      type: object
+      properties:
+        version:
+          type: string
+          description: Service version
+        currentTime:
+          type: integer
+          description: Current timestamp in milliseconds
+        commitHash:
+          type: string
+          description: Git commit hash
+
+    About:
+      type: object
+      properties:
+        healthy:
+          type: boolean
+          description: Overall health status
+        acceptingUsers:
+          type: boolean
+          description: Whether the node is accepting new users
+        content:
+          type: object
+          properties:
+            healthy:
+              type: boolean
+            version:
+              type: string
+            commitHash:
+              type: string
+            publicUrl:
+              type: string
+            synchronizationStatus:
+              type: string
+        lambdas:
+          type: object
+          properties:
+            healthy:
+              type: boolean
+            version:
+              type: string
+            commitHash:
+              type: string
+            publicUrl:
+              type: string
+        comms:
+          type: object
+          nullable: true
+          properties:
+            healthy:
+              type: boolean
+            protocol:
+              type: string
+            version:
+              type: string
+            commitHash:
+              type: string
+            usersCount:
+              type: integer
+            adapter:
+              type: string
+        bff:
+          type: object
+          properties:
+            healthy:
+              type: boolean
+            protocolVersion:
+              type: string
+            userCount:
+              type: integer
+            publicUrl:
+              type: string
+        configurations:
+          type: object
+          properties:
+            networkId:
+              type: integer
+            globalScenesUrn:
+              type: array
+              items:
+                type: string
+            scenesUrn:
+              type: array
+              items:
+                type: string
+            realmName:
+              type: string
+            map:
+              type: object
+
+    Wearable:
+      type: object
+      properties:
+        urn:
+          type: string
+          description: Universal Resource Name for the wearable
+        amount:
+          type: integer
+          description: Total number of items owned
+        individualData:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              tokenId:
+                type: string
+              transferredAt:
+                type: integer
+              price:
+                type: number
+        name:
+          type: string
+        category:
+          type: string
+        rarity:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary, mythic, unique]
+        definition:
+          $ref: "#/components/schemas/WearableDefinition"
+        entity:
+          $ref: "#/components/schemas/Entity"
+
+    WearableDefinition:
+      type: object
+      description: Wearable metadata definition
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        rarity:
+          type: string
+        category:
+          type: string
+        data:
+          type: object
+
+    Emote:
+      type: object
+      properties:
+        urn:
+          type: string
+        amount:
+          type: integer
+        individualData:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              tokenId:
+                type: string
+              transferredAt:
+                type: integer
+              price:
+                type: number
+        name:
+          type: string
+        category:
+          type: string
+        rarity:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary, mythic, unique]
+        definition:
+          $ref: "#/components/schemas/EmoteDefinition"
+        entity:
+          $ref: "#/components/schemas/Entity"
+
+    EmoteDefinition:
+      type: object
+      description: Emote metadata definition
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        rarity:
+          type: string
+        category:
+          type: string
+        data:
+          type: object
+
+    Name:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The Decentraland name
+        contractAddress:
+          type: string
+        tokenId:
+          type: string
+        price:
+          type: number
+          nullable: true
+
+    Land:
+      type: object
+      properties:
+        contractAddress:
+          type: string
+        tokenId:
+          type: string
+        category:
+          type: string
+          enum: [parcel, estate]
+        name:
+          type: string
+          nullable: true
+        x:
+          type: string
+          nullable: true
+          description: X coordinate for parcels
+        y:
+          type: string
+          nullable: true
+          description: Y coordinate for parcels
+        description:
+          type: string
+          nullable: true
+        price:
+          type: number
+          nullable: true
+        image:
+          type: string
+          nullable: true
+
+    ThirdPartyWearable:
+      type: object
+      properties:
+        urn:
+          type: string
+        amount:
+          type: integer
+        individualData:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+        name:
+          type: string
+        category:
+          type: string
+        entity:
+          $ref: "#/components/schemas/Entity"
+        definition:
+          $ref: "#/components/schemas/WearableDefinition"
+
+    Entity:
+      type: object
+      description: Content entity metadata
+      properties:
+        version:
+          type: string
+        id:
+          type: string
+        type:
+          type: string
+        pointers:
+          type: array
+          items:
+            type: string
+        timestamp:
+          type: integer
+        content:
+          type: array
+          items:
+            type: object
+            properties:
+              file:
+                type: string
+              hash:
+                type: string
+        metadata:
+          type: object
+
+    Profile:
+      type: object
+      properties:
+        avatars:
+          type: array
+          items:
+            type: object
+            properties:
+              userId:
+                type: string
+              email:
+                type: string
+              name:
+                type: string
+              hasClaimedName:
+                type: boolean
+              description:
+                type: string
+              ethAddress:
+                type: string
+              version:
+                type: integer
+              avatar:
+                type: object
+              tutorialStep:
+                type: integer
+              interests:
+                type: array
+                items:
+                  type: string
+
+    ThirdPartyIntegration:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        urn:
+          type: string
+
+    Collection:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Collection URN
+        name:
+          type: string
+          description: Collection name
+
+    Server:
+      type: object
+      properties:
+        address:
+          type: string
+        owner:
+          type: string
+        id:
+          type: string
+
+    POI:
+      type: object
+      properties:
+        x:
+          type: integer
+        y:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+
+    MixedWearable:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [base-wearable, on-chain, third-party]
+        urn:
+          type: string
+        amount:
+          type: integer
+        individualData:
+          type: array
+          items:
+            type: object
+        name:
+          type: string
+        category:
+          type: string
+        rarity:
+          type: string
+          nullable: true
+        entity:
+          $ref: "#/components/schemas/Entity"
+
+    PaginatedResponse:
+      type: object
+      properties:
+        elements:
+          type: array
+          items:
+            type: object
+        totalAmount:
+          type: integer
+          description: Total number of items across all pages
+        pageNum:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Number of items per page
+
+    WearablesPaginated:
+      allOf:
+        - $ref: "#/components/schemas/PaginatedResponse"
+        - type: object
+          properties:
+            elements:
+              type: array
+              items:
+                $ref: "#/components/schemas/Wearable"
+
+    EmotesPaginated:
+      allOf:
+        - $ref: "#/components/schemas/PaginatedResponse"
+        - type: object
+          properties:
+            elements:
+              type: array
+              items:
+                $ref: "#/components/schemas/Emote"
+
+    NamesPaginated:
+      allOf:
+        - $ref: "#/components/schemas/PaginatedResponse"
+        - type: object
+          properties:
+            elements:
+              type: array
+              items:
+                $ref: "#/components/schemas/Name"
+
+    LandsPaginated:
+      allOf:
+        - $ref: "#/components/schemas/PaginatedResponse"
+        - type: object
+          properties:
+            elements:
+              type: array
+              items:
+                $ref: "#/components/schemas/Land"
+
+    ThirdPartyWearablesPaginated:
+      allOf:
+        - $ref: "#/components/schemas/PaginatedResponse"
+        - type: object
+          properties:
+            elements:
+              type: array
+              items:
+                $ref: "#/components/schemas/ThirdPartyWearable"
+
+    MixedWearablesPaginated:
+      allOf:
+        - $ref: "#/components/schemas/PaginatedResponse"
+        - type: object
+          properties:
+            elements:
+              type: array
+              items:
+                $ref: "#/components/schemas/MixedWearable"
+
+    ThirdPartyIntegrations:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ThirdPartyIntegration"
+
+    Collections:
+      type: object
+      properties:
+        collections:
+          type: array
+          items:
+            $ref: "#/components/schemas/Collection"
+
+    Servers:
+      type: object
+      properties:
+        servers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Server"
+
+    POIs:
+      type: object
+      properties:
+        pois:
+          type: array
+          items:
+            $ref: "#/components/schemas/POI"
+
+    DenylistedNames:
+      type: object
+      properties:
+        denylistedNames:
+          type: array
+          items:
+            type: string
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+        message:
+          type: string
+          description: Detailed error description
+
+  responses:
+    BadRequest:
+      description: Bad request - Invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
