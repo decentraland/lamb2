@@ -1,6 +1,25 @@
 import { parseUrn as resolverParseUrn } from '@dcl/urn-resolver'
 import { ThirdPartyProvider } from '../types'
-import { Rarity } from '@dcl/schemas'
+import { Entity, Rarity, WearableCategory } from '@dcl/schemas'
+
+export type ExplorerWearableRepresentation = {
+  bodyShapes: string[]
+}
+
+export type ExplorerWearableMetadata = {
+  id: string
+  rarity?: Rarity
+  data: {
+    category: WearableCategory
+    representations: ExplorerWearableRepresentation[]
+  }
+}
+
+export type ExplorerWearableEntity = {
+  id: string
+  thumbnail?: string
+  metadata: ExplorerWearableMetadata
+}
 
 export const SORTED_RARITIES = [
   Rarity.COMMON,
@@ -50,6 +69,29 @@ export function sanitizeContractList(thirdPartyProviders: ThirdPartyProvider[]) 
         network: c.network.toLowerCase(),
         address: c.address.toLowerCase()
       }))
+    }
+  }
+}
+
+export function buildTrimmedEntity(entity: Entity): ExplorerWearableEntity {
+  const thumbnailFile = entity?.metadata?.thumbnail as string | undefined
+  const thumbnailHash = entity?.content?.find((c) => c.file === thumbnailFile)?.hash
+  const metadata = entity?.metadata
+  const category: WearableCategory | undefined = metadata?.data?.category
+  const representations: ExplorerWearableRepresentation[] = (metadata?.data?.representations || []).map((rep: any) => ({
+    bodyShapes: rep.bodyShapes
+  }))
+
+  return {
+    id: entity.id,
+    thumbnail: thumbnailHash,
+    metadata: {
+      id: metadata?.id,
+      rarity: metadata?.rarity,
+      data: {
+        category: category as WearableCategory,
+        representations
+      }
     }
   }
 }

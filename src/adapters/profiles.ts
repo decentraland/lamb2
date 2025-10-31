@@ -71,7 +71,7 @@ export async function createProfilesComponent(
   const logger = logs.getLogger('profiles')
 
   const ensureERC721 = (await config.getString('ENSURE_ERC_721')) !== 'false'
-  const baseUrl = (await config.getString('PROFILE_CDN_BASE_URL')) ?? 'http://profile-images.decentraland.org'
+  const baseUrl = (await config.getString('PROFILE_CDN_BASE_URL')) ?? 'https://profile-images.decentraland.org'
 
   async function getProfiles(
     ethAddresses: string[],
@@ -118,14 +118,18 @@ export async function createProfilesComponent(
 
           isDefaultProfile || thirdPartyWearablesOwnershipChecker.addNFTsForAddress(ethAddress, wearables)
 
-          const [ownedWearables, ownedEmotes, ownedNames] = isDefaultProfile
-            ? [[], [], []]
+          const [wearablesResult, emotesResult, namesResult] = isDefaultProfile
+            ? [{ elements: [] }, { elements: [] }, { elements: [] }]
             : await Promise.all([
                 wearablesFetcher.fetchOwnedElements(ethAddress),
                 emotesFetcher.fetchOwnedElements(ethAddress),
                 namesFetcher.fetchOwnedElements(ethAddress),
                 thirdPartyWearablesOwnershipChecker.checkNFTsOwnership()
               ])
+
+          const ownedWearables = wearablesResult.elements
+          const ownedEmotes = emotesResult.elements
+          const ownedNames = namesResult.elements
 
           const thirdPartyWearables = isDefaultProfile
             ? []

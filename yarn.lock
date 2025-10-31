@@ -302,10 +302,10 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@dcl/catalyst-api-specs@^3.3.0":
-  version "3.3.0"
-  resolved "https://registry.yarnpkg.com/@dcl/catalyst-api-specs/-/catalyst-api-specs-3.3.0.tgz#6efebe6142e4934bcf51d60367639e203204de2b"
-  integrity sha512-SwOY3+XRP0KBFOkUl4k4plSP8iYMd3On5iDcCeHkcWBuDvNplW2eydC2S9A6XHjjGwRZI7pmqMS9Q2LX1xeGGQ==
+"@dcl/catalyst-api-specs@^3.5.1":
+  version "3.5.1"
+  resolved "https://registry.yarnpkg.com/@dcl/catalyst-api-specs/-/catalyst-api-specs-3.5.1.tgz#03977b4cd67cdc7781aa39848dc9fe657f5629b4"
+  integrity sha512-24/8oH4VzWWoIiHFNt347+AhoF+49il8xe9whKPDsQ8o4IVM7+iIT+YtNPiS5nkyddXpI0u0eiS8f7DgjBfH9w==
   dependencies:
     yaml "^2.3.4"
 
@@ -355,10 +355,10 @@
     ajv-keywords "^5.1.0"
     mitt "^3.0.1"
 
-"@dcl/schemas@^15.8.1":
-  version "15.8.1"
-  resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-15.8.1.tgz#d2bc69cf74a48cd319bfe0fe2a7dcb67d82c4980"
-  integrity sha512-XzKOtv0y1i/mVeZqJ8Xr8JCuJjDvmwayPSNLmBiG+VgsbYZ8OCLswGchRi3aIjAh1oSMcth9jevw8dBe5MIJAw==
+"@dcl/schemas@^16.2.0":
+  version "16.2.0"
+  resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-16.2.0.tgz#5ba196a0061d10bd3a0d4b075673f022c2fbf286"
+  integrity sha512-3JNyNSBTwYvKz3GjZENAo+xmskIa+wXXyf3FahYlRjAclUO5he+uyDKkOEE1so1nxDpSCUufPS0WYqqBWFNRng==
   dependencies:
     ajv "^8.11.0"
     ajv-errors "^3.0.0"
