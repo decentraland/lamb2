@@ -355,10 +355,10 @@
     ajv-keywords "^5.1.0"
     mitt "^3.0.1"
 
-"@dcl/schemas@^16.2.0":
-  version "16.2.0"
-  resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-16.2.0.tgz#5ba196a0061d10bd3a0d4b075673f022c2fbf286"
-  integrity sha512-3JNyNSBTwYvKz3GjZENAo+xmskIa+wXXyf3FahYlRjAclUO5he+uyDKkOEE1so1nxDpSCUufPS0WYqqBWFNRng==
+"@dcl/schemas@^19.4.1":
+  version "19.4.1"
+  resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-19.4.1.tgz#ce9ad612d81711f1977ceca747436624c377a49f"
+  integrity sha512-HYIMkIKxrogMP6Mb+P/0sCXbdYclG1zlD4zpxQDyDc1kb8DcEs8JY8Bb98uRf/BshZ0dkCqrvwtvh7NcHkARfg==
   dependencies:
     ajv "^8.11.0"
     ajv-errors "^3.0.0"
