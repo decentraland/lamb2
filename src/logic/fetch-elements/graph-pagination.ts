@@ -195,6 +195,9 @@ export function createItemQueryBuilder(category: ItemType) {
     itemTypeFilter = `itemType: smart_wearable_v1`
   } else if (category === 'emote') {
     itemTypeFilter = `itemType: emote_v1`
+  } else if (category === 'polygonWearables') {
+    // polygonWearables includes both wearable_v2 and smart_wearable_v1
+    itemTypeFilter = `itemType_in: [wearable_v2, smart_wearable_v1]`
   } else if (category === 'wearable') {
     itemTypeFilter = `itemType_in: [wearable_v1, wearable_v2, smart_wearable_v1]`
   }
@@ -213,7 +216,7 @@ export function createItemQueryBuilder(category: ItemType) {
         category,
         transferredAt,
         metadata {
-          ${['wearable', 'smartWearable'].includes(category) ? 'wearable' : category} {
+          ${['wearable', 'smartWearable', 'polygonWearables'].includes(category) ? 'wearable' : category} {
             name,
             category
           }

@@ -235,8 +235,14 @@ export async function createMarketplaceApiFetcher(
     if (params.direction) {
       queryParams.set('direction', params.direction)
     }
-    if (params.itemType && params.itemType === 'smartWearable') {
-      queryParams.set('itemType', 'smart_wearable_v1')
+    if (params.itemType) {
+      if (params.itemType === 'smartWearable') {
+        queryParams.append('itemType', 'smart_wearable_v1')
+      } else if (params.itemType === 'polygonWearables') {
+        // polygonWearables includes both wearable_v2 and smart_wearable_v1
+        queryParams.append('itemType', 'wearable_v2')
+        queryParams.append('itemType', 'smart_wearable_v1')
+      }
     }
 
     const queryString = queryParams.toString()

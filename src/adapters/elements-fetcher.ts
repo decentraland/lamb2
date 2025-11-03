@@ -41,7 +41,7 @@ export type ElementsResult<T> = {
   totalAmount: number
 }
 
-export type ItemType = 'wearable' | 'emote' | 'smartWearable'
+export type ItemType = 'wearable' | 'emote' | 'smartWearable' | 'polygonWearables'
 
 export type ElementsFilters = {
   category?: string
