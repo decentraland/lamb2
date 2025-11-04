@@ -33,7 +33,7 @@ yarn build
 yarn start
 ```
 
-## 🤖 AI Agent Context
+## AI Agent Context
 
 **Service Purpose:** Provides utility APIs for Decentraland clients to interact with Catalyst Content Servers. Replaces the legacy lambdas service with improved architecture, offering entity resolution, ownership validation, asset queries, and client helper functions.
 
