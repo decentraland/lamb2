@@ -202,23 +202,17 @@ export type LandPermission = {
  */
 export type PermissionType =
   | 'owner' // Direct parcel ownership
-  | 'estateOwner' // Ownership via estate
-  | 'updateOperator' // Parcel-level update operator
-  | 'estateUpdateOperator' // Estate-level update operator
-  | 'updateManager' // Address-level update manager
+  | 'updateOperator' // Update operator rights
+  | 'operator' // Operator rights
 
 /**
- * Comprehensive land permission with all permission types tracked
+ * Land permission with all permission types tracked
  */
 export type WalletLandPermission = {
   x: string
   y: string
   permissions: PermissionType[]
-  estate?: {
-    // Present if parcel is in an estate
-    id: string
-    size: number
-  }
+  owner: string | null // Owner of the parcel
 }
 
 export type PaginatedResponse<T> = {

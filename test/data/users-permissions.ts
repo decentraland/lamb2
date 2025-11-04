@@ -6,62 +6,25 @@ import { WalletLandPermission, PermissionType } from '../../src/types'
 type SubgraphParcel = {
   x: string
   y: string
-  tokenId: string
-  id: string
-}
-
-type SubgraphUser = {
-  parcels: SubgraphParcel[]
-  estates: Array<{
-    id: string
-    size: number
-    parcels: SubgraphParcel[]
-  }>
-}
-
-type SubgraphParcelWithOwner = SubgraphParcel & {
-  owner: { id: string }
-  estate?: { id: string; size: number }
-}
-
-type SubgraphEstate = {
-  id: string
-  size: number
-  owner: { id: string }
-  parcels: SubgraphParcel[]
-}
-
-type SubgraphAuthorization = {
-  owner: {
-    parcels: Array<
-      SubgraphParcel & {
-        estate?: { id: string; size: number }
-      }
-    >
-    estates: Array<{
-      id: string
-      size: number
-      parcels: SubgraphParcel[]
-    }>
-  }
+  owner: { id: string } | null
+  updateOperator: string | null
+  operator: string | null
 }
 
 export type GraphQueryResult = {
-  user: SubgraphUser | null
-  updateOperatorParcels: SubgraphParcelWithOwner[]
-  updateOperatorEstates: SubgraphEstate[]
-  updateManagerAuthorizations: SubgraphAuthorization[]
+  parcels: SubgraphParcel[]
 }
 
 /**
  * Helper to create a basic parcel structure
  */
-function createParcel(x: number, y: number): SubgraphParcel {
+function createParcel(x: number, y: number, owner: string | null = null): SubgraphParcel {
   return {
     x: x.toString(),
     y: y.toString(),
-    tokenId: `token-${x}-${y}`,
-    id: `parcel-${x}-${y}`
+    owner: owner ? { id: owner } : null,
+    updateOperator: null,
+    operator: null
   }
 }
 
@@ -70,10 +33,7 @@ function createParcel(x: number, y: number): SubgraphParcel {
  */
 export function createEmptyGraphResult(): GraphQueryResult {
   return {
-    user: null,
-    updateOperatorParcels: [],
-    updateOperatorEstates: [],
-    updateManagerAuthorizations: []
+    parcels: []
   }
 }
 
@@ -81,53 +41,15 @@ export function createEmptyGraphResult(): GraphQueryResult {
  * Creates a graph result with direct parcel ownership
  */
 export function createOwnerGraphResult(ownerAddress: string, parcelCount: number = 1): GraphQueryResult {
-  const parcels = Array.from({ length: parcelCount }, (_, i) => createParcel(i, i * 2))
+  const parcels = Array.from({ length: parcelCount }, (_, i) => createParcel(i, i * 2, ownerAddress.toLowerCase()))
 
   return {
-    user: {
-      parcels,
-      estates: []
-    },
-    updateOperatorParcels: [],
-    updateOperatorEstates: [],
-    updateManagerAuthorizations: []
+    parcels
   }
 }
 
 /**
- * Creates a graph result with estate ownership
- */
-export function createEstateOwnerGraphResult(
-  ownerAddress: string,
-  estateCount: number = 1,
-  parcelsPerEstate: number = 3
-): GraphQueryResult {
-  const estates = Array.from({ length: estateCount }, (_, estateIdx) => {
-    const parcels = Array.from({ length: parcelsPerEstate }, (_, parcelIdx) => {
-      const offset = estateIdx * parcelsPerEstate
-      return createParcel(offset + parcelIdx, (offset + parcelIdx) * 2)
-    })
-
-    return {
-      id: `estate-${estateIdx}`,
-      size: parcelsPerEstate,
-      parcels
-    }
-  })
-
-  return {
-    user: {
-      parcels: [],
-      estates
-    },
-    updateOperatorParcels: [],
-    updateOperatorEstates: [],
-    updateManagerAuthorizations: []
-  }
-}
-
-/**
- * Creates a graph result with parcel-level updateOperator permissions
+ * Creates a graph result with updateOperator permissions
  */
 export function createUpdateOperatorGraphResult(
   operatorAddress: string,
@@ -135,71 +57,30 @@ export function createUpdateOperatorGraphResult(
   parcelCount: number = 1
 ): GraphQueryResult {
   const parcels = Array.from({ length: parcelCount }, (_, i) => ({
-    ...createParcel(i, i * 2),
-    owner: { id: ownerAddress }
+    ...createParcel(i, i * 2, ownerAddress.toLowerCase()),
+    updateOperator: operatorAddress.toLowerCase()
   }))
 
   return {
-    user: null,
-    updateOperatorParcels: parcels,
-    updateOperatorEstates: [],
-    updateManagerAuthorizations: []
+    parcels
   }
 }
 
 /**
- * Creates a graph result with estate-level updateOperator permissions
+ * Creates a graph result with operator permissions
  */
-export function createEstateUpdateOperatorGraphResult(
+export function createOperatorGraphResult(
   operatorAddress: string,
-  ownerAddress: string,
-  estateCount: number = 1,
-  parcelsPerEstate: number = 3
-): GraphQueryResult {
-  const estates = Array.from({ length: estateCount }, (_, estateIdx) => {
-    const parcels = Array.from({ length: parcelsPerEstate }, (_, parcelIdx) => {
-      const offset = estateIdx * parcelsPerEstate
-      return createParcel(offset + parcelIdx, (offset + parcelIdx) * 2)
-    })
-
-    return {
-      id: `estate-${estateIdx}`,
-      size: parcelsPerEstate,
-      owner: { id: ownerAddress },
-      parcels
-    }
-  })
-
-  return {
-    user: null,
-    updateOperatorParcels: [],
-    updateOperatorEstates: estates,
-    updateManagerAuthorizations: []
-  }
-}
-
-/**
- * Creates a graph result with updateManager permissions
- */
-export function createUpdateManagerGraphResult(
-  managerAddress: string,
   ownerAddress: string,
   parcelCount: number = 1
 ): GraphQueryResult {
-  const parcels = Array.from({ length: parcelCount }, (_, i) => createParcel(i, i * 2))
+  const parcels = Array.from({ length: parcelCount }, (_, i) => ({
+    ...createParcel(i, i * 2, ownerAddress.toLowerCase()),
+    operator: operatorAddress.toLowerCase()
+  }))
 
   return {
-    user: null,
-    updateOperatorParcels: [],
-    updateOperatorEstates: [],
-    updateManagerAuthorizations: [
-      {
-        owner: {
-          parcels,
-          estates: []
-        }
-      }
-    ]
+    parcels
   }
 }
 
@@ -212,70 +93,25 @@ export function createMixedPermissionsGraphResult(
   ownerAddress: string,
   options: {
     includeOwner?: boolean
-    includeEstateOwner?: boolean
     includeUpdateOperator?: boolean
-    includeEstateUpdateOperator?: boolean
-    includeUpdateManager?: boolean
+    includeOperator?: boolean
   }
 ): GraphQueryResult {
-  const parcel = createParcel(0, 0)
-  const estate = { id: 'estate-mixed', size: 3 }
-
-  const result: GraphQueryResult = {
-    user: null,
-    updateOperatorParcels: [],
-    updateOperatorEstates: [],
-    updateManagerAuthorizations: []
-  }
-
-  // Add owner permission
-  if (options.includeOwner) {
-    result.user = {
-      parcels: [parcel],
-      estates: []
-    }
-  }
-
-  // Add estate owner permission
-  if (options.includeEstateOwner) {
-    result.user = result.user || { parcels: [], estates: [] }
-    result.user.estates.push({
-      id: estate.id,
-      size: estate.size,
-      parcels: [parcel]
-    })
-  }
+  const parcel = createParcel(0, 0, options.includeOwner ? userAddress.toLowerCase() : ownerAddress.toLowerCase())
 
   // Add updateOperator permission
   if (options.includeUpdateOperator) {
-    result.updateOperatorParcels.push({
-      ...parcel,
-      owner: { id: ownerAddress },
-      estate: options.includeEstateOwner ? estate : undefined
-    })
+    parcel.updateOperator = userAddress.toLowerCase()
   }
 
-  // Add estateUpdateOperator permission
-  if (options.includeEstateUpdateOperator) {
-    result.updateOperatorEstates.push({
-      id: estate.id,
-      size: estate.size,
-      owner: { id: ownerAddress },
-      parcels: [parcel]
-    })
+  // Add operator permission
+  if (options.includeOperator) {
+    parcel.operator = userAddress.toLowerCase()
   }
 
-  // Add updateManager permission
-  if (options.includeUpdateManager) {
-    result.updateManagerAuthorizations.push({
-      owner: {
-        parcels: [parcel],
-        estates: []
-      }
-    })
+  return {
+    parcels: [parcel]
   }
-
-  return result
 }
 
 /**
@@ -285,15 +121,13 @@ export function createExpectedPermission(
   x: number,
   y: number,
   permissions: PermissionType[],
-  options: {
-    estate?: { id: string; size: number }
-  } = {}
+  owner: string | null = null
 ): WalletLandPermission {
   return {
     x: x.toString(),
     y: y.toString(),
     permissions: permissions.sort(),
-    estate: options.estate
+    owner
   }
 }
 
@@ -303,17 +137,41 @@ export function createExpectedPermission(
 export function createExpectedPermissions(
   count: number,
   permissionType: PermissionType,
-  options: {
-    estateIdPrefix?: string
-  } = {}
+  owner: string | null = null
 ): WalletLandPermission[] {
   return Array.from({ length: count }, (_, i) => {
-    const estate = options.estateIdPrefix
-      ? { id: `${options.estateIdPrefix}-${Math.floor(i / 3)}`, size: 3 }
-      : undefined
-
-    return createExpectedPermission(i, i * 2, [permissionType], {
-      estate
-    })
+    return createExpectedPermission(i, i * 2, [permissionType], owner)
   })
+}
+
+// Legacy function names for backward compatibility - marked as deprecated
+/** @deprecated Use createEstateOwnerGraphResult instead */
+export function createEstateOwnerGraphResult(
+  ownerAddress: string,
+  _estateCount: number = 1,
+  parcelsPerEstate: number = 3
+): GraphQueryResult {
+  // This now just creates regular owner permissions, as estates are no longer tracked separately
+  return createOwnerGraphResult(ownerAddress, parcelsPerEstate)
+}
+
+/** @deprecated Use createUpdateOperatorGraphResult instead */
+export function createEstateUpdateOperatorGraphResult(
+  operatorAddress: string,
+  ownerAddress: string,
+  _estateCount: number = 1,
+  parcelsPerEstate: number = 3
+): GraphQueryResult {
+  // This now just creates regular updateOperator permissions
+  return createUpdateOperatorGraphResult(operatorAddress, ownerAddress, parcelsPerEstate)
+}
+
+/** @deprecated Use createOperatorGraphResult instead */
+export function createUpdateManagerGraphResult(
+  managerAddress: string,
+  ownerAddress: string,
+  parcelCount: number = 1
+): GraphQueryResult {
+  // This now creates operator permissions
+  return createOperatorGraphResult(managerAddress, ownerAddress, parcelCount)
 }

@@ -1,12 +1,9 @@
-import { WalletLandPermission } from '../../src/types'
 import { test } from '../components'
 import {
   createEmptyGraphResult,
   createOwnerGraphResult,
-  createEstateOwnerGraphResult,
   createUpdateOperatorGraphResult,
-  createEstateUpdateOperatorGraphResult,
-  createUpdateManagerGraphResult,
+  createOperatorGraphResult,
   createMixedPermissionsGraphResult
 } from '../data/users-permissions'
 import { generateRandomAddress } from '../helpers'
@@ -63,44 +60,12 @@ test('user-permissions-handler: GET /users/:address/permissions should', functio
         expect(response.elements[0].permissions).toEqual(['owner'])
       })
 
-      it('should not include estate information', async () => {
+      it('should include owner information', async () => {
         const r = await components.localFetch.fetch(`/users/${randomAddress}/permissions`)
 
         expect(r.status).toBe(200)
         const response = await r.json()
-        expect(response.elements[0].estate).toBeUndefined()
-      })
-    })
-
-    describe('and the user is an estate owner', () => {
-      let graphResult: any
-
-      beforeEach(() => {
-        graphResult = createEstateOwnerGraphResult(randomAddress, 1, 3)
-        components.theGraph.landSubgraph.query = jest.fn().mockResolvedValueOnce(graphResult)
-      })
-
-      it('should return 200 and include estateOwner permission type', async () => {
-        const r = await components.localFetch.fetch(`/users/${randomAddress}/permissions`)
-
-        expect(r.status).toBe(200)
-        const response = await r.json()
-        expect(response.elements).toHaveLength(3)
-        response.elements.forEach((element: WalletLandPermission) => {
-          expect(element.permissions).toEqual(['estateOwner'])
-        })
-      })
-
-      it('should include estate information with id and size', async () => {
-        const r = await components.localFetch.fetch(`/users/${randomAddress}/permissions`)
-
-        expect(r.status).toBe(200)
-        const response = await r.json()
-        response.elements.forEach((element: WalletLandPermission) => {
-          expect(element.estate).toBeDefined()
-          expect(element.estate!.id).toBe('estate-0')
-          expect(element.estate!.size).toBe(3)
-        })
+        expect(response.elements[0].owner).toBe(randomAddress.toLowerCase())
       })
     })
 
@@ -122,59 +87,41 @@ test('user-permissions-handler: GET /users/:address/permissions should', functio
         expect(response.elements).toHaveLength(1)
         expect(response.elements[0].permissions).toEqual(['updateOperator'])
       })
+
+      it('should include owner information', async () => {
+        const r = await components.localFetch.fetch(`/users/${randomAddress}/permissions`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+        expect(response.elements[0].owner).toBe(ownerAddress.toLowerCase())
+      })
     })
 
-    describe('and the user has estateUpdateOperator permission', () => {
+    describe('and the user has operator permission', () => {
       let graphResult: any
       let ownerAddress: string
 
       beforeEach(() => {
         ownerAddress = generateRandomAddress()
-        graphResult = createEstateUpdateOperatorGraphResult(randomAddress, ownerAddress, 1, 2)
+        graphResult = createOperatorGraphResult(randomAddress, ownerAddress, 1)
         components.theGraph.landSubgraph.query = jest.fn().mockResolvedValueOnce(graphResult)
       })
 
-      it('should return 200 and include estateUpdateOperator permission type', async () => {
-        const r = await components.localFetch.fetch(`/users/${randomAddress}/permissions`)
-
-        expect(r.status).toBe(200)
-        const response = await r.json()
-        expect(response.elements).toHaveLength(2)
-        response.elements.forEach((element: WalletLandPermission) => {
-          expect(element.permissions).toEqual(['estateUpdateOperator'])
-        })
-      })
-
-      it('should include estate information', async () => {
-        const r = await components.localFetch.fetch(`/users/${randomAddress}/permissions`)
-
-        expect(r.status).toBe(200)
-        const response = await r.json()
-        response.elements.forEach((element: WalletLandPermission) => {
-          expect(element.estate).toBeDefined()
-          expect(element.estate!.id).toBe('estate-0')
-          expect(element.estate!.size).toBe(2)
-        })
-      })
-    })
-
-    describe('and the user has updateManager permission', () => {
-      let graphResult: any
-      let ownerAddress: string
-
-      beforeEach(() => {
-        ownerAddress = generateRandomAddress()
-        graphResult = createUpdateManagerGraphResult(randomAddress, ownerAddress, 1)
-        components.theGraph.landSubgraph.query = jest.fn().mockResolvedValueOnce(graphResult)
-      })
-
-      it('should return 200 and include updateManager permission type', async () => {
+      it('should return 200 and include operator permission type', async () => {
         const r = await components.localFetch.fetch(`/users/${randomAddress}/permissions`)
 
         expect(r.status).toBe(200)
         const response = await r.json()
         expect(response.elements).toHaveLength(1)
-        expect(response.elements[0].permissions).toEqual(['updateManager'])
+        expect(response.elements[0].permissions).toEqual(['operator'])
+      })
+
+      it('should include owner information', async () => {
+        const r = await components.localFetch.fetch(`/users/${randomAddress}/permissions`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+        expect(response.elements[0].owner).toBe(ownerAddress.toLowerCase())
       })
     })
 
@@ -209,29 +156,7 @@ test('user-permissions-handler: GET /users/:address/permissions should', functio
         })
       })
 
-      describe('and the user is estateOwner with estateUpdateOperator permission', () => {
-        let graphResult: any
-        let ownerAddress: string
-
-        beforeEach(() => {
-          ownerAddress = generateRandomAddress()
-          graphResult = createMixedPermissionsGraphResult(randomAddress, ownerAddress, {
-            includeEstateOwner: true,
-            includeEstateUpdateOperator: true
-          })
-          components.theGraph.landSubgraph.query = jest.fn().mockResolvedValueOnce(graphResult)
-        })
-
-        it('should include both permission types', async () => {
-          const r = await components.localFetch.fetch(`/users/${randomAddress}/permissions`)
-
-          expect(r.status).toBe(200)
-          const response = await r.json()
-          expect(response.elements[0].permissions).toEqual(['estateOwner', 'estateUpdateOperator'])
-        })
-      })
-
-      describe('and the user has owner and updateManager permissions', () => {
+      describe('and the user is owner with operator permission', () => {
         let graphResult: any
         let ownerAddress: string
 
@@ -239,7 +164,7 @@ test('user-permissions-handler: GET /users/:address/permissions should', functio
           ownerAddress = generateRandomAddress()
           graphResult = createMixedPermissionsGraphResult(randomAddress, ownerAddress, {
             includeOwner: true,
-            includeUpdateManager: true
+            includeOperator: true
           })
           components.theGraph.landSubgraph.query = jest.fn().mockResolvedValueOnce(graphResult)
         })
@@ -249,7 +174,52 @@ test('user-permissions-handler: GET /users/:address/permissions should', functio
 
           expect(r.status).toBe(200)
           const response = await r.json()
-          expect(response.elements[0].permissions).toEqual(['owner', 'updateManager'])
+          expect(response.elements[0].permissions).toEqual(['operator', 'owner'])
+        })
+      })
+
+      describe('and the user has updateOperator and operator permissions', () => {
+        let graphResult: any
+        let ownerAddress: string
+
+        beforeEach(() => {
+          ownerAddress = generateRandomAddress()
+          graphResult = createMixedPermissionsGraphResult(randomAddress, ownerAddress, {
+            includeUpdateOperator: true,
+            includeOperator: true
+          })
+          components.theGraph.landSubgraph.query = jest.fn().mockResolvedValueOnce(graphResult)
+        })
+
+        it('should include both permission types', async () => {
+          const r = await components.localFetch.fetch(`/users/${randomAddress}/permissions`)
+
+          expect(r.status).toBe(200)
+          const response = await r.json()
+          expect(response.elements[0].permissions).toEqual(['operator', 'updateOperator'])
+        })
+      })
+
+      describe('and the user has all three permission types', () => {
+        let graphResult: any
+        let ownerAddress: string
+
+        beforeEach(() => {
+          ownerAddress = generateRandomAddress()
+          graphResult = createMixedPermissionsGraphResult(randomAddress, ownerAddress, {
+            includeOwner: true,
+            includeUpdateOperator: true,
+            includeOperator: true
+          })
+          components.theGraph.landSubgraph.query = jest.fn().mockResolvedValueOnce(graphResult)
+        })
+
+        it('should include all three permission types', async () => {
+          const r = await components.localFetch.fetch(`/users/${randomAddress}/permissions`)
+
+          expect(r.status).toBe(200)
+          const response = await r.json()
+          expect(response.elements[0].permissions).toEqual(['operator', 'owner', 'updateOperator'])
         })
       })
     })
@@ -403,7 +373,8 @@ test('user-permissions-handler: GET /users/:address/permissions should', functio
         await components.localFetch.fetch(`/users/${mixedCaseAddress}/permissions`)
 
         expect(components.theGraph.landSubgraph.query).toHaveBeenCalledWith(expect.any(String), {
-          address: mixedCaseAddress.toLowerCase()
+          address: mixedCaseAddress.toLowerCase(),
+          addressBytes: mixedCaseAddress.toLowerCase()
         })
       })
     })

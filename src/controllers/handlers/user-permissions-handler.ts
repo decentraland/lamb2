@@ -2,14 +2,12 @@ import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { HandlerContextWithPath, WalletLandPermission } from '../../types'
 
 /**
- * Handler for fetching comprehensive user land permissions
+ * Handler for fetching user land permissions
  *
  * Returns all permission types:
  * - owner: Direct parcel ownership
- * - estateOwner: Ownership via estate
- * - updateOperator: Parcel-level update operator
- * - estateUpdateOperator: Estate-level update operator
- * - updateManager: Address-level update manager
+ * - updateOperator: Update operator rights
+ * - operator: Operator rights
  *
  * Query parameters:
  * - pageSize: number - Number of results per page

@@ -9,7 +9,7 @@ type ParcelPermissionAccumulator = {
   x: string
   y: string
   permissions: Set<PermissionType>
-  estate?: { id: string; size: number }
+  owner: string | null
 }
 
 /**
@@ -18,135 +18,35 @@ type ParcelPermissionAccumulator = {
 type SubgraphParcel = {
   x: string
   y: string
-  tokenId: string
-  id: string
-}
-
-type SubgraphUser = {
-  parcels: SubgraphParcel[]
-  estates: Array<{
-    id: string
-    size: number
-    parcels: SubgraphParcel[]
-  }>
-}
-
-type SubgraphParcelWithOwner = SubgraphParcel & {
-  owner: { id: string }
-  estate?: { id: string; size: number }
-}
-
-type SubgraphEstate = {
-  id: string
-  size: number
-  owner: { id: string }
-  parcels: SubgraphParcel[]
-}
-
-type SubgraphAuthorization = {
-  owner: {
-    parcels: Array<
-      SubgraphParcel & {
-        estate?: { id: string; size: number }
-      }
-    >
-    estates: Array<{
-      id: string
-      size: number
-      parcels: SubgraphParcel[]
-    }>
-  }
+  owner: { id: string } | null
+  updateOperator: string | null
+  operator: string | null
 }
 
 type QueryResult = {
-  user: SubgraphUser | null
-  updateOperatorParcels: SubgraphParcelWithOwner[]
-  updateOperatorEstates: SubgraphEstate[]
-  updateManagerAuthorizations: SubgraphAuthorization[]
+  parcels: SubgraphParcel[]
 }
 
 /**
- * Comprehensive GraphQL query that retrieves all authorization types for a user
+ * GraphQL query that retrieves parcels where user has owner, updateOperator, or operator rights
  */
-const QUERY_USER_PERMISSIONS = `
-query GetAllUserPermissions($address: String!) {
-  # 1. Direct parcel and estate ownership
-  user: wallet(id: $address) {
-    parcels {
-      x
-      y
-      tokenId
-      id
-    }
-    estates {
-      id
-      size
-      parcels {
-        x
-        y
-        tokenId
-        id
-      }
-    }
-  }
-
-  # 2. Parcel-level UpdateOperator permissions
-  updateOperatorParcels: parcels(
-    where: { updateOperator: $address }
+const QUERY_USER_LAND_PERMISSIONS = `
+query GetUserLandPermissions($address: ID!, $addressBytes: Bytes!) {
+  parcels(
     first: 1000
+    where: {
+      or: [
+        { owner_: { id: $address } }
+        { updateOperator: $addressBytes }
+        { operator: $addressBytes }
+      ]
+    }
   ) {
     x
     y
-    tokenId
-    id
     owner { id }
-    estate { id, size }
-  }
-
-  # 3. Estate-level UpdateOperator permissions
-  updateOperatorEstates: estates(
-    where: { updateOperator: $address }
-    first: 1000
-  ) {
-    id
-    size
-    owner { id }
-    parcels {
-      x
-      y
-      tokenId
-      id
-    }
-  }
-
-  # 4. Address-level UpdateManager permissions
-  updateManagerAuthorizations: authorizations(
-    where: {
-      operator: $address
-      type: "UpdateManager"
-      isApproved: true
-    }
-    first: 1000
-  ) {
-    owner {
-      parcels {
-        x
-        y
-        tokenId
-        id
-        estate { id, size }
-      }
-      estates {
-        id
-        size
-        parcels {
-          x
-          y
-          tokenId
-          id
-        }
-      }
-    }
+    updateOperator
+    operator
   }
 }
 `
@@ -161,12 +61,10 @@ function createParcelKey(x: string, y: string): ParcelKey {
 /**
  * Fetches all land permissions for a user from the LAND-permissions-graph
  *
- * This function queries the subgraph for:
- * - Direct parcel ownership
- * - Estate ownership (with parcels)
- * - Parcel-level UpdateOperator permissions
- * - Estate-level UpdateOperator permissions
- * - Address-level UpdateManager permissions
+ * This function queries the subgraph for parcels where the user has:
+ * - Owner rights (via owner_ relationship)
+ * - UpdateOperator rights
+ * - Operator rights
  *
  * All results are deduplicated and merged into a single array where each
  * parcel can have multiple permission types.
@@ -184,11 +82,12 @@ export async function fetchUserLandsPermissions(
 
   const address = owner.toLowerCase()
 
-  logger.info(`Fetching comprehensive land permissions for user: ${address}`)
+  logger.info(`Fetching land permissions for user: ${address}`)
 
-  // Execute the comprehensive query
-  const result = await theGraph.landSubgraph.query<QueryResult>(QUERY_USER_PERMISSIONS, {
-    address
+  // Execute the query with both ID and Bytes address formats
+  const result = await theGraph.landSubgraph.query<QueryResult>(QUERY_USER_LAND_PERMISSIONS, {
+    address,
+    addressBytes: address
   })
 
   const parcelMap = new Map<ParcelKey, ParcelPermissionAccumulator>()
@@ -196,87 +95,39 @@ export async function fetchUserLandsPermissions(
   /**
    * Helper to add or update a parcel in the accumulator
    */
-  function addParcel(x: string, y: string, permissionType: PermissionType, estate?: { id: string; size: number }) {
+  function addParcel(x: string, y: string, permissionType: PermissionType, owner: string | null) {
     const key = createParcelKey(x, y)
     const existing = parcelMap.get(key)
 
     if (existing) {
       existing.permissions.add(permissionType)
-
-      // Update estate info if provided and not already set
-      if (estate && !existing.estate) {
-        existing.estate = estate
-      }
     } else {
       parcelMap.set(key, {
         x,
         y,
         permissions: new Set([permissionType]),
-        estate
+        owner
       })
     }
   }
 
-  // 1. Process direct parcel ownership
-  if (result.user?.parcels) {
-    for (const parcel of result.user.parcels) {
-      addParcel(parcel.x, parcel.y, 'owner')
-    }
-  }
+  // Process all parcels and determine permission types
+  for (const parcel of result.parcels) {
+    const parcelOwner = parcel.owner?.id || null
 
-  // 2. Process estate ownership (parcels within owned estates)
-  if (result.user?.estates) {
-    for (const estate of result.user.estates) {
-      // Filter out empty estates (size: 0)
-      if (estate.size > 0 && estate.parcels) {
-        for (const parcel of estate.parcels) {
-          addParcel(parcel.x, parcel.y, 'estateOwner', { id: estate.id, size: estate.size })
-        }
-      }
-    }
-  }
-
-  // 3. Process parcel-level UpdateOperator permissions
-  for (const parcel of result.updateOperatorParcels) {
-    addParcel(
-      parcel.x,
-      parcel.y,
-      'updateOperator',
-      parcel.estate ? { id: parcel.estate.id, size: parcel.estate.size } : undefined
-    )
-  }
-
-  // 4. Process estate-level UpdateOperator permissions
-  for (const estate of result.updateOperatorEstates) {
-    if (estate.size > 0 && estate.parcels) {
-      for (const parcel of estate.parcels) {
-        addParcel(parcel.x, parcel.y, 'estateUpdateOperator', { id: estate.id, size: estate.size })
-      }
-    }
-  }
-
-  // 5. Process UpdateManager authorizations (address-level)
-  for (const auth of result.updateManagerAuthorizations) {
-    if (auth.owner.parcels) {
-      for (const parcel of auth.owner.parcels) {
-        addParcel(
-          parcel.x,
-          parcel.y,
-          'updateManager',
-          parcel.estate ? { id: parcel.estate.id, size: parcel.estate.size } : undefined
-        )
-      }
+    // Check if user is the owner
+    if (parcelOwner && parcelOwner.toLowerCase() === address) {
+      addParcel(parcel.x, parcel.y, 'owner', parcelOwner)
     }
 
-    // Process owner's estates
-    if (auth.owner.estates) {
-      for (const estate of auth.owner.estates) {
-        if (estate.size > 0 && estate.parcels) {
-          for (const parcel of estate.parcels) {
-            addParcel(parcel.x, parcel.y, 'updateManager', { id: estate.id, size: estate.size })
-          }
-        }
-      }
+    // Check if user has updateOperator permission
+    if (parcel.updateOperator && parcel.updateOperator.toLowerCase() === address) {
+      addParcel(parcel.x, parcel.y, 'updateOperator', parcelOwner)
+    }
+
+    // Check if user has operator permission
+    if (parcel.operator && parcel.operator.toLowerCase() === address) {
+      addParcel(parcel.x, parcel.y, 'operator', parcelOwner)
     }
   }
 
@@ -284,7 +135,7 @@ export async function fetchUserLandsPermissions(
     x: acc.x,
     y: acc.y,
     permissions: Array.from(acc.permissions).sort(), // Sort for consistent ordering
-    estate: acc.estate
+    owner: acc.owner
   }))
 
   logger.info(`Returning ${permissions.length} unique parcels with permissions for user ${address}`)
