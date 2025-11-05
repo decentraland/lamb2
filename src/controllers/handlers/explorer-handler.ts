@@ -200,7 +200,8 @@ export async function explorerHandler(
   const isSmartWearableParam = context.url.searchParams.get('isSmartWearable')
   const isSmartWearable = isSmartWearableParam === 'true' || isSmartWearableParam === '1'
   const networkParam = context.url.searchParams.get('network')
-  const network = networkParam as Network | undefined
+  // Validate network parameter - only allow valid Network enum values (ETHEREUM or MATIC)
+  const network = networkParam === Network.ETHEREUM || networkParam === Network.MATIC ? networkParam : undefined
   const includeAmountParam = context.url.searchParams.get('includeAmount')
   const includeAmount = includeAmountParam === 'true' || includeAmountParam === '1'
 

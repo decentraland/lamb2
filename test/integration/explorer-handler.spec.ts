@@ -1037,23 +1037,23 @@ testWithComponents(() => {
       wallet = generateRandomAddress()
     })
 
-    describe('and network is polygon', () => {
+    describe('and network is MATIC', () => {
       beforeEach(() => {
         const { baseWearablesFetcher, wearablesFetcher, content, fetch, alchemyNftFetcher, theGraph } = components
 
-        // Mock baseWearablesFetcher to not be called when network=polygon
+        // Mock baseWearablesFetcher to not be called when network=MATIC
         baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
           elements: baseWearables,
           totalAmount: baseWearables.length
         })
 
-        // Mock wearablesFetcher to be called with network: 'polygon'
+        // Mock wearablesFetcher to be called with network: MATIC
         wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
           elements: convertWearablesToOnChain(onChainWearables),
           totalAmount: onChainWearables.length
         })
 
-        // Mock thirdPartyWearablesFetcher to not be called when network=polygon
+        // Mock thirdPartyWearablesFetcher to not be called when network=MATIC
         alchemyNftFetcher.getNFTsForOwner = jest
           .fn()
           .mockResolvedValue(thirdPartyWearables.map((wearable) => wearable.urn.decentraland))
@@ -1080,7 +1080,7 @@ testWithComponents(() => {
       it('should return only polygon wearables (wearable_v2 and smart_wearable_v1)', async () => {
         const { localFetch, wearablesFetcher } = components
 
-        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=polygon`)
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=MATIC`)
 
         expect(r.status).toBe(200)
         const response = await r.json()
@@ -1097,28 +1097,28 @@ testWithComponents(() => {
         })
       })
 
-      it('should exclude base wearables when network=polygon', async () => {
+      it('should exclude base wearables when network=MATIC', async () => {
         const { localFetch, baseWearablesFetcher } = components
 
-        await localFetch.fetch(`/explorer/${wallet}/wearables?network=polygon`)
+        await localFetch.fetch(`/explorer/${wallet}/wearables?network=MATIC`)
 
-        // baseWearablesFetcher should not be called when network=polygon
+        // baseWearablesFetcher should not be called when network=MATIC
         expect(baseWearablesFetcher.fetchOwnedElements).not.toHaveBeenCalled()
       })
 
-      it('should exclude third-party wearables when network=polygon', async () => {
+      it('should exclude third-party wearables when network=MATIC', async () => {
         const { localFetch, alchemyNftFetcher } = components
 
-        await localFetch.fetch(`/explorer/${wallet}/wearables?network=polygon`)
+        await localFetch.fetch(`/explorer/${wallet}/wearables?network=MATIC`)
 
-        // alchemyNftFetcher should not be called when network=polygon
+        // alchemyNftFetcher should not be called when network=MATIC
         expect(alchemyNftFetcher.getNFTsForOwner).not.toHaveBeenCalled()
       })
 
-      it('should work with trimmed response when network=polygon', async () => {
+      it('should work with trimmed response when network=MATIC', async () => {
         const { localFetch } = components
 
-        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=polygon&trimmed=true`)
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=MATIC&trimmed=true`)
 
         expect(r.status).toBe(200)
         const response = await r.json()
@@ -1136,10 +1136,10 @@ testWithComponents(() => {
         }
       })
 
-      it('should work with sorting when network=polygon', async () => {
+      it('should work with sorting when network=MATIC', async () => {
         const { localFetch } = components
 
-        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=polygon&orderBy=name&direction=asc`)
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=MATIC&orderBy=name&direction=asc`)
 
         expect(r.status).toBe(200)
         const response = await r.json()
@@ -1150,7 +1150,7 @@ testWithComponents(() => {
       })
     })
 
-    describe('and network is ethereum', () => {
+    describe('and network is ETHEREUM', () => {
       beforeEach(() => {
         const { baseWearablesFetcher, wearablesFetcher, content, fetch, alchemyNftFetcher, theGraph } = components
 
@@ -1191,7 +1191,7 @@ testWithComponents(() => {
       it('should return only ethereum on-chain wearables (wearable_v1)', async () => {
         const { localFetch, wearablesFetcher } = components
 
-        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=ethereum`)
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=ETHEREUM`)
 
         expect(r.status).toBe(200)
         const response = await r.json()
@@ -1208,28 +1208,28 @@ testWithComponents(() => {
         })
       })
 
-      it('should exclude base wearables when network=ethereum', async () => {
+      it('should exclude base wearables when network=ETHEREUM', async () => {
         const { localFetch, baseWearablesFetcher } = components
 
-        await localFetch.fetch(`/explorer/${wallet}/wearables?network=ethereum`)
+        await localFetch.fetch(`/explorer/${wallet}/wearables?network=ETHEREUM`)
 
-        // baseWearablesFetcher should not be called when network=ethereum
+        // baseWearablesFetcher should not be called when network=ETHEREUM
         expect(baseWearablesFetcher.fetchOwnedElements).not.toHaveBeenCalled()
       })
 
-      it('should exclude third-party wearables when network=ethereum', async () => {
+      it('should exclude third-party wearables when network=ETHEREUM', async () => {
         const { localFetch, alchemyNftFetcher } = components
 
-        await localFetch.fetch(`/explorer/${wallet}/wearables?network=ethereum`)
+        await localFetch.fetch(`/explorer/${wallet}/wearables?network=ETHEREUM`)
 
-        // alchemyNftFetcher should not be called when network=ethereum
+        // alchemyNftFetcher should not be called when network=ETHEREUM
         expect(alchemyNftFetcher.getNFTsForOwner).not.toHaveBeenCalled()
       })
 
-      it('should work with trimmed response when network=ethereum', async () => {
+      it('should work with trimmed response when network=ETHEREUM', async () => {
         const { localFetch } = components
 
-        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=ethereum&trimmed=true`)
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=ETHEREUM&trimmed=true`)
 
         expect(r.status).toBe(200)
         const response = await r.json()
@@ -1247,10 +1247,10 @@ testWithComponents(() => {
         }
       })
 
-      it('should work with sorting when network=ethereum', async () => {
+      it('should work with sorting when network=ETHEREUM', async () => {
         const { localFetch } = components
 
-        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=ethereum&orderBy=name&direction=asc`)
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=ETHEREUM&orderBy=name&direction=asc`)
 
         expect(r.status).toBe(200)
         const response = await r.json()
@@ -1654,10 +1654,10 @@ testWithComponents(() => {
         }
       })
 
-      it('should work with includeAmount and network=polygon', async () => {
+      it('should work with includeAmount and network=MATIC', async () => {
         const { localFetch } = components
 
-        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=true&includeAmount=true&network=polygon`)
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=true&includeAmount=true&network=MATIC`)
 
         expect(r.status).toBe(200)
         const response = await r.json()
