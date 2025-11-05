@@ -43,6 +43,11 @@ export function buildMarketplaceApiParams(
     params.itemType = filters.itemType
   }
 
+  // Network
+  if (filters?.network) {
+    params.network = filters.network
+  }
+
   return params
 }
 
@@ -190,23 +195,34 @@ export async function fetchWearables(
     },
     async () => {
       // TheGraph fallback implementation
-      const wearableQueryBuilder = createItemQueryBuilder((filters?.itemType || 'wearable') as ItemType)
+      const itemType = (filters?.itemType || 'wearable') as ItemType
+      const network = filters?.network
+
+      // Determine which subgraphs to query based on network filter
+      const shouldQueryEthereum = !network || network === 'ethereum'
+      const shouldQueryMatic = !network || network === 'polygon'
+
+      const wearableQueryBuilder = createItemQueryBuilder(itemType, network)
 
       const [ethereumResult, maticResult] = await Promise.all([
-        fetchNFTsPaginated<WearableFromQuery>(
-          theGraph.ethereumCollectionsSubgraph,
-          wearableQueryBuilder,
-          owner,
-          pagination,
-          filters
-        ),
-        fetchNFTsPaginated<WearableFromQuery>(
-          theGraph.maticCollectionsSubgraph,
-          wearableQueryBuilder,
-          owner,
-          pagination,
-          filters
-        )
+        shouldQueryEthereum
+          ? fetchNFTsPaginated<WearableFromQuery>(
+              theGraph.ethereumCollectionsSubgraph,
+              wearableQueryBuilder,
+              owner,
+              pagination,
+              filters
+            )
+          : Promise.resolve({ elements: [], totalAmount: 0 }),
+        shouldQueryMatic
+          ? fetchNFTsPaginated<WearableFromQuery>(
+              theGraph.maticCollectionsSubgraph,
+              wearableQueryBuilder,
+              owner,
+              pagination,
+              filters
+            )
+          : Promise.resolve({ elements: [], totalAmount: 0 })
       ])
 
       const allWearables = [...ethereumResult.elements, ...maticResult.elements]

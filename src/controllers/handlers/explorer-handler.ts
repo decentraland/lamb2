@@ -46,7 +46,7 @@ export type MixedWearableTrimmedResponse = {
 
 export type WearableFilters = {
   isSmartWearable: boolean
-  isPolygonWearable: boolean
+  network?: 'ethereum' | 'polygon'
 }
 
 async function fetchCombinedElements(
@@ -62,7 +62,7 @@ async function fetchCombinedElements(
   collectionTypes: string[],
   thirdPartyCollectionId: string[],
   address: string,
-  filters: WearableFilters = { isSmartWearable: false, isPolygonWearable: false }
+  filters: WearableFilters = { isSmartWearable: false }
 ): Promise<MixedWearable[]> {
   async function fetchBaseWearables() {
     const { elements } = await components.baseWearablesFetcher.fetchOwnedElements(address)
@@ -87,17 +87,17 @@ async function fetchCombinedElements(
   }
 
   async function fetchOnChainWearables(): Promise<MixedOnChainWearable[]> {
-    let itemType: 'wearable' | 'smartWearable' | 'polygonWearables' = 'wearable'
+    let itemType: 'wearable' | 'smartWearable' = 'wearable'
 
     if (filters.isSmartWearable) {
       itemType = 'smartWearable'
-    } else if (filters.isPolygonWearable) {
-      itemType = 'polygonWearables'
     }
 
     const { elements } = await components.wearablesFetcher.fetchOwnedElements(address, undefined, {
-      itemType
+      itemType,
+      network: filters.network
     })
+
     if (!elements.length) {
       return []
     }
@@ -158,13 +158,13 @@ async function fetchCombinedElements(
   }
 
   const [baseItems, nftItems, thirdPartyItems] = await Promise.all([
-    filters.isSmartWearable || filters.isPolygonWearable
+    filters.isSmartWearable || filters.network
       ? []
       : collectionTypes.includes(BASE_WEARABLE)
         ? fetchBaseWearables()
         : [],
     collectionTypes.includes(ON_CHAIN) ? fetchOnChainWearables() : [],
-    filters.isSmartWearable || filters.isPolygonWearable
+    filters.isSmartWearable || filters.network
       ? []
       : collectionTypes.includes(THIRD_PARTY)
         ? fetchThirdPartyWearables(thirdPartyCollectionId)
@@ -199,8 +199,9 @@ export async function explorerHandler(
   const isTrimmed = trimmedParam === 'true' || trimmedParam === '1'
   const isSmartWearableParam = context.url.searchParams.get('isSmartWearable')
   const isSmartWearable = isSmartWearableParam === 'true' || isSmartWearableParam === '1'
-  const isPolygonWearableParam = context.url.searchParams.get('isPolygonWearable')
-  const isPolygonWearable = isPolygonWearableParam === 'true' || isPolygonWearableParam === '1'
+  const networkParam = context.url.searchParams.get('network')
+  const network: 'ethereum' | 'polygon' | undefined =
+    networkParam === 'ethereum' || networkParam === 'polygon' ? networkParam : undefined
   const includeAmountParam = context.url.searchParams.get('includeAmount')
   const includeAmount = includeAmountParam === 'true' || includeAmountParam === '1'
 
@@ -212,7 +213,7 @@ export async function explorerHandler(
     () =>
       fetchCombinedElements(context.components, collectionTypes, thirdPartyCollectionIds, address, {
         isSmartWearable,
-        isPolygonWearable
+        network
       }),
     pagination,
     filter,

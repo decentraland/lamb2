@@ -84,6 +84,8 @@ export type MarketplaceApiParams = {
 
   // Item type
   itemType?: ItemType
+  // Network
+  network?: 'ethereum' | 'polygon'
 }
 
 /**
@@ -235,13 +237,21 @@ export async function createMarketplaceApiFetcher(
     if (params.direction) {
       queryParams.set('direction', params.direction)
     }
+
+    // Handle itemType and network parameters
     if (params.itemType) {
       if (params.itemType === 'smartWearable') {
         queryParams.append('itemType', 'smart_wearable_v1')
-      } else if (params.itemType === 'polygonWearables') {
-        // polygonWearables includes both wearable_v2 and smart_wearable_v1
-        queryParams.append('itemType', 'wearable_v2')
-        queryParams.append('itemType', 'smart_wearable_v1')
+      } else if (params.itemType === 'wearable') {
+        // Handle network-specific wearable types
+        if (params.network === 'polygon') {
+          // Polygon: wearable_v2 and smart_wearable_v1
+          queryParams.append('itemType', 'wearable_v2')
+          queryParams.append('itemType', 'smart_wearable_v1')
+        } else if (params.network === 'ethereum') {
+          // Ethereum: only wearable_v1
+          queryParams.append('itemType', 'wearable_v1')
+        }
       }
     }
 

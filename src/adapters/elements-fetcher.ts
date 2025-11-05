@@ -41,7 +41,7 @@ export type ElementsResult<T> = {
   totalAmount: number
 }
 
-export type ItemType = 'wearable' | 'emote' | 'smartWearable' | 'polygonWearables'
+export type ItemType = 'wearable' | 'emote' | 'smartWearable'
 
 export type ElementsFilters = {
   category?: string
@@ -50,6 +50,7 @@ export type ElementsFilters = {
   orderBy?: string
   direction?: string
   itemType?: ItemType
+  network?: 'ethereum' | 'polygon'
 }
 
 export type LegacyElementsFetcher<T> = IBaseComponent & {

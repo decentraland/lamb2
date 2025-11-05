@@ -188,18 +188,24 @@ async function fetchAllNFTsUpTo<E extends NFT>(
 /**
  * Creates a query builder for items (wearables/emotes)
  */
-export function createItemQueryBuilder(category: ItemType) {
+export function createItemQueryBuilder(category: ItemType, network?: 'ethereum' | 'polygon') {
   let itemTypeFilter: string
 
   if (category === 'smartWearable') {
     itemTypeFilter = `itemType: smart_wearable_v1`
   } else if (category === 'emote') {
     itemTypeFilter = `itemType: emote_v1`
-  } else if (category === 'polygonWearables') {
-    // polygonWearables includes both wearable_v2 and smart_wearable_v1
-    itemTypeFilter = `itemType_in: [wearable_v2, smart_wearable_v1]`
   } else if (category === 'wearable') {
-    itemTypeFilter = `itemType_in: [wearable_v1, wearable_v2, smart_wearable_v1]`
+    if (network === 'polygon') {
+      // Polygon wearables: only wearable_v2 and smart_wearable_v1
+      itemTypeFilter = `itemType_in: [wearable_v2, smart_wearable_v1]`
+    } else if (network === 'ethereum') {
+      // Ethereum wearables: only wearable_v1
+      itemTypeFilter = `itemType: wearable_v1`
+    } else {
+      // No network filter: all wearable types
+      itemTypeFilter = `itemType_in: [wearable_v1, wearable_v2, smart_wearable_v1]`
+    }
   }
 
   return (filters: string, orderBy: string, orderDirection: string, first: number) => `
@@ -216,7 +222,7 @@ export function createItemQueryBuilder(category: ItemType) {
         category,
         transferredAt,
         metadata {
-          ${['wearable', 'smartWearable', 'polygonWearables'].includes(category) ? 'wearable' : category} {
+          ${['wearable', 'smartWearable'].includes(category) ? 'wearable' : category} {
             name,
             category
           }

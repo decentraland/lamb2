@@ -1018,7 +1018,7 @@ testWithComponents(() => {
     })
   })
 
-  describe('when isPolygonWearable parameter is provided', () => {
+  describe('when network parameter is provided', () => {
     let baseWearables: any[]
     let onChainWearables: any[]
     let thirdPartyWearables: any[]
@@ -1037,23 +1037,23 @@ testWithComponents(() => {
       wallet = generateRandomAddress()
     })
 
-    describe('and isPolygonWearable is true', () => {
+    describe('and network is polygon', () => {
       beforeEach(() => {
         const { baseWearablesFetcher, wearablesFetcher, content, fetch, alchemyNftFetcher, theGraph } = components
 
-        // Mock baseWearablesFetcher to not be called when isPolygonWearable=true
+        // Mock baseWearablesFetcher to not be called when network=polygon
         baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
           elements: baseWearables,
           totalAmount: baseWearables.length
         })
 
-        // Mock wearablesFetcher to be called with polygonWearables itemType
+        // Mock wearablesFetcher to be called with network: 'polygon'
         wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
           elements: convertWearablesToOnChain(onChainWearables),
           totalAmount: onChainWearables.length
         })
 
-        // Mock thirdPartyWearablesFetcher to not be called when isPolygonWearable=true
+        // Mock thirdPartyWearablesFetcher to not be called when network=polygon
         alchemyNftFetcher.getNFTsForOwner = jest
           .fn()
           .mockResolvedValue(thirdPartyWearables.map((wearable) => wearable.urn.decentraland))
@@ -1080,63 +1080,45 @@ testWithComponents(() => {
       it('should return only polygon wearables (wearable_v2 and smart_wearable_v1)', async () => {
         const { localFetch, wearablesFetcher } = components
 
-        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?isPolygonWearable=true`)
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=polygon`)
 
         expect(r.status).toBe(200)
         const response = await r.json()
 
-        // Should only return on-chain wearables (polygonWearables includes both wearable_v2 and smart_wearable_v1)
+        // Should only return on-chain wearables (polygon network includes both wearable_v2 and smart_wearable_v1)
         expect(response.elements).toHaveLength(2)
         expect(response.totalAmount).toBe(2)
         expect(response.elements.every((el: any) => el.type === 'on-chain')).toBe(true)
 
-        // Verify wearablesFetcher was called with polygonWearables itemType
+        // Verify wearablesFetcher was called with network: 'polygon'
         expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
-          itemType: 'polygonWearables'
+          itemType: 'wearable',
+          network: 'polygon'
         })
       })
 
-      it('should return only polygon wearables when isPolygonWearable=1', async () => {
-        const { localFetch, wearablesFetcher } = components
-
-        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?isPolygonWearable=1`)
-
-        expect(r.status).toBe(200)
-        const response = await r.json()
-
-        // Should only return on-chain wearables (polygonWearables includes both wearable_v2 and smart_wearable_v1)
-        expect(response.elements).toHaveLength(2)
-        expect(response.totalAmount).toBe(2)
-        expect(response.elements.every((el: any) => el.type === 'on-chain')).toBe(true)
-
-        // Verify wearablesFetcher was called with polygonWearables itemType
-        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
-          itemType: 'polygonWearables'
-        })
-      })
-
-      it('should exclude base wearables when isPolygonWearable=true', async () => {
+      it('should exclude base wearables when network=polygon', async () => {
         const { localFetch, baseWearablesFetcher } = components
 
-        await localFetch.fetch(`/explorer/${wallet}/wearables?isPolygonWearable=true`)
+        await localFetch.fetch(`/explorer/${wallet}/wearables?network=polygon`)
 
-        // baseWearablesFetcher should not be called when isPolygonWearable=true
+        // baseWearablesFetcher should not be called when network=polygon
         expect(baseWearablesFetcher.fetchOwnedElements).not.toHaveBeenCalled()
       })
 
-      it('should exclude third-party wearables when isPolygonWearable=true', async () => {
+      it('should exclude third-party wearables when network=polygon', async () => {
         const { localFetch, alchemyNftFetcher } = components
 
-        await localFetch.fetch(`/explorer/${wallet}/wearables?isPolygonWearable=true`)
+        await localFetch.fetch(`/explorer/${wallet}/wearables?network=polygon`)
 
-        // alchemyNftFetcher should not be called when isPolygonWearable=true
+        // alchemyNftFetcher should not be called when network=polygon
         expect(alchemyNftFetcher.getNFTsForOwner).not.toHaveBeenCalled()
       })
 
-      it('should work with trimmed response when isPolygonWearable=true', async () => {
+      it('should work with trimmed response when network=polygon', async () => {
         const { localFetch } = components
 
-        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?isPolygonWearable=true&trimmed=true`)
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=polygon&trimmed=true`)
 
         expect(r.status).toBe(200)
         const response = await r.json()
@@ -1154,10 +1136,10 @@ testWithComponents(() => {
         }
       })
 
-      it('should work with sorting when isPolygonWearable=true', async () => {
+      it('should work with sorting when network=polygon', async () => {
         const { localFetch } = components
 
-        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?isPolygonWearable=true&orderBy=name&direction=asc`)
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=polygon&orderBy=name&direction=asc`)
 
         expect(r.status).toBe(200)
         const response = await r.json()
@@ -1168,7 +1150,7 @@ testWithComponents(() => {
       })
     })
 
-    describe('and isPolygonWearable is false', () => {
+    describe('and network is ethereum', () => {
       beforeEach(() => {
         const { baseWearablesFetcher, wearablesFetcher, content, fetch, alchemyNftFetcher, theGraph } = components
 
@@ -1177,7 +1159,7 @@ testWithComponents(() => {
           totalAmount: baseWearables.length
         })
 
-        // Mock wearablesFetcher to be called with wearable itemType (not polygonWearables)
+        // Mock wearablesFetcher to be called with wearable itemType (ethereum wearables)
         wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
           elements: convertWearablesToOnChain(onChainWearables),
           totalAmount: onChainWearables.length
@@ -1206,44 +1188,80 @@ testWithComponents(() => {
         })
       })
 
-      it('should return all wearable types when isPolygonWearable=false', async () => {
+      it('should return only ethereum on-chain wearables (wearable_v1)', async () => {
         const { localFetch, wearablesFetcher } = components
 
-        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?isPolygonWearable=false`)
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=ethereum`)
 
         expect(r.status).toBe(200)
         const response = await r.json()
 
-        // Should return all types of wearables
-        expect(response.elements).toHaveLength(6) // 2 base + 2 on-chain + 2 third-party
-        expect(response.totalAmount).toBe(6)
+        // Should only return on-chain wearables (ethereum network = wearable_v1)
+        expect(response.elements).toHaveLength(2)
+        expect(response.totalAmount).toBe(2)
+        expect(response.elements.every((el: any) => el.type === 'on-chain')).toBe(true)
 
-        // Verify wearablesFetcher was called with wearable itemType (not polygonWearables)
+        // Verify wearablesFetcher was called with network: 'ethereum'
         expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
-          itemType: 'wearable'
+          itemType: 'wearable',
+          network: 'ethereum'
         })
       })
 
-      it('should return all wearable types when isPolygonWearable=0', async () => {
-        const { localFetch, wearablesFetcher } = components
+      it('should exclude base wearables when network=ethereum', async () => {
+        const { localFetch, baseWearablesFetcher } = components
 
-        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?isPolygonWearable=0`)
+        await localFetch.fetch(`/explorer/${wallet}/wearables?network=ethereum`)
+
+        // baseWearablesFetcher should not be called when network=ethereum
+        expect(baseWearablesFetcher.fetchOwnedElements).not.toHaveBeenCalled()
+      })
+
+      it('should exclude third-party wearables when network=ethereum', async () => {
+        const { localFetch, alchemyNftFetcher } = components
+
+        await localFetch.fetch(`/explorer/${wallet}/wearables?network=ethereum`)
+
+        // alchemyNftFetcher should not be called when network=ethereum
+        expect(alchemyNftFetcher.getNFTsForOwner).not.toHaveBeenCalled()
+      })
+
+      it('should work with trimmed response when network=ethereum', async () => {
+        const { localFetch } = components
+
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=ethereum&trimmed=true`)
 
         expect(r.status).toBe(200)
         const response = await r.json()
 
-        // Should return all types of wearables
-        expect(response.elements).toHaveLength(6) // 2 base + 2 on-chain + 2 third-party
-        expect(response.totalAmount).toBe(6)
+        // Should return trimmed ethereum wearables
+        expect(response.elements).toHaveLength(2)
+        expect(response.totalAmount).toBe(2)
 
-        // Verify wearablesFetcher was called with wearable itemType (not polygonWearables)
-        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
-          itemType: 'wearable'
-        })
+        // Verify trimmed structure
+        for (const element of response.elements) {
+          expect(element).toHaveProperty('entity')
+          expect(Object.keys(element)).toEqual(['entity'])
+          expect(element.entity).toHaveProperty('metadata')
+          expect(element.entity).not.toHaveProperty('version')
+        }
+      })
+
+      it('should work with sorting when network=ethereum', async () => {
+        const { localFetch } = components
+
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=ethereum&orderBy=name&direction=asc`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+
+        expect(response.elements).toHaveLength(2)
+        expect(response.totalAmount).toBe(2)
+        expect(response.elements.every((el: any) => el.type === 'on-chain')).toBe(true)
       })
     })
 
-    describe('and isPolygonWearable parameter is not provided', () => {
+    describe('and network parameter is not provided', () => {
       beforeEach(() => {
         const { baseWearablesFetcher, wearablesFetcher, content, fetch, alchemyNftFetcher, theGraph } = components
 
@@ -1293,14 +1311,15 @@ testWithComponents(() => {
         expect(response.elements).toHaveLength(6) // 2 base + 2 on-chain + 2 third-party
         expect(response.totalAmount).toBe(6)
 
-        // Verify wearablesFetcher was called with wearable itemType (default behavior)
+        // Verify wearablesFetcher was called with wearable itemType and no network (queries both)
         expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
-          itemType: 'wearable'
+          itemType: 'wearable',
+          network: undefined
         })
       })
     })
 
-    describe('and isPolygonWearable has invalid value', () => {
+    describe('and network has invalid value', () => {
       beforeEach(() => {
         const { baseWearablesFetcher, wearablesFetcher, content, fetch, alchemyNftFetcher, theGraph } = components
 
@@ -1338,21 +1357,22 @@ testWithComponents(() => {
         })
       })
 
-      it('should treat invalid values as false and return all wearable types', async () => {
+      it('should treat invalid values as undefined and return all wearable types', async () => {
         const { localFetch, wearablesFetcher } = components
 
-        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?isPolygonWearable=invalid`)
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=invalid`)
 
         expect(r.status).toBe(200)
         const response = await r.json()
 
-        // Should return all types of wearables (treats invalid value as false)
+        // Should return all types of wearables (treats invalid value as both networks)
         expect(response.elements).toHaveLength(6) // 2 base + 2 on-chain + 2 third-party
         expect(response.totalAmount).toBe(6)
 
-        // Verify wearablesFetcher was called with wearable itemType (default behavior)
+        // Verify wearablesFetcher was called with wearable itemType and no network (queries both)
         expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
-          itemType: 'wearable'
+          itemType: 'wearable',
+          network: undefined
         })
       })
     })
@@ -1566,10 +1586,10 @@ testWithComponents(() => {
         }
       })
 
-      it('should work with includeAmount and isPolygonWearable', async () => {
+      it('should work with includeAmount and network=polygon', async () => {
         const { localFetch } = components
 
-        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=true&includeAmount=true&isPolygonWearable=true`)
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=true&includeAmount=true&network=polygon`)
 
         expect(r.status).toBe(200)
         const response = await r.json()
