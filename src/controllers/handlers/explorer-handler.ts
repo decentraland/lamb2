@@ -1,4 +1,4 @@
-import { Entity } from '@dcl/schemas'
+import { Entity, Network } from '@dcl/schemas'
 import { fetchThirdPartyWearablesFromThirdPartyName } from '../../logic/fetch-elements/fetch-third-party-wearables'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { createCombinedSorting } from '../../logic/sorting'
@@ -46,7 +46,7 @@ export type MixedWearableTrimmedResponse = {
 
 export type WearableFilters = {
   isSmartWearable: boolean
-  network?: 'ethereum' | 'polygon'
+  network?: Network
 }
 
 async function fetchCombinedElements(
@@ -200,8 +200,7 @@ export async function explorerHandler(
   const isSmartWearableParam = context.url.searchParams.get('isSmartWearable')
   const isSmartWearable = isSmartWearableParam === 'true' || isSmartWearableParam === '1'
   const networkParam = context.url.searchParams.get('network')
-  const network: 'ethereum' | 'polygon' | undefined =
-    networkParam === 'ethereum' || networkParam === 'polygon' ? networkParam : undefined
+  const network = networkParam as Network | undefined
   const includeAmountParam = context.url.searchParams.get('includeAmount')
   const includeAmount = includeAmountParam === 'true' || includeAmountParam === '1'
 

@@ -1,4 +1,5 @@
 import { ISubgraphComponent } from '@well-known-components/thegraph-component'
+import { Network } from '@dcl/schemas'
 import { ElementsFilters, ItemType } from '../../adapters/elements-fetcher'
 
 interface NFT {
@@ -188,7 +189,7 @@ async function fetchAllNFTsUpTo<E extends NFT>(
 /**
  * Creates a query builder for items (wearables/emotes)
  */
-export function createItemQueryBuilder(category: ItemType, network?: 'ethereum' | 'polygon') {
+export function createItemQueryBuilder(category: ItemType, network?: Network) {
   let itemTypeFilter: string
 
   if (category === 'smartWearable') {
@@ -196,10 +197,10 @@ export function createItemQueryBuilder(category: ItemType, network?: 'ethereum' 
   } else if (category === 'emote') {
     itemTypeFilter = `itemType: emote_v1`
   } else if (category === 'wearable') {
-    if (network === 'polygon') {
+    if (network === Network.MATIC) {
       // Polygon wearables: only wearable_v2 and smart_wearable_v1
       itemTypeFilter = `itemType_in: [wearable_v2, smart_wearable_v1]`
-    } else if (network === 'ethereum') {
+    } else if (network === Network.ETHEREUM) {
       // Ethereum wearables: only wearable_v1
       itemTypeFilter = `itemType: wearable_v1`
     } else {

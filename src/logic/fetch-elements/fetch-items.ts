@@ -1,4 +1,4 @@
-import { EmoteCategory, WearableCategory } from '@dcl/schemas'
+import { EmoteCategory, WearableCategory, Network } from '@dcl/schemas'
 import { Item, OnChainEmote, OnChainWearable, Pagination } from '../../types'
 import { MarketplaceApiParams } from '../../adapters/marketplace-api-fetcher'
 import { ElementsFilters, ElementsFetcherDependencies, ItemType } from '../../adapters/elements-fetcher'
@@ -199,8 +199,8 @@ export async function fetchWearables(
       const network = filters?.network
 
       // Determine which subgraphs to query based on network filter
-      const shouldQueryEthereum = !network || network === 'ethereum'
-      const shouldQueryMatic = !network || network === 'polygon'
+      const shouldQueryEthereum = !network || network === Network.ETHEREUM
+      const shouldQueryMatic = !network || network === Network.MATIC
 
       const wearableQueryBuilder = createItemQueryBuilder(itemType, network)
 

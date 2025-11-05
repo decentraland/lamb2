@@ -1,4 +1,4 @@
-import { Entity } from '@dcl/schemas'
+import { Entity, Network } from '@dcl/schemas'
 import { WearableFromQuery } from '../../src/logic/fetch-elements/fetch-items'
 import { testWithComponents } from '../components'
 import {
@@ -1090,10 +1090,10 @@ testWithComponents(() => {
         expect(response.totalAmount).toBe(2)
         expect(response.elements.every((el: any) => el.type === 'on-chain')).toBe(true)
 
-        // Verify wearablesFetcher was called with network: 'polygon'
+        // Verify wearablesFetcher was called with network: Network.MATIC
         expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
           itemType: 'wearable',
-          network: 'polygon'
+          network: Network.MATIC
         })
       })
 
@@ -1201,10 +1201,10 @@ testWithComponents(() => {
         expect(response.totalAmount).toBe(2)
         expect(response.elements.every((el: any) => el.type === 'on-chain')).toBe(true)
 
-        // Verify wearablesFetcher was called with network: 'ethereum'
+        // Verify wearablesFetcher was called with network: Network.ETHEREUM
         expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
           itemType: 'wearable',
-          network: 'ethereum'
+          network: Network.ETHEREUM
         })
       })
 
@@ -1373,6 +1373,74 @@ testWithComponents(() => {
         expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
           itemType: 'wearable',
           network: undefined
+        })
+      })
+    })
+
+    describe('and network uses enum values', () => {
+      beforeEach(() => {
+        const { baseWearablesFetcher, wearablesFetcher, content, fetch, alchemyNftFetcher, theGraph } = components
+
+        // Mock baseWearablesFetcher to not be called when network is specified
+        baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+          elements: [],
+          totalAmount: 0
+        })
+
+        // Mock wearablesFetcher to be called with network filter
+        wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+          elements: convertWearablesToOnChain(onChainWearables),
+          totalAmount: onChainWearables.length
+        })
+
+        // Mock thirdPartyWearablesFetcher to not be called when network is specified
+        alchemyNftFetcher.getNFTsForOwner = jest.fn().mockResolvedValue([])
+
+        content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
+          pointers.map((pointer) => entities.find((def) => def.id === pointer))
+        )
+        theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: onChainWearables.slice(0, 5) })
+        theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: onChainWearables.slice(5, 10) })
+        fetch.fetch = jest.fn().mockResolvedValue({ ok: true, json: () => ({ assets: [], total: 0, page: 1 }) })
+      })
+
+      it('should accept ETHEREUM enum value', async () => {
+        const { localFetch, wearablesFetcher } = components
+
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=ETHEREUM`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+
+        // Should only return on-chain wearables
+        expect(response.elements).toHaveLength(2)
+        expect(response.totalAmount).toBe(2)
+        expect(response.elements.every((el: any) => el.type === 'on-chain')).toBe(true)
+
+        // Verify wearablesFetcher was called with network: Network.ETHEREUM
+        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
+          itemType: 'wearable',
+          network: Network.ETHEREUM
+        })
+      })
+
+      it('should accept MATIC enum value', async () => {
+        const { localFetch, wearablesFetcher } = components
+
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=MATIC`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+
+        // Should only return on-chain wearables
+        expect(response.elements).toHaveLength(2)
+        expect(response.totalAmount).toBe(2)
+        expect(response.elements.every((el: any) => el.type === 'on-chain')).toBe(true)
+
+        // Verify wearablesFetcher was called with network: Network.MATIC
+        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
+          itemType: 'wearable',
+          network: Network.MATIC
         })
       })
     })

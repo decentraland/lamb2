@@ -1,5 +1,5 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
-import { WearableCategory, EmoteCategory } from '@dcl/schemas'
+import { WearableCategory, EmoteCategory, Network } from '@dcl/schemas'
 import { OnChainWearable, OnChainEmote, Name, AppComponents } from '../types'
 import { ItemType } from './elements-fetcher'
 
@@ -85,7 +85,7 @@ export type MarketplaceApiParams = {
   // Item type
   itemType?: ItemType
   // Network
-  network?: 'ethereum' | 'polygon'
+  network?: Network
 }
 
 /**
@@ -244,11 +244,11 @@ export async function createMarketplaceApiFetcher(
         queryParams.append('itemType', 'smart_wearable_v1')
       } else if (params.itemType === 'wearable') {
         // Handle network-specific wearable types
-        if (params.network === 'polygon') {
+        if (params.network === Network.MATIC) {
           // Polygon: wearable_v2 and smart_wearable_v1
           queryParams.append('itemType', 'wearable_v2')
           queryParams.append('itemType', 'smart_wearable_v1')
-        } else if (params.network === 'ethereum') {
+        } else if (params.network === Network.ETHEREUM) {
           // Ethereum: only wearable_v1
           queryParams.append('itemType', 'wearable_v1')
         }
