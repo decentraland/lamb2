@@ -23,6 +23,7 @@ import { parcelPermissionsHandler } from './handlers/parcel-permissions-handler'
 import { parcelOperatorsHandler } from './handlers/parcel-operators-handler'
 import { nameOwnerHandler } from './handlers/name-owner-handler'
 import { userLandsPermissionsHandler } from './handlers/user-lands-permissions-handler'
+import { userPermissionsHandler } from './handlers/user-permissions-handler'
 
 // We return the entire router because it will be easier to test than a whole server
 export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContext>> {
@@ -41,6 +42,7 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
   router.get('/users/:address/parcels/:x/:y/permissions', parcelPermissionsHandler)
   router.get('/users/:address/lands', landsHandler)
   router.get('/users/:address/lands-permissions', userLandsPermissionsHandler)
+  router.get('/users/:address/permissions', userPermissionsHandler)
   router.post('/profiles', profilesHandler)
   router.get('/profiles/:id', profileHandler)
   router.get('/nfts/collections', allCollectionsHandler)
