@@ -13,6 +13,7 @@ import {
 } from './handlers/third-party-wearables-handler'
 import { wearablesHandler } from './handlers/wearables-handler'
 import { explorerHandler } from './handlers/explorer-handler'
+import { explorerEmotesHandler } from './handlers/explorer-emotes-handler'
 import { errorHandler } from './handlers/errorHandler'
 import { aboutHandler } from './handlers/about-handler'
 import { outfitsHandler } from './handlers/outfits-handler'
@@ -49,6 +50,7 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
   router.get('/contracts/pois', getPOIsHandler)
   router.get('/contracts/denylisted-names', getNameDenylistHandler)
   router.get('/explorer/:address/wearables', explorerHandler)
+  router.get('/explorer/:address/emotes', explorerEmotesHandler)
   router.get('/parcels/:x/:y/operators', parcelOperatorsHandler)
 
   return router

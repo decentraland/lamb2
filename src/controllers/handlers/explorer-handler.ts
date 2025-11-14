@@ -1,4 +1,4 @@
-import { Entity } from '@dcl/schemas'
+import { Entity, Network } from '@dcl/schemas'
 import { fetchThirdPartyWearablesFromThirdPartyName } from '../../logic/fetch-elements/fetch-third-party-wearables'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { createCombinedSorting } from '../../logic/sorting'
@@ -41,10 +41,12 @@ export type MixedWearableResponse = Omit<MixedWearable, 'minTransferredAt' | 'ma
 
 export type MixedWearableTrimmedResponse = {
   entity: ExplorerWearableEntity
+  amount?: number
 }
 
 export type WearableFilters = {
   isSmartWearable: boolean
+  network?: Network
 }
 
 async function fetchCombinedElements(
@@ -85,9 +87,17 @@ async function fetchCombinedElements(
   }
 
   async function fetchOnChainWearables(): Promise<MixedOnChainWearable[]> {
+    let itemType: 'wearable' | 'smartWearable' = 'wearable'
+
+    if (filters.isSmartWearable) {
+      itemType = 'smartWearable'
+    }
+
     const { elements } = await components.wearablesFetcher.fetchOwnedElements(address, undefined, {
-      itemType: filters.isSmartWearable ? 'smartWearable' : 'wearable'
+      itemType,
+      network: filters.network
     })
+
     if (!elements.length) {
       return []
     }
@@ -148,9 +158,13 @@ async function fetchCombinedElements(
   }
 
   const [baseItems, nftItems, thirdPartyItems] = await Promise.all([
-    filters.isSmartWearable ? [] : collectionTypes.includes(BASE_WEARABLE) ? fetchBaseWearables() : [],
+    filters.isSmartWearable || filters.network
+      ? []
+      : collectionTypes.includes(BASE_WEARABLE)
+        ? fetchBaseWearables()
+        : [],
     collectionTypes.includes(ON_CHAIN) ? fetchOnChainWearables() : [],
-    filters.isSmartWearable
+    filters.isSmartWearable || filters.network
       ? []
       : collectionTypes.includes(THIRD_PARTY)
         ? fetchThirdPartyWearables(thirdPartyCollectionId)
@@ -185,6 +199,11 @@ export async function explorerHandler(
   const isTrimmed = trimmedParam === 'true' || trimmedParam === '1'
   const isSmartWearableParam = context.url.searchParams.get('isSmartWearable')
   const isSmartWearable = isSmartWearableParam === 'true' || isSmartWearableParam === '1'
+  const networkParam = context.url.searchParams.get('network')
+  // Validate network parameter - only allow valid Network enum values (ETHEREUM or MATIC)
+  const network = networkParam === Network.ETHEREUM || networkParam === Network.MATIC ? networkParam : undefined
+  const includeAmountParam = context.url.searchParams.get('includeAmount')
+  const includeAmount = includeAmountParam === 'true' || includeAmountParam === '1'
 
   if (collectionTypes.some((type) => !VALID_COLLECTION_TYPES.includes(type))) {
     throw new InvalidRequestError(`Invalid collection type. Valid types are: ${VALID_COLLECTION_TYPES.join(', ')}.`)
@@ -192,16 +211,25 @@ export async function explorerHandler(
 
   const page = await fetchAndPaginate<MixedWearable>(
     () =>
-      fetchCombinedElements(context.components, collectionTypes, thirdPartyCollectionIds, address, { isSmartWearable }),
+      fetchCombinedElements(context.components, collectionTypes, thirdPartyCollectionIds, address, {
+        isSmartWearable,
+        network
+      }),
     pagination,
     filter,
     sorting
   )
 
   if (isTrimmed) {
-    const results: MixedWearableTrimmedResponse[] = page.elements.map((wearable) => ({
-      entity: buildTrimmedEntity(wearable.entity)
-    }))
+    const results: MixedWearableTrimmedResponse[] = page.elements.map((wearable) => {
+      const result: MixedWearableTrimmedResponse = {
+        entity: buildTrimmedEntity(wearable.entity)
+      }
+      if (includeAmount) {
+        result.amount = wearable.individualData?.length || 0
+      }
+      return result
+    })
 
     return {
       status: 200,

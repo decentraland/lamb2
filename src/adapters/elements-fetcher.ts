@@ -1,3 +1,4 @@
+import { Network } from '@dcl/schemas'
 import { AppComponents } from '../types'
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { createLowerCaseKeysCache } from './lowercase-keys-cache'
@@ -50,6 +51,7 @@ export type ElementsFilters = {
   orderBy?: string
   direction?: string
   itemType?: ItemType
+  network?: Network
 }
 
 export type LegacyElementsFetcher<T> = IBaseComponent & {

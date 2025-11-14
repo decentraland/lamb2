@@ -1,4 +1,4 @@
-import { Entity } from '@dcl/schemas'
+import { Entity, Network } from '@dcl/schemas'
 import { WearableFromQuery } from '../../src/logic/fetch-elements/fetch-items'
 import { testWithComponents } from '../components'
 import {
@@ -1014,6 +1014,674 @@ testWithComponents(() => {
         expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
           itemType: 'wearable'
         })
+      })
+    })
+  })
+
+  describe('when network parameter is provided', () => {
+    let baseWearables: any[]
+    let onChainWearables: any[]
+    let thirdPartyWearables: any[]
+    let entities: any[]
+    let wallet: string
+
+    beforeEach(() => {
+      baseWearables = generateBaseWearables(2)
+      onChainWearables = generateWearables(2)
+      thirdPartyWearables = generateThirdPartyWearables(2)
+      entities = generateWearableEntities([
+        ...baseWearables.map((wearable) => wearable.urn),
+        ...onChainWearables.map((wearable) => wearable.urn),
+        ...thirdPartyWearables.map((wearable) => wearable.urn.decentraland)
+      ])
+      wallet = generateRandomAddress()
+    })
+
+    describe('and network is MATIC', () => {
+      beforeEach(() => {
+        const { baseWearablesFetcher, wearablesFetcher, content, fetch, alchemyNftFetcher, theGraph } = components
+
+        // Mock baseWearablesFetcher to not be called when network=MATIC
+        baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+          elements: baseWearables,
+          totalAmount: baseWearables.length
+        })
+
+        // Mock wearablesFetcher to be called with network: MATIC
+        wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+          elements: convertWearablesToOnChain(onChainWearables),
+          totalAmount: onChainWearables.length
+        })
+
+        // Mock thirdPartyWearablesFetcher to not be called when network=MATIC
+        alchemyNftFetcher.getNFTsForOwner = jest
+          .fn()
+          .mockResolvedValue(thirdPartyWearables.map((wearable) => wearable.urn.decentraland))
+
+        content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
+          pointers.map((pointer) => entities.find((def) => def.id === pointer))
+        )
+        theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+        theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: onChainWearables })
+        fetch.fetch = jest.fn().mockImplementation((url) => {
+          if (url.includes('test-collection')) {
+            return {
+              ok: true,
+              json: () => ({
+                entities: generateWearableEntities(thirdPartyWearables.map((wearable) => wearable.urn.decentraland))
+              })
+            }
+          } else {
+            return { ok: true, json: () => ({ entities: [] }) }
+          }
+        })
+      })
+
+      it('should return only polygon wearables (wearable_v2 and smart_wearable_v1)', async () => {
+        const { localFetch, wearablesFetcher } = components
+
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=MATIC`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+
+        // Should only return on-chain wearables (polygon network includes both wearable_v2 and smart_wearable_v1)
+        expect(response.elements).toHaveLength(2)
+        expect(response.totalAmount).toBe(2)
+        expect(response.elements.every((el: any) => el.type === 'on-chain')).toBe(true)
+
+        // Verify wearablesFetcher was called with network: Network.MATIC
+        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
+          itemType: 'wearable',
+          network: Network.MATIC
+        })
+      })
+
+      it('should exclude base wearables when network=MATIC', async () => {
+        const { localFetch, baseWearablesFetcher } = components
+
+        await localFetch.fetch(`/explorer/${wallet}/wearables?network=MATIC`)
+
+        // baseWearablesFetcher should not be called when network=MATIC
+        expect(baseWearablesFetcher.fetchOwnedElements).not.toHaveBeenCalled()
+      })
+
+      it('should exclude third-party wearables when network=MATIC', async () => {
+        const { localFetch, alchemyNftFetcher } = components
+
+        await localFetch.fetch(`/explorer/${wallet}/wearables?network=MATIC`)
+
+        // alchemyNftFetcher should not be called when network=MATIC
+        expect(alchemyNftFetcher.getNFTsForOwner).not.toHaveBeenCalled()
+      })
+
+      it('should work with trimmed response when network=MATIC', async () => {
+        const { localFetch } = components
+
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=MATIC&trimmed=true`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+
+        // Should return trimmed polygon wearables
+        expect(response.elements).toHaveLength(2)
+        expect(response.totalAmount).toBe(2)
+
+        // Verify trimmed structure
+        for (const element of response.elements) {
+          expect(element).toHaveProperty('entity')
+          expect(Object.keys(element)).toEqual(['entity'])
+          expect(element.entity).toHaveProperty('metadata')
+          expect(element.entity).not.toHaveProperty('version')
+        }
+      })
+
+      it('should work with sorting when network=MATIC', async () => {
+        const { localFetch } = components
+
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=MATIC&orderBy=name&direction=asc`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+
+        expect(response.elements).toHaveLength(2)
+        expect(response.totalAmount).toBe(2)
+        expect(response.elements.every((el: any) => el.type === 'on-chain')).toBe(true)
+      })
+    })
+
+    describe('and network is ETHEREUM', () => {
+      beforeEach(() => {
+        const { baseWearablesFetcher, wearablesFetcher, content, fetch, alchemyNftFetcher, theGraph } = components
+
+        baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+          elements: baseWearables,
+          totalAmount: baseWearables.length
+        })
+
+        // Mock wearablesFetcher to be called with wearable itemType (ethereum wearables)
+        wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+          elements: convertWearablesToOnChain(onChainWearables),
+          totalAmount: onChainWearables.length
+        })
+
+        alchemyNftFetcher.getNFTsForOwner = jest
+          .fn()
+          .mockResolvedValue(thirdPartyWearables.map((wearable) => wearable.urn.decentraland))
+
+        content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
+          pointers.map((pointer) => entities.find((def) => def.id === pointer))
+        )
+        theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: onChainWearables.slice(0, 5) })
+        theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: onChainWearables.slice(5, 10) })
+        fetch.fetch = jest.fn().mockImplementation((url) => {
+          if (url.includes('test-collection')) {
+            return {
+              ok: true,
+              json: () => ({
+                entities: generateWearableEntities(thirdPartyWearables.map((wearable) => wearable.urn.decentraland))
+              })
+            }
+          } else {
+            return { ok: true, json: () => ({ entities: [] }) }
+          }
+        })
+      })
+
+      it('should return only ethereum on-chain wearables (wearable_v1)', async () => {
+        const { localFetch, wearablesFetcher } = components
+
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=ETHEREUM`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+
+        // Should only return on-chain wearables (ethereum network = wearable_v1)
+        expect(response.elements).toHaveLength(2)
+        expect(response.totalAmount).toBe(2)
+        expect(response.elements.every((el: any) => el.type === 'on-chain')).toBe(true)
+
+        // Verify wearablesFetcher was called with network: Network.ETHEREUM
+        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
+          itemType: 'wearable',
+          network: Network.ETHEREUM
+        })
+      })
+
+      it('should exclude base wearables when network=ETHEREUM', async () => {
+        const { localFetch, baseWearablesFetcher } = components
+
+        await localFetch.fetch(`/explorer/${wallet}/wearables?network=ETHEREUM`)
+
+        // baseWearablesFetcher should not be called when network=ETHEREUM
+        expect(baseWearablesFetcher.fetchOwnedElements).not.toHaveBeenCalled()
+      })
+
+      it('should exclude third-party wearables when network=ETHEREUM', async () => {
+        const { localFetch, alchemyNftFetcher } = components
+
+        await localFetch.fetch(`/explorer/${wallet}/wearables?network=ETHEREUM`)
+
+        // alchemyNftFetcher should not be called when network=ETHEREUM
+        expect(alchemyNftFetcher.getNFTsForOwner).not.toHaveBeenCalled()
+      })
+
+      it('should work with trimmed response when network=ETHEREUM', async () => {
+        const { localFetch } = components
+
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=ETHEREUM&trimmed=true`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+
+        // Should return trimmed ethereum wearables
+        expect(response.elements).toHaveLength(2)
+        expect(response.totalAmount).toBe(2)
+
+        // Verify trimmed structure
+        for (const element of response.elements) {
+          expect(element).toHaveProperty('entity')
+          expect(Object.keys(element)).toEqual(['entity'])
+          expect(element.entity).toHaveProperty('metadata')
+          expect(element.entity).not.toHaveProperty('version')
+        }
+      })
+
+      it('should work with sorting when network=ETHEREUM', async () => {
+        const { localFetch } = components
+
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=ETHEREUM&orderBy=name&direction=asc`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+
+        expect(response.elements).toHaveLength(2)
+        expect(response.totalAmount).toBe(2)
+        expect(response.elements.every((el: any) => el.type === 'on-chain')).toBe(true)
+      })
+    })
+
+    describe('and network parameter is not provided', () => {
+      beforeEach(() => {
+        const { baseWearablesFetcher, wearablesFetcher, content, fetch, alchemyNftFetcher, theGraph } = components
+
+        baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+          elements: baseWearables,
+          totalAmount: baseWearables.length
+        })
+
+        // Mock wearablesFetcher to be called with wearable itemType (default behavior)
+        wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+          elements: convertWearablesToOnChain(onChainWearables),
+          totalAmount: onChainWearables.length
+        })
+
+        alchemyNftFetcher.getNFTsForOwner = jest
+          .fn()
+          .mockResolvedValue(thirdPartyWearables.map((wearable) => wearable.urn.decentraland))
+
+        content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
+          pointers.map((pointer) => entities.find((def) => def.id === pointer))
+        )
+        theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: onChainWearables.slice(0, 5) })
+        theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: onChainWearables.slice(5, 10) })
+        fetch.fetch = jest.fn().mockImplementation((url) => {
+          if (url.includes('test-collection')) {
+            return {
+              ok: true,
+              json: () => ({
+                entities: generateWearableEntities(thirdPartyWearables.map((wearable) => wearable.urn.decentraland))
+              })
+            }
+          } else {
+            return { ok: true, json: () => ({ entities: [] }) }
+          }
+        })
+      })
+
+      it('should return all wearable types by default', async () => {
+        const { localFetch, wearablesFetcher } = components
+
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+
+        // Should return all types of wearables
+        expect(response.elements).toHaveLength(6) // 2 base + 2 on-chain + 2 third-party
+        expect(response.totalAmount).toBe(6)
+
+        // Verify wearablesFetcher was called with wearable itemType and no network (queries both)
+        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
+          itemType: 'wearable',
+          network: undefined
+        })
+      })
+    })
+
+    describe('and network has invalid value', () => {
+      beforeEach(() => {
+        const { baseWearablesFetcher, wearablesFetcher, content, fetch, alchemyNftFetcher, theGraph } = components
+
+        baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+          elements: baseWearables,
+          totalAmount: baseWearables.length
+        })
+
+        // Mock wearablesFetcher to be called with wearable itemType (default behavior for invalid values)
+        wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+          elements: convertWearablesToOnChain(onChainWearables),
+          totalAmount: onChainWearables.length
+        })
+
+        alchemyNftFetcher.getNFTsForOwner = jest
+          .fn()
+          .mockResolvedValue(thirdPartyWearables.map((wearable) => wearable.urn.decentraland))
+
+        content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
+          pointers.map((pointer) => entities.find((def) => def.id === pointer))
+        )
+        theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: onChainWearables.slice(0, 5) })
+        theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: onChainWearables.slice(5, 10) })
+        fetch.fetch = jest.fn().mockImplementation((url) => {
+          if (url.includes('test-collection')) {
+            return {
+              ok: true,
+              json: () => ({
+                entities: generateWearableEntities(thirdPartyWearables.map((wearable) => wearable.urn.decentraland))
+              })
+            }
+          } else {
+            return { ok: true, json: () => ({ entities: [] }) }
+          }
+        })
+      })
+
+      it('should treat invalid values as undefined and return all wearable types', async () => {
+        const { localFetch, wearablesFetcher } = components
+
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=invalid`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+
+        // Should return all types of wearables (treats invalid value as both networks)
+        expect(response.elements).toHaveLength(6) // 2 base + 2 on-chain + 2 third-party
+        expect(response.totalAmount).toBe(6)
+
+        // Verify wearablesFetcher was called with wearable itemType and no network (queries both)
+        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
+          itemType: 'wearable',
+          network: undefined
+        })
+      })
+    })
+
+    describe('and network uses enum values', () => {
+      beforeEach(() => {
+        const { baseWearablesFetcher, wearablesFetcher, content, fetch, alchemyNftFetcher, theGraph } = components
+
+        // Mock baseWearablesFetcher to not be called when network is specified
+        baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+          elements: [],
+          totalAmount: 0
+        })
+
+        // Mock wearablesFetcher to be called with network filter
+        wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+          elements: convertWearablesToOnChain(onChainWearables),
+          totalAmount: onChainWearables.length
+        })
+
+        // Mock thirdPartyWearablesFetcher to not be called when network is specified
+        alchemyNftFetcher.getNFTsForOwner = jest.fn().mockResolvedValue([])
+
+        content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
+          pointers.map((pointer) => entities.find((def) => def.id === pointer))
+        )
+        theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: onChainWearables.slice(0, 5) })
+        theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: onChainWearables.slice(5, 10) })
+        fetch.fetch = jest.fn().mockResolvedValue({ ok: true, json: () => ({ assets: [], total: 0, page: 1 }) })
+      })
+
+      it('should accept ETHEREUM enum value', async () => {
+        const { localFetch, wearablesFetcher } = components
+
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=ETHEREUM`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+
+        // Should only return on-chain wearables
+        expect(response.elements).toHaveLength(2)
+        expect(response.totalAmount).toBe(2)
+        expect(response.elements.every((el: any) => el.type === 'on-chain')).toBe(true)
+
+        // Verify wearablesFetcher was called with network: Network.ETHEREUM
+        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
+          itemType: 'wearable',
+          network: Network.ETHEREUM
+        })
+      })
+
+      it('should accept MATIC enum value', async () => {
+        const { localFetch, wearablesFetcher } = components
+
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?network=MATIC`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+
+        // Should only return on-chain wearables
+        expect(response.elements).toHaveLength(2)
+        expect(response.totalAmount).toBe(2)
+        expect(response.elements.every((el: any) => el.type === 'on-chain')).toBe(true)
+
+        // Verify wearablesFetcher was called with network: Network.MATIC
+        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
+          itemType: 'wearable',
+          network: Network.MATIC
+        })
+      })
+    })
+  })
+
+  describe('when includeAmount parameter is provided', () => {
+    let baseWearables: any[]
+    let onChainWearables: any[]
+    let entities: any[]
+    let wallet: string
+
+    beforeEach(() => {
+      baseWearables = generateBaseWearables(2)
+      onChainWearables = generateWearables(2)
+      entities = generateWearableEntities([
+        ...baseWearables.map((wearable) => wearable.urn),
+        ...onChainWearables.map((wearable) => wearable.urn)
+      ])
+      wallet = generateRandomAddress()
+
+      const { baseWearablesFetcher, wearablesFetcher, content, theGraph, alchemyNftFetcher } = components
+
+      baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+        elements: baseWearables,
+        totalAmount: baseWearables.length
+      })
+
+      wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+        elements: convertWearablesToOnChain(onChainWearables),
+        totalAmount: onChainWearables.length
+      })
+
+      content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
+        pointers.map((pointer) => entities.find((def) => def.id === pointer)).filter((e): e is Entity => e !== undefined)
+      )
+      theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+      theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+      alchemyNftFetcher.getNFTsForOwner = jest.fn().mockResolvedValue([])
+    })
+
+    describe('and includeAmount is true with trimmed response', () => {
+      it('should include amount field in trimmed response when includeAmount=true', async () => {
+        const { localFetch } = components
+
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=true&includeAmount=true`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+
+        expect(response.elements).toHaveLength(4) // 2 base + 2 on-chain
+
+        // Verify all elements have amount field
+        for (const element of response.elements) {
+          expect(element).toHaveProperty('entity')
+          expect(element).toHaveProperty('amount')
+          expect(typeof element.amount).toBe('number')
+          expect(element.amount).toBeGreaterThanOrEqual(0)
+        }
+      })
+
+      it('should include amount field when includeAmount=1', async () => {
+        const { localFetch } = components
+
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=true&includeAmount=1`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+
+        expect(response.elements).toHaveLength(4)
+
+        // Verify all elements have amount field
+        for (const element of response.elements) {
+          expect(element).toHaveProperty('amount')
+          expect(typeof element.amount).toBe('number')
+        }
+      })
+
+      it('should calculate amount correctly from individualData length', async () => {
+        const { localFetch } = components
+
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=true&includeAmount=true`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+
+        // Base wearables have 1 item each
+        const baseElements = response.elements.slice(0, 2)
+        for (const element of baseElements) {
+          expect(element.amount).toBe(1)
+        }
+
+        // On-chain wearables have 1 item each in this mock
+        const onChainElements = response.elements.slice(2, 4)
+        for (const element of onChainElements) {
+          expect(element.amount).toBe(1)
+        }
+      })
+    })
+
+    describe('and includeAmount is false or not provided with trimmed response', () => {
+      it('should not include amount field when includeAmount=false', async () => {
+        const { localFetch } = components
+
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=true&includeAmount=false`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+
+        expect(response.elements).toHaveLength(4)
+
+        // Verify no elements have amount field
+        for (const element of response.elements) {
+          expect(element).toHaveProperty('entity')
+          expect(element).not.toHaveProperty('amount')
+        }
+      })
+
+      it('should not include amount field when includeAmount is not provided', async () => {
+        const { localFetch } = components
+
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=true`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+
+        expect(response.elements).toHaveLength(4)
+
+        // Verify no elements have amount field by default
+        for (const element of response.elements) {
+          expect(element).toHaveProperty('entity')
+          expect(element).not.toHaveProperty('amount')
+        }
+      })
+
+      it('should not include amount field when includeAmount=0', async () => {
+        const { localFetch } = components
+
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=true&includeAmount=0`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+
+        expect(response.elements).toHaveLength(4)
+
+        // Verify no elements have amount field
+        for (const element of response.elements) {
+          expect(element).not.toHaveProperty('amount')
+        }
+      })
+
+      it('should treat invalid includeAmount values as false', async () => {
+        const { localFetch } = components
+
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=true&includeAmount=invalid`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+
+        expect(response.elements).toHaveLength(4)
+
+        // Verify no elements have amount field with invalid value
+        for (const element of response.elements) {
+          expect(element).not.toHaveProperty('amount')
+        }
+      })
+    })
+
+    describe('and includeAmount is used with non-trimmed response', () => {
+      it('should already have amount in non-trimmed response regardless of includeAmount', async () => {
+        const { localFetch } = components
+
+        const r1 = await localFetch.fetch(`/explorer/${wallet}/wearables?includeAmount=true`)
+        const r2 = await localFetch.fetch(`/explorer/${wallet}/wearables?includeAmount=false`)
+        const r3 = await localFetch.fetch(`/explorer/${wallet}/wearables`)
+
+        expect(r1.status).toBe(200)
+        expect(r2.status).toBe(200)
+        expect(r3.status).toBe(200)
+
+        const response1 = await r1.json()
+        const response2 = await r2.json()
+        const response3 = await r3.json()
+
+        // All non-trimmed responses should have amount field
+        for (const element of response1.elements) {
+          expect(element).toHaveProperty('amount')
+        }
+        for (const element of response2.elements) {
+          expect(element).toHaveProperty('amount')
+        }
+        for (const element of response3.elements) {
+          expect(element).toHaveProperty('amount')
+        }
+      })
+    })
+
+    describe('and includeAmount is combined with other filters', () => {
+      it('should work with includeAmount and isSmartWearable', async () => {
+        const { localFetch } = components
+
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=true&includeAmount=true&isSmartWearable=true`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+
+        // Verify elements have both trimmed structure and amount
+        for (const element of response.elements) {
+          expect(element).toHaveProperty('entity')
+          expect(element).toHaveProperty('amount')
+          expect(Object.keys(element).sort()).toEqual(['amount', 'entity'])
+        }
+      })
+
+      it('should work with includeAmount and network=MATIC', async () => {
+        const { localFetch } = components
+
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=true&includeAmount=true&network=MATIC`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+
+        // Verify elements have both trimmed structure and amount
+        for (const element of response.elements) {
+          expect(element).toHaveProperty('entity')
+          expect(element).toHaveProperty('amount')
+        }
+      })
+
+      it('should work with includeAmount and sorting', async () => {
+        const { localFetch } = components
+
+        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=true&includeAmount=true&orderBy=name&direction=asc`)
+
+        expect(r.status).toBe(200)
+        const response = await r.json()
+
+        // Verify elements have both trimmed structure and amount
+        for (const element of response.elements) {
+          expect(element).toHaveProperty('entity')
+          expect(element).toHaveProperty('amount')
+        }
       })
     })
   })
