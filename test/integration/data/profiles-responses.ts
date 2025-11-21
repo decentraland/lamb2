@@ -1083,3 +1083,252 @@ export const tpwResolverResponseFullAnother = {
   page: 1,
   next: ''
 }
+
+export const profileEntityWithBaseEmotes = {
+  version: 'v3',
+  id: 'bafkreid2ltr77sewkzr4xz37pzyvcgzeljubecqworvsdbw7t5333h6q3a',
+  type: EntityType.PROFILE,
+  timestamp: 1662137617154,
+  pointers: ['0x20'],
+  content: [
+    {
+      file: 'body.png',
+      hash: 'bafkreicilawwtbjyf6ahyzv64ssoamdm73rif75qncee5lv6j3a3352lua'
+    },
+    {
+      file: 'face256.png',
+      hash: 'bafkreigi3yrgdhvjr2cqzxvfztnsubnll2cfdioo4vfzu6o6vibwoag2ma'
+    }
+  ],
+  metadata: {
+    avatars: [
+      {
+        hasClaimedName: false,
+        name: 'testuser#1234',
+        description: '',
+        tutorialStep: 256,
+        userId: '0x20',
+        email: '',
+        ethAddress: '0x20',
+        version: 30,
+        avatar: {
+          bodyShape: 'urn:decentraland:off-chain:base-avatars:BaseMale',
+          wearables: [
+            'urn:decentraland:off-chain:base-avatars:eyebrows_00',
+            'urn:decentraland:off-chain:base-avatars:short_hair'
+          ],
+          emotes: [
+            {
+              slot: 0,
+              urn: 'urn:decentraland:off-chain:base-emotes:wave'
+            },
+            {
+              slot: 1,
+              urn: 'urn:decentraland:off-chain:base-emotes:dance'
+            }
+          ],
+          snapshots: {
+            body: 'bafkreicilawwtbjyf6ahyzv64ssoamdm73rif75qncee5lv6j3a3352lua',
+            face256: 'bafkreigi3yrgdhvjr2cqzxvfztnsubnll2cfdioo4vfzu6o6vibwoag2ma'
+          },
+          eyes: {
+            color: {
+              r: 0.37109375,
+              g: 0.22265625,
+              b: 0.1953125,
+              a: 1
+            }
+          },
+          hair: {
+            color: {
+              r: 0.234375,
+              g: 0.12890625,
+              b: 0.04296875,
+              a: 1
+            }
+          },
+          skin: {
+            color: {
+              r: 0.94921875,
+              g: 0.76171875,
+              b: 0.6484375,
+              a: 1
+            }
+          }
+        },
+        interests: [],
+        hasConnectedWeb3: true
+      }
+    ]
+  }
+}
+
+export const profileEntityWithOwnedEmotes = {
+  version: 'v3',
+  id: 'bafkreid2ltr77sewkzr4xz37pzyvcgzeljubecqworvsdbw7t5333h6q3b',
+  type: EntityType.PROFILE,
+  timestamp: 1662137617154,
+  pointers: ['0x21'],
+  content: [
+    {
+      file: 'body.png',
+      hash: 'bafkreicilawwtbjyf6ahyzv64ssoamdm73rif75qncee5lv6j3a3352lua'
+    },
+    {
+      file: 'face256.png',
+      hash: 'bafkreigi3yrgdhvjr2cqzxvfztnsubnll2cfdioo4vfzu6o6vibwoag2ma'
+    }
+  ],
+  metadata: {
+    avatars: [
+      {
+        hasClaimedName: false,
+        name: 'testuser#5678',
+        description: '',
+        tutorialStep: 256,
+        userId: '0x21',
+        email: '',
+        ethAddress: '0x21',
+        version: 30,
+        avatar: {
+          bodyShape: 'urn:decentraland:off-chain:base-avatars:BaseFemale',
+          wearables: [
+            'urn:decentraland:off-chain:base-avatars:eyebrows_00',
+            'urn:decentraland:off-chain:base-avatars:short_hair'
+          ],
+          emotes: [
+            {
+              slot: 0,
+              urn: 'urn:decentraland:off-chain:base-emotes:wave'
+            },
+            {
+              slot: 1,
+              urn: 'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0:5'
+            },
+            {
+              slot: 2,
+              urn: 'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:10'
+            }
+          ],
+          snapshots: {
+            body: 'bafkreicilawwtbjyf6ahyzv64ssoamdm73rif75qncee5lv6j3a3352lua',
+            face256: 'bafkreigi3yrgdhvjr2cqzxvfztnsubnll2cfdioo4vfzu6o6vibwoag2ma'
+          },
+          eyes: {
+            color: {
+              r: 0.37109375,
+              g: 0.22265625,
+              b: 0.1953125,
+              a: 1
+            }
+          },
+          hair: {
+            color: {
+              r: 0.234375,
+              g: 0.12890625,
+              b: 0.04296875,
+              a: 1
+            }
+          },
+          skin: {
+            color: {
+              r: 0.94921875,
+              g: 0.76171875,
+              b: 0.6484375,
+              a: 1
+            }
+          }
+        },
+        interests: [],
+        hasConnectedWeb3: true
+      }
+    ]
+  }
+}
+
+export const profileEntityWithMixedEmotes = {
+  version: 'v3',
+  id: 'bafkreid2ltr77sewkzr4xz37pzyvcgzeljubecqworvsdbw7t5333h6q3c',
+  type: EntityType.PROFILE,
+  timestamp: 1662137617154,
+  pointers: ['0x22'],
+  content: [
+    {
+      file: 'body.png',
+      hash: 'bafkreicilawwtbjyf6ahyzv64ssoamdm73rif75qncee5lv6j3a3352lua'
+    },
+    {
+      file: 'face256.png',
+      hash: 'bafkreigi3yrgdhvjr2cqzxvfztnsubnll2cfdioo4vfzu6o6vibwoag2ma'
+    }
+  ],
+  metadata: {
+    avatars: [
+      {
+        hasClaimedName: false,
+        name: 'testuser#9999',
+        description: '',
+        tutorialStep: 256,
+        userId: '0x22',
+        email: '',
+        ethAddress: '0x22',
+        version: 30,
+        avatar: {
+          bodyShape: 'urn:decentraland:off-chain:base-avatars:BaseMale',
+          wearables: [
+            'urn:decentraland:off-chain:base-avatars:eyebrows_00',
+            'urn:decentraland:off-chain:base-avatars:short_hair'
+          ],
+          emotes: [
+            {
+              slot: 0,
+              urn: 'urn:decentraland:off-chain:base-emotes:wave'
+            },
+            {
+              slot: 1,
+              urn: 'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0:5'
+            },
+            {
+              slot: 2,
+              urn: 'clap'
+            },
+            {
+              slot: 3,
+              urn: 'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:10:10'
+            }
+          ],
+          snapshots: {
+            body: 'bafkreicilawwtbjyf6ahyzv64ssoamdm73rif75qncee5lv6j3a3352lua',
+            face256: 'bafkreigi3yrgdhvjr2cqzxvfztnsubnll2cfdioo4vfzu6o6vibwoag2ma'
+          },
+          eyes: {
+            color: {
+              r: 0.37109375,
+              g: 0.22265625,
+              b: 0.1953125,
+              a: 1
+            }
+          },
+          hair: {
+            color: {
+              r: 0.234375,
+              g: 0.12890625,
+              b: 0.04296875,
+              a: 1
+            }
+          },
+          skin: {
+            color: {
+              r: 0.94921875,
+              g: 0.76171875,
+              b: 0.6484375,
+              a: 1
+            }
+          }
+        },
+        interests: [],
+        hasConnectedWeb3: true
+      }
+    ]
+  }
+}

@@ -8,6 +8,10 @@ function isBaseWearable(wearable: string): boolean {
   return wearable.includes('base-avatars')
 }
 
+function isBaseEmote(emoteUrn: string): boolean {
+  return emoteUrn.includes('urn:decentraland:off-chain:base-emotes')
+}
+
 export async function translateWearablesIdFormat(wearableId: string): Promise<string | undefined> {
   if (!wearableId.startsWith('dcl://')) {
     return wearableId
@@ -165,7 +169,7 @@ export async function createProfilesComponent(
 
             const validatedEmotes: { slot: number; urn: string }[] = []
             for (const emote of avatar.avatar.emotes ?? []) {
-              if (!emote.urn.includes(':')) {
+              if (!emote.urn.includes(':') || isBaseEmote(emote.urn)) {
                 validatedEmotes.push(emote)
                 continue
               }

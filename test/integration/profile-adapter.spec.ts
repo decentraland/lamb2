@@ -6,7 +6,10 @@ import {
   profileEntityFull,
   profileEntityFullWithExtendedItems,
   profileEntityTwoEthWearables,
-  tpwResolverResponseFull
+  tpwResolverResponseFull,
+  profileEntityWithBaseEmotes,
+  profileEntityWithOwnedEmotes,
+  profileEntityWithMixedEmotes
 } from './data/profiles-responses'
 import { WearableCategory } from '@dcl/schemas'
 import { createProfilesComponent } from '../../src/adapters/profiles'
@@ -762,6 +765,199 @@ testWithComponents(() => {
       'urn:decentraland:off-chain:base-avatars:eyebrows_00',
       'urn:decentraland:off-chain:base-avatars:short_hair',
       'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:tokenId-1'
+    ])
+  })
+})
+
+testWithComponents(() => {
+  const wearables: any[] = []
+  const emotes = [
+    {
+      urn: 'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0',
+      id: 'emote-1',
+      tokenId: '5',
+      category: 'emote',
+      transferredAt: Date.now(),
+      metadata: {
+        emote: {
+          name: 'Dance Emote',
+          category: 'dance'
+        }
+      },
+      item: {
+        rarity: 'rare',
+        price: 50
+      }
+    },
+    {
+      urn: 'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:10',
+      id: 'emote-2',
+      tokenId: '10',
+      category: 'emote',
+      transferredAt: Date.now(),
+      metadata: {
+        emote: {
+          name: 'Wave Emote',
+          category: 'greetings'
+        }
+      },
+      item: {
+        rarity: 'epic',
+        price: 100
+      }
+    }
+  ]
+  const names: any[] = []
+
+  const { createMarketplaceApiFetcherMock } = require('../mocks/marketplace-api-mock')
+  const marketplaceApiFetcher = createMarketplaceApiFetcherMock({ wearables, emotes, names })
+
+  return { marketplaceApiFetcher }
+})('integration tests for profile adapter', function ({ components, stubComponents }) {
+  it('calling with profile containing only base emotes', async () => {
+    const {
+      metrics,
+      config,
+      contentServerUrl,
+      ownershipCaches,
+      thirdPartyProvidersStorage,
+      logs,
+      wearablesFetcher,
+      emotesFetcher,
+      namesFetcher,
+      l1ThirdPartyItemChecker,
+      l2ThirdPartyItemChecker
+    } = components
+    const { alchemyNftFetcher, entitiesFetcher, theGraph, fetch, content } = stubComponents
+    const address = '0x20'
+
+    content.fetchEntitiesByPointers.withArgs([address]).resolves(await Promise.all([profileEntityWithBaseEmotes]))
+
+    theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+
+    const profilesComponent = await createProfilesComponent({
+      alchemyNftFetcher,
+      entitiesFetcher,
+      metrics,
+      content,
+      contentServerUrl,
+      theGraph,
+      config,
+      fetch,
+      ownershipCaches,
+      l1ThirdPartyItemChecker,
+      l2ThirdPartyItemChecker,
+      thirdPartyProvidersStorage,
+      logs,
+      wearablesFetcher,
+      emotesFetcher,
+      namesFetcher
+    })
+
+    const profiles = await profilesComponent.getProfiles([address])
+    expect(profiles).toHaveLength(1)
+    expect(profiles[0].avatars[0].avatar.emotes).toEqual([
+      { slot: 0, urn: 'urn:decentraland:off-chain:base-emotes:wave' },
+      { slot: 1, urn: 'urn:decentraland:off-chain:base-emotes:dance' }
+    ])
+  })
+
+  it('calling with profile containing base emotes and owned emotes', async () => {
+    const {
+      metrics,
+      config,
+      contentServerUrl,
+      ownershipCaches,
+      thirdPartyProvidersStorage,
+      logs,
+      wearablesFetcher,
+      emotesFetcher,
+      namesFetcher,
+      l1ThirdPartyItemChecker,
+      l2ThirdPartyItemChecker
+    } = components
+    const { alchemyNftFetcher, entitiesFetcher, theGraph, fetch, content } = stubComponents
+    const address = '0x21'
+
+    content.fetchEntitiesByPointers.withArgs([address]).resolves(await Promise.all([profileEntityWithOwnedEmotes]))
+
+    theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+
+    const profilesComponent = await createProfilesComponent({
+      alchemyNftFetcher,
+      entitiesFetcher,
+      metrics,
+      content,
+      contentServerUrl,
+      theGraph,
+      config,
+      fetch,
+      ownershipCaches,
+      l1ThirdPartyItemChecker,
+      l2ThirdPartyItemChecker,
+      thirdPartyProvidersStorage,
+      logs,
+      wearablesFetcher,
+      emotesFetcher,
+      namesFetcher
+    })
+
+    const profiles = await profilesComponent.getProfiles([address])
+    expect(profiles).toHaveLength(1)
+    expect(profiles[0].avatars[0].avatar.emotes).toEqual([
+      { slot: 0, urn: 'urn:decentraland:off-chain:base-emotes:wave' },
+      { slot: 1, urn: 'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0:5' },
+      { slot: 2, urn: 'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:10:10' }
+    ])
+  })
+
+  it('calling with profile containing mixed emotes including ones without colons', async () => {
+    const {
+      metrics,
+      config,
+      contentServerUrl,
+      ownershipCaches,
+      thirdPartyProvidersStorage,
+      logs,
+      wearablesFetcher,
+      emotesFetcher,
+      namesFetcher,
+      l1ThirdPartyItemChecker,
+      l2ThirdPartyItemChecker
+    } = components
+    const { alchemyNftFetcher, entitiesFetcher, theGraph, fetch, content } = stubComponents
+    const address = '0x22'
+
+    content.fetchEntitiesByPointers.withArgs([address]).resolves(await Promise.all([profileEntityWithMixedEmotes]))
+
+    theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+
+    const profilesComponent = await createProfilesComponent({
+      alchemyNftFetcher,
+      entitiesFetcher,
+      metrics,
+      content,
+      contentServerUrl,
+      theGraph,
+      config,
+      fetch,
+      ownershipCaches,
+      l1ThirdPartyItemChecker,
+      l2ThirdPartyItemChecker,
+      thirdPartyProvidersStorage,
+      logs,
+      wearablesFetcher,
+      emotesFetcher,
+      namesFetcher
+    })
+
+    const profiles = await profilesComponent.getProfiles([address])
+    expect(profiles).toHaveLength(1)
+    expect(profiles[0].avatars[0].avatar.emotes).toEqual([
+      { slot: 0, urn: 'urn:decentraland:off-chain:base-emotes:wave' },
+      { slot: 1, urn: 'urn:decentraland:matic:collections-v2:0xf6f601efee04e74cecac02c8c5bdc8cc0fc1c721:0:5' },
+      { slot: 2, urn: 'clap' },
+      { slot: 3, urn: 'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:10:10' }
     ])
   })
 })
