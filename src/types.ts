@@ -66,6 +66,7 @@ export type BaseComponents = {
   namesFetcher: ElementsFetcher<Name>
   landsFetcher: LegacyElementsFetcher<LAND>
   landsPermissionsFetcher: ElementsFetcher<LandPermission>
+  userPermissionsFetcher: ElementsFetcher<WalletLandPermission>
   parcelRightsFetcher: ParcelRightsFetcher
   resourcesStatusCheck: IResourcesStatusComponent
   status: IStatusComponent
@@ -194,6 +195,24 @@ export type LandPermission = {
   y: string
   owner: string
   updateOperator: string
+}
+
+/**
+ * Permission types that a wallet can have for a parcel
+ */
+export type PermissionType =
+  | 'owner' // Direct parcel ownership
+  | 'updateOperator' // Update operator rights
+  | 'operator' // Operator rights
+
+/**
+ * Land permission with all permission types tracked
+ */
+export type WalletLandPermission = {
+  x: string
+  y: string
+  permissions: PermissionType[]
+  owner: string | null // Owner of the parcel
 }
 
 export type PaginatedResponse<T> = {
