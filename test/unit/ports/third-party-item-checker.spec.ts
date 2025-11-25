@@ -39,7 +39,8 @@ describe('third party item checker', () => {
       fetchEntities: async (urns: string[]) => {
         return generateThirdPartyWearableEntities(urns)
       },
-      fetchCollectionEntities: jest.fn() // no-op: not needed for verification through RPC
+      fetchCollectionEntities: jest.fn(), // no-op: not needed for verification through RPC
+      clearCache: jest.fn()
     }
     registry = createThirdPartyContractRegistryMock()
     thirdPartyItemChecker = await createThirdPartyItemChecker({ entitiesFetcher, logs }, httpProvider, registry)

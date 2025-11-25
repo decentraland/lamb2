@@ -8,7 +8,8 @@ describe('fetchBaseWearables', () => {
       fetchEntities: async (urns: string[]) => {
         return generateWearableEntities(urns)
       },
-      fetchCollectionEntities: jest.fn() // no-op: not needed for base wearables
+      fetchCollectionEntities: jest.fn(), // no-op: not needed for base wearables
+      clearCache: jest.fn()
     }
 
     const baseWearables = await fetchBaseWearables({ entitiesFetcher })
