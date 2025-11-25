@@ -2,7 +2,7 @@ import { Entity } from '@dcl/schemas'
 import { BlockchainCollectionThirdPartyName, parseUrn } from '@dcl/urn-resolver'
 import { FetcherError } from '../../adapters/elements-fetcher'
 import { AppComponents, ThirdPartyAsset, ThirdPartyProvider, ThirdPartyWearable } from '../../types'
-import { filterByUserNfts, mappingComprehendsUrn } from '../linked-wearables-mapper'
+import { mappingComprehendsUrn } from '../linked-wearables-mapper'
 
 const URN_THIRD_PARTY_NAME_TYPE = 'blockchain-collection-third-party-name'
 const URN_THIRD_PARTY_ASSET_TYPE = 'blockchain-collection-third-party'
@@ -27,8 +27,7 @@ async function fetchAssetsRepresentation(
     throw new Error(`Couldn't parse linked wearable provider id: ${collectionId}`)
   }
 
-  const allEntities = await components.entitiesFetcher.fetchCollectionEntities(collectionId, userOwnedNfts)
-  return filterByUserNfts(allEntities, userOwnedNfts)
+  return await components.entitiesFetcher.fetchCollectionEntities(collectionId, userOwnedNfts)
 }
 
 function groupLinkedWearablesByURN(
