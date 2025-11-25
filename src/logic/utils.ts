@@ -8,8 +8,8 @@ export type ExplorerWearableRepresentation = {
 
 export type ExplorerWearableMetadata = {
   id: string
-  rarity?: Rarity,
-  isSmart?: boolean,
+  rarity?: Rarity
+  isSmart?: boolean
   data: {
     category: WearableCategory
     representations: ExplorerWearableRepresentation[]
