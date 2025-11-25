@@ -2,7 +2,7 @@ import { Entity } from '@dcl/schemas'
 import { BlockchainCollectionThirdPartyName, parseUrn } from '@dcl/urn-resolver'
 import { FetcherError } from '../../adapters/elements-fetcher'
 import { AppComponents, ThirdPartyAsset, ThirdPartyProvider, ThirdPartyWearable } from '../../types'
-import { filterByUserNfts, mappingComprehendsUrn } from '../linked-wearables-mapper'
+import { mappingComprehendsUrn } from '../linked-wearables-mapper'
 
 const URN_THIRD_PARTY_NAME_TYPE = 'blockchain-collection-third-party-name'
 const URN_THIRD_PARTY_ASSET_TYPE = 'blockchain-collection-third-party'
@@ -27,11 +27,7 @@ async function fetchAssetsRepresentation(
     throw new Error(`Couldn't parse linked wearable provider id: ${collectionId}`)
   }
 
-  // Fetch all entities with built-in caching and pagination
-  const allEntities = await components.entitiesFetcher.fetchCollectionEntities(collectionId)
-
-  // Filter and return only entities matching user's NFTs
-  return filterByUserNfts(allEntities, userOwnedNfts)
+  return await components.entitiesFetcher.fetchCollectionEntities(collectionId, userOwnedNfts)
 }
 
 function groupLinkedWearablesByURN(
@@ -145,7 +141,6 @@ async function _fetchThirdPartyWearables(
   const providers = thirdParties.filter((provider) => (provider.metadata.thirdParty.contracts?.length ?? 0) > 0)
 
   const thirdPartyWearables = await fetchThirdPartyWearables(providers)
-
   const thirdPartyWearablesByUrn = thirdPartyWearables.reduce(
     (acc, tpw) => {
       // If there are repeated wearables, we should merge them
@@ -154,6 +149,7 @@ async function _fetchThirdPartyWearables(
     },
     {} as Record<string, ThirdPartyWearable>
   )
+
   return Object.values(thirdPartyWearablesByUrn)
 }
 

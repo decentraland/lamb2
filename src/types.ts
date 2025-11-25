@@ -38,6 +38,7 @@ import { AlchemyNftFetcher } from './adapters/alchemy-nft-fetcher'
 import { ThirdPartyItemChecker } from './ports/ownership-checker/third-party-item-checker'
 import { ParcelRightsFetcher } from './adapters/parcel-rights-fetcher'
 import { MarketplaceApiFetcher } from './adapters/marketplace-api-fetcher'
+import { ThirdPartyCollectionsCacheWarmer } from './adapters/third-party-collections-cache-warmer'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -80,6 +81,7 @@ export type BaseComponents = {
   l2ThirdPartyItemChecker: ThirdPartyItemChecker
   marketplaceApiFetcher?: MarketplaceApiFetcher
   nameOwnerFetcher: ElementsFetcher<NameOwner>
+  thirdPartyCollectionsCacheWarmer: ThirdPartyCollectionsCacheWarmer
 }
 
 // components used in runtime

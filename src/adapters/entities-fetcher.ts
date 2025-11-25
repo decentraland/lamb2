@@ -3,6 +3,7 @@ import { AppComponents } from '../types'
 import { Entity, Mappings } from '@dcl/schemas'
 import { createLowerCaseKeysCache } from './lowercase-keys-cache'
 import { createLowerCaseKeysMap } from './lowercase-keys-map'
+import { filterByUserNfts } from '../logic/linked-wearables-mapper'
 
 /**
  * Response structure from content server collection endpoints
@@ -27,7 +28,7 @@ type CollectionCacheData = {
 
 export type EntitiesFetcher = IBaseComponent & {
   fetchEntities(urns: string[]): Promise<(Entity | undefined)[]>
-  fetchCollectionEntities(collectionId: string): Promise<Entity[]>
+  fetchCollectionEntities(collectionId: string, userOwnedNfts?: string[]): Promise<Entity[]>
 }
 
 const MAX_COLLECTION_PAGE_SIZE = 1000
@@ -100,10 +101,25 @@ export async function createEntitiesFetcherComponent({
       return _fetchEntities(urns)
     },
 
-    async fetchCollectionEntities(collectionId: string): Promise<Entity[]> {
+    async fetchCollectionEntities(collectionId: string, userOwnedNfts?: string[]): Promise<Entity[]> {
       const cachedResult = collectionsCache.get(collectionId)
       if (cachedResult && cachedResult.isComplete) {
-        const entityUrns = cachedResult.entities.map((ref) => ref.entityUrn)
+        let refsToFetch = cachedResult.entities
+
+        if (userOwnedNfts && userOwnedNfts.length > 0) {
+          const minimalEntities = cachedResult.entities.map((ref) => ({
+            metadata: {
+              id: ref.entityUrn,
+              mappings: ref.mappings
+            }
+          })) as Entity[]
+
+          const matchingMinimalEntities = filterByUserNfts(minimalEntities, userOwnedNfts)
+          const matchingUrns = new Set(matchingMinimalEntities.map((e) => e.metadata.id))
+          refsToFetch = cachedResult.entities.filter((ref) => matchingUrns.has(ref.entityUrn))
+        }
+
+        const entityUrns = refsToFetch.map((ref) => ref.entityUrn)
         const fullEntities = await _fetchEntities(entityUrns)
 
         return fullEntities.filter((entity): entity is Entity => entity !== undefined)
@@ -122,9 +138,7 @@ export async function createEntitiesFetcherComponent({
         let complete = true
 
         if (totalPages > 1) {
-          // fetch all the rest of pages in parallel
           const remainingPageNumbers = Array.from({ length: totalPages - 1 }, (_, i) => i + 2)
-          console.log('remainingPageNumbers', remainingPageNumbers)
           const remainingResults = await Promise.all(
             remainingPageNumbers.map(async (pageNum) => {
               return await fetchCollectionPagination(collectionId, pageNum)
@@ -140,7 +154,6 @@ export async function createEntitiesFetcherComponent({
           }
         }
 
-        // remove entities without mappings
         const entitiesWithMappings = allEntities.filter((entity) => entity.metadata.mappings)
         const minimalCacheData: CollectionCacheData = {
           entities: entitiesWithMappings.map((entity) => ({
@@ -150,9 +163,7 @@ export async function createEntitiesFetcherComponent({
           isComplete: complete
         }
 
-        // store minimal data in cache { urn, mappings }
         collectionsCache.set(collectionId, minimalCacheData)
-
         return entitiesWithMappings
       } catch (error) {
         logger.error('Parallel pagination failed for collection', {
