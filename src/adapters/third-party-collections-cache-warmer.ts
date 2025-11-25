@@ -24,9 +24,12 @@ export type CacheWarmerStatus = {
  * a collection triggers expensive pagination across thousands of entities.
  */
 export async function createThirdPartyCollectionsCacheWarmer(
-  components: Pick<AppComponents, 'config' | 'logs' | 'thirdPartyProvidersStorage' | 'entitiesFetcher'>
+  components: Pick<
+    AppComponents,
+    'config' | 'logs' | 'thirdPartyProvidersStorage' | 'entitiesFetcher' | 'fetch' | 'contentServerUrl'
+  >
 ): Promise<ThirdPartyCollectionsCacheWarmer> {
-  const { config, logs, thirdPartyProvidersStorage, entitiesFetcher } = components
+  const { config, logs, thirdPartyProvidersStorage, entitiesFetcher, fetch, contentServerUrl } = components
   const logger = logs.getLogger('third-party-collections-cache-warmer')
 
   // Configuration
@@ -34,6 +37,8 @@ export async function createThirdPartyCollectionsCacheWarmer(
   const warmupIntervalMs = (await config.getNumber('CACHE_WARMER_INTERVAL_MS')) || 1000 * 60 * 60 * 24 // 24 hours default
   const warmupDelayMs = (await config.getNumber('CACHE_WARMER_DELAY_MS')) || 5000 // 5 seconds delay after boot
   const maxConcurrent = (await config.getNumber('CACHE_WARMER_MAX_CONCURRENT')) || 3 // Warm 3 collections in parallel
+  const healthCheckRetryMs = (await config.getNumber('CACHE_WARMER_HEALTH_CHECK_RETRY_MS')) || 5000 // 5 seconds between retries
+  const healthCheckMaxRetries = (await config.getNumber('CACHE_WARMER_HEALTH_CHECK_MAX_RETRIES')) || 60 // Max 60 retries (5 min)
 
   // State
   let intervalId: ReturnType<typeof setInterval> | undefined
@@ -44,6 +49,93 @@ export async function createThirdPartyCollectionsCacheWarmer(
     totalCollections: 0,
     errors: [],
     isWarming: false
+  }
+
+  /**
+   * Check if content server is ready for cache warming
+   * Content server status endpoint returns synchronizationState which should be "Syncing"
+   */
+  async function isContentServerReady(): Promise<boolean> {
+    try {
+      const statusUrl = `${contentServerUrl}/status`
+      logger.debug('[isContentServerReady] Checking content server health', { statusUrl })
+
+      const response = await fetch.fetch(statusUrl)
+      if (!response.ok) {
+        logger.warn('[isContentServerReady] Content server status check failed', {
+          status: response.status,
+          statusText: response.statusText
+        })
+        return false
+      }
+
+      const data = await response.json()
+      const syncState = data.synchronizationStatus?.synchronizationState
+
+      logger.debug('[isContentServerReady] Content server status', {
+        version: data.version,
+        ethNetwork: data.ethNetwork,
+        synchronizationState: syncState
+      })
+
+      // Content server is ready when synchronizationState is "Syncing"
+      const isReady = syncState === 'Syncing'
+
+      if (!isReady) {
+        logger.info('[isContentServerReady] Content server not ready yet', {
+          currentState: syncState,
+          expectedState: 'Syncing'
+        })
+      } else {
+        logger.info('[isContentServerReady] Content server is ready', {
+          synchronizationState: syncState
+        })
+      }
+
+      return isReady
+    } catch (error) {
+      logger.warn('[isContentServerReady] Error checking content server health', {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      })
+      return false
+    }
+  }
+
+  /**
+   * Wait for content server to be ready before warming cache
+   * Retries with exponential backoff up to maxRetries
+   */
+  async function waitForContentServerReady(): Promise<boolean> {
+    logger.info('[waitForContentServerReady] Waiting for content server to be ready', {
+      healthCheckRetryMs,
+      healthCheckMaxRetries
+    })
+
+    for (let attempt = 1; attempt <= healthCheckMaxRetries; attempt++) {
+      const isReady = await isContentServerReady()
+
+      if (isReady) {
+        logger.info('[waitForContentServerReady] Content server is ready', {
+          attempt,
+          totalWaitMs: (attempt - 1) * healthCheckRetryMs
+        })
+        return true
+      }
+
+      if (attempt < healthCheckMaxRetries) {
+        logger.debug('[waitForContentServerReady] Retrying health check', {
+          attempt,
+          nextRetryInMs: healthCheckRetryMs
+        })
+        await new Promise((resolve) => setTimeout(resolve, healthCheckRetryMs))
+      }
+    }
+
+    logger.error('[waitForContentServerReady] Content server not ready after max retries', {
+      maxRetries: healthCheckMaxRetries,
+      totalWaitMs: healthCheckMaxRetries * healthCheckRetryMs
+    })
+    return false
   }
 
   /**
@@ -146,6 +238,19 @@ export async function createThirdPartyCollectionsCacheWarmer(
 
     try {
       logger.info('[warmCache] Starting cache warmup')
+
+      // Wait for content server to be ready
+      logger.info('[warmCache] Checking if content server is ready')
+      const contentServerReady = await waitForContentServerReady()
+
+      if (!contentServerReady) {
+        const errorMsg = 'Content server not ready after waiting. Skipping cache warmup.'
+        logger.error('[warmCache] ' + errorMsg)
+        status.errors.push(errorMsg)
+        return
+      }
+
+      logger.info('[warmCache] Content server is ready, proceeding with cache warmup')
 
       // Get all third-party providers
       const allProviders = await thirdPartyProvidersStorage.getAll()
