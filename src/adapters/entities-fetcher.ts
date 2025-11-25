@@ -29,6 +29,7 @@ type CollectionCacheData = {
 export type EntitiesFetcher = IBaseComponent & {
   fetchEntities(urns: string[]): Promise<(Entity | undefined)[]>
   fetchCollectionEntities(collectionId: string, userOwnedNfts?: string[]): Promise<Entity[]>
+  clearCache(): void
 }
 
 const MAX_COLLECTION_PAGE_SIZE = 1000
@@ -110,6 +111,10 @@ export async function createEntitiesFetcherComponent({
   }
 
   return {
+    clearCache() {
+      entititesCache.clear()
+      collectionsCache.clear()
+    },
     async fetchEntities(urns: string[]): Promise<(Entity | undefined)[]> {
       return _fetchEntities(urns)
     },

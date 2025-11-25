@@ -5,13 +5,12 @@ import {
   generateBaseWearables,
   generateThirdPartyWearables,
   generateWearableEntities,
-  generateWearables,
-  getThirdPartyProviders
+  generateWearables
 } from '../data/wearables'
 
-import { MixedWearableResponse, MixedWearableTrimmedResponse } from '../../src/controllers/handlers/explorer-handler'
-import { leastRareOptional, nameAZ, nameZA, rarestOptional } from '../../src/logic/sorting'
-import { BaseWearable, ThirdPartyAsset } from '../../src/types'
+import { MixedWearableResponse } from '../../src/controllers/handlers/explorer-handler'
+import { rarestOptional } from '../../src/logic/sorting'
+import { BaseWearable } from '../../src/types'
 import { createTheGraphComponentMock } from '../mocks/the-graph-mock'
 import { generateRandomAddress } from '../helpers'
 
@@ -48,6 +47,11 @@ testWithComponents(() => {
     theGraphComponent: theGraphMock
   }
 })('wearables-handler: GET /explorer/:address/wearables', function ({ components }) {
+  beforeEach(() => {
+    const { entitiesFetcher } = components
+    entitiesFetcher.clearCache()
+  })
+
   it('return descriptive errors for bad requests', async () => {
     const { localFetch } = components
 
@@ -817,7 +821,9 @@ testWithComponents(() => {
       it('should work with sorting when isSmartWearable=true', async () => {
         const { localFetch } = components
 
-        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?isSmartWearable=true&orderBy=name&direction=asc`)
+        const r = await localFetch.fetch(
+          `/explorer/${wallet}/wearables?isSmartWearable=true&orderBy=name&direction=asc`
+        )
 
         expect(r.status).toBe(200)
         const response = await r.json()
@@ -941,6 +947,7 @@ testWithComponents(() => {
         })
       })
 
+      //
       it('should return all wearable types by default', async () => {
         const { localFetch, wearablesFetcher } = components
 
@@ -1474,7 +1481,9 @@ testWithComponents(() => {
       })
 
       content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
-        pointers.map((pointer) => entities.find((def) => def.id === pointer)).filter((e): e is Entity => e !== undefined)
+        pointers
+          .map((pointer) => entities.find((def) => def.id === pointer))
+          .filter((e): e is Entity => e !== undefined)
       )
       theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
       theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
@@ -1641,7 +1650,9 @@ testWithComponents(() => {
       it('should work with includeAmount and isSmartWearable', async () => {
         const { localFetch } = components
 
-        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=true&includeAmount=true&isSmartWearable=true`)
+        const r = await localFetch.fetch(
+          `/explorer/${wallet}/wearables?trimmed=true&includeAmount=true&isSmartWearable=true`
+        )
 
         expect(r.status).toBe(200)
         const response = await r.json()
@@ -1672,7 +1683,9 @@ testWithComponents(() => {
       it('should work with includeAmount and sorting', async () => {
         const { localFetch } = components
 
-        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=true&includeAmount=true&orderBy=name&direction=asc`)
+        const r = await localFetch.fetch(
+          `/explorer/${wallet}/wearables?trimmed=true&includeAmount=true&orderBy=name&direction=asc`
+        )
 
         expect(r.status).toBe(200)
         const response = await r.json()
