@@ -224,8 +224,6 @@ export async function createThirdPartyCollectionsCacheWarmer(
     status.errors = []
     status.collectionsWarmed = 0
 
-    const overallStart = Date.now()
-
     try {
       logger.info('[warmCache] Starting cache warmup')
 
