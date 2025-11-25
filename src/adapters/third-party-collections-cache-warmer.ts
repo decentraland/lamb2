@@ -32,7 +32,7 @@ export async function createThirdPartyCollectionsCacheWarmer(
   const { config, logs, thirdPartyProvidersStorage, entitiesFetcher, fetch, contentServerUrl } = components
   const logger = logs.getLogger('third-party-collections-cache-warmer')
 
-  const isDisabled = (await config.getString('DISABLE_CACHE_WARMER_ENABLED'))?.toLowerCase() === 'true' || false
+  const enabled = (await config.getString('CACHE_WARMER_ENABLED'))?.toLowerCase() === 'true' || false
   const warmupIntervalMs = (await config.getNumber('CACHE_WARMER_INTERVAL_MS')) || 1000 * 60 * 60 * 47 // 47 hours (just before the LW collection 48h TTL expires)
   const warmupDelayMs = (await config.getNumber('CACHE_WARMER_DELAY_MS')) || 5000 // 5 seconds delay after boot
   const maxConcurrent = (await config.getNumber('CACHE_WARMER_MAX_CONCURRENT')) || 3 // Warm 3 collections in parallel
@@ -42,7 +42,7 @@ export async function createThirdPartyCollectionsCacheWarmer(
   let intervalId: ReturnType<typeof setInterval> | undefined
   let isWarming = false
   const status: CacheWarmerStatus = {
-    enabled: !isDisabled,
+    enabled,
     collectionsWarmed: 0,
     totalCollections: 0,
     errors: [],
@@ -209,7 +209,7 @@ export async function createThirdPartyCollectionsCacheWarmer(
    * Main cache warming function
    */
   async function warmCache(): Promise<void> {
-    if (isDisabled) {
+    if (!enabled) {
       logger.info('[warmCache] Cache warmer is disabled')
       return
     }
@@ -283,7 +283,7 @@ export async function createThirdPartyCollectionsCacheWarmer(
    * Start the cache warmer component
    */
   async function start() {
-    if (isDisabled) {
+    if (!enabled) {
       logger.info('[start] Cache warmer is disabled via config')
       return
     }
