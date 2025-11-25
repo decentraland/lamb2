@@ -200,7 +200,9 @@ export async function initComponents(
     config,
     logs,
     thirdPartyProvidersStorage,
-    entitiesFetcher
+    entitiesFetcher,
+    fetch,
+    contentServerUrl
   })
 
   return {
