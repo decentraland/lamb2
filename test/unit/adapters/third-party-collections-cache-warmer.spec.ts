@@ -53,7 +53,7 @@ describe('when creating the third-party collections cache warmer component', () 
 
   describe('and the cache warmer is disabled', () => {
     beforeEach(() => {
-      ;(mockConfig.getString as jest.Mock).mockResolvedValueOnce('false')
+      ;(mockConfig.getString as jest.Mock).mockResolvedValueOnce('true')
       ;(mockConfig.getNumber as jest.Mock).mockResolvedValue(undefined)
     })
 
@@ -67,7 +67,7 @@ describe('when creating the third-party collections cache warmer component', () 
 
   describe('and the cache warmer is enabled', () => {
     beforeEach(() => {
-      ;(mockConfig.getString as jest.Mock).mockResolvedValueOnce('true')
+      ;(mockConfig.getString as jest.Mock).mockResolvedValueOnce('false')
       ;(mockConfig.getNumber as jest.Mock).mockResolvedValue(undefined)
     })
 
@@ -102,7 +102,7 @@ describe('when creating the third-party collections cache warmer component', () 
       customMaxConcurrent = 5
       customHealthCheckRetry = 3000
       customHealthCheckMaxRetries = 10
-      ;(mockConfig.getString as jest.Mock).mockResolvedValueOnce('true')
+      ;(mockConfig.getString as jest.Mock).mockResolvedValueOnce('false')
       ;(mockConfig.getNumber as jest.Mock).mockImplementation((key: string) => {
         switch (key) {
           case 'CACHE_WARMER_INTERVAL_MS':
@@ -161,7 +161,7 @@ describe('when the cache warmer component is disabled', () => {
       fetch: mockFetch,
       contentServerUrl: 'http://test-content-server.com'
     }
-    ;(mockConfig.getString as jest.Mock).mockResolvedValueOnce('false')
+    ;(mockConfig.getString as jest.Mock).mockResolvedValueOnce('true')
     ;(mockConfig.getNumber as jest.Mock).mockResolvedValue(undefined)
 
     warmer = await createThirdPartyCollectionsCacheWarmer(components)
@@ -222,7 +222,7 @@ describe('when the cache warmer component is enabled', () => {
       fetch: mockFetch,
       contentServerUrl
     }
-    ;(mockConfig.getString as jest.Mock).mockResolvedValueOnce('true')
+    ;(mockConfig.getString as jest.Mock).mockResolvedValueOnce('false')
     ;(mockConfig.getNumber as jest.Mock).mockResolvedValue(undefined)
 
     warmer = await createThirdPartyCollectionsCacheWarmer(components)
@@ -485,7 +485,7 @@ describe('when the cache warmer component is enabled', () => {
 
           // Reset config mock to include batch configuration
           const batchConfig = createConfigMock()
-          ;(batchConfig.getString as jest.Mock).mockResolvedValueOnce('true')
+          ;(batchConfig.getString as jest.Mock).mockResolvedValueOnce('false')
           ;(batchConfig.getNumber as jest.Mock).mockImplementation((key: string) => {
             if (key === 'CACHE_WARMER_MAX_CONCURRENT') {
               return Promise.resolve(maxConcurrent)
@@ -691,7 +691,7 @@ describe('when the cache warmer component is enabled', () => {
         warmupInterval = 10000
 
         const customConfig = createConfigMock()
-        ;(customConfig.getString as jest.Mock).mockResolvedValueOnce('true')
+        ;(customConfig.getString as jest.Mock).mockResolvedValueOnce('false')
         ;(customConfig.getNumber as jest.Mock).mockImplementation((key: string) => {
           if (key === 'CACHE_WARMER_DELAY_MS') {
             return Promise.resolve(warmupDelay)

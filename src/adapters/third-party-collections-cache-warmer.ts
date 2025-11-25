@@ -32,7 +32,7 @@ export async function createThirdPartyCollectionsCacheWarmer(
   const { config, logs, thirdPartyProvidersStorage, entitiesFetcher, fetch, contentServerUrl } = components
   const logger = logs.getLogger('third-party-collections-cache-warmer')
 
-  const enabled = (await config.getString('CACHE_WARMER_ENABLED'))?.toLowerCase() === 'true' || false
+  const enabled = (await config.getString('DISABLE_CACHE_WARMER'))?.toLowerCase() !== 'true'
   const warmupIntervalMs = (await config.getNumber('CACHE_WARMER_INTERVAL_MS')) || 1000 * 60 * 60 * 47 // 47 hours (just before the LW collection 48h TTL expires)
   const warmupDelayMs = (await config.getNumber('CACHE_WARMER_DELAY_MS')) || 5000 // 5 seconds delay after boot
   const maxConcurrent = (await config.getNumber('CACHE_WARMER_MAX_CONCURRENT')) || 3 // Warm 3 collections in parallel
