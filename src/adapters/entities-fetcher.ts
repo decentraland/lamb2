@@ -104,11 +104,9 @@ export async function createEntitiesFetcherComponent({
     async fetchCollectionEntities(collectionId: string, userOwnedNfts?: string[]): Promise<Entity[]> {
       const cachedResult = collectionsCache.get(collectionId)
       if (cachedResult && cachedResult.isComplete) {
-        // If we have user NFTs, filter by mappings BEFORE fetching full entities
         let refsToFetch = cachedResult.entities
 
         if (userOwnedNfts && userOwnedNfts.length > 0) {
-          // Create minimal entities with just the mappings for filtering
           const minimalEntities = cachedResult.entities.map((ref) => ({
             metadata: {
               id: ref.entityUrn,
@@ -116,10 +114,7 @@ export async function createEntitiesFetcherComponent({
             }
           })) as Entity[]
 
-          // Filter by mappings
           const matchingMinimalEntities = filterByUserNfts(minimalEntities, userOwnedNfts)
-
-          // Get the refs for matching entities
           const matchingUrns = new Set(matchingMinimalEntities.map((e) => e.metadata.id))
           refsToFetch = cachedResult.entities.filter((ref) => matchingUrns.has(ref.entityUrn))
         }
@@ -143,7 +138,6 @@ export async function createEntitiesFetcherComponent({
         let complete = true
 
         if (totalPages > 1) {
-          // fetch all the rest of pages in parallel
           const remainingPageNumbers = Array.from({ length: totalPages - 1 }, (_, i) => i + 2)
           const remainingResults = await Promise.all(
             remainingPageNumbers.map(async (pageNum) => {
@@ -160,7 +154,6 @@ export async function createEntitiesFetcherComponent({
           }
         }
 
-        // remove entities without mappings
         const entitiesWithMappings = allEntities.filter((entity) => entity.metadata.mappings)
         const minimalCacheData: CollectionCacheData = {
           entities: entitiesWithMappings.map((entity) => ({
@@ -170,9 +163,7 @@ export async function createEntitiesFetcherComponent({
           isComplete: complete
         }
 
-        // store minimal data in cache { urn, mappings }
         collectionsCache.set(collectionId, minimalCacheData)
-
         return entitiesWithMappings
       } catch (error) {
         logger.error('Parallel pagination failed for collection', {
