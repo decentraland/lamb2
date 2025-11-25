@@ -162,7 +162,7 @@ export async function initComponents(
     { logs, theGraph, marketplaceApiFetcher },
     async (_deps, address) => {
       const elements = await fetchAllThirdPartyWearables(
-        { alchemyNftFetcher, contentServerUrl, thirdPartyProvidersStorage, fetch, entitiesFetcher, metrics },
+        { alchemyNftFetcher, contentServerUrl, thirdPartyProvidersStorage, fetch, entitiesFetcher, metrics, logs },
         address
       )
       return { elements, totalAmount: elements.length }

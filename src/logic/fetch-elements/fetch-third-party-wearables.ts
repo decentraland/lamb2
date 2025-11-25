@@ -27,10 +27,7 @@ async function fetchAssetsRepresentation(
     throw new Error(`Couldn't parse linked wearable provider id: ${collectionId}`)
   }
 
-  // Fetch all entities with built-in caching and pagination
-  const allEntities = await components.entitiesFetcher.fetchCollectionEntities(collectionId)
-
-  // Filter and return only entities matching user's NFTs
+  const allEntities = await components.entitiesFetcher.fetchCollectionEntities(collectionId, userOwnedNfts)
   return filterByUserNfts(allEntities, userOwnedNfts)
 }
 
@@ -145,7 +142,6 @@ async function _fetchThirdPartyWearables(
   const providers = thirdParties.filter((provider) => (provider.metadata.thirdParty.contracts?.length ?? 0) > 0)
 
   const thirdPartyWearables = await fetchThirdPartyWearables(providers)
-
   const thirdPartyWearablesByUrn = thirdPartyWearables.reduce(
     (acc, tpw) => {
       // If there are repeated wearables, we should merge them
@@ -154,6 +150,7 @@ async function _fetchThirdPartyWearables(
     },
     {} as Record<string, ThirdPartyWearable>
   )
+
   return Object.values(thirdPartyWearablesByUrn)
 }
 
