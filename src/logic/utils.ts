@@ -8,7 +8,8 @@ export type ExplorerWearableRepresentation = {
 
 export type ExplorerWearableMetadata = {
   id: string
-  rarity?: Rarity
+  rarity?: Rarity,
+  isSmart?: boolean,
   data: {
     category: WearableCategory
     representations: ExplorerWearableRepresentation[]
@@ -81,6 +82,7 @@ export function buildTrimmedEntity(entity: Entity): ExplorerWearableEntity {
   const representations: ExplorerWearableRepresentation[] = (metadata?.data?.representations || []).map((rep: any) => ({
     bodyShapes: rep.bodyShapes
   }))
+  const isSmart = metadata?.data?.tags?.map((tag: string) => tag.toLowerCase()).includes('smart') ?? false
 
   return {
     id: entity.id,
@@ -88,6 +90,7 @@ export function buildTrimmedEntity(entity: Entity): ExplorerWearableEntity {
     metadata: {
       id: metadata?.id,
       rarity: metadata?.rarity,
+      isSmart,
       data: {
         category: category as WearableCategory,
         representations
