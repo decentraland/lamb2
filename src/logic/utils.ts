@@ -74,7 +74,7 @@ export function sanitizeContractList(thirdPartyProviders: ThirdPartyProvider[]) 
   }
 }
 
-export function buildTrimmedEntity(entity: Entity): ExplorerWearableEntity {
+export function buildTrimmedEntity(entity: Entity, itemType?: string): ExplorerWearableEntity {
   const thumbnailFile = entity?.metadata?.thumbnail as string | undefined
   const thumbnailHash = entity?.content?.find((c) => c.file === thumbnailFile)?.hash
   const metadata = entity?.metadata
@@ -82,7 +82,7 @@ export function buildTrimmedEntity(entity: Entity): ExplorerWearableEntity {
   const representations: ExplorerWearableRepresentation[] = (metadata?.data?.representations || []).map((rep: any) => ({
     bodyShapes: rep.bodyShapes
   }))
-  const isSmart = metadata?.data?.tags?.map((tag: string) => tag.toLowerCase()).includes('smart') ?? false
+  const isSmart = itemType?.startsWith('smart_wearable') ?? false
 
   return {
     id: entity.id,

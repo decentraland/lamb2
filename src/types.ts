@@ -141,6 +141,7 @@ export type Item<C extends WearableCategory | EmoteCategory> = {
   }[]
   name: string
   rarity: string
+  itemType?: string
   minTransferredAt: number
   maxTransferredAt: number
   category: C
