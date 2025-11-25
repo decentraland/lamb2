@@ -3,6 +3,7 @@ import { AppComponents } from '../types'
 import { Entity, Mappings } from '@dcl/schemas'
 import { createLowerCaseKeysCache } from './lowercase-keys-cache'
 import { createLowerCaseKeysMap } from './lowercase-keys-map'
+import { filterByUserNfts } from '../logic/linked-wearables-mapper'
 
 /**
  * Response structure from content server collection endpoints
@@ -27,7 +28,8 @@ type CollectionCacheData = {
 
 export type EntitiesFetcher = IBaseComponent & {
   fetchEntities(urns: string[]): Promise<(Entity | undefined)[]>
-  fetchCollectionEntities(collectionId: string): Promise<Entity[]>
+  fetchCollectionEntities(collectionId: string, userOwnedNfts?: string[]): Promise<Entity[]>
+  clearCache(): void
 }
 
 const MAX_COLLECTION_PAGE_SIZE = 1000
@@ -95,15 +97,40 @@ export async function createEntitiesFetcherComponent({
     return urns.map((urn) => entitiesByUrn.get(urn))
   }
 
+  function getCollectionMappingsCached(collectionId: string): Partial<Entity>[] | undefined {
+    const cachedResult = collectionsCache.get(collectionId)
+    if (cachedResult && cachedResult.isComplete) {
+      return cachedResult.entities.map((ref) => ({
+        metadata: {
+          entityUrn: ref.entityUrn,
+          mappings: ref.mappings
+        }
+      }))
+    }
+    return undefined
+  }
+
   return {
+    clearCache() {
+      entititesCache.clear()
+      collectionsCache.clear()
+    },
     async fetchEntities(urns: string[]): Promise<(Entity | undefined)[]> {
       return _fetchEntities(urns)
     },
 
-    async fetchCollectionEntities(collectionId: string): Promise<Entity[]> {
-      const cachedResult = collectionsCache.get(collectionId)
-      if (cachedResult && cachedResult.isComplete) {
-        const entityUrns = cachedResult.entities.map((ref) => ref.entityUrn)
+    async fetchCollectionEntities(collectionId: string, userOwnedNfts?: string[]): Promise<Entity[]> {
+      const cachedMappings: Partial<Entity>[] | undefined = getCollectionMappingsCached(collectionId)
+      if (cachedMappings) {
+        let refsToFetch = cachedMappings
+
+        if (userOwnedNfts && userOwnedNfts.length > 0) {
+          const matchingMinimalEntities = filterByUserNfts<Partial<Entity>>(cachedMappings, userOwnedNfts)
+          const matchingUrns = new Set(matchingMinimalEntities.map((e) => e.metadata.id))
+          refsToFetch = cachedMappings.filter((ref) => matchingUrns.has(ref.metadata.entityUrn))
+        }
+
+        const entityUrns = refsToFetch.map((ref) => ref.metadata.entityUrn)
         const fullEntities = await _fetchEntities(entityUrns)
 
         return fullEntities.filter((entity): entity is Entity => entity !== undefined)
@@ -124,7 +151,6 @@ export async function createEntitiesFetcherComponent({
         if (totalPages > 1) {
           // fetch all the rest of pages in parallel
           const remainingPageNumbers = Array.from({ length: totalPages - 1 }, (_, i) => i + 2)
-          console.log('remainingPageNumbers', remainingPageNumbers)
           const remainingResults = await Promise.all(
             remainingPageNumbers.map(async (pageNum) => {
               return await fetchCollectionPagination(collectionId, pageNum)
@@ -149,11 +175,12 @@ export async function createEntitiesFetcherComponent({
           })),
           isComplete: complete
         }
-
-        // store minimal data in cache { urn, mappings }
         collectionsCache.set(collectionId, minimalCacheData)
 
-        return entitiesWithMappings
+        const ownedEntities = userOwnedNfts
+          ? filterByUserNfts<Entity>(entitiesWithMappings, userOwnedNfts)
+          : entitiesWithMappings
+        return ownedEntities
       } catch (error) {
         logger.error('Parallel pagination failed for collection', {
           collectionId,

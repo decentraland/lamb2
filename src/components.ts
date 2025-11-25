@@ -42,6 +42,7 @@ import { createThirdPartyItemChecker } from './ports/ownership-checker/third-par
 import { createParcelRightsComponent } from './adapters/parcel-rights-fetcher'
 import { fetchNameOwner } from './logic/fetch-elements/fetch-name-owner'
 import { fetchAllPermissions } from './logic/fetch-elements/fetch-permissions'
+import { createThirdPartyCollectionsCacheWarmer } from './adapters/third-party-collections-cache-warmer'
 
 // Initialize all the components of the app
 export async function initComponents(
@@ -194,6 +195,15 @@ export async function initComponents(
     l2ThirdPartyItemChecker
   })
 
+  const thirdPartyCollectionsCacheWarmer = await createThirdPartyCollectionsCacheWarmer({
+    config,
+    logs,
+    thirdPartyProvidersStorage,
+    entitiesFetcher,
+    fetch,
+    contentServerUrl
+  })
+
   return {
     config,
     logs,
@@ -230,6 +240,7 @@ export async function initComponents(
     l1ThirdPartyItemChecker,
     l2ThirdPartyItemChecker,
     marketplaceApiFetcher,
-    nameOwnerFetcher
+    nameOwnerFetcher,
+    thirdPartyCollectionsCacheWarmer
   }
 }
