@@ -22,36 +22,6 @@ export const metricDeclarations = {
     help: 'Third Party Provider fetch assets request duration in seconds.',
     type: IMetricsComponent.HistogramType,
     labelNames: ['id']
-  },
-  cache_warmer_collections_warmed_total: {
-    help: 'Total number of collections successfully warmed by the cache warmer',
-    type: IMetricsComponent.CounterType,
-    labelNames: ['collection']
-  },
-  cache_warmer_duration_seconds: {
-    help: 'Duration of cache warming per collection in seconds',
-    type: IMetricsComponent.HistogramType,
-    labelNames: ['collection']
-  },
-  cache_warmer_errors_total: {
-    help: 'Total number of cache warming errors',
-    type: IMetricsComponent.CounterType,
-    labelNames: ['collection']
-  },
-  cache_warmer_fatal_errors_total: {
-    help: 'Total number of fatal cache warming errors',
-    type: IMetricsComponent.CounterType,
-    labelNames: []
-  },
-  cache_warmer_total_duration_seconds: {
-    help: 'Total duration of full cache warmup cycle in seconds',
-    type: IMetricsComponent.HistogramType,
-    labelNames: []
-  },
-  cache_warmer_last_warmup_timestamp: {
-    help: 'Unix timestamp of the last successful cache warmup',
-    type: IMetricsComponent.GaugeType,
-    labelNames: []
   }
 }
 

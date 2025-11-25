@@ -24,8 +24,8 @@ function checkMappingsMatch(mappings: Mappings, userOwnedNfts: string[]): boolea
  * Filters entities by matching their mappings against URNs.
  * Returns entities that the user owns based on URNs.
  */
-export function filterByUserNfts(entities: Entity[], userOwnedNfts: string[]): Entity[] {
-  const matchingEntities: Entity[] = []
+export function filterByUserNfts<T extends Entity | Partial<Entity>>(entities: T[], userOwnedNfts: string[]): T[] {
+  const matchingEntities: T[] = []
 
   for (const entity of entities) {
     if (checkMappingsMatch(entity.metadata.mappings, userOwnedNfts)) {

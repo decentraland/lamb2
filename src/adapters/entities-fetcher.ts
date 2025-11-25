@@ -96,35 +96,36 @@ export async function createEntitiesFetcherComponent({
     return urns.map((urn) => entitiesByUrn.get(urn))
   }
 
+  function getCollectionMappingsCached(collectionId: string): Partial<Entity>[] | undefined {
+    const cachedResult = collectionsCache.get(collectionId)
+    if (cachedResult && cachedResult.isComplete) {
+      return cachedResult.entities.map((ref) => ({
+        metadata: {
+          entityUrn: ref.entityUrn,
+          mappings: ref.mappings
+        }
+      }))
+    }
+    return undefined
+  }
+
   return {
     async fetchEntities(urns: string[]): Promise<(Entity | undefined)[]> {
       return _fetchEntities(urns)
     },
 
     async fetchCollectionEntities(collectionId: string, userOwnedNfts?: string[]): Promise<Entity[]> {
-      const cachedResult = collectionsCache.get(collectionId)
-      if (cachedResult && cachedResult.isComplete) {
-        // If we have user NFTs, filter by mappings BEFORE fetching full entities
-        let refsToFetch = cachedResult.entities
+      const cachedMappings: Partial<Entity>[] | undefined = getCollectionMappingsCached(collectionId)
+      if (cachedMappings) {
+        let refsToFetch = cachedMappings
 
         if (userOwnedNfts && userOwnedNfts.length > 0) {
-          // Create minimal entities with just the mappings for filtering
-          const minimalEntities = cachedResult.entities.map((ref) => ({
-            metadata: {
-              id: ref.entityUrn,
-              mappings: ref.mappings
-            }
-          })) as Entity[]
-
-          // Filter by mappings
-          const matchingMinimalEntities = filterByUserNfts(minimalEntities, userOwnedNfts)
-
-          // Get the refs for matching entities
+          const matchingMinimalEntities = filterByUserNfts<Partial<Entity>>(cachedMappings, userOwnedNfts)
           const matchingUrns = new Set(matchingMinimalEntities.map((e) => e.metadata.id))
-          refsToFetch = cachedResult.entities.filter((ref) => matchingUrns.has(ref.entityUrn))
+          refsToFetch = cachedMappings.filter((ref) => matchingUrns.has(ref.metadata.entityUrn))
         }
 
-        const entityUrns = refsToFetch.map((ref) => ref.entityUrn)
+        const entityUrns = refsToFetch.map((ref) => ref.metadata.entityUrn)
         const fullEntities = await _fetchEntities(entityUrns)
 
         return fullEntities.filter((entity): entity is Entity => entity !== undefined)
@@ -169,11 +170,12 @@ export async function createEntitiesFetcherComponent({
           })),
           isComplete: complete
         }
-
-        // store minimal data in cache { urn, mappings }
         collectionsCache.set(collectionId, minimalCacheData)
 
-        return entitiesWithMappings
+        const ownedEntities = userOwnedNfts
+          ? filterByUserNfts<Entity>(entitiesWithMappings, userOwnedNfts)
+          : entitiesWithMappings
+        return ownedEntities
       } catch (error) {
         logger.error('Parallel pagination failed for collection', {
           collectionId,

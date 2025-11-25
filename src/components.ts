@@ -195,7 +195,6 @@ export async function initComponents(
     l2ThirdPartyItemChecker
   })
 
-  // Create cache warmer component
   const thirdPartyCollectionsCacheWarmer = await createThirdPartyCollectionsCacheWarmer({
     config,
     logs,
