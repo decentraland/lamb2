@@ -32,15 +32,13 @@ export async function createThirdPartyCollectionsCacheWarmer(
   const { config, logs, thirdPartyProvidersStorage, entitiesFetcher, fetch, contentServerUrl } = components
   const logger = logs.getLogger('third-party-collections-cache-warmer')
 
-  // Configuration
   const enabled = (await config.getString('CACHE_WARMER_ENABLED'))?.toLowerCase() === 'true' || false
-  const warmupIntervalMs = (await config.getNumber('CACHE_WARMER_INTERVAL_MS')) || 1000 * 60 * 60 * 24 // 24 hours default
+  const warmupIntervalMs = (await config.getNumber('CACHE_WARMER_INTERVAL_MS')) || 1000 * 60 * 60 * 47 // 47 hours (just before the LW collection 48h TTL expires)
   const warmupDelayMs = (await config.getNumber('CACHE_WARMER_DELAY_MS')) || 5000 // 5 seconds delay after boot
   const maxConcurrent = (await config.getNumber('CACHE_WARMER_MAX_CONCURRENT')) || 3 // Warm 3 collections in parallel
   const healthCheckRetryMs = (await config.getNumber('CACHE_WARMER_HEALTH_CHECK_RETRY_MS')) || 5000 // 5 seconds between retries
   const healthCheckMaxRetries = (await config.getNumber('CACHE_WARMER_HEALTH_CHECK_MAX_RETRIES')) || 60 // Max 60 retries (5 min)
 
-  // State
   let intervalId: ReturnType<typeof setInterval> | undefined
   let isWarming = false
   const status: CacheWarmerStatus = {
@@ -163,10 +161,6 @@ export async function createThirdPartyCollectionsCacheWarmer(
         durationMs: duration
       })
 
-      // Record metric (TODO: Uncomment when metrics are properly configured)
-      // metrics.increment('cache_warmer_collections_warmed_total', { collection: providerName })
-      // metrics.observe('cache_warmer_duration_seconds', duration / 1000, { collection: providerName })
-
       status.collectionsWarmed++
     } catch (error) {
       const duration = Date.now() - startTime
@@ -180,9 +174,6 @@ export async function createThirdPartyCollectionsCacheWarmer(
       })
 
       status.errors.push(`${collectionId}: ${errorMsg}`)
-
-      // Record error metric (TODO: Uncomment when metrics are properly configured)
-      // metrics.increment('cache_warmer_errors_total', { collection: providerName })
     }
   }
 
@@ -203,7 +194,6 @@ export async function createThirdPartyCollectionsCacheWarmer(
       maxConcurrent
     })
 
-    // Process each batch sequentially, but items within batch in parallel
     for (let i = 0; i < batches.length; i++) {
       const batch = batches[i]
       logger.debug('[warmCollectionsInBatches] Processing batch', {
@@ -239,7 +229,6 @@ export async function createThirdPartyCollectionsCacheWarmer(
     try {
       logger.info('[warmCache] Starting cache warmup')
 
-      // Wait for content server to be ready
       logger.info('[warmCache] Checking if content server is ready')
       const contentServerReady = await waitForContentServerReady()
 
@@ -252,10 +241,8 @@ export async function createThirdPartyCollectionsCacheWarmer(
 
       logger.info('[warmCache] Content server is ready, proceeding with cache warmup')
 
-      // Get all third-party providers
       const allProviders = await thirdPartyProvidersStorage.getAll()
 
-      // Filter providers with contracts (same logic as fetch-third-party-wearables)
       const providersWithContracts = allProviders.filter(
         (provider) => (provider.metadata.thirdParty.contracts?.length ?? 0) > 0
       )
@@ -273,25 +260,7 @@ export async function createThirdPartyCollectionsCacheWarmer(
         return
       }
 
-      // Warm collections in batches
       await warmCollectionsInBatches(providersWithContracts)
-
-      const overallDuration = Date.now() - overallStart
-      status.lastWarmupTime = overallStart
-      status.lastWarmupDuration = overallDuration
-
-      logger.info('[warmCache] Cache warmup complete', {
-        totalProviders: status.totalCollections,
-        warmedSuccessfully: status.collectionsWarmed,
-        failed: status.totalCollections - status.collectionsWarmed,
-        errorsCount: status.errors.length,
-        durationMs: overallDuration,
-        avgDurationPerCollection: Math.round(overallDuration / status.totalCollections)
-      })
-
-      // Record overall metrics (TODO: Uncomment when metrics are properly configured)
-      // metrics.observe('cache_warmer_total_duration_seconds', {}, overallDuration / 1000)
-      // metrics.increment('cache_warmer_last_warmup_timestamp', {}, overallStart / 1000)
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error'
       logger.error('[warmCache] Fatal error during cache warmup', {
@@ -299,7 +268,6 @@ export async function createThirdPartyCollectionsCacheWarmer(
       })
 
       status.errors.push(`Fatal: ${errorMsg}`)
-      // metrics.increment('cache_warmer_fatal_errors_total') // TODO: Uncomment when metrics are properly configured
     } finally {
       isWarming = false
       status.isWarming = false

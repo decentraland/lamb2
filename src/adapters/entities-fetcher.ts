@@ -3,6 +3,7 @@ import { AppComponents } from '../types'
 import { Entity, Mappings } from '@dcl/schemas'
 import { createLowerCaseKeysCache } from './lowercase-keys-cache'
 import { createLowerCaseKeysMap } from './lowercase-keys-map'
+import { filterByUserNfts } from '../logic/linked-wearables-mapper'
 
 /**
  * Response structure from content server collection endpoints
@@ -27,7 +28,7 @@ type CollectionCacheData = {
 
 export type EntitiesFetcher = IBaseComponent & {
   fetchEntities(urns: string[]): Promise<(Entity | undefined)[]>
-  fetchCollectionEntities(collectionId: string): Promise<Entity[]>
+  fetchCollectionEntities(collectionId: string, userOwnedNfts?: string[]): Promise<Entity[]>
 }
 
 const MAX_COLLECTION_PAGE_SIZE = 1000
@@ -100,10 +101,30 @@ export async function createEntitiesFetcherComponent({
       return _fetchEntities(urns)
     },
 
-    async fetchCollectionEntities(collectionId: string): Promise<Entity[]> {
+    async fetchCollectionEntities(collectionId: string, userOwnedNfts?: string[]): Promise<Entity[]> {
       const cachedResult = collectionsCache.get(collectionId)
       if (cachedResult && cachedResult.isComplete) {
-        const entityUrns = cachedResult.entities.map((ref) => ref.entityUrn)
+        // If we have user NFTs, filter by mappings BEFORE fetching full entities
+        let refsToFetch = cachedResult.entities
+
+        if (userOwnedNfts && userOwnedNfts.length > 0) {
+          // Create minimal entities with just the mappings for filtering
+          const minimalEntities = cachedResult.entities.map((ref) => ({
+            metadata: {
+              id: ref.entityUrn,
+              mappings: ref.mappings
+            }
+          })) as Entity[]
+
+          // Filter by mappings
+          const matchingMinimalEntities = filterByUserNfts(minimalEntities, userOwnedNfts)
+
+          // Get the refs for matching entities
+          const matchingUrns = new Set(matchingMinimalEntities.map((e) => e.metadata.id))
+          refsToFetch = cachedResult.entities.filter((ref) => matchingUrns.has(ref.entityUrn))
+        }
+
+        const entityUrns = refsToFetch.map((ref) => ref.entityUrn)
         const fullEntities = await _fetchEntities(entityUrns)
 
         return fullEntities.filter((entity): entity is Entity => entity !== undefined)
@@ -124,7 +145,6 @@ export async function createEntitiesFetcherComponent({
         if (totalPages > 1) {
           // fetch all the rest of pages in parallel
           const remainingPageNumbers = Array.from({ length: totalPages - 1 }, (_, i) => i + 2)
-          console.log('remainingPageNumbers', remainingPageNumbers)
           const remainingResults = await Promise.all(
             remainingPageNumbers.map(async (pageNum) => {
               return await fetchCollectionPagination(collectionId, pageNum)
