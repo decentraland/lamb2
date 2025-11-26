@@ -1,7 +1,8 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { WearableCategory, EmoteCategory, Network } from '@dcl/schemas'
 import { OnChainWearable, OnChainEmote, Name, AppComponents } from '../types'
-import { ItemType } from './elements-fetcher'
+import { ItemType as ItemTypeFilter } from './elements-fetcher'
+import { ItemType } from '../types'
 
 /**
  * Marketplace API response types matching the marketplace-server API
@@ -42,6 +43,7 @@ type MarketplaceApiGroupedBaseData = {
   }>
   name: string
   rarity: string
+  itemType: ItemType
   minTransferredAt: number
   maxTransferredAt: number
 }
@@ -83,7 +85,7 @@ export type MarketplaceApiParams = {
   direction?: string
 
   // Item type
-  itemType?: ItemType
+  itemType?: ItemTypeFilter
   // Network
   network?: Network
 }
@@ -149,6 +151,7 @@ function mapGroupedWearableToOnChainWearable(grouped: MarketplaceApiGroupedWeara
     })),
     name: grouped.name,
     rarity: grouped.rarity,
+    itemType: grouped.itemType,
     minTransferredAt: grouped.minTransferredAt,
     maxTransferredAt: grouped.maxTransferredAt,
     category: grouped.category

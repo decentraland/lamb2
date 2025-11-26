@@ -141,10 +141,17 @@ export type Item<C extends WearableCategory | EmoteCategory> = {
   }[]
   name: string
   rarity: string
-  itemType?: string
+  itemType?: ItemType
   minTransferredAt: number
   maxTransferredAt: number
   category: C
+}
+
+export enum ItemType {
+  EMOTE_V1 = 'emote_v1',
+  WEARABLE_V1 = 'wearable_v1',
+  WEARABLE_V2 = 'wearable_v2',
+  SMART_WEARABLE_V1 = 'smart_wearable_v1'
 }
 
 export type HasUrn = { urn: string }
