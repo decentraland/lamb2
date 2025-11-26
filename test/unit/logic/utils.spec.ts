@@ -1,14 +1,14 @@
 import { Entity, Rarity, WearableCategory } from '@dcl/schemas'
-import { buildTrimmedEntity } from '../../../src/logic/utils'
+import { buildTrimmedEntity, ExplorerWearableEntity } from '../../../src/logic/utils'
 import { ItemType } from '../../../src/types'
 import { createMockEntity } from '../../mocks/entity-mock'
 
 describe('buildTrimmedEntity', function () {
   describe('when building a trimmed entity', function () {
-    describe('and itemType is SMART_WEARABLE_V1', function () {
-      let entity: Entity
-      let result: any
+    let entity: Entity
+    let result: ExplorerWearableEntity
 
+    describe('and itemType is SMART_WEARABLE_V1', function () {
       beforeEach(function () {
         entity = createMockEntity()
         result = buildTrimmedEntity(entity, ItemType.SMART_WEARABLE_V1)
@@ -20,9 +20,6 @@ describe('buildTrimmedEntity', function () {
     })
 
     describe('and itemType is WEARABLE_V1', function () {
-      let entity: Entity
-      let result: any
-
       beforeEach(function () {
         entity = createMockEntity()
         result = buildTrimmedEntity(entity, ItemType.WEARABLE_V1)
@@ -34,9 +31,6 @@ describe('buildTrimmedEntity', function () {
     })
 
     describe('and itemType is WEARABLE_V2', function () {
-      let entity: Entity
-      let result: any
-
       beforeEach(function () {
         entity = createMockEntity()
         result = buildTrimmedEntity(entity, ItemType.WEARABLE_V2)
@@ -48,9 +42,6 @@ describe('buildTrimmedEntity', function () {
     })
 
     describe('and itemType is EMOTE_V1', function () {
-      let entity: Entity
-      let result: any
-
       beforeEach(function () {
         entity = createMockEntity()
         result = buildTrimmedEntity(entity, ItemType.EMOTE_V1)
@@ -62,9 +53,6 @@ describe('buildTrimmedEntity', function () {
     })
 
     describe('and itemType is undefined', function () {
-      let entity: Entity
-      let result: any
-
       beforeEach(function () {
         entity = createMockEntity()
         result = buildTrimmedEntity(entity, undefined)
@@ -76,9 +64,6 @@ describe('buildTrimmedEntity', function () {
     })
 
     describe('and itemType is not provided', function () {
-      let entity: Entity
-      let result: any
-
       beforeEach(function () {
         entity = createMockEntity()
         result = buildTrimmedEntity(entity)
@@ -90,9 +75,6 @@ describe('buildTrimmedEntity', function () {
     })
 
     describe('and entity has a custom id', function () {
-      let entity: Entity
-      let result: any
-
       beforeEach(function () {
         entity = createMockEntity({ id: 'custom-entity-id' })
         result = buildTrimmedEntity(entity, ItemType.WEARABLE_V2)
@@ -104,9 +86,6 @@ describe('buildTrimmedEntity', function () {
     })
 
     describe('and entity has standard metadata', function () {
-      let entity: Entity
-      let result: any
-
       beforeEach(function () {
         entity = createMockEntity()
         result = buildTrimmedEntity(entity, ItemType.WEARABLE_V2)
@@ -137,9 +116,6 @@ describe('buildTrimmedEntity', function () {
     })
 
     describe('and entity has multiple representations', function () {
-      let entity: Entity
-      let result: any
-
       beforeEach(function () {
         entity = createMockEntity({
           metadata: {
@@ -194,9 +170,6 @@ describe('buildTrimmedEntity', function () {
     })
 
     describe('and entity has no representations', function () {
-      let entity: Entity
-      let result: any
-
       beforeEach(function () {
         entity = createMockEntity({
           metadata: {
@@ -220,9 +193,6 @@ describe('buildTrimmedEntity', function () {
     })
 
     describe('and entity has undefined thumbnail', function () {
-      let entity: Entity
-      let result: any
-
       beforeEach(function () {
         entity = createMockEntity({
           metadata: {
@@ -246,9 +216,6 @@ describe('buildTrimmedEntity', function () {
     })
 
     describe('and entity has missing content', function () {
-      let entity: Entity
-      let result: any
-
       beforeEach(function () {
         entity = createMockEntity({
           content: []
