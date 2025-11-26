@@ -1,141 +1,147 @@
 import { Entity, Rarity, WearableCategory } from '@dcl/schemas'
 import { buildTrimmedEntity } from '../../../src/logic/utils'
 import { ItemType } from '../../../src/types'
+import { createMockEntity } from '../../mocks/entity-mock'
 
-describe('utils', function () {
-  describe('buildTrimmedEntity', function () {
-    const createMockEntity = (overrides?: Partial<Entity>): Entity => {
-      return {
-        id: 'test-entity-id',
-        type: 'wearable',
-        pointers: ['urn:decentraland:matic:collections-v2:0xtest:0'],
-        timestamp: Date.now(),
-        content: [
-          {
-            file: 'thumbnail.png',
-            hash: 'QmThumbnailHash123'
-          },
-          {
-            file: 'model.glb',
-            hash: 'QmModelHash456'
-          }
-        ],
-        metadata: {
-          id: 'metadata-id',
-          name: 'Test Wearable',
-          description: 'A test wearable',
-          rarity: Rarity.COMMON,
-          thumbnail: 'thumbnail.png',
-          data: {
-            category: WearableCategory.HAT,
-            representations: [
-              {
-                bodyShapes: ['urn:decentraland:off-chain:base-avatars:BaseMale'],
-                mainFile: 'model.glb',
-                contents: ['model.glb'],
-                overrideHides: [],
-                overrideReplaces: []
-              }
-            ],
-            tags: []
-          }
-        },
-        ...overrides
-      } as Entity
-    }
-
-    describe('isSmart flag', function () {
+describe('buildTrimmedEntity', function () {
+  describe('when building a trimmed entity', function () {
+    describe('and itemType is SMART_WEARABLE_V1', function () {
       let entity: Entity
+      let result: any
 
       beforeEach(function () {
         entity = createMockEntity()
+        result = buildTrimmedEntity(entity, ItemType.SMART_WEARABLE_V1)
       })
 
-      it('should return isSmart as true when itemType is SMART_WEARABLE_V1', function () {
-        const result = buildTrimmedEntity(entity, ItemType.SMART_WEARABLE_V1)
-
+      it('should set isSmart to true', function () {
         expect(result.metadata.isSmart).toBe(true)
       })
+    })
 
-      it('should return isSmart as false when itemType is WEARABLE_V1', function () {
-        const result = buildTrimmedEntity(entity, ItemType.WEARABLE_V1)
+    describe('and itemType is WEARABLE_V1', function () {
+      let entity: Entity
+      let result: any
 
-        expect(result.metadata.isSmart).toBe(false)
+      beforeEach(function () {
+        entity = createMockEntity()
+        result = buildTrimmedEntity(entity, ItemType.WEARABLE_V1)
       })
 
-      it('should return isSmart as false when itemType is WEARABLE_V2', function () {
-        const result = buildTrimmedEntity(entity, ItemType.WEARABLE_V2)
-
-        expect(result.metadata.isSmart).toBe(false)
-      })
-
-      it('should return isSmart as false when itemType is EMOTE_V1', function () {
-        const result = buildTrimmedEntity(entity, ItemType.EMOTE_V1)
-
-        expect(result.metadata.isSmart).toBe(false)
-      })
-
-      it('should return isSmart as false when itemType is undefined', function () {
-        const result = buildTrimmedEntity(entity, undefined)
-
-        expect(result.metadata.isSmart).toBe(false)
-      })
-
-      it('should return isSmart as false when itemType is not provided', function () {
-        const result = buildTrimmedEntity(entity)
-
+      it('should set isSmart to false', function () {
         expect(result.metadata.isSmart).toBe(false)
       })
     })
 
-    describe('entity structure', function () {
-      it('should correctly map entity id', function () {
-        const entity = createMockEntity({ id: 'custom-entity-id' })
-        const result = buildTrimmedEntity(entity, ItemType.WEARABLE_V2)
+    describe('and itemType is WEARABLE_V2', function () {
+      let entity: Entity
+      let result: any
 
-        expect(result.id).toBe('custom-entity-id')
+      beforeEach(function () {
+        entity = createMockEntity()
+        result = buildTrimmedEntity(entity, ItemType.WEARABLE_V2)
       })
 
-      it('should correctly map thumbnail hash', function () {
-        const entity = createMockEntity()
-        const result = buildTrimmedEntity(entity, ItemType.WEARABLE_V2)
+      it('should set isSmart to false', function () {
+        expect(result.metadata.isSmart).toBe(false)
+      })
+    })
 
+    describe('and itemType is EMOTE_V1', function () {
+      let entity: Entity
+      let result: any
+
+      beforeEach(function () {
+        entity = createMockEntity()
+        result = buildTrimmedEntity(entity, ItemType.EMOTE_V1)
+      })
+
+      it('should set isSmart to false', function () {
+        expect(result.metadata.isSmart).toBe(false)
+      })
+    })
+
+    describe('and itemType is undefined', function () {
+      let entity: Entity
+      let result: any
+
+      beforeEach(function () {
+        entity = createMockEntity()
+        result = buildTrimmedEntity(entity, undefined)
+      })
+
+      it('should set isSmart to false', function () {
+        expect(result.metadata.isSmart).toBe(false)
+      })
+    })
+
+    describe('and itemType is not provided', function () {
+      let entity: Entity
+      let result: any
+
+      beforeEach(function () {
+        entity = createMockEntity()
+        result = buildTrimmedEntity(entity)
+      })
+
+      it('should set isSmart to false', function () {
+        expect(result.metadata.isSmart).toBe(false)
+      })
+    })
+
+    describe('and entity has a custom id', function () {
+      let entity: Entity
+      let result: any
+
+      beforeEach(function () {
+        entity = createMockEntity({ id: 'custom-entity-id' })
+        result = buildTrimmedEntity(entity, ItemType.WEARABLE_V2)
+      })
+
+      it('should map the entity id correctly', function () {
+        expect(result.id).toBe('custom-entity-id')
+      })
+    })
+
+    describe('and entity has standard metadata', function () {
+      let entity: Entity
+      let result: any
+
+      beforeEach(function () {
+        entity = createMockEntity()
+        result = buildTrimmedEntity(entity, ItemType.WEARABLE_V2)
+      })
+
+      it('should map the thumbnail hash from content', function () {
         expect(result.thumbnail).toBe('QmThumbnailHash123')
       })
 
-      it('should correctly map metadata id', function () {
-        const entity = createMockEntity()
-        const result = buildTrimmedEntity(entity, ItemType.WEARABLE_V2)
-
+      it('should map the metadata id', function () {
         expect(result.metadata.id).toBe('metadata-id')
       })
 
-      it('should correctly map rarity', function () {
-        const entity = createMockEntity()
-        const result = buildTrimmedEntity(entity, ItemType.WEARABLE_V2)
-
+      it('should map the rarity', function () {
         expect(result.metadata.rarity).toBe(Rarity.COMMON)
       })
 
-      it('should correctly map category', function () {
-        const entity = createMockEntity()
-        const result = buildTrimmedEntity(entity, ItemType.WEARABLE_V2)
-
+      it('should map the category', function () {
         expect(result.metadata.data.category).toBe(WearableCategory.HAT)
       })
 
-      it('should correctly map representations with bodyShapes', function () {
-        const entity = createMockEntity()
-        const result = buildTrimmedEntity(entity, ItemType.WEARABLE_V2)
-
+      it('should map the representations with bodyShapes', function () {
         expect(result.metadata.data.representations).toHaveLength(1)
         expect(result.metadata.data.representations[0].bodyShapes).toEqual([
           'urn:decentraland:off-chain:base-avatars:BaseMale'
         ])
       })
+    })
 
-      it('should handle entities with multiple representations', function () {
-        const entity = createMockEntity({
+    describe('and entity has multiple representations', function () {
+      let entity: Entity
+      let result: any
+
+      beforeEach(function () {
+        entity = createMockEntity({
           metadata: {
             id: 'metadata-id',
             name: 'Test Wearable',
@@ -163,20 +169,36 @@ describe('utils', function () {
             }
           } as any
         })
-        const result = buildTrimmedEntity(entity, ItemType.SMART_WEARABLE_V1)
+        result = buildTrimmedEntity(entity, ItemType.SMART_WEARABLE_V1)
+      })
 
+      it('should include all representations', function () {
         expect(result.metadata.data.representations).toHaveLength(2)
+      })
+
+      it('should map male bodyShapes correctly', function () {
         expect(result.metadata.data.representations[0].bodyShapes).toEqual([
           'urn:decentraland:off-chain:base-avatars:BaseMale'
         ])
+      })
+
+      it('should map female bodyShapes correctly', function () {
         expect(result.metadata.data.representations[1].bodyShapes).toEqual([
           'urn:decentraland:off-chain:base-avatars:BaseFemale'
         ])
-        expect(result.metadata.isSmart).toBe(true)
       })
 
-      it('should handle entities with no representations', function () {
-        const entity = createMockEntity({
+      it('should set isSmart to true for smart wearables', function () {
+        expect(result.metadata.isSmart).toBe(true)
+      })
+    })
+
+    describe('and entity has no representations', function () {
+      let entity: Entity
+      let result: any
+
+      beforeEach(function () {
+        entity = createMockEntity({
           metadata: {
             id: 'metadata-id',
             name: 'Test Wearable',
@@ -189,13 +211,20 @@ describe('utils', function () {
             }
           } as any
         })
-        const result = buildTrimmedEntity(entity, ItemType.WEARABLE_V2)
-
-        expect(result.metadata.data.representations).toHaveLength(0)
+        result = buildTrimmedEntity(entity, ItemType.WEARABLE_V2)
       })
 
-      it('should handle entities with undefined thumbnail', function () {
-        const entity = createMockEntity({
+      it('should return an empty representations array', function () {
+        expect(result.metadata.data.representations).toHaveLength(0)
+      })
+    })
+
+    describe('and entity has undefined thumbnail', function () {
+      let entity: Entity
+      let result: any
+
+      beforeEach(function () {
+        entity = createMockEntity({
           metadata: {
             id: 'metadata-id',
             name: 'Test Wearable',
@@ -208,17 +237,26 @@ describe('utils', function () {
             }
           } as any
         })
-        const result = buildTrimmedEntity(entity, ItemType.WEARABLE_V2)
-
-        expect(result.thumbnail).toBeUndefined()
+        result = buildTrimmedEntity(entity, ItemType.WEARABLE_V2)
       })
 
-      it('should handle entities with missing content', function () {
-        const entity = createMockEntity({
+      it('should set thumbnail to undefined', function () {
+        expect(result.thumbnail).toBeUndefined()
+      })
+    })
+
+    describe('and entity has missing content', function () {
+      let entity: Entity
+      let result: any
+
+      beforeEach(function () {
+        entity = createMockEntity({
           content: []
         })
-        const result = buildTrimmedEntity(entity, ItemType.WEARABLE_V2)
+        result = buildTrimmedEntity(entity, ItemType.WEARABLE_V2)
+      })
 
+      it('should set thumbnail to undefined', function () {
         expect(result.thumbnail).toBeUndefined()
       })
     })
