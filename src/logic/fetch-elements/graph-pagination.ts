@@ -221,6 +221,7 @@ export function createItemQueryBuilder(category: ItemType, network?: Network) {
         id,
         tokenId,
         category,
+        itemType,
         transferredAt,
         metadata {
           ${['wearable', 'smartWearable'].includes(category) ? 'wearable' : category} {

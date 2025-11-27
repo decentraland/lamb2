@@ -1,7 +1,11 @@
 import { EmoteCategory, WearableCategory, Network } from '@dcl/schemas'
-import { Item, OnChainEmote, OnChainWearable, Pagination } from '../../types'
+import { Item, ItemType, OnChainEmote, OnChainWearable, Pagination } from '../../types'
 import { MarketplaceApiParams } from '../../adapters/marketplace-api-fetcher'
-import { ElementsFilters, ElementsFetcherDependencies, ItemType } from '../../adapters/elements-fetcher'
+import {
+  ElementsFilters,
+  ElementsFetcherDependencies,
+  ItemType as ItemTypeFilter
+} from '../../adapters/elements-fetcher'
 
 import { fetchNFTsPaginated, createItemQueryBuilder } from './graph-pagination'
 import { compareByRarity } from '../sorting'
@@ -76,6 +80,7 @@ function groupItemsByURN<
         urn: itemFromQuery.urn,
         individualData: [individualData],
         rarity: itemFromQuery.item.rarity,
+        itemType: itemFromQuery.itemType,
         amount: 1,
         name: getMetadata(itemFromQuery).name,
         category: getMetadata(itemFromQuery).category,
@@ -95,6 +100,7 @@ type ItemFromQuery = {
   id: string
   tokenId: string
   transferredAt: number
+  itemType: ItemType
   item: {
     rarity: string
     price: number
@@ -195,7 +201,7 @@ export async function fetchWearables(
     },
     async () => {
       // TheGraph fallback implementation
-      const itemType = (filters?.itemType || 'wearable') as ItemType
+      const itemType = (filters?.itemType || 'wearable') as ItemTypeFilter
       const network = filters?.network
 
       // Determine which subgraphs to query based on network filter

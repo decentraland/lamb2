@@ -1,5 +1,5 @@
 import { parseUrn as resolverParseUrn } from '@dcl/urn-resolver'
-import { ThirdPartyProvider } from '../types'
+import { ItemType, ThirdPartyProvider } from '../types'
 import { Entity, Rarity, WearableCategory } from '@dcl/schemas'
 
 export type ExplorerWearableRepresentation = {
@@ -9,6 +9,7 @@ export type ExplorerWearableRepresentation = {
 export type ExplorerWearableMetadata = {
   id: string
   rarity?: Rarity
+  isSmart?: boolean
   data: {
     category: WearableCategory
     representations: ExplorerWearableRepresentation[]
@@ -73,7 +74,7 @@ export function sanitizeContractList(thirdPartyProviders: ThirdPartyProvider[]) 
   }
 }
 
-export function buildTrimmedEntity(entity: Entity): ExplorerWearableEntity {
+export function buildTrimmedEntity(entity: Entity, itemType?: ItemType): ExplorerWearableEntity {
   const thumbnailFile = entity?.metadata?.thumbnail as string | undefined
   const thumbnailHash = entity?.content?.find((c) => c.file === thumbnailFile)?.hash
   const metadata = entity?.metadata
@@ -81,6 +82,7 @@ export function buildTrimmedEntity(entity: Entity): ExplorerWearableEntity {
   const representations: ExplorerWearableRepresentation[] = (metadata?.data?.representations || []).map((rep: any) => ({
     bodyShapes: rep.bodyShapes
   }))
+  const isSmart = itemType === ItemType.SMART_WEARABLE_V1
 
   return {
     id: entity.id,
@@ -88,6 +90,7 @@ export function buildTrimmedEntity(entity: Entity): ExplorerWearableEntity {
     metadata: {
       id: metadata?.id,
       rarity: metadata?.rarity,
+      isSmart,
       data: {
         category: category as WearableCategory,
         representations

@@ -46,6 +46,7 @@ describe('fetchEmotes', () => {
         id,
         tokenId,
         category,
+        itemType,
         transferredAt,
         metadata {
           emote {
@@ -305,6 +306,7 @@ describe('fetchWearables', () => {
         id,
         tokenId,
         category,
+        itemType,
         transferredAt,
         metadata {
           wearable {

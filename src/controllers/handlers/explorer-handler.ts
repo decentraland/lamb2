@@ -35,7 +35,7 @@ export type MixedThirdPartyWearable = ThirdPartyWearable & {
 }
 
 export type MixedWearable = (MixedBaseWearable | MixedOnChainWearable | MixedThirdPartyWearable) &
-  Partial<Pick<OnChainWearable, 'rarity'>>
+  Partial<Pick<OnChainWearable, 'rarity' | 'itemType'>>
 
 export type MixedWearableResponse = Omit<MixedWearable, 'minTransferredAt' | 'maxTransferredAt'>
 
@@ -223,7 +223,7 @@ export async function explorerHandler(
   if (isTrimmed) {
     const results: MixedWearableTrimmedResponse[] = page.elements.map((wearable) => {
       const result: MixedWearableTrimmedResponse = {
-        entity: buildTrimmedEntity(wearable.entity)
+        entity: buildTrimmedEntity(wearable.entity, wearable.itemType)
       }
       if (includeAmount) {
         result.amount = wearable.individualData?.length || 0
