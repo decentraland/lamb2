@@ -1,6 +1,6 @@
 import { parseUrn as resolverParseUrn } from '@dcl/urn-resolver'
-import { ItemType, ThirdPartyProvider } from '../types'
-import { Entity, Rarity, WearableCategory } from '@dcl/schemas'
+import { ItemType, ThirdPartyProvider, MixedWearable } from '../types'
+import { Rarity, WearableCategory } from '@dcl/schemas'
 
 export type ExplorerWearableRepresentation = {
   bodyShapes: string[]
@@ -20,6 +20,7 @@ export type ExplorerWearableEntity = {
   id: string
   thumbnail?: string
   metadata: ExplorerWearableMetadata
+  individualData: MixedWearable['individualData']
 }
 
 export const SORTED_RARITIES = [
@@ -74,7 +75,7 @@ export function sanitizeContractList(thirdPartyProviders: ThirdPartyProvider[]) 
   }
 }
 
-export function buildTrimmedEntity(entity: Entity, itemType?: ItemType): ExplorerWearableEntity {
+export function buildTrimmedEntity({ entity, itemType, individualData }: MixedWearable): ExplorerWearableEntity {
   const thumbnailFile = entity?.metadata?.thumbnail as string | undefined
   const thumbnailHash = entity?.content?.find((c) => c.file === thumbnailFile)?.hash
   const metadata = entity?.metadata
@@ -87,6 +88,7 @@ export function buildTrimmedEntity(entity: Entity, itemType?: ItemType): Explore
   return {
     id: entity.id,
     thumbnail: thumbnailHash,
+    individualData,
     metadata: {
       id: metadata?.id,
       rarity: metadata?.rarity,

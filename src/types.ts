@@ -179,6 +179,23 @@ export type ThirdPartyWearable = {
 
 export type BaseWearable = ThirdPartyWearable
 
+export type MixedBaseWearable = BaseWearable & {
+  type: 'base-wearable'
+  entity: Entity
+}
+
+export type MixedOnChainWearable = OnChainWearable & {
+  type: 'on-chain'
+  entity: Entity
+}
+
+export type MixedThirdPartyWearable = ThirdPartyWearable & {
+  type: 'third-party'
+}
+
+export type MixedWearable = (MixedBaseWearable | MixedOnChainWearable | MixedThirdPartyWearable) &
+  Partial<Pick<OnChainWearable, 'rarity' | 'itemType'>>
+
 export type Name = {
   name: string
   contractAddress: string

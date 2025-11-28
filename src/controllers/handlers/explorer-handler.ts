@@ -1,14 +1,16 @@
-import { Entity, Network } from '@dcl/schemas'
+import { Network } from '@dcl/schemas'
 import { fetchThirdPartyWearablesFromThirdPartyName } from '../../logic/fetch-elements/fetch-third-party-wearables'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { createCombinedSorting } from '../../logic/sorting'
 import { ExplorerWearableEntity, parseUrn, buildTrimmedEntity } from '../../logic/utils'
 import {
   AppComponents,
-  BaseWearable,
   HandlerContextWithPath,
   InvalidRequestError,
-  OnChainWearable,
+  MixedBaseWearable,
+  MixedOnChainWearable,
+  MixedThirdPartyWearable,
+  MixedWearable,
   PaginatedResponse,
   ThirdPartyWearable
 } from '../../types'
@@ -19,23 +21,6 @@ export const ON_CHAIN = 'on-chain'
 export const THIRD_PARTY = 'third-party'
 
 const VALID_COLLECTION_TYPES = ['base-wearable', 'on-chain', 'third-party']
-
-export type MixedBaseWearable = BaseWearable & {
-  type: typeof BASE_WEARABLE
-  entity: Entity
-}
-
-export type MixedOnChainWearable = OnChainWearable & {
-  type: typeof ON_CHAIN
-  entity: Entity
-}
-
-export type MixedThirdPartyWearable = ThirdPartyWearable & {
-  type: typeof THIRD_PARTY
-}
-
-export type MixedWearable = (MixedBaseWearable | MixedOnChainWearable | MixedThirdPartyWearable) &
-  Partial<Pick<OnChainWearable, 'rarity' | 'itemType'>>
 
 export type MixedWearableResponse = Omit<MixedWearable, 'minTransferredAt' | 'maxTransferredAt'>
 
@@ -223,7 +208,7 @@ export async function explorerHandler(
   if (isTrimmed) {
     const results: MixedWearableTrimmedResponse[] = page.elements.map((wearable) => {
       const result: MixedWearableTrimmedResponse = {
-        entity: buildTrimmedEntity(wearable.entity, wearable.itemType)
+        entity: buildTrimmedEntity(wearable)
       }
       if (includeAmount) {
         result.amount = wearable.individualData?.length || 0
