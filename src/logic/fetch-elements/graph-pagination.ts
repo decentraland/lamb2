@@ -212,7 +212,7 @@ export function createItemQueryBuilder(category: ItemType, network?: Network) {
   return (filters: string, orderBy: string, orderDirection: string, first: number) => `
     query fetchItemsByOwner($owner: String, $idFrom: ID) {
       nfts(
-        where: { id_gt: $idFrom, owner_: {address: $owner}, ${itemTypeFilter}${filters}},
+        where: { id_gt: $idFrom, owner: $owner, ${itemTypeFilter}${filters}},
         orderBy: ${orderBy},
         orderDirection: ${orderDirection},
         first: ${first}
