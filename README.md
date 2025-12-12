@@ -60,29 +60,6 @@ External dependencies:
 
 The API is fully documented using the [OpenAPI standard](https://swagger.io/specification/). Its schema is located at [docs/openapi.yaml](docs/openapi.yaml).
 
-### Key Endpoints
-
-| **Endpoint**                            | **Method** | **Description**                                                                              |
-| --------------------------------------- | ---------- | -------------------------------------------------------------------------------------------- |
-| `/status`                               | `GET`      | Returns the status of the service including version and commit hash                          |
-| `/about`                                | `GET`      | Provides detailed realm information including content, lambdas, comms, and BFF configuration |
-| `/users/:address/wearables`             | `GET`      | Retrieves all wearables owned by an address with filtering and pagination                    |
-| `/users/:address/emotes`                | `GET`      | Retrieves all emotes owned by an address with filtering and pagination                       |
-| `/users/:address/names`                 | `GET`      | Retrieves all Decentraland names owned by an address                                         |
-| `/users/:address/lands`                 | `GET`      | Retrieves all LAND parcels and Estates owned by an address                                   |
-| `/users/:address/third-party-wearables` | `GET`      | Retrieves third-party wearables owned by an address                                          |
-| `/profiles`                             | `POST`     | Fetches multiple user profiles by address (batch endpoint)                                   |
-| `/profiles/:id`                         | `GET`      | Fetches a single user profile by address                                                     |
-| `/nfts/collections`                     | `GET`      | Lists all available NFT collections across L1 and L2                                         |
-| `/outfits/:id`                          | `GET`      | Retrieves outfit configuration and validates ownership                                       |
-| `/contracts/servers`                    | `GET`      | Returns the list of approved Catalyst servers from the DAO                                   |
-| `/contracts/pois`                       | `GET`      | Returns Points of Interest from the POI contract                                             |
-| `/contracts/denylisted-names`           | `GET`      | Returns the list of denied names                                                             |
-| `/explorer/:address/wearables`          | `GET`      | Explorer-specific endpoint combining base wearables, on-chain, and third-party wearables     |
-| `/explorer/:address/emotes`             | `GET`      | Explorer-specific endpoint combining on-chain emotes with definitions                        |
-
-For complete documentation, see the [Full Catalyst API Specs](https://decentraland.github.io/catalyst-api-specs/#tag/Lambdas).
-
 ## Getting Started
 
 ### Prerequisites
@@ -172,14 +149,6 @@ This will:
 - Start the HTTP server on the port specified by `HTTP_SERVER_PORT` (defaults to 7272)
 - Connect to the configured Content Server and The Graph subgraphs
 - Begin serving API requests at `http://localhost:6969`
-
-Example minimal `.env` file for local development:
-
-```bash
-LAMBDAS_URL=http://localhost:6969
-CONTENT_URL=https://peer.decentraland.org/content
-ETH_NETWORK=mainnet
-```
 
 #### Running in production mode
 
