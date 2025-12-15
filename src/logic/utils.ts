@@ -8,6 +8,7 @@ export type ExplorerWearableRepresentation = {
 
 export type ExplorerWearableMetadata = {
   id: string
+  name: string
   rarity?: Rarity
   isSmart?: boolean
   data: {
@@ -75,7 +76,7 @@ export function sanitizeContractList(thirdPartyProviders: ThirdPartyProvider[]) 
   }
 }
 
-export function buildTrimmedEntity({ entity, itemType, individualData }: MixedWearable): ExplorerWearableEntity {
+export function buildTrimmedEntity({ entity, itemType, individualData, name }: MixedWearable): ExplorerWearableEntity {
   const thumbnailFile = entity?.metadata?.thumbnail as string | undefined
   const thumbnailHash = entity?.content?.find((c) => c.file === thumbnailFile)?.hash
   const metadata = entity?.metadata
@@ -91,6 +92,7 @@ export function buildTrimmedEntity({ entity, itemType, individualData }: MixedWe
     individualData,
     metadata: {
       id: metadata?.id,
+      name,
       rarity: metadata?.rarity,
       isSmart,
       data: {
