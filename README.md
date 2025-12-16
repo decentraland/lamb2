@@ -39,10 +39,7 @@ This service interacts with the following services:
 
 - **[Catalyst Content Server](https://github.com/decentraland/catalyst)**: Fetches entity data, wearable definitions, and content files for Decentraland assets
 - **[Catalyst Owner](https://github.com/decentraland/catalyst-owner)**: Deployment bundle that incorporates lamb2 as part of the complete Catalyst node stack
-- **[Marketplace API](https://market.decentraland.org)**: Primary data source for NFT collections, wearables, emotes, and names with enhanced metadata
-
-External dependencies:
-
+- **[Marketplace API](https://github.com/decentraland/marketplace-server)**: Primary data source for NFT collections, wearables, emotes, and names with enhanced metadata
 - **The Graph Subgraphs**: Blockchain indexing service for ownership verification across multiple subgraphs:
   - Ethereum Collections Subgraph (L1 wearables/emotes)
   - Polygon Collections Subgraph (L2 wearables/emotes)
@@ -92,48 +89,15 @@ yarn build
 
 ### Configuration
 
-The service uses environment variables for configuration. The service will automatically load configuration from `.env.default` and `.env` files (with `.env` taking precedence).
-
-**Required environment variables:**
-
-- `LAMBDAS_URL`: Public URL where this lambdas service is accessible (e.g., `https://peer.decentraland.zone/lambdas/`)
-- `CONTENT_URL`: URL of the Catalyst Content Server (e.g., `https://peer.decentraland.zone/content/`)
-- `MARKETPLACE_API_URL`: Marketplace API base URL (e.g., `https://marketplace-api.decentraland.zone/`)
-
-**Optional environment variables:**
-
-- `ETH_NETWORK`: Ethereum network to use (`mainnet` or `sepolia`, defaults to `mainnet`)
-- `HTTP_SERVER_PORT`: Port for the HTTP server (defaults to `7272`)
-- `HTTP_SERVER_HOST`: Host for the HTTP server (defaults to `0.0.0.0`)
-- `INTERNAL_LAMBDAS_URL`: Internal URL for health checks (optional)
-- `INTERNAL_CONTENT_URL`: Internal URL for content server health checks (optional)
-- `ARCHIPELAGO_URL`: URL for Archipelago communications service (optional)
-- `INTERNAL_ARCHIPELAGO_URL`: Internal URL for Archipelago health checks (optional)
-- `REALM_NAME`: Name of the realm for the `/about` endpoint (optional)
-- `MAX_USERS`: Maximum number of users for the realm (optional)
-- `COMMIT_HASH`: Git commit hash for status reporting (optional)
-- `CURRENT_VERSION`: Service version for status reporting (optional)
-- `NFT_WORKER_BASE_URL`: Base URL for NFT worker service (defaults to `https://nfts.decentraland.org`)
-- `COLLECTIONS_L1_SUBGRAPH_URL`: Custom The Graph subgraph URL for L1 collections (optional)
-- `COLLECTIONS_L2_SUBGRAPH_URL`: Custom The Graph subgraph URL for L2 collections (optional)
-- `ENS_OWNER_PROVIDER_URL`: Custom ENS subgraph URL (optional)
-- `THIRD_PARTY_REGISTRY_SUBGRAPH_URL`: Custom third-party registry subgraph URL (optional)
-- `LAND_SUBGRAPH_URL`: Custom land manager subgraph URL (optional)
+The service uses environment variables for configuration.
+Create a `.env` file in the root directory containing the environment variables for the service to run.
+Use the `.env.default` variables as an example.
 
 ### Running the Service
 
 #### Setting up the environment
 
 The Lambdas v2 service is a lightweight, stateless service that does not require local databases or message brokers. Unlike many backend services, it can run standalone with minimal setup.
-
-The service only requires:
-
-- Network access to Catalyst Content Server (configured via `CONTENT_URL`)
-- Network access to The Graph subgraphs (uses public endpoints by default)
-- Network access to Ethereum and Polygon RPC endpoints (via `https://rpc.decentraland.org`)
-- Network access to NFT Worker service (optional, for third-party wearables)
-
-No docker-compose setup is needed - the service is ready to run once configured.
 
 #### Running in development mode
 
@@ -143,23 +107,6 @@ To run the service in development mode:
 yarn build
 yarn start
 ```
-
-This will:
-
-- Start the HTTP server on the port specified by `HTTP_SERVER_PORT` (defaults to 7272)
-- Connect to the configured Content Server and The Graph subgraphs
-- Begin serving API requests at `http://localhost:6969`
-
-#### Running in production mode
-
-For production deployment, ensure all required environment variables are properly configured, and run:
-
-```bash
-yarn build
-yarn start
-```
-
-The service is typically deployed as part of the [Catalyst Owner](https://github.com/decentraland/catalyst-owner) bundle, which provides the complete Catalyst node infrastructure.
 
 ## Testing
 
