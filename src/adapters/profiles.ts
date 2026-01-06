@@ -30,17 +30,17 @@ function roundToSeconds(timestamp: number) {
  * The content server provides the snapshots' hashes, but clients expect a full url. So in this
  * method, we replace the hashes by urls that would trigger the snapshot download.
  */
-function addBaseUrlToSnapshots(entityId: string, baseUrl: string, snapshots: Snapshots): Snapshots {
-  snapshots.body = addBaseUrlToSnapshot(entityId, baseUrl, 'body')
-  snapshots.face256 = addBaseUrlToSnapshot(entityId, baseUrl, 'face')
-  return snapshots
+function addBaseUrlToSnapshots(entityId: string, baseUrl: string): Snapshots {
+  return {
+    body: addBaseUrlToSnapshot(entityId, baseUrl, 'body'),
+    face256: addBaseUrlToSnapshot(entityId, baseUrl, 'face')
+  }
 }
 
 function addBaseUrlToSnapshot(entityId: string, baseUrl: string, which: string): string {
   const cleanedBaseUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/'
   return cleanedBaseUrl + `entities/${entityId}/${which}.png`
 }
-
 export type IProfilesComponent = {
   getProfiles(
     ethAddresses: string[],
@@ -198,7 +198,7 @@ export async function createProfilesComponent(
                 ...avatar.avatar,
                 emotes: validatedEmotes,
                 bodyShape: (await translateWearablesIdFormat(avatar.avatar.bodyShape)) ?? '',
-                snapshots: addBaseUrlToSnapshots(entity.id, baseUrl, avatar.avatar.snapshots),
+                snapshots: addBaseUrlToSnapshots(entity.id, baseUrl),
                 wearables: Array.from(new Set(validatedWearables.concat(thirdPartyWearables)))
               }
             })
