@@ -198,7 +198,11 @@ export async function createProfilesComponent(
                 ...avatar.avatar,
                 emotes: validatedEmotes,
                 bodyShape: (await translateWearablesIdFormat(avatar.avatar.bodyShape)) ?? '',
-                snapshots: addBaseUrlToSnapshots(entity.id, baseUrl, avatar.avatar.snapshots),
+                snapshots: addBaseUrlToSnapshots(
+                  entity.id,
+                  baseUrl,
+                  avatar.avatar.snapshots || { face256: '', body: '' }
+                ),
                 wearables: Array.from(new Set(validatedWearables.concat(thirdPartyWearables)))
               }
             })
