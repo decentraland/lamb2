@@ -166,4 +166,3 @@ export function createCombinedSorting<T extends HasName>(url: URL): SortingFunct
     )
   }
 }
-
