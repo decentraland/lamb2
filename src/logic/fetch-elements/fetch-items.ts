@@ -8,7 +8,6 @@ import {
 } from '../../adapters/elements-fetcher'
 
 import { fetchNFTsPaginated, createItemQueryBuilder } from './graph-pagination'
-import { compareByRarity } from '../sorting'
 import { fetchWithMarketplaceFallback } from '../api-with-fallback'
 
 export function buildMarketplaceApiParams(
@@ -144,12 +143,12 @@ export async function fetchEmotes(
     { marketplaceApiFetcher, theGraph, logs },
     'emotes',
     async () => {
+      // Marketplace API handles sorting via orderBy/direction params
       const { emotes, total } = await marketplaceApiFetcher!.fetchUserEmotes(owner, apiParams)
-      const sortedEmotes = emotes.sort(compareByRarity)
 
       return {
-        elements: sortedEmotes,
-        totalAmount: total || sortedEmotes.length
+        elements: emotes,
+        totalAmount: total || emotes.length
       }
     },
     async () => {
@@ -191,12 +190,12 @@ export async function fetchWearables(
     { marketplaceApiFetcher, theGraph, logs },
     'wearables',
     async () => {
+      // Marketplace API handles sorting via orderBy/direction params
       const { wearables, total } = await marketplaceApiFetcher!.fetchUserWearables(owner, apiParams)
-      const sortedWearables = wearables.sort(compareByRarity)
 
       return {
-        elements: sortedWearables,
-        totalAmount: total || sortedWearables.length
+        elements: wearables,
+        totalAmount: total || wearables.length
       }
     },
     async () => {

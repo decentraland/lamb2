@@ -93,9 +93,14 @@ function sortDirectionParams(url: URL) {
   return { sort, direction }
 }
 
-export function createSorting<T extends HasName & HasRarity & HasDate>(url: URL): SortingFunction<T> {
-  const { sort, direction } = sortDirectionParams(url)
-
+/**
+ * Core sorting function selector - returns the appropriate sorting function based on sort field and direction.
+ * Returns undefined if the combination is not recognized.
+ */
+function selectSortingFunction<T extends HasName & HasRarity & HasDate>(
+  sort: string,
+  direction: string
+): SortingFunction<T> | undefined {
   if (sort === 'rarity' && direction === 'ASC') {
     return leastRare
   } else if (sort === 'rarity' && direction === 'DESC') {
@@ -108,9 +113,19 @@ export function createSorting<T extends HasName & HasRarity & HasDate>(url: URL)
     return oldest
   } else if (sort === 'date' && direction === 'DESC') {
     return newest
-  } else {
+  }
+  return undefined
+}
+
+export function createSorting<T extends HasName & HasRarity & HasDate>(url: URL): SortingFunction<T> {
+  const { sort, direction } = sortDirectionParams(url)
+  const sortingFn = selectSortingFunction<T>(sort, direction)
+
+  if (!sortingFn) {
     throw new InvalidRequestError(`Invalid sorting requested: ${sort} ${direction}`)
   }
+
+  return sortingFn
 }
 
 export function createBaseSorting<T extends HasName>(url: URL): SortingFunction<T> {
