@@ -167,19 +167,3 @@ export function createCombinedSorting<T extends HasName>(url: URL): SortingFunct
   }
 }
 
-/**
- * Creates a sorting function from filter parameters.
- * Used when fetching items from the marketplace API and local sorting is needed.
- * @param orderBy - The field to sort by (rarity, name, date). Defaults to 'rarity'.
- * @param direction - The sort direction (ASC, DESC). Defaults to DESC for rarity/date, ASC for name.
- */
-export function createSortingFromFilters<T extends HasName & HasRarity & HasDate>(
-  orderBy?: string,
-  direction?: string
-): SortingFunction<T> {
-  const sort = orderBy?.toLowerCase() || 'rarity'
-  const dir = direction?.toUpperCase() || (sort === 'name' ? 'ASC' : 'DESC')
-
-  // Use shared sorting function selector, fallback to rarest for unrecognized options
-  return selectSortingFunction<T>(sort, dir) || rarest
-}

@@ -8,7 +8,6 @@ import {
 } from '../../adapters/elements-fetcher'
 
 import { fetchNFTsPaginated, createItemQueryBuilder } from './graph-pagination'
-import { createSortingFromFilters } from '../sorting'
 import { fetchWithMarketplaceFallback } from '../api-with-fallback'
 
 export function buildMarketplaceApiParams(
@@ -140,19 +139,16 @@ export async function fetchEmotes(
   const apiParams: MarketplaceApiParams | undefined =
     filters || pagination ? buildMarketplaceApiParams(filters, pagination) : undefined
 
-  // Create sorting function based on filters (respects orderBy parameter)
-  const sortingFn = createSortingFromFilters(filters?.orderBy, filters?.direction)
-
   return fetchWithMarketplaceFallback(
     { marketplaceApiFetcher, theGraph, logs },
     'emotes',
     async () => {
+      // Marketplace API handles sorting via orderBy/direction params
       const { emotes, total } = await marketplaceApiFetcher!.fetchUserEmotes(owner, apiParams)
-      const sortedEmotes = emotes.sort(sortingFn)
 
       return {
-        elements: sortedEmotes,
-        totalAmount: total || sortedEmotes.length
+        elements: emotes,
+        totalAmount: total || emotes.length
       }
     },
     async () => {
@@ -190,19 +186,16 @@ export async function fetchWearables(
   const apiParams: MarketplaceApiParams | undefined =
     filters || pagination ? buildMarketplaceApiParams(filters, pagination) : undefined
 
-  // Create sorting function based on filters (respects orderBy parameter)
-  const wearableSortingFn = createSortingFromFilters(filters?.orderBy, filters?.direction)
-
   return fetchWithMarketplaceFallback(
     { marketplaceApiFetcher, theGraph, logs },
     'wearables',
     async () => {
+      // Marketplace API handles sorting via orderBy/direction params
       const { wearables, total } = await marketplaceApiFetcher!.fetchUserWearables(owner, apiParams)
-      const sortedWearables = wearables.sort(wearableSortingFn)
 
       return {
-        elements: sortedWearables,
-        totalAmount: total || sortedWearables.length
+        elements: wearables,
+        totalAmount: total || wearables.length
       }
     },
     async () => {
