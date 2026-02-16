@@ -8,7 +8,7 @@ import {
 } from '../../adapters/elements-fetcher'
 
 import { fetchNFTsPaginated, createItemQueryBuilder } from './graph-pagination'
-import { compareByRarity } from '../sorting'
+import { createSortingFromFilters } from '../sorting'
 import { fetchWithMarketplaceFallback } from '../api-with-fallback'
 
 export function buildMarketplaceApiParams(
@@ -140,12 +140,15 @@ export async function fetchEmotes(
   const apiParams: MarketplaceApiParams | undefined =
     filters || pagination ? buildMarketplaceApiParams(filters, pagination) : undefined
 
+  // Create sorting function based on filters (respects orderBy parameter)
+  const sortingFn = createSortingFromFilters(filters?.orderBy, filters?.direction)
+
   return fetchWithMarketplaceFallback(
     { marketplaceApiFetcher, theGraph, logs },
     'emotes',
     async () => {
       const { emotes, total } = await marketplaceApiFetcher!.fetchUserEmotes(owner, apiParams)
-      const sortedEmotes = emotes.sort(compareByRarity)
+      const sortedEmotes = emotes.sort(sortingFn)
 
       return {
         elements: sortedEmotes,
@@ -187,12 +190,15 @@ export async function fetchWearables(
   const apiParams: MarketplaceApiParams | undefined =
     filters || pagination ? buildMarketplaceApiParams(filters, pagination) : undefined
 
+  // Create sorting function based on filters (respects orderBy parameter)
+  const wearableSortingFn = createSortingFromFilters(filters?.orderBy, filters?.direction)
+
   return fetchWithMarketplaceFallback(
     { marketplaceApiFetcher, theGraph, logs },
     'wearables',
     async () => {
       const { wearables, total } = await marketplaceApiFetcher!.fetchUserWearables(owner, apiParams)
-      const sortedWearables = wearables.sort(compareByRarity)
+      const sortedWearables = wearables.sort(wearableSortingFn)
 
       return {
         elements: sortedWearables,
