@@ -2,7 +2,7 @@ import { Network } from '@dcl/schemas'
 import { fetchThirdPartyWearablesFromThirdPartyName } from '../../logic/fetch-elements/fetch-third-party-wearables'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { createCombinedSorting } from '../../logic/sorting'
-import { ExplorerWearableEntity, parseUrn, buildTrimmedEntity } from '../../logic/utils'
+import { ExplorerWearableEntity, parseUrn, buildTrimmedWearableEntity } from '../../logic/utils'
 import {
   AppComponents,
   HandlerContextWithPath,
@@ -208,7 +208,7 @@ export async function explorerHandler(
   if (isTrimmed) {
     const results: MixedWearableTrimmedResponse[] = page.elements.map((wearable) => {
       const result: MixedWearableTrimmedResponse = {
-        entity: buildTrimmedEntity(wearable)
+        entity: buildTrimmedWearableEntity(wearable)
       }
       if (includeAmount) {
         result.amount = wearable.individualData?.length || 0
