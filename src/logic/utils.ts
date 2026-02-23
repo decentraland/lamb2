@@ -121,20 +121,23 @@ export function buildTrimmedEmoteEntity({
   individualData: OnChainEmote['individualData']
 }): ExplorerEmoteEntity {
   const metadata = entity?.metadata
-  const representations: ExplorerItemRepresentation[] = (metadata?.data?.representations || []).map((rep: any) => ({
+  const thumbnailFile = metadata?.thumbnail as string | undefined
+  const thumbnailHash = entity?.content?.find((c) => c.file === thumbnailFile)?.hash
+  const emoteData = metadata?.emoteDataADR74
+  const representations: ExplorerItemRepresentation[] = (emoteData?.representations || []).map((rep: any) => ({
     bodyShapes: rep.bodyShapes
   }))
 
   return {
     id: entity.id,
-    thumbnail: metadata?.thumbnail,
+    thumbnail: thumbnailHash,
     individualData,
     metadata: {
       id: metadata?.id,
       name: metadata?.name,
       rarity: metadata?.rarity,
       data: {
-        category: metadata?.data?.category,
+        category: emoteData?.category,
         representations
       }
     }
