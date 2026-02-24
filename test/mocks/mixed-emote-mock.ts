@@ -11,7 +11,7 @@ export const createMockOnChainEmote = (overrides?: Partial<MixedOnChainEmote>): 
       description: 'A test emote',
       rarity: Rarity.COMMON,
       thumbnail: 'thumbnail.png',
-      data: {
+      emoteDataADR74: {
         category: EmoteCategory.DANCE,
         representations: [
           {

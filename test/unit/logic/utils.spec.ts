@@ -359,8 +359,8 @@ describe('buildTrimmedEmoteEntity', function () {
         expect(result.id).toBe('test-entity-id')
       })
 
-      it('should map the thumbnail from metadata', function () {
-        expect(result.thumbnail).toBe('thumbnail.png')
+      it('should map the thumbnail hash from content', function () {
+        expect(result.thumbnail).toBe('QmThumbnailHash123')
       })
 
       it('should map the metadata id', function () {
@@ -427,7 +427,7 @@ describe('buildTrimmedEmoteEntity', function () {
             name: 'Test Emote',
             rarity: Rarity.RARE,
             thumbnail: 'thumb.png',
-            data: {
+            emoteDataADR74: {
               category: EmoteCategory.GREETINGS,
               representations: [
                 { bodyShapes: ['urn:decentraland:off-chain:base-avatars:BaseMale'], mainFile: 'm.glb', contents: [] },
@@ -457,7 +457,7 @@ describe('buildTrimmedEmoteEntity', function () {
             id: 'emote-metadata-id',
             name: 'Test Emote',
             thumbnail: undefined,
-            data: { category: EmoteCategory.DANCE, representations: [], tags: [], loop: false }
+            emoteDataADR74: { category: EmoteCategory.DANCE, representations: [], tags: [], loop: false }
           } as any
         })
         result = buildTrimmedEmoteEntity(createMockOnChainEmote({ entity }))
@@ -475,7 +475,7 @@ describe('buildTrimmedEmoteEntity', function () {
             id: 'emote-metadata-id',
             name: 'Test Emote',
             thumbnail: 'thumb.png',
-            data: { category: EmoteCategory.DANCE, representations: [], tags: [], loop: false }
+            emoteDataADR74: { category: EmoteCategory.DANCE, representations: [], tags: [], loop: false }
           } as any
         })
         result = buildTrimmedEmoteEntity(createMockOnChainEmote({ entity }))
