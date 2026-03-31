@@ -42,7 +42,9 @@ function addBaseUrlToSnapshot(entityId: string, baseUrl: string, which: string):
 }
 
 export function sanitizeLinks(links: Avatar['links']): Avatar['links'] {
-  if (!links || links.length === 0) return links
+  if (!links || links.length === 0) {
+    return links
+  }
 
   return links.reduce<NonNullable<Avatar['links']>>((acc, link) => {
     if (LinkUrl.validate(link.url)) {
