@@ -1,28 +1,33 @@
 import { parseUrn as resolverParseUrn } from '@dcl/urn-resolver'
-import { ItemType, ThirdPartyProvider, MixedWearable } from '../types'
-import { Rarity, WearableCategory } from '@dcl/schemas'
+import { ItemType, OnChainEmote, ThirdPartyProvider, MixedWearable } from '../types'
+import { EmoteCategory, Entity, Rarity, WearableCategory } from '@dcl/schemas'
 
-export type ExplorerWearableRepresentation = {
+export type ExplorerItemRepresentation = {
   bodyShapes: string[]
 }
 
-export type ExplorerWearableMetadata = {
+export type ExplorerItemMetadata<C extends WearableCategory | EmoteCategory> = {
   id: string
   name: string
   rarity?: Rarity
-  isSmart?: boolean
   data: {
-    category: WearableCategory
-    representations: ExplorerWearableRepresentation[]
+    category: C
+    representations: ExplorerItemRepresentation[]
   }
 }
 
-export type ExplorerWearableEntity = {
+export type ExplorerItemEntity<M, I> = {
   id: string
   thumbnail?: string
-  metadata: ExplorerWearableMetadata
-  individualData: MixedWearable['individualData']
+  metadata: M
+  individualData: I
 }
+
+export type ExplorerWearableMetadata = ExplorerItemMetadata<WearableCategory> & { isSmart?: boolean }
+export type ExplorerWearableEntity = ExplorerItemEntity<ExplorerWearableMetadata, MixedWearable['individualData']>
+
+export type ExplorerEmoteMetadata = ExplorerItemMetadata<EmoteCategory>
+export type ExplorerEmoteEntity = ExplorerItemEntity<ExplorerEmoteMetadata, OnChainEmote['individualData']>
 
 export const SORTED_RARITIES = [
   Rarity.COMMON,
@@ -76,12 +81,17 @@ export function sanitizeContractList(thirdPartyProviders: ThirdPartyProvider[]) 
   }
 }
 
-export function buildTrimmedEntity({ entity, itemType, individualData, name }: MixedWearable): ExplorerWearableEntity {
+export function buildTrimmedWearableEntity({
+  entity,
+  itemType,
+  individualData,
+  name
+}: MixedWearable): ExplorerWearableEntity {
   const thumbnailFile = entity?.metadata?.thumbnail as string | undefined
   const thumbnailHash = entity?.content?.find((c) => c.file === thumbnailFile)?.hash
   const metadata = entity?.metadata
   const category: WearableCategory | undefined = metadata?.data?.category
-  const representations: ExplorerWearableRepresentation[] = (metadata?.data?.representations || []).map((rep: any) => ({
+  const representations: ExplorerItemRepresentation[] = (metadata?.data?.representations || []).map((rep: any) => ({
     bodyShapes: rep.bodyShapes
   }))
   const isSmart = itemType === ItemType.SMART_WEARABLE_V1
@@ -97,6 +107,37 @@ export function buildTrimmedEntity({ entity, itemType, individualData, name }: M
       isSmart,
       data: {
         category: category as WearableCategory,
+        representations
+      }
+    }
+  }
+}
+
+export function buildTrimmedEmoteEntity({
+  entity,
+  individualData
+}: {
+  entity: Entity
+  individualData: OnChainEmote['individualData']
+}): ExplorerEmoteEntity {
+  const metadata = entity?.metadata
+  const thumbnailFile = metadata?.thumbnail as string | undefined
+  const thumbnailHash = entity?.content?.find((c) => c.file === thumbnailFile)?.hash
+  const emoteData = metadata?.emoteDataADR74
+  const representations: ExplorerItemRepresentation[] = (emoteData?.representations || []).map((rep: any) => ({
+    bodyShapes: rep.bodyShapes
+  }))
+
+  return {
+    id: entity.id,
+    thumbnail: thumbnailHash,
+    individualData,
+    metadata: {
+      id: metadata?.id,
+      name: metadata?.name,
+      rarity: metadata?.rarity,
+      data: {
+        category: emoteData?.category,
         representations
       }
     }

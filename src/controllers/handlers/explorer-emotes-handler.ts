@@ -1,6 +1,7 @@
 import { Entity } from '@dcl/schemas'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
 import { createCombinedSorting } from '../../logic/sorting'
+import { ExplorerEmoteEntity, buildTrimmedEmoteEntity } from '../../logic/utils'
 import {
   AppComponents,
   HandlerContextWithPath,
@@ -24,7 +25,7 @@ export type MixedEmote = MixedOnChainEmote
 export type MixedEmoteResponse = Omit<MixedEmote, 'minTransferredAt' | 'maxTransferredAt'>
 
 export type MixedEmoteTrimmedResponse = {
-  entity: Entity
+  entity: ExplorerEmoteEntity
   amount?: number
 }
 
@@ -89,7 +90,7 @@ export async function explorerEmotesHandler(
   if (isTrimmed) {
     const results: MixedEmoteTrimmedResponse[] = page.elements.map((emote) => {
       const result: MixedEmoteTrimmedResponse = {
-        entity: emote.entity
+        entity: buildTrimmedEmoteEntity(emote)
       }
       if (includeAmount) {
         result.amount = emote.individualData?.length || 0
