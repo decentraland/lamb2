@@ -1,5 +1,5 @@
 import { AppComponents, ProfileMetadata } from '../types'
-import { Avatar, Entity, Snapshots } from '@dcl/schemas'
+import { Avatar, Entity, LinkUrl, Snapshots } from '@dcl/schemas'
 import { parseUrn } from '@dcl/urn-resolver'
 import { splitUrnAndTokenId } from '../logic/utils'
 import { createTPWOwnershipChecker } from '../ports/ownership-checker/tpw-ownership-checker'
@@ -39,6 +39,30 @@ function addBaseUrlToSnapshots(entityId: string, baseUrl: string, snapshots: Sna
 function addBaseUrlToSnapshot(entityId: string, baseUrl: string, which: string): string {
   const cleanedBaseUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/'
   return cleanedBaseUrl + `entities/${entityId}/${which}.png`
+}
+
+export function sanitizeLinks(links: Avatar['links']): Avatar['links'] {
+  if (!links || links.length === 0) {
+    return links
+  }
+
+  return links.reduce<NonNullable<Avatar['links']>>((acc, link) => {
+    if (LinkUrl.validate(link.url)) {
+      acc.push(link)
+      return acc
+    }
+
+    try {
+      const decoded = decodeURIComponent(link.url)
+      if (LinkUrl.validate(decoded)) {
+        acc.push({ ...link, url: decoded })
+      }
+    } catch {
+      // decodeURIComponent can throw on malformed input — drop the link
+    }
+
+    return acc
+  }, [])
 }
 
 export type IProfilesComponent = {
@@ -193,6 +217,7 @@ export async function createProfilesComponent(
 
             avatars.push({
               ...avatar,
+              links: sanitizeLinks(avatar.links),
               hasClaimedName: ownedNames.findIndex((name) => name.name === avatar.name) !== -1,
               avatar: {
                 ...avatar.avatar,
