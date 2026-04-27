@@ -1,8 +1,13 @@
 import { WearableDefinition } from '@dcl/schemas'
-import { CatalogFilters, getWearablesCatalog } from '../../logic/wearables-catalog'
-import { HandlerContextWithPath, InvalidRequestError } from '../../types'
+import { fetchBaseWearables } from '../../logic/fetch-elements/fetch-base-items'
+import {
+  fetchWearablesByFilters,
+  WearablesByFiltersCriteria
+} from '../../logic/fetch-elements/fetch-wearables-by-filters'
+import { BaseWearable, HandlerContextWithPath, InvalidRequestError } from '../../types'
 
 const MAX_LIMIT = 500
+const BASE_AVATARS_COLLECTION_ID = 'urn:decentraland:off-chain:base-avatars'
 
 type WearablesCatalogResponse = {
   wearables: WearableDefinition[]
@@ -24,6 +29,7 @@ export async function wearablesCatalogHandler(
     '/collections/wearables'
   >
 ): Promise<{ status: 200; body: WearablesCatalogResponse }> {
+  const { theGraph, wearableDefinitionsFetcher, entitiesFetcher } = context.components
   const { searchParams } = context.url
 
   const collectionIds = searchParams.getAll('collectionId').map((id) => id.toLowerCase())
@@ -45,19 +51,47 @@ export async function wearablesCatalogHandler(
   }
 
   const limit = clampLimit(searchParams.get('limit'))
-
-  const filters: CatalogFilters = {
+  const filters: WearablesByFiltersCriteria = {
     collectionIds: collectionIds.length > 0 ? collectionIds : undefined,
     itemIds: wearableIds.length > 0 ? wearableIds : undefined,
     textSearch
   }
 
-  const { wearables, lastId: nextLastId } = await getWearablesCatalog(context.components, filters, { limit, lastId })
+  let remaining = limit
+  let onChainCursor = lastId
+
+  const onlyBaseCollection =
+    filters.collectionIds?.length === 1 && filters.collectionIds[0] === BASE_AVATARS_COLLECTION_ID
+  const baseCollectionAllowed = !filters.collectionIds || filters.collectionIds.includes(BASE_AVATARS_COLLECTION_ID)
+
+  let offChain: WearableDefinition[] = []
+  if (baseCollectionAllowed && (!lastId || lastId.startsWith(BASE_AVATARS_COLLECTION_ID))) {
+    const base = await fetchBaseWearables({ entitiesFetcher })
+    offChain = filterBaseWearables(base, filters, lastId)
+    remaining -= offChain.length
+    onChainCursor = undefined
+  }
+
+  let onChain: WearableDefinition[] = []
+  if (!onlyBaseCollection && remaining >= 0) {
+    const urns = await fetchWearablesByFilters(theGraph, filters, { limit: remaining + 1, lastId: onChainCursor })
+    if (urns.length > 0) {
+      const definitions = await wearableDefinitionsFetcher.fetchItemsDefinitions(urns)
+      onChain = definitions
+        .filter((d): d is WearableDefinition => !!d)
+        .sort((a, b) => a.id.toLowerCase().localeCompare(b.id.toLowerCase()))
+    }
+  }
+
+  const merged = [...offChain, ...onChain]
+  const hasMore = merged.length > limit
+  const slice = hasMore ? merged.slice(0, limit) : merged
+  const nextLastId = hasMore ? slice[slice.length - 1]?.id : undefined
 
   return {
     status: 200,
     body: {
-      wearables,
+      wearables: slice,
       filters,
       pagination: {
         limit,
@@ -66,6 +100,35 @@ export async function wearablesCatalogHandler(
       }
     }
   }
+}
+
+function filterBaseWearables(
+  baseWearables: BaseWearable[],
+  filters: WearablesByFiltersCriteria,
+  lastId: string | undefined
+): WearableDefinition[] {
+  return baseWearables
+    .filter((wearable) => {
+      const lcUrn = wearable.urn.toLowerCase()
+      if (lastId && lcUrn <= lastId) {
+        return false
+      }
+      if (filters.itemIds && !filters.itemIds.includes(lcUrn)) {
+        return false
+      }
+      if (filters.textSearch) {
+        const englishName = (wearable.entity.metadata as { i18n?: { code: string; text: string }[] })?.i18n?.find(
+          (entry) => entry.code === 'en'
+        )?.text
+        const haystack = (englishName ?? wearable.name).toLowerCase()
+        if (!haystack.includes(filters.textSearch)) {
+          return false
+        }
+      }
+      return true
+    })
+    .map((wearable) => wearable.entity.metadata as WearableDefinition)
+    .sort((a, b) => a.id.toLowerCase().localeCompare(b.id.toLowerCase()))
 }
 
 function clampLimit(raw: string | null): number {
@@ -79,7 +142,7 @@ function clampLimit(raw: string | null): number {
   return parsed
 }
 
-function buildNextQuery(filters: CatalogFilters, limit: number, nextLastId: string): string {
+function buildNextQuery(filters: WearablesByFiltersCriteria, limit: number, nextLastId: string): string {
   const params = new URLSearchParams()
   if (filters.collectionIds) {
     for (const id of filters.collectionIds) {
