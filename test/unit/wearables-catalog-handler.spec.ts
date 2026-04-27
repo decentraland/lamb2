@@ -207,6 +207,80 @@ describe('wearables-catalog-handler: GET /collections/wearables', () => {
     })
   })
 
+  describe('when off-chain alone returns more items than the requested limit', () => {
+    const baseUrns = [
+      'urn:decentraland:off-chain:base-avatars:a',
+      'urn:decentraland:off-chain:base-avatars:b',
+      'urn:decentraland:off-chain:base-avatars:c'
+    ]
+    const baseWearables = baseUrns.map((urn) => makeBaseWearable(urn, urn))
+
+    beforeEach(() => {
+      fetchBaseSpy.mockResolvedValueOnce(baseWearables)
+    })
+
+    it('should slice off-chain results and skip the on-chain query entirely', async () => {
+      const response = await wearablesCatalogHandler(
+        buildContext('/collections/wearables?textSearch=urn&limit=2')
+      )
+
+      expect(fetchByFiltersSpy).not.toHaveBeenCalled()
+      expect(response.body.wearables).toHaveLength(2)
+      expect(response.body.pagination.next).toBeDefined()
+      const nextParams = new URLSearchParams(response.body.pagination.next!.slice(1))
+      expect(nextParams.get('lastId')).toBe(baseUrns[1])
+    })
+  })
+
+  describe('when off-chain returns some items and on-chain is queried fresh', () => {
+    const baseUrns = [
+      'urn:decentraland:off-chain:base-avatars:a',
+      'urn:decentraland:off-chain:base-avatars:b'
+    ]
+    const baseWearables = baseUrns.map((urn) => makeBaseWearable(urn, urn))
+    const onChainDefinitions = [
+      { id: 'urn:decentraland:matic:1' },
+      { id: 'urn:decentraland:matic:2' },
+      { id: 'urn:decentraland:matic:3' },
+      { id: 'urn:decentraland:matic:4' }
+    ] as WearableDefinition[]
+
+    beforeEach(() => {
+      fetchBaseSpy.mockResolvedValueOnce(baseWearables)
+      fetchByFiltersSpy.mockResolvedValueOnce(onChainDefinitions.map((d) => d.id))
+    })
+
+    it('should call the on-chain fetcher with a cleared cursor and remaining+1 limit', async () => {
+      await wearablesCatalogHandler(
+        buildContext(
+          '/collections/wearables?textSearch=urn&limit=5',
+          jest.fn().mockResolvedValueOnce(onChainDefinitions)
+        )
+      )
+
+      // limit=5, off-chain returns 2 → remaining=3 → fetcher asked for remaining+1=4
+      expect(fetchByFiltersSpy).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({ lastId: undefined, limit: 4 })
+      )
+    })
+
+    it('should merge off-chain and on-chain results in order, off-chain first', async () => {
+      const response = await wearablesCatalogHandler(
+        buildContext(
+          '/collections/wearables?textSearch=urn&limit=5',
+          jest.fn().mockResolvedValueOnce(onChainDefinitions)
+        )
+      )
+
+      expect(response.body.wearables).toHaveLength(5)
+      const ids = response.body.wearables.map((w) => w.id)
+      expect(ids.slice(0, 2)).toEqual(baseUrns)
+      expect(ids.slice(2)).toEqual(onChainDefinitions.slice(0, 3).map((d) => d.id))
+    })
+  })
+
   describe('when the fetcher returns more results than the requested limit', () => {
     const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k']
     const definitions = letters.map((l) => ({ id: `urn:matic:${l}` })) as WearableDefinition[]
