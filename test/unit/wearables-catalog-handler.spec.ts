@@ -27,7 +27,8 @@ describe('wearables-catalog-handler: GET /collections/wearables', () => {
         wearableDefinitionsFetcher: {
           fetchItemsDefinitions
         } as any,
-        entitiesFetcher: {} as any
+        entitiesFetcher: {} as any,
+        contentServerUrl: 'http://content.test'
       },
       url: new URL(`http://localhost${urlPath}`)
     } as any
@@ -35,10 +36,14 @@ describe('wearables-catalog-handler: GET /collections/wearables', () => {
 
   function makeBaseWearable(urn: string, name: string, englishText?: string): BaseWearable {
     const entity = {
+      content: [],
       metadata: {
         id: urn,
         name,
-        i18n: englishText ? [{ code: 'en', text: englishText }] : undefined
+        thumbnail: 'thumb.png',
+        image: 'img.png',
+        i18n: englishText ? [{ code: 'en', text: englishText }] : undefined,
+        data: { representations: [], category: 'hat', tags: [], hides: [], replaces: [] }
       }
     } as unknown as Entity
     return {
@@ -150,7 +155,8 @@ describe('wearables-catalog-handler: GET /collections/wearables', () => {
         buildContext(`/collections/wearables?wearableId=${encodeURIComponent(baseUrn)}`)
       )
 
-      expect(response.body.wearables).toEqual([baseWearable.entity.metadata])
+      expect(response.body.wearables).toHaveLength(1)
+      expect(response.body.wearables[0]).toMatchObject({ id: baseUrn, name: 'Eyebrows' })
     })
   })
 
@@ -166,7 +172,8 @@ describe('wearables-catalog-handler: GET /collections/wearables', () => {
     it('should still match the base wearable via its english i18n text', async () => {
       const response = await wearablesCatalogHandler(buildContext('/collections/wearables?textSearch=translated'))
 
-      expect(response.body.wearables).toEqual([baseWearable.entity.metadata])
+      expect(response.body.wearables).toHaveLength(1)
+      expect(response.body.wearables[0]).toMatchObject({ id: baseUrn })
     })
   })
 

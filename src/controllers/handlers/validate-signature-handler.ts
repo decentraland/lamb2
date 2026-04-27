@@ -18,7 +18,7 @@ export async function validateSignatureHandler(
 ): Promise<{ status: 200; body: ValidateSignatureResponse }> {
   const { l1Provider } = context.components
 
-  const body = (await context.request.json()) as ValidateSignatureBody
+  const body = parseBody(await context.request.json())
   const finalAuthority = body.signedMessage ?? body.timestamp
   if (!finalAuthority) {
     throw new InvalidRequestError(`Expected 'signedMessage' property to be set`)
@@ -33,5 +33,26 @@ export async function validateSignatureHandler(
       ownerAddress: result.ok ? Authenticator.ownerAddress(body.authChain) : undefined,
       error: result.message
     }
+  }
+}
+
+function parseBody(raw: unknown): ValidateSignatureBody {
+  if (!raw || typeof raw !== 'object') {
+    throw new InvalidRequestError('Request body must be a JSON object')
+  }
+  const body = raw as Record<string, unknown>
+  if (!Array.isArray(body.authChain)) {
+    throw new InvalidRequestError(`'authChain' must be an array`)
+  }
+  if (body.timestamp !== undefined && typeof body.timestamp !== 'string') {
+    throw new InvalidRequestError(`'timestamp' must be a string`)
+  }
+  if (body.signedMessage !== undefined && typeof body.signedMessage !== 'string') {
+    throw new InvalidRequestError(`'signedMessage' must be a string`)
+  }
+  return {
+    timestamp: body.timestamp as string | undefined,
+    signedMessage: body.signedMessage as string | undefined,
+    authChain: body.authChain as AuthLink[]
   }
 }

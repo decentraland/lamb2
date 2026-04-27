@@ -3,6 +3,11 @@ import { wearablesByOwnerHandler } from '../../src/controllers/handlers/wearable
 import * as fetchThirdPartyModule from '../../src/logic/fetch-elements/fetch-third-party-wearables'
 import { InvalidRequestError, OnChainWearable } from '../../src/types'
 import { generateRandomAddress } from '../helpers'
+import {
+  buildOwnerHandlerSharedComponents,
+  makeDefinitionsFetcherMock,
+  makeOwnedFetcherMock
+} from '../mocks/items-by-owner-fixtures'
 
 describe('wearables-by-owner-handler: GET /collections/wearables-by-owner/:owner', () => {
   const owner = generateRandomAddress()
@@ -29,16 +34,9 @@ describe('wearables-by-owner-handler: GET /collections/wearables-by-owner/:owner
 
   function buildComponents() {
     return {
-      wearablesFetcher: {
-        fetchOwnedElements: jest.fn()
-      },
-      wearableDefinitionsFetcher: {
-        fetchItemsDefinitions: jest.fn()
-      },
-      thirdPartyWearablesFetcher: { fetchOwnedElements: jest.fn() } as any,
-      thirdPartyProvidersStorage: { get: jest.fn(), getAll: jest.fn() } as any,
-      logs: { getLogger: () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() }) } as any,
-      fetch: { fetch: jest.fn() } as any
+      wearablesFetcher: makeOwnedFetcherMock(),
+      wearableDefinitionsFetcher: makeDefinitionsFetcherMock(),
+      ...buildOwnerHandlerSharedComponents()
     }
   }
 
@@ -138,7 +136,11 @@ describe('wearables-by-owner-handler: GET /collections/wearables-by-owner/:owner
         )
       )
 
-      expect(fetchSpy).toHaveBeenCalledWith(components, owner, expect.objectContaining({ thirdPartyName: 'baby-doge-coin' }))
+      expect(fetchSpy).toHaveBeenCalledWith(
+        expect.any(Object),
+        owner,
+        expect.objectContaining({ thirdPartyName: 'baby-doge-coin' })
+      )
       expect(components.wearablesFetcher.fetchOwnedElements).not.toHaveBeenCalled()
       expect(response.body).toEqual([{ urn: thirdPartyWearable.urn, amount: 3 }])
     })

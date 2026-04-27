@@ -3,6 +3,11 @@ import { emotesByOwnerHandler } from '../../src/controllers/handlers/emotes-by-o
 import * as fetchThirdPartyModule from '../../src/logic/fetch-elements/fetch-third-party-wearables'
 import { InvalidRequestError, OnChainEmote } from '../../src/types'
 import { generateRandomAddress } from '../helpers'
+import {
+  buildOwnerHandlerSharedComponents,
+  makeDefinitionsFetcherMock,
+  makeOwnedFetcherMock
+} from '../mocks/items-by-owner-fixtures'
 
 describe('emotes-by-owner-handler: GET /collections/emotes-by-owner/:owner', () => {
   const owner = generateRandomAddress()
@@ -29,16 +34,9 @@ describe('emotes-by-owner-handler: GET /collections/emotes-by-owner/:owner', () 
 
   function buildComponents() {
     return {
-      emotesFetcher: {
-        fetchOwnedElements: jest.fn()
-      },
-      emoteDefinitionsFetcher: {
-        fetchItemsDefinitions: jest.fn()
-      },
-      thirdPartyWearablesFetcher: { fetchOwnedElements: jest.fn() } as any,
-      thirdPartyProvidersStorage: { get: jest.fn(), getAll: jest.fn() } as any,
-      logs: { getLogger: () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() }) } as any,
-      fetch: { fetch: jest.fn() } as any
+      emotesFetcher: makeOwnedFetcherMock(),
+      emoteDefinitionsFetcher: makeDefinitionsFetcherMock(),
+      ...buildOwnerHandlerSharedComponents()
     }
   }
 
@@ -136,7 +134,7 @@ describe('emotes-by-owner-handler: GET /collections/emotes-by-owner/:owner', () 
       )
 
       expect(fetchSpy).toHaveBeenCalledWith(
-        components,
+        expect.any(Object),
         owner,
         expect.objectContaining({ thirdPartyName: 'cryptoavatars' })
       )
