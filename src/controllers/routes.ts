@@ -25,6 +25,8 @@ import { parcelOperatorsHandler } from './handlers/parcel-operators-handler'
 import { nameOwnerHandler } from './handlers/name-owner-handler'
 import { userLandsPermissionsHandler } from './handlers/user-lands-permissions-handler'
 import { validateSignatureHandler } from './handlers/validate-signature-handler'
+import { emotesByOwnerHandler } from './handlers/emotes-by-owner-handler'
+import { emotesCatalogHandler } from './handlers/emotes-catalog-handler'
 import { wearablesByOwnerHandler } from './handlers/wearables-by-owner-handler'
 import { wearablesCatalogHandler } from './handlers/wearables-catalog-handler'
 
@@ -59,6 +61,8 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
   router.post('/crypto/validate-signature', validateSignatureHandler)
   router.get('/collections/wearables-by-owner/:owner', wearablesByOwnerHandler)
   router.get('/collections/wearables', wearablesCatalogHandler)
+  router.get('/collections/emotes-by-owner/:owner', emotesByOwnerHandler)
+  router.get('/collections/emotes', emotesCatalogHandler)
 
   return router
 }

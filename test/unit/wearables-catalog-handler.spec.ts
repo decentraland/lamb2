@@ -1,7 +1,7 @@
 import { Entity, WearableDefinition } from '@dcl/schemas'
 import { wearablesCatalogHandler } from '../../src/controllers/handlers/wearables-catalog-handler'
 import * as fetchBaseItemsModule from '../../src/logic/fetch-elements/fetch-base-items'
-import * as fetchWearablesByFiltersModule from '../../src/logic/fetch-elements/fetch-wearables-by-filters'
+import * as fetchWearablesByFiltersModule from '../../src/logic/fetch-elements/fetch-items-by-filters'
 import { BaseWearable, InvalidRequestError } from '../../src/types'
 
 describe('wearables-catalog-handler: GET /collections/wearables', () => {

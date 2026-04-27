@@ -1,9 +1,6 @@
 import { WearableDefinition } from '@dcl/schemas'
 import { fetchBaseWearables } from '../../logic/fetch-elements/fetch-base-items'
-import {
-  fetchWearablesByFilters,
-  WearablesByFiltersCriteria
-} from '../../logic/fetch-elements/fetch-wearables-by-filters'
+import { fetchWearablesByFilters, ItemsByFiltersCriteria } from '../../logic/fetch-elements/fetch-items-by-filters'
 import { BaseWearable, HandlerContextWithPath, InvalidRequestError } from '../../types'
 
 const MAX_LIMIT = 500
@@ -51,7 +48,7 @@ export async function wearablesCatalogHandler(
   }
 
   const limit = clampLimit(searchParams.get('limit'))
-  const filters: WearablesByFiltersCriteria = {
+  const filters: ItemsByFiltersCriteria = {
     collectionIds: collectionIds.length > 0 ? collectionIds : undefined,
     itemIds: wearableIds.length > 0 ? wearableIds : undefined,
     textSearch
@@ -104,7 +101,7 @@ export async function wearablesCatalogHandler(
 
 function filterBaseWearables(
   baseWearables: BaseWearable[],
-  filters: WearablesByFiltersCriteria,
+  filters: ItemsByFiltersCriteria,
   lastId: string | undefined
 ): WearableDefinition[] {
   return baseWearables
@@ -142,7 +139,7 @@ function clampLimit(raw: string | null): number {
   return parsed
 }
 
-function buildNextQuery(filters: WearablesByFiltersCriteria, limit: number, nextLastId: string): string {
+function buildNextQuery(filters: ItemsByFiltersCriteria, limit: number, nextLastId: string): string {
   const params = new URLSearchParams()
   if (filters.collectionIds) {
     for (const id of filters.collectionIds) {

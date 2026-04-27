@@ -1,4 +1,7 @@
-import { fetchWearablesByFilters } from '../../../../src/logic/fetch-elements/fetch-wearables-by-filters'
+import {
+  fetchEmotesByFilters,
+  fetchWearablesByFilters
+} from '../../../../src/logic/fetch-elements/fetch-items-by-filters'
 import { createTheGraphComponentMock } from '../../../mocks/the-graph-mock'
 
 describe('fetchWearablesByFilters', () => {
@@ -148,6 +151,94 @@ describe('fetchWearablesByFilters', () => {
       expect(queryString).toContain('wearable_v2')
       expect(queryString).toContain('smart_wearable_v1')
       expect(queryString).not.toContain('emote_v1')
+    })
+  })
+})
+
+describe('fetchEmotesByFilters', () => {
+  let theGraph: ReturnType<typeof createTheGraphComponentMock>
+  let l1Query: jest.SpyInstance
+  let l2Query: jest.SpyInstance
+
+  beforeEach(() => {
+    theGraph = createTheGraphComponentMock()
+    l1Query = jest.spyOn(theGraph.ethereumCollectionsSubgraph, 'query')
+    l2Query = jest.spyOn(theGraph.maticCollectionsSubgraph, 'query')
+  })
+
+  afterEach(() => {
+    jest.resetAllMocks()
+  })
+
+  describe('when called with a textSearch filter', () => {
+    beforeEach(() => {
+      l2Query.mockResolvedValueOnce({ items: [{ urn: 'urn:matic:emote:1' }] })
+    })
+
+    it('should query only the matic collection subgraph and skip ethereum', async () => {
+      const result = await fetchEmotesByFilters(theGraph, { textSearch: 'dance' }, { limit: 10 })
+
+      expect(result).toEqual(['urn:matic:emote:1'])
+      expect(l1Query).not.toHaveBeenCalled()
+      expect(l2Query).toHaveBeenCalledTimes(1)
+    })
+
+    it('should restrict the searchItemType to emote_v1 only', async () => {
+      await fetchEmotesByFilters(theGraph, { textSearch: 'dance' }, { limit: 10 })
+
+      const queryString = l2Query.mock.calls[0][0] as string
+      expect(queryString).toContain('searchItemType_in')
+      expect(queryString).toContain('emote_v1')
+      expect(queryString).not.toContain('wearable_v1')
+      expect(queryString).not.toContain('wearable_v2')
+      expect(queryString).not.toContain('smart_wearable_v1')
+    })
+  })
+
+  describe('when called with itemIds', () => {
+    beforeEach(() => {
+      l2Query.mockResolvedValueOnce({ items: [{ urn: 'urn:matic:emote:1' }] })
+    })
+
+    it('should pass the ids variable to the subgraph', async () => {
+      await fetchEmotesByFilters(theGraph, { itemIds: ['urn:e:1', 'urn:e:2'] }, { limit: 5 })
+
+      expect(l2Query).toHaveBeenCalledWith(
+        expect.stringContaining('urn_in: $ids'),
+        expect.objectContaining({ ids: ['urn:e:1', 'urn:e:2'] })
+      )
+    })
+  })
+
+  describe('when called with collectionIds', () => {
+    beforeEach(() => {
+      l2Query.mockResolvedValueOnce({
+        collections: [{ items: [{ urn: 'urn:matic:e:1' }, { urn: 'urn:matic:e:2' }] }]
+      })
+    })
+
+    it('should wrap the items query inside a collections block on L2', async () => {
+      const result = await fetchEmotesByFilters(theGraph, { collectionIds: ['urn:c1'] }, { limit: 10 })
+
+      expect(result).toEqual(['urn:matic:e:1', 'urn:matic:e:2'])
+      expect(l2Query).toHaveBeenCalledWith(
+        expect.stringContaining('collections(where: { urn_in: $collectionIds }'),
+        expect.objectContaining({ collectionIds: ['urn:c1'] })
+      )
+    })
+  })
+
+  describe('when an L2 cursor is provided', () => {
+    const maticCursor = 'urn:decentraland:matic:collections-v2:0xabc:0'
+
+    beforeEach(() => {
+      l2Query.mockResolvedValueOnce({ items: [{ urn: 'urn:matic:emote:after-cursor' }] })
+    })
+
+    it('should pass the cursor through to the L2 subgraph', async () => {
+      await fetchEmotesByFilters(theGraph, { textSearch: 'dance' }, { limit: 10, lastId: maticCursor })
+
+      expect(l2Query).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ lastId: maticCursor }))
     })
   })
 })
