@@ -1,5 +1,5 @@
-import { Entity, Rarity, WearableCategory } from '@dcl/schemas'
-import { buildTrimmedEntity, ExplorerWearableEntity } from '../../../src/logic/utils'
+import { EmoteCategory, Entity, Rarity, WearableCategory } from '@dcl/schemas'
+import { buildTrimmedWearableEntity, buildTrimmedEmoteEntity, ExplorerWearableEntity, ExplorerEmoteEntity } from '../../../src/logic/utils'
 import { ItemType, MixedWearable } from '../../../src/types'
 import { createMockEntity } from '../../mocks/entity-mock'
 import {
@@ -7,8 +7,9 @@ import {
   createMockThirdPartyWearable,
   createMockBaseWearable
 } from '../../mocks/mixed-wearable-mock'
+import { createMockOnChainEmote } from '../../mocks/mixed-emote-mock'
 
-describe('buildTrimmedEntity', function () {
+describe('buildTrimmedWearableEntity', function () {
   describe('when building a trimmed entity', function () {
     let mixedWearable: MixedWearable
     let result: ExplorerWearableEntity
@@ -16,7 +17,7 @@ describe('buildTrimmedEntity', function () {
     describe('and itemType is SMART_WEARABLE_V1', function () {
       beforeEach(function () {
         mixedWearable = createMockOnChainWearable({ itemType: ItemType.SMART_WEARABLE_V1 })
-        result = buildTrimmedEntity(mixedWearable)
+        result = buildTrimmedWearableEntity(mixedWearable)
       })
 
       it('should set isSmart to true', function () {
@@ -27,7 +28,7 @@ describe('buildTrimmedEntity', function () {
     describe('and itemType is WEARABLE_V1', function () {
       beforeEach(function () {
         mixedWearable = createMockOnChainWearable({ itemType: ItemType.WEARABLE_V1 })
-        result = buildTrimmedEntity(mixedWearable)
+        result = buildTrimmedWearableEntity(mixedWearable)
       })
 
       it('should set isSmart to false', function () {
@@ -38,7 +39,7 @@ describe('buildTrimmedEntity', function () {
     describe('and itemType is WEARABLE_V2', function () {
       beforeEach(function () {
         mixedWearable = createMockOnChainWearable({ itemType: ItemType.WEARABLE_V2 })
-        result = buildTrimmedEntity(mixedWearable)
+        result = buildTrimmedWearableEntity(mixedWearable)
       })
 
       it('should set isSmart to false', function () {
@@ -49,7 +50,7 @@ describe('buildTrimmedEntity', function () {
     describe('and itemType is EMOTE_V1', function () {
       beforeEach(function () {
         mixedWearable = createMockOnChainWearable({ itemType: ItemType.EMOTE_V1 })
-        result = buildTrimmedEntity(mixedWearable)
+        result = buildTrimmedWearableEntity(mixedWearable)
       })
 
       it('should set isSmart to false', function () {
@@ -60,7 +61,7 @@ describe('buildTrimmedEntity', function () {
     describe('and itemType is undefined', function () {
       beforeEach(function () {
         mixedWearable = createMockThirdPartyWearable()
-        result = buildTrimmedEntity(mixedWearable)
+        result = buildTrimmedWearableEntity(mixedWearable)
       })
 
       it('should set isSmart to false', function () {
@@ -73,7 +74,7 @@ describe('buildTrimmedEntity', function () {
 
       beforeEach(function () {
         mixedWearable = createMockOnChainWearable({ entity })
-        result = buildTrimmedEntity(mixedWearable)
+        result = buildTrimmedWearableEntity(mixedWearable)
       })
 
       it('should map the entity id correctly', function () {
@@ -84,7 +85,7 @@ describe('buildTrimmedEntity', function () {
     describe('and entity has standard metadata', function () {
       beforeEach(function () {
         mixedWearable = createMockOnChainWearable()
-        result = buildTrimmedEntity(mixedWearable)
+        result = buildTrimmedWearableEntity(mixedWearable)
       })
 
       it('should map the thumbnail hash from content', function () {
@@ -148,7 +149,7 @@ describe('buildTrimmedEntity', function () {
           rarity: 'epic',
           category: WearableCategory.UPPER_BODY
         })
-        result = buildTrimmedEntity(mixedWearable)
+        result = buildTrimmedWearableEntity(mixedWearable)
       })
 
       it('should include all representations', function () {
@@ -189,7 +190,7 @@ describe('buildTrimmedEntity', function () {
 
       beforeEach(function () {
         mixedWearable = createMockOnChainWearable({ entity })
-        result = buildTrimmedEntity(mixedWearable)
+        result = buildTrimmedWearableEntity(mixedWearable)
       })
 
       it('should return an empty representations array', function () {
@@ -214,7 +215,7 @@ describe('buildTrimmedEntity', function () {
 
       beforeEach(function () {
         mixedWearable = createMockOnChainWearable({ entity })
-        result = buildTrimmedEntity(mixedWearable)
+        result = buildTrimmedWearableEntity(mixedWearable)
       })
 
       it('should set thumbnail to undefined', function () {
@@ -229,7 +230,7 @@ describe('buildTrimmedEntity', function () {
 
       beforeEach(function () {
         mixedWearable = createMockOnChainWearable({ entity })
-        result = buildTrimmedEntity(mixedWearable)
+        result = buildTrimmedWearableEntity(mixedWearable)
       })
 
       it('should set thumbnail to undefined', function () {
@@ -249,7 +250,7 @@ describe('buildTrimmedEntity', function () {
           amount: 2,
           maxTransferredAt: 2000
         })
-        result = buildTrimmedEntity(mixedWearable)
+        result = buildTrimmedWearableEntity(mixedWearable)
       })
 
       it('should include individualData in the result', function () {
@@ -286,7 +287,7 @@ describe('buildTrimmedEntity', function () {
           individualData: thirdPartyIndividualData,
           amount: 2
         })
-        result = buildTrimmedEntity(mixedWearable)
+        result = buildTrimmedWearableEntity(mixedWearable)
       })
 
       it('should include individualData in the result', function () {
@@ -314,7 +315,7 @@ describe('buildTrimmedEntity', function () {
         mixedWearable = createMockBaseWearable({
           individualData: baseWearableIndividualData
         })
-        result = buildTrimmedEntity(mixedWearable)
+        result = buildTrimmedWearableEntity(mixedWearable)
       })
 
       it('should include individualData in the result', function () {
@@ -334,12 +335,154 @@ describe('buildTrimmedEntity', function () {
           minTransferredAt: 0,
           maxTransferredAt: 0
         })
-        result = buildTrimmedEntity(mixedWearable)
+        result = buildTrimmedWearableEntity(mixedWearable)
       })
 
       it('should include empty individualData array', function () {
         expect(result.individualData).toBeDefined()
         expect(result.individualData).toHaveLength(0)
+      })
+    })
+  })
+})
+
+describe('buildTrimmedEmoteEntity', function () {
+  describe('when building a trimmed emote entity', function () {
+    let result: ExplorerEmoteEntity
+
+    describe('and emote has standard metadata', function () {
+      beforeEach(function () {
+        result = buildTrimmedEmoteEntity(createMockOnChainEmote())
+      })
+
+      it('should map the entity id correctly', function () {
+        expect(result.id).toBe('test-entity-id')
+      })
+
+      it('should map the thumbnail hash from content', function () {
+        expect(result.thumbnail).toBe('QmThumbnailHash123')
+      })
+
+      it('should map the metadata id', function () {
+        expect(result.metadata.id).toBe('emote-metadata-id')
+      })
+
+      it('should map the metadata name', function () {
+        expect(result.metadata.name).toBe('Test Emote')
+      })
+
+      it('should map the rarity', function () {
+        expect(result.metadata.rarity).toBe(Rarity.COMMON)
+      })
+
+      it('should map the category', function () {
+        expect(result.metadata.data.category).toBe(EmoteCategory.DANCE)
+      })
+
+      it('should map the representations with bodyShapes only', function () {
+        expect(result.metadata.data.representations).toHaveLength(1)
+        expect(result.metadata.data.representations[0].bodyShapes).toEqual([
+          'urn:decentraland:off-chain:base-avatars:BaseMale'
+        ])
+      })
+
+      it('should map individualData from the emote', function () {
+        expect(result.individualData).toEqual([{ id: 'nft-1', tokenId: '123', transferredAt: 1000, price: 100 }])
+      })
+    })
+
+    describe('and emote has a custom entity id', function () {
+      beforeEach(function () {
+        const entity = createMockEntity({ id: 'custom-emote-entity-id' })
+        result = buildTrimmedEmoteEntity(createMockOnChainEmote({ entity }))
+      })
+
+      it('should map the entity id correctly', function () {
+        expect(result.id).toBe('custom-emote-entity-id')
+      })
+    })
+
+    describe('and emote has multiple individualData entries', function () {
+      const individualData = [
+        { id: 'nft-1', tokenId: '1', transferredAt: 1000, price: 100 },
+        { id: 'nft-2', tokenId: '2', transferredAt: 2000, price: 200 }
+      ]
+
+      beforeEach(function () {
+        result = buildTrimmedEmoteEntity(createMockOnChainEmote({ individualData, amount: 2 }))
+      })
+
+      it('should preserve all individualData entries', function () {
+        expect(result.individualData).toHaveLength(2)
+        expect(result.individualData[0].id).toBe('nft-1')
+        expect(result.individualData[1].id).toBe('nft-2')
+      })
+    })
+
+    describe('and emote has multiple representations', function () {
+      beforeEach(function () {
+        const entity = createMockEntity({
+          metadata: {
+            id: 'emote-metadata-id',
+            name: 'Test Emote',
+            rarity: Rarity.RARE,
+            thumbnail: 'thumb.png',
+            emoteDataADR74: {
+              category: EmoteCategory.GREETINGS,
+              representations: [
+                { bodyShapes: ['urn:decentraland:off-chain:base-avatars:BaseMale'], mainFile: 'm.glb', contents: [] },
+                { bodyShapes: ['urn:decentraland:off-chain:base-avatars:BaseFemale'], mainFile: 'f.glb', contents: [] }
+              ],
+              tags: [],
+              loop: false
+            }
+          } as any
+        })
+        result = buildTrimmedEmoteEntity(createMockOnChainEmote({ entity }))
+      })
+
+      it('should include all representations', function () {
+        expect(result.metadata.data.representations).toHaveLength(2)
+      })
+
+      it('should strip extra representation fields, keeping only bodyShapes', function () {
+        expect(Object.keys(result.metadata.data.representations[0])).toEqual(['bodyShapes'])
+      })
+    })
+
+    describe('and emote has undefined thumbnail', function () {
+      beforeEach(function () {
+        const entity = createMockEntity({
+          metadata: {
+            id: 'emote-metadata-id',
+            name: 'Test Emote',
+            thumbnail: undefined,
+            emoteDataADR74: { category: EmoteCategory.DANCE, representations: [], tags: [], loop: false }
+          } as any
+        })
+        result = buildTrimmedEmoteEntity(createMockOnChainEmote({ entity }))
+      })
+
+      it('should set thumbnail to undefined', function () {
+        expect(result.thumbnail).toBeUndefined()
+      })
+    })
+
+    describe('and emote has no representations', function () {
+      beforeEach(function () {
+        const entity = createMockEntity({
+          metadata: {
+            id: 'emote-metadata-id',
+            name: 'Test Emote',
+            thumbnail: 'thumb.png',
+            emoteDataADR74: { category: EmoteCategory.DANCE, representations: [], tags: [], loop: false }
+          } as any
+        })
+        result = buildTrimmedEmoteEntity(createMockOnChainEmote({ entity }))
+      })
+
+      it('should return an empty representations array', function () {
+        expect(result.metadata.data.representations).toHaveLength(0)
       })
     })
   })
