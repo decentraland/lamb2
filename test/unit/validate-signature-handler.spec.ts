@@ -62,6 +62,58 @@ describe('validate-signature-handler: POST /crypto/validate-signature', () => {
     })
   })
 
+  describe('when the request body is not a JSON object', () => {
+    it('should throw InvalidRequestError for an array body', async () => {
+      const request = makeRequest([1, 2, 3])
+      await expect(
+        validateSignatureHandler({ components: { l1Provider: mockL1Provider }, request: request as any })
+      ).rejects.toThrow(/JSON object/)
+      expect(mockValidateSignature).not.toHaveBeenCalled()
+    })
+
+    it('should throw InvalidRequestError for a null body', async () => {
+      const request = makeRequest(null)
+      await expect(
+        validateSignatureHandler({ components: { l1Provider: mockL1Provider }, request: request as any })
+      ).rejects.toThrow(/JSON object/)
+      expect(mockValidateSignature).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('when authChain is missing or not an array', () => {
+    it('should throw InvalidRequestError for a missing authChain', async () => {
+      const request = makeRequest({ signedMessage: 'hello' })
+      await expect(
+        validateSignatureHandler({ components: { l1Provider: mockL1Provider }, request: request as any })
+      ).rejects.toThrow(/authChain/)
+      expect(mockValidateSignature).not.toHaveBeenCalled()
+    })
+
+    it('should throw InvalidRequestError when authChain is a string', async () => {
+      const request = makeRequest({ signedMessage: 'hello', authChain: 'not-an-array' })
+      await expect(
+        validateSignatureHandler({ components: { l1Provider: mockL1Provider }, request: request as any })
+      ).rejects.toThrow(/authChain/)
+      expect(mockValidateSignature).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('when timestamp or signedMessage are present but not strings', () => {
+    it('should throw InvalidRequestError when timestamp is a number', async () => {
+      const request = makeRequest({ timestamp: 1700000000, authChain })
+      await expect(
+        validateSignatureHandler({ components: { l1Provider: mockL1Provider }, request: request as any })
+      ).rejects.toThrow(/timestamp/)
+    })
+
+    it('should throw InvalidRequestError when signedMessage is an object', async () => {
+      const request = makeRequest({ signedMessage: { not: 'a string' }, authChain })
+      await expect(
+        validateSignatureHandler({ components: { l1Provider: mockL1Provider }, request: request as any })
+      ).rejects.toThrow(/signedMessage/)
+    })
+  })
+
   describe('when signedMessage is provided and the signature is valid', () => {
     beforeEach(() => {
       mockValidateSignature.mockResolvedValueOnce(validResult)

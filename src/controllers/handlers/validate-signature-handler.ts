@@ -37,7 +37,7 @@ export async function validateSignatureHandler(
 }
 
 function parseBody(raw: unknown): ValidateSignatureBody {
-  if (!raw || typeof raw !== 'object') {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     throw new InvalidRequestError('Request body must be a JSON object')
   }
   const body = raw as Record<string, unknown>

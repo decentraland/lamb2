@@ -1,4 +1,4 @@
-import { WearableDefinition } from '@dcl/schemas'
+import { Wearable, WearableDefinition } from '@dcl/schemas'
 import { extractWearableDefinitionFromEntity } from '../../adapters/definitions'
 import { BASE_AVATARS_COLLECTION_ID, fetchBaseWearables } from '../../logic/fetch-elements/fetch-base-items'
 import { fetchWearablesByFilters, ItemsByFiltersCriteria } from '../../logic/fetch-elements/fetch-items-by-filters'
@@ -32,7 +32,10 @@ export async function wearablesCatalogHandler(
   let onChainCursor = lastId
   if (baseCollectionAllowed && (!lastId || lastId.startsWith(BASE_AVATARS_COLLECTION_ID))) {
     const base = await fetchBaseWearables({ entitiesFetcher })
-    offChain = filterAndExtractBaseWearables({ contentServerUrl }, base, filters, lastId)
+    // We only need limit+1 off-chain matches: the caller slices to `limit` and
+    // any extra item just signals hasMore. Capping here avoids running the
+    // entity extractor over the full base avatars list when filters are broad.
+    offChain = filterAndExtractBaseWearables({ contentServerUrl }, base, filters, lastId, limit + 1)
     onChainCursor = undefined
   }
 
@@ -61,17 +64,16 @@ export async function wearablesCatalogHandler(
   }
 }
 
-type WearableEntityMetadata = {
-  i18n?: { code: string; text: string }[]
-  name?: string
-}
-
 function filterAndExtractBaseWearables(
   components: { contentServerUrl: string },
   baseWearables: BaseWearable[],
   filters: ItemsByFiltersCriteria,
-  lastId: string | undefined
+  lastId: string | undefined,
+  maxResults: number
 ): WearableDefinition[] {
+  // Sort and slice on the cheap BaseWearable shape, then extract definitions only
+  // for the survivors. The extractor walks `data.representations` and the entity
+  // `content` array; doing it lazily keeps the broad-filter case cheap.
   return baseWearables
     .filter((wearable) => {
       const lcUrn = wearable.urn.toLowerCase()
@@ -82,7 +84,7 @@ function filterAndExtractBaseWearables(
         return false
       }
       if (filters.textSearch) {
-        const metadata = wearable.entity.metadata as WearableEntityMetadata
+        const metadata = wearable.entity.metadata as Wearable
         const englishName = metadata?.i18n?.find((entry) => entry.code === 'en')?.text
         const haystack = (englishName ?? wearable.name).toLowerCase()
         if (!haystack.includes(filters.textSearch)) {
@@ -91,6 +93,7 @@ function filterAndExtractBaseWearables(
       }
       return true
     })
+    .sort((a, b) => a.urn.toLowerCase().localeCompare(b.urn.toLowerCase()))
+    .slice(0, maxResults)
     .map((wearable) => extractWearableDefinitionFromEntity(components, wearable.entity))
-    .sort((a, b) => a.id.toLowerCase().localeCompare(b.id.toLowerCase()))
 }
