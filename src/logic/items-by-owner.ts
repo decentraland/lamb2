@@ -40,7 +40,7 @@ export async function getItemsByOwner<T extends WearableDefinition | EmoteDefini
   }
 
   const definitions = await components.definitionsFetcher.fetchItemsDefinitions(ownedItems.map((item) => item.urn))
-  return ownedItems.map((item, i) => ({ ...item, definition: definitions[i] ?? undefined }))
+  return ownedItems.map((item, i) => ({ ...item, definition: definitions[i] }))
 }
 
 async function fetchOwnedOnChain(
@@ -59,7 +59,7 @@ async function fetchByThirdPartyCollection(
   const cleaned = collectionId.split(':').slice(0, 5).join(':')
   const urn = await parseUrn(cleaned)
   if (!urn || urn.type !== 'blockchain-collection-third-party-name') {
-    throw new InvalidRequestError(`Invalid collectionId: ${collectionId} is not a third-party collection URN`)
+    throw new InvalidRequestError(`'collectionId' must be a valid third-party collection URN`)
   }
   const items = await fetchThirdPartyWearablesFromThirdPartyName(components, owner, urn)
   return items.map((item) => ({ urn: item.urn, amount: item.amount }))

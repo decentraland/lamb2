@@ -1,6 +1,10 @@
 import { Authenticator, AuthLink, ValidationResult } from '@dcl/crypto'
 import { HandlerContextWithPath, InvalidRequestError } from '../../types'
 
+// EIP-1654 chains in practice are 2-5 links long; capping defends the shared
+// l1Provider against amplified eth_call traffic on this unauthenticated endpoint.
+const MAX_AUTH_CHAIN_LENGTH = 10
+
 type ValidateSignatureBody = {
   timestamp?: string
   signedMessage?: string
@@ -18,7 +22,14 @@ export async function validateSignatureHandler(
 ): Promise<{ status: 200; body: ValidateSignatureResponse }> {
   const { l1Provider } = context.components
 
-  const body = parseBody(await context.request.json())
+  let raw: unknown
+  try {
+    raw = await context.request.json()
+  } catch {
+    throw new InvalidRequestError('Request body must be valid JSON')
+  }
+
+  const body = parseBody(raw)
   const finalAuthority = body.signedMessage ?? body.timestamp
   if (!finalAuthority) {
     throw new InvalidRequestError(`Expected 'signedMessage' property to be set`)
@@ -44,6 +55,12 @@ function parseBody(raw: unknown): ValidateSignatureBody {
   if (!Array.isArray(body.authChain)) {
     throw new InvalidRequestError(`'authChain' must be an array`)
   }
+  if (body.authChain.length === 0 || body.authChain.length > MAX_AUTH_CHAIN_LENGTH) {
+    throw new InvalidRequestError(`'authChain' length must be between 1 and ${MAX_AUTH_CHAIN_LENGTH}`)
+  }
+  if (!body.authChain.every(isAuthLink)) {
+    throw new InvalidRequestError(`'authChain' entries must each have string 'type', 'payload', and 'signature' fields`)
+  }
   if (body.timestamp !== undefined && typeof body.timestamp !== 'string') {
     throw new InvalidRequestError(`'timestamp' must be a string`)
   }
@@ -53,6 +70,14 @@ function parseBody(raw: unknown): ValidateSignatureBody {
   return {
     timestamp: body.timestamp as string | undefined,
     signedMessage: body.signedMessage as string | undefined,
-    authChain: body.authChain as AuthLink[]
+    authChain: body.authChain
   }
+}
+
+function isAuthLink(item: unknown): item is AuthLink {
+  if (typeof item !== 'object' || item === null) {
+    return false
+  }
+  const link = item as Record<string, unknown>
+  return typeof link.type === 'string' && typeof link.payload === 'string' && typeof link.signature === 'string'
 }

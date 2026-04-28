@@ -4,8 +4,11 @@ import { parseUrn } from '../utils'
 
 const WEARABLE_ITEM_TYPES = ['wearable_v1', 'wearable_v2', 'smart_wearable_v1']
 const EMOTE_ITEM_TYPES = ['emote_v1']
-const L1_NETWORKS = new Set(['mainnet', 'sepolia', 'ropsten', 'kovan', 'rinkeby', 'goerli'])
-const L2_NETWORKS = new Set(['matic', 'mumbai', 'amoy'])
+const L1_NETWORKS = new Set(['mainnet', 'sepolia'])
+const L2_NETWORKS = new Set(['matic', 'amoy'])
+// Cap how many collections the subgraph wraps in a single query when the caller
+// passes collectionIds. Independent of the per-item limit (MAX_LIMIT in the handler).
+const MAX_COLLECTIONS_PER_QUERY = 1000
 
 export type ItemsByFiltersCriteria = {
   collectionIds?: string[]
@@ -127,7 +130,7 @@ function buildFilterQuery(itemTypes: string[], filters: ItemsByFiltersCriteria):
   if (filters.collectionIds) {
     params.push('$collectionIds: [String]!')
     return `query ItemsByFilters(${params.join(',')}) {
-      collections(where: { urn_in: $collectionIds }, first: 1000, orderBy: urn, orderDirection: asc) {
+      collections(where: { urn_in: $collectionIds }, first: ${MAX_COLLECTIONS_PER_QUERY}, orderBy: urn, orderDirection: asc) {
         ${itemsQuery}
       }
     }`

@@ -41,6 +41,9 @@ export async function wearablesCatalogHandler(
 
   const remaining = limit - offChain.length
   let onChainDefinitions: (WearableDefinition | undefined)[] = []
+  // Inclusive of zero: when off-chain exactly fills the limit we still query
+  // on-chain with `limit: 1` so the merged set can reach `limit + 1` and signal
+  // hasMore to the cursor logic. Skip only when off-chain has already overflowed.
   if (!onlyBaseCollection && remaining >= 0) {
     const urns = await fetchWearablesByFilters(theGraph, filters, { limit: remaining + 1, lastId: onChainCursor })
     if (urns.length > 0) {

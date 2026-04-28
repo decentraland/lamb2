@@ -41,6 +41,21 @@ test('validate-signature-handler: POST /crypto/validate-signature', function ({ 
     })
   })
 
+  describe('when the body is malformed JSON', () => {
+    it('responds 400, not 500, with a useful error message', async () => {
+      const { localFetch } = components
+
+      const r = await localFetch.fetch('/crypto/validate-signature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{invalid'
+      })
+
+      expect(r.status).toBe(400)
+      expect(await r.json()).toMatchObject({ error: 'Bad request', message: /JSON/ })
+    })
+  })
+
   describe('when the signature is valid', () => {
     beforeEach(() => {
       validateSignatureMock.mockResolvedValueOnce({ ok: true, message: undefined })

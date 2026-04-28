@@ -98,6 +98,57 @@ describe('validate-signature-handler: POST /crypto/validate-signature', () => {
     })
   })
 
+  describe('when authChain length is out of bounds', () => {
+    it('should throw InvalidRequestError for an empty authChain', async () => {
+      const request = makeRequest({ signedMessage: 'hello', authChain: [] })
+      await expect(
+        validateSignatureHandler({ components: { l1Provider: mockL1Provider }, request: request as any })
+      ).rejects.toThrow(/length must be between 1 and 10/)
+      expect(mockValidateSignature).not.toHaveBeenCalled()
+    })
+
+    it('should throw InvalidRequestError for an authChain longer than the cap', async () => {
+      const link = { type: 'SIGNER', payload: ownerAddress, signature: '' }
+      const request = makeRequest({ signedMessage: 'hello', authChain: Array(11).fill(link) })
+      await expect(
+        validateSignatureHandler({ components: { l1Provider: mockL1Provider }, request: request as any })
+      ).rejects.toThrow(/length must be between 1 and 10/)
+      expect(mockValidateSignature).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('when authChain entries are malformed', () => {
+    it('should throw InvalidRequestError for a non-object element', async () => {
+      const request = makeRequest({ signedMessage: 'hello', authChain: [42] })
+      await expect(
+        validateSignatureHandler({ components: { l1Provider: mockL1Provider }, request: request as any })
+      ).rejects.toThrow(/must each have string/)
+      expect(mockValidateSignature).not.toHaveBeenCalled()
+    })
+
+    it('should throw InvalidRequestError when an element is missing a required field', async () => {
+      const request = makeRequest({
+        signedMessage: 'hello',
+        authChain: [{ type: 'SIGNER', payload: ownerAddress }]
+      })
+      await expect(
+        validateSignatureHandler({ components: { l1Provider: mockL1Provider }, request: request as any })
+      ).rejects.toThrow(/must each have string/)
+      expect(mockValidateSignature).not.toHaveBeenCalled()
+    })
+
+    it('should throw InvalidRequestError when an element has the wrong field type', async () => {
+      const request = makeRequest({
+        signedMessage: 'hello',
+        authChain: [{ type: 'SIGNER', payload: ownerAddress, signature: 42 }]
+      })
+      await expect(
+        validateSignatureHandler({ components: { l1Provider: mockL1Provider }, request: request as any })
+      ).rejects.toThrow(/must each have string/)
+      expect(mockValidateSignature).not.toHaveBeenCalled()
+    })
+  })
+
   describe('when timestamp or signedMessage are present but not strings', () => {
     it('should throw InvalidRequestError when timestamp is a number', async () => {
       const request = makeRequest({ timestamp: 1700000000, authChain })
