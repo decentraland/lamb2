@@ -38,9 +38,12 @@ export async function createEntitiesFetcherComponent({
   config,
   content,
   logs,
-  contentServerUrl,
+  internalContentServerUrl,
   fetch
-}: Pick<AppComponents, 'logs' | 'config' | 'content' | 'contentServerUrl' | 'fetch'>): Promise<EntitiesFetcher> {
+}: Pick<
+  AppComponents,
+  'logs' | 'config' | 'content' | 'internalContentServerUrl' | 'fetch'
+>): Promise<EntitiesFetcher> {
   const itemsSize = (await config.getNumber('ITEMS_CACHE_MAX_SIZE')) ?? 10000
   const itemsAge = (await config.getNumber('ITEMS_CACHE_MAX_AGE')) ?? 600000 // 10 minutes by default
 
@@ -59,7 +62,7 @@ export async function createEntitiesFetcherComponent({
     collectionId: string,
     pageNum: number = 1
   ): Promise<LinkedWearableAssetEntities | undefined> {
-    const url = `${contentServerUrl}/entities/active/collections/${collectionId}?pageSize=${MAX_COLLECTION_PAGE_SIZE}&pageNum=${pageNum}`
+    const url = `${internalContentServerUrl}/entities/active/collections/${collectionId}?pageSize=${MAX_COLLECTION_PAGE_SIZE}&pageNum=${pageNum}`
     const response = await fetch.fetch(url)
     if (!response.ok) {
       return response.status === 404
