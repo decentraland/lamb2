@@ -10,7 +10,7 @@ import { createMetricsComponent } from '@well-known-components/metrics'
 import { createContentClient } from 'dcl-catalyst-client'
 import { HTTPProvider } from 'eth-connect'
 import { createCatalystsFetcher } from './adapters/catalysts-fetcher'
-import { createContentServerUrl } from './adapters/content-server-url'
+import { createContentServerUrls } from './adapters/content-server-url'
 import {
   createEmoteDefinitionsFetcherComponent,
   createWearableDefinitionsFetcherComponent
@@ -64,8 +64,10 @@ export async function initComponents(
   const metrics = await createMetricsComponent(metricDeclarations, { config })
   await instrumentHttpServerWithPromClientRegistry({ server, metrics, config, registry: metrics.registry! })
 
-  const contentServerUrl = await createContentServerUrl({ config })
-  const content = createContentClient({ url: contentServerUrl, fetcher: fetch })
+  const { publicUrl: contentServerUrl, internalUrl: internalContentServerUrl } = await createContentServerUrls({
+    config
+  })
+  const content = createContentClient({ url: internalContentServerUrl, fetcher: fetch })
 
   const theGraph = theGraphComponent
     ? theGraphComponent
@@ -80,8 +82,14 @@ export async function initComponents(
     contentServerUrl
   })
 
-  // TODO: use content client for collection items fetching. prevent injecting contentServerUrl and fetch components.
-  const entitiesFetcher = await createEntitiesFetcherComponent({ config, logs, content, contentServerUrl, fetch })
+  // TODO: use content client for collection items fetching. prevent injecting internalContentServerUrl and fetch components.
+  const entitiesFetcher = await createEntitiesFetcherComponent({
+    config,
+    logs,
+    content,
+    internalContentServerUrl,
+    fetch
+  })
 
   // Create marketplace API fetcher for primary data source
   const marketplaceApiFetcher = await createMarketplaceApiFetcher({ config, fetch, logs })
@@ -202,7 +210,7 @@ export async function initComponents(
     thirdPartyProvidersStorage,
     entitiesFetcher,
     fetch,
-    contentServerUrl
+    internalContentServerUrl
   })
 
   return {
@@ -229,6 +237,7 @@ export async function initComponents(
     thirdPartyProvidersGraphFetcher,
     thirdPartyProvidersStorage,
     contentServerUrl,
+    internalContentServerUrl,
     resourcesStatusCheck,
     status,
     l1Provider,

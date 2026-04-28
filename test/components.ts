@@ -132,8 +132,9 @@ async function initComponents(
   )
 
   const contentServerUrl = 'baseUrl'
+  const internalContentServerUrl = 'baseUrl'
 
-  const entitiesFetcher = await createEntitiesFetcherComponent({ config, logs, content, contentServerUrl, fetch })
+  const entitiesFetcher = await createEntitiesFetcherComponent({ config, logs, content, internalContentServerUrl, fetch })
 
   const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent({
     config,
@@ -183,6 +184,7 @@ async function initComponents(
     theGraph: theGraphMock,
     content,
     contentServerUrl,
+    internalContentServerUrl,
     wearablesFetcher,
     entitiesFetcher,
     emotesFetcher,

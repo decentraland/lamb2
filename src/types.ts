@@ -53,6 +53,7 @@ export type BaseComponents = {
   metrics: IMetricsComponent<keyof typeof metricDeclarations>
   content: Pick<ContentClient, 'fetchEntitiesByPointers'>
   contentServerUrl: string
+  internalContentServerUrl: string
   theGraph: TheGraphComponent
   ownershipCaches: OwnershipCachesComponent
   baseWearablesFetcher: ElementsFetcher<BaseWearable>

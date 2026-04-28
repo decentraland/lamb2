@@ -17,7 +17,7 @@ import {
 describe('when creating the third-party collections cache warmer component', () => {
   let components: Pick<
     AppComponents,
-    'config' | 'logs' | 'thirdPartyProvidersStorage' | 'entitiesFetcher' | 'fetch' | 'contentServerUrl'
+    'config' | 'logs' | 'thirdPartyProvidersStorage' | 'entitiesFetcher' | 'fetch' | 'internalContentServerUrl'
   >
   let mockConfig: IConfigComponent
   let mockLogs: ILoggerComponent
@@ -25,7 +25,7 @@ describe('when creating the third-party collections cache warmer component', () 
   let mockThirdPartyProvidersStorage: ThirdPartyProvidersStorage
   let mockEntitiesFetcher: EntitiesFetcher
   let mockFetch: IFetchComponent
-  let contentServerUrl: string
+  let internalContentServerUrl: string
 
   beforeEach(() => {
     mockConfig = createConfigMock()
@@ -34,7 +34,7 @@ describe('when creating the third-party collections cache warmer component', () 
     mockThirdPartyProvidersStorage = createThirdPartyProvidersStorageMock()
     mockEntitiesFetcher = createEntitiesFetcherMock()
     mockFetch = createFetchMock()
-    contentServerUrl = 'http://test-content-server.com'
+    internalContentServerUrl = 'http://test-internal-content-server.com'
 
     components = {
       config: mockConfig,
@@ -42,7 +42,7 @@ describe('when creating the third-party collections cache warmer component', () 
       thirdPartyProvidersStorage: mockThirdPartyProvidersStorage,
       entitiesFetcher: mockEntitiesFetcher,
       fetch: mockFetch,
-      contentServerUrl
+      internalContentServerUrl
     }
   })
 
@@ -136,7 +136,7 @@ describe('when the cache warmer component is disabled', () => {
   let warmer: ThirdPartyCollectionsCacheWarmer
   let components: Pick<
     AppComponents,
-    'config' | 'logs' | 'thirdPartyProvidersStorage' | 'entitiesFetcher' | 'fetch' | 'contentServerUrl'
+    'config' | 'logs' | 'thirdPartyProvidersStorage' | 'entitiesFetcher' | 'fetch' | 'internalContentServerUrl'
   >
   let mockConfig: IConfigComponent
   let mockLogs: ILoggerComponent
@@ -159,7 +159,7 @@ describe('when the cache warmer component is disabled', () => {
       thirdPartyProvidersStorage: mockThirdPartyProvidersStorage,
       entitiesFetcher: mockEntitiesFetcher,
       fetch: mockFetch,
-      contentServerUrl: 'http://test-content-server.com'
+      internalContentServerUrl: 'http://test-internal-content-server.com'
     }
     ;(mockConfig.getString as jest.Mock).mockResolvedValueOnce('true')
     ;(mockConfig.getNumber as jest.Mock).mockResolvedValue(undefined)
@@ -195,7 +195,7 @@ describe('when the cache warmer component is enabled', () => {
   let warmer: ThirdPartyCollectionsCacheWarmer
   let components: Pick<
     AppComponents,
-    'config' | 'logs' | 'thirdPartyProvidersStorage' | 'entitiesFetcher' | 'fetch' | 'contentServerUrl'
+    'config' | 'logs' | 'thirdPartyProvidersStorage' | 'entitiesFetcher' | 'fetch' | 'internalContentServerUrl'
   >
   let mockConfig: IConfigComponent
   let mockLogs: ILoggerComponent
@@ -203,7 +203,7 @@ describe('when the cache warmer component is enabled', () => {
   let mockThirdPartyProvidersStorage: ThirdPartyProvidersStorage
   let mockEntitiesFetcher: EntitiesFetcher
   let mockFetch: IFetchComponent
-  let contentServerUrl: string
+  let internalContentServerUrl: string
 
   beforeEach(async () => {
     mockConfig = createConfigMock()
@@ -212,7 +212,7 @@ describe('when the cache warmer component is enabled', () => {
     mockThirdPartyProvidersStorage = createThirdPartyProvidersStorageMock()
     mockEntitiesFetcher = createEntitiesFetcherMock()
     mockFetch = createFetchMock()
-    contentServerUrl = 'http://test-content-server.com'
+    internalContentServerUrl = 'http://test-internal-content-server.com'
 
     components = {
       config: mockConfig,
@@ -220,7 +220,7 @@ describe('when the cache warmer component is enabled', () => {
       thirdPartyProvidersStorage: mockThirdPartyProvidersStorage,
       entitiesFetcher: mockEntitiesFetcher,
       fetch: mockFetch,
-      contentServerUrl
+      internalContentServerUrl
     }
     ;(mockConfig.getString as jest.Mock).mockResolvedValueOnce('false')
     ;(mockConfig.getNumber as jest.Mock).mockResolvedValue(undefined)
