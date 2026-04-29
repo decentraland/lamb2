@@ -99,11 +99,11 @@ describe('validate-signature-handler: POST /crypto/validate-signature', () => {
   })
 
   describe('when authChain length is out of bounds', () => {
-    it('should throw InvalidRequestError for an empty authChain', async () => {
+    it('should throw InvalidRequestError for an empty authChain (rejected by the schema validator)', async () => {
       const request = makeRequest({ signedMessage: 'hello', authChain: [] })
       await expect(
         validateSignatureHandler({ components: { l1Provider: mockL1Provider }, request: request as any })
-      ).rejects.toThrow(/length must be between 1 and 10/)
+      ).rejects.toThrow(/authChain/)
       expect(mockValidateSignature).not.toHaveBeenCalled()
     })
 
@@ -122,29 +122,29 @@ describe('validate-signature-handler: POST /crypto/validate-signature', () => {
       const request = makeRequest({ signedMessage: 'hello', authChain: [42] })
       await expect(
         validateSignatureHandler({ components: { l1Provider: mockL1Provider }, request: request as any })
-      ).rejects.toThrow(/must each have string/)
+      ).rejects.toThrow(/must be object/)
       expect(mockValidateSignature).not.toHaveBeenCalled()
     })
 
-    it('should throw InvalidRequestError when an element is missing a required field', async () => {
+    it('should throw InvalidRequestError when an element has the wrong type field', async () => {
       const request = makeRequest({
         signedMessage: 'hello',
-        authChain: [{ type: 'SIGNER', payload: ownerAddress }]
+        authChain: [{ type: 'NOT_A_VALID_TYPE', payload: ownerAddress, signature: '' }]
       })
       await expect(
         validateSignatureHandler({ components: { l1Provider: mockL1Provider }, request: request as any })
-      ).rejects.toThrow(/must each have string/)
+      ).rejects.toThrow(/authChain/)
       expect(mockValidateSignature).not.toHaveBeenCalled()
     })
 
-    it('should throw InvalidRequestError when an element has the wrong field type', async () => {
+    it('should throw InvalidRequestError when an element has a non-string signature', async () => {
       const request = makeRequest({
         signedMessage: 'hello',
         authChain: [{ type: 'SIGNER', payload: ownerAddress, signature: 42 }]
       })
       await expect(
         validateSignatureHandler({ components: { l1Provider: mockL1Provider }, request: request as any })
-      ).rejects.toThrow(/must each have string/)
+      ).rejects.toThrow(/signature must be string/)
       expect(mockValidateSignature).not.toHaveBeenCalled()
     })
   })

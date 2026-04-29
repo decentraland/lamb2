@@ -1,4 +1,5 @@
-import { Authenticator, AuthLink, ValidationResult } from '@dcl/crypto'
+import { Authenticator, ValidationResult } from '@dcl/crypto'
+import { AuthChain } from '@dcl/schemas'
 import { HandlerContextWithPath, InvalidRequestError } from '../../types'
 
 // EIP-1654 chains in practice are 2-5 links long; capping defends the shared
@@ -8,7 +9,7 @@ const MAX_AUTH_CHAIN_LENGTH = 10
 type ValidateSignatureBody = {
   timestamp?: string
   signedMessage?: string
-  authChain: AuthLink[]
+  authChain: AuthChain
 }
 
 type ValidateSignatureResponse = {
@@ -52,14 +53,13 @@ function parseBody(raw: unknown): ValidateSignatureBody {
     throw new InvalidRequestError('Request body must be a JSON object')
   }
   const body = raw as Record<string, unknown>
-  if (!Array.isArray(body.authChain)) {
-    throw new InvalidRequestError(`'authChain' must be an array`)
+  if (!AuthChain.validate(body.authChain)) {
+    const detail = AuthChain.validate.errors?.[0]
+    const message = detail ? `${detail.instancePath || 'authChain'} ${detail.message}` : 'invalid auth chain'
+    throw new InvalidRequestError(`'authChain' is invalid: ${message}`)
   }
   if (body.authChain.length === 0 || body.authChain.length > MAX_AUTH_CHAIN_LENGTH) {
     throw new InvalidRequestError(`'authChain' length must be between 1 and ${MAX_AUTH_CHAIN_LENGTH}`)
-  }
-  if (!body.authChain.every(isAuthLink)) {
-    throw new InvalidRequestError(`'authChain' entries must each have string 'type', 'payload', and 'signature' fields`)
   }
   if (body.timestamp !== undefined && typeof body.timestamp !== 'string') {
     throw new InvalidRequestError(`'timestamp' must be a string`)
@@ -72,12 +72,4 @@ function parseBody(raw: unknown): ValidateSignatureBody {
     signedMessage: body.signedMessage as string | undefined,
     authChain: body.authChain
   }
-}
-
-function isAuthLink(item: unknown): item is AuthLink {
-  if (typeof item !== 'object' || item === null) {
-    return false
-  }
-  const link = item as Record<string, unknown>
-  return typeof link.type === 'string' && typeof link.payload === 'string' && typeof link.signature === 'string'
 }
