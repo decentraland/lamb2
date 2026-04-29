@@ -42,7 +42,7 @@ test('validate-signature-handler: POST /crypto/validate-signature', function ({ 
   })
 
   describe('when the body is malformed JSON', () => {
-    it('responds 400, not 500, with a useful error message', async () => {
+    it('responds 400 via the schema-validator middleware', async () => {
       const { localFetch } = components
 
       const r = await localFetch.fetch('/crypto/validate-signature', {
@@ -52,7 +52,69 @@ test('validate-signature-handler: POST /crypto/validate-signature', function ({ 
       })
 
       expect(r.status).toBe(400)
-      expect(await r.json()).toMatchObject({ error: 'Bad request', message: /JSON/ })
+      expect(await r.json()).toMatchObject({ ok: false, message: expect.any(String) })
+    })
+  })
+
+  describe('when Content-Type is not application/json', () => {
+    it('responds 4xx (rejected before reaching the handler)', async () => {
+      const { localFetch } = components
+
+      const r = await localFetch.fetch('/crypto/validate-signature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ signedMessage: 'hello', authChain })
+      })
+
+      // The WKC HTTP server returns 415 (Unsupported Media Type) before our
+      // schema-validator middleware would return 400. Either is acceptable
+      // — the contract is that the request never reaches the handler.
+      expect(r.status).toBeGreaterThanOrEqual(400)
+      expect(r.status).toBeLessThan(500)
+    })
+  })
+
+  describe('when the body fails schema validation', () => {
+    it('responds 400 when authChain is missing', async () => {
+      const { localFetch } = components
+
+      const r = await localFetch.fetch('/crypto/validate-signature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ signedMessage: 'hello' })
+      })
+
+      expect(r.status).toBe(400)
+      expect(await r.json()).toMatchObject({ ok: false, data: expect.any(Array) })
+    })
+
+    it('responds 400 when authChain is not an array', async () => {
+      const { localFetch } = components
+
+      const r = await localFetch.fetch('/crypto/validate-signature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ signedMessage: 'hello', authChain: 'not-an-array' })
+      })
+
+      expect(r.status).toBe(400)
+      expect(await r.json()).toMatchObject({ ok: false, data: expect.any(Array) })
+    })
+
+    it('responds 400 when an authChain entry has a non-string signature', async () => {
+      const { localFetch } = components
+
+      const r = await localFetch.fetch('/crypto/validate-signature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          signedMessage: 'hello',
+          authChain: [{ type: AuthLinkType.SIGNER, payload: ownerAddress, signature: 42 }]
+        })
+      })
+
+      expect(r.status).toBe(400)
+      expect(await r.json()).toMatchObject({ ok: false, data: expect.any(Array) })
     })
   })
 

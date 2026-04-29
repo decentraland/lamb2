@@ -24,16 +24,18 @@ import { parcelPermissionsHandler } from './handlers/parcel-permissions-handler'
 import { parcelOperatorsHandler } from './handlers/parcel-operators-handler'
 import { nameOwnerHandler } from './handlers/name-owner-handler'
 import { userLandsPermissionsHandler } from './handlers/user-lands-permissions-handler'
-import { validateSignatureHandler } from './handlers/validate-signature-handler'
+import { validateSignatureBodySchema, validateSignatureHandler } from './handlers/validate-signature-handler'
 import { emotesByOwnerHandler } from './handlers/emotes-by-owner-handler'
 import { emotesCatalogHandler } from './handlers/emotes-catalog-handler'
 import { wearablesByOwnerHandler } from './handlers/wearables-by-owner-handler'
 import { wearablesCatalogHandler } from './handlers/wearables-catalog-handler'
 
 // We return the entire router because it will be easier to test than a whole server
-export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContext>> {
+export async function setupRouter(globalContext: GlobalContext): Promise<Router<GlobalContext>> {
   const router = new Router<GlobalContext>()
   router.use(errorHandler)
+
+  const { schemaValidator } = globalContext.components
 
   router.get('/status', statusHandler)
   router.get('/about', aboutHandler)
@@ -58,7 +60,11 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
   router.get('/explorer/:address/wearables', explorerHandler)
   router.get('/explorer/:address/emotes', explorerEmotesHandler)
   router.get('/parcels/:x/:y/operators', parcelOperatorsHandler)
-  router.post('/crypto/validate-signature', validateSignatureHandler)
+  router.post(
+    '/crypto/validate-signature',
+    schemaValidator.withSchemaValidatorMiddleware(validateSignatureBodySchema),
+    validateSignatureHandler
+  )
   router.get('/collections/wearables-by-owner/:owner', wearablesByOwnerHandler)
   router.get('/collections/wearables', wearablesCatalogHandler)
   router.get('/collections/emotes-by-owner/:owner', emotesByOwnerHandler)
