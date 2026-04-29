@@ -26,10 +26,10 @@ export type CacheWarmerStatus = {
 export async function createThirdPartyCollectionsCacheWarmer(
   components: Pick<
     AppComponents,
-    'config' | 'logs' | 'thirdPartyProvidersStorage' | 'entitiesFetcher' | 'fetch' | 'contentServerUrl'
+    'config' | 'logs' | 'thirdPartyProvidersStorage' | 'entitiesFetcher' | 'fetch' | 'internalContentServerUrl'
   >
 ): Promise<ThirdPartyCollectionsCacheWarmer> {
-  const { config, logs, thirdPartyProvidersStorage, entitiesFetcher, fetch, contentServerUrl } = components
+  const { config, logs, thirdPartyProvidersStorage, entitiesFetcher, fetch, internalContentServerUrl } = components
   const logger = logs.getLogger('third-party-collections-cache-warmer')
 
   const enabled = (await config.getString('DISABLE_CACHE_WARMER'))?.toLowerCase() !== 'true'
@@ -55,7 +55,7 @@ export async function createThirdPartyCollectionsCacheWarmer(
    */
   async function isContentServerReady(): Promise<boolean> {
     try {
-      const statusUrl = `${contentServerUrl}/status`
+      const statusUrl = `${internalContentServerUrl}/status`
       logger.debug('[isContentServerReady] Checking content server health', { statusUrl })
 
       const response = await fetch.fetch(statusUrl)
