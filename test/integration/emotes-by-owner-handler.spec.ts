@@ -1,7 +1,28 @@
+import { Emote, EmoteCategory, Entity, EntityType } from '@dcl/schemas'
 import { createMarketplaceApiFetcherMock } from '../mocks/marketplace-api-mock'
 import { testWithComponents } from '../components'
 import { generateEmotes } from '../data/emotes'
 import { generateRandomAddress } from '../helpers'
+
+function buildEmoteEntity(urn: string, name: string): Entity {
+  return {
+    version: 'v3',
+    id: 'bafkreig' + urn,
+    type: EntityType.EMOTE,
+    pointers: [urn],
+    timestamp: 0,
+    content: [],
+    metadata: {
+      id: urn,
+      name,
+      description: '',
+      i18n: [{ code: 'en', text: name }],
+      thumbnail: 'thumb.png',
+      image: 'img.png',
+      emoteDataADR74: { tags: [], category: EmoteCategory.DANCE, representations: [], loop: false }
+    } as unknown as Emote
+  }
+}
 
 const testWith = testWithComponents(() => {
   const emotes = generateEmotes(2)
@@ -36,6 +57,31 @@ testWith('emotes-by-owner-handler: GET /collections/emotes-by-owner/:owner', fun
 
       expect(r.status).toBe(400)
       expect(await r.json()).toMatchObject({ error: 'Bad request' })
+    })
+  })
+
+  describe('when called with ?includeDefinitions', () => {
+    beforeEach(() => {
+      components.content.fetchEntitiesByPointers = jest
+        .fn()
+        .mockImplementation(async (urns: string[]) => urns.map((urn) => buildEmoteEntity(urn, `def-${urn}`)))
+    })
+
+    it('attaches an emote definition to each entry', async () => {
+      const { localFetch } = components
+
+      const r = await localFetch.fetch(`/collections/emotes-by-owner/${generateRandomAddress()}?includeDefinitions`)
+
+      expect(r.status).toBe(200)
+      const body = (await r.json()) as Array<{ urn: string; amount: number; definition?: { id: string; name: string } }>
+      expect(body).toHaveLength(2)
+      for (const entry of body) {
+        expect(entry).toMatchObject({
+          urn: expect.any(String),
+          amount: expect.any(Number),
+          definition: expect.objectContaining({ id: entry.urn, name: `def-${entry.urn}` })
+        })
+      }
     })
   })
 })

@@ -72,4 +72,61 @@ test('emotes-catalog-handler: GET /collections/emotes', function ({ components }
       expect(components.theGraph.ethereumCollectionsSubgraph.query).not.toHaveBeenCalled()
     })
   })
+
+  describe('when filtering by collectionId', () => {
+    const collectionId = 'urn:decentraland:matic:collections-v2:0xemote'
+    const matchedUrn = `${collectionId}:0`
+
+    beforeEach(() => {
+      ;(components.theGraph.maticCollectionsSubgraph.query as jest.Mock).mockResolvedValue({
+        collections: [{ items: [{ urn: matchedUrn }] }]
+      })
+      components.content.fetchEntitiesByPointers = jest
+        .fn()
+        .mockResolvedValue([buildEmoteEntity(matchedUrn, 'collection emote')])
+    })
+
+    it('wraps the items query inside collections() on the L2 subgraph', async () => {
+      const { localFetch } = components
+
+      const r = await localFetch.fetch(`/collections/emotes?collectionId=${encodeURIComponent(collectionId)}`)
+
+      expect(r.status).toBe(200)
+      const body = await r.json()
+      expect(body.emotes.map((e: { id: string }) => e.id)).toEqual([matchedUrn])
+      expect(body.filters).toEqual({ collectionIds: [collectionId.toLowerCase()] })
+
+      const sent = (components.theGraph.maticCollectionsSubgraph.query as jest.Mock).mock.calls[0][0] as string
+      expect(sent).toContain('collections(where: { urn_in: $collectionIds }')
+      expect(components.theGraph.ethereumCollectionsSubgraph.query).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('when filtering by emoteId', () => {
+    const emoteId = 'urn:decentraland:matic:collections-v2:0xemote:1'
+
+    beforeEach(() => {
+      ;(components.theGraph.maticCollectionsSubgraph.query as jest.Mock).mockResolvedValue({
+        items: [{ urn: emoteId }]
+      })
+      components.content.fetchEntitiesByPointers = jest
+        .fn()
+        .mockResolvedValue([buildEmoteEntity(emoteId, 'specific dance')])
+    })
+
+    it('passes urn_in to the L2 subgraph and returns just that emote', async () => {
+      const { localFetch } = components
+
+      const r = await localFetch.fetch(`/collections/emotes?emoteId=${encodeURIComponent(emoteId)}`)
+
+      expect(r.status).toBe(200)
+      const body = await r.json()
+      expect(body.emotes.map((e: { id: string }) => e.id)).toEqual([emoteId])
+      expect(body.filters).toEqual({ itemIds: [emoteId.toLowerCase()] })
+
+      const sent = (components.theGraph.maticCollectionsSubgraph.query as jest.Mock).mock.calls[0][0] as string
+      expect(sent).toContain('urn_in: $ids')
+      expect(sent).toContain('emote_v1')
+    })
+  })
 })
