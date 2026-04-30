@@ -55,3 +55,18 @@ export async function profileHandler(
     body: profile
   }
 }
+
+// Legacy /profile/:id never 404'd — when no profile existed it returned a stub
+// `{ avatars: [], timestamp: 0 }`. Callers (governance, decentraland-gatsby,
+// top-scenes, dao-landing, public sdk docs) lean on `.avatars` always being
+// an array. The alias preserves that contract; the canonical /profiles/:id
+// keeps the stricter 404 behavior.
+export async function profileAliasHandler(
+  context: Pick<HandlerContextWithPath<'profiles', '/profile/:id'>, 'components' | 'params'>
+): Promise<{ status: 200; body: Profile | { avatars: []; timestamp: 0 } }> {
+  const profile = await context.components.profiles.getProfile(context.params.id)
+  if (!profile) {
+    return { status: 200, body: { avatars: [], timestamp: 0 } }
+  }
+  return { status: 200, body: profile }
+}

@@ -4,7 +4,7 @@ import { allCollectionsHandler } from './handlers/all-collections-handler'
 import { emotesHandler } from './handlers/emotes-handler'
 import { landsHandler } from './handlers/lands-handler'
 import { namesHandler } from './handlers/names-handler'
-import { profileHandler, profilesHandler } from './handlers/profiles-handler'
+import { profileAliasHandler, profileHandler, profilesHandler } from './handlers/profiles-handler'
 import { statusHandler } from './handlers/status-handler'
 import {
   thirdPartyCollectionWearablesHandler,
@@ -51,7 +51,7 @@ export async function setupRouter(globalContext: GlobalContext): Promise<Router<
   router.get('/users/:address/lands-permissions', userLandsPermissionsHandler)
   router.post('/profiles', profilesHandler)
   router.get('/profiles/:id', profileHandler)
-  router.get('/profile/:id', profileHandler)
+  router.get('/profile/:id', profileAliasHandler)
   router.get('/nfts/collections', allCollectionsHandler)
   router.get('/outfits/:id', outfitsHandler)
   router.get('/contracts/servers', getCatalystServersHandler)

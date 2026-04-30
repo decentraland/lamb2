@@ -44,10 +44,19 @@ test('profile alias: GET /profile/:id mirrors /profiles/:id', function ({ compon
       components.profiles.getProfile = jest.fn().mockResolvedValue(undefined)
     })
 
-    it('responds 404 on /profile/:id (proves the alias goes through the same NotFoundError mapping)', async () => {
+    it('returns 200 with the legacy { avatars: [], timestamp: 0 } stub on the alias', async () => {
       const { localFetch } = components
 
       const r = await localFetch.fetch(`/profile/${address}`)
+
+      expect(r.status).toBe(200)
+      expect(await r.json()).toEqual({ avatars: [], timestamp: 0 })
+    })
+
+    it('still 404s on the canonical /profiles/:id (legacy contract divergence preserved)', async () => {
+      const { localFetch } = components
+
+      const r = await localFetch.fetch(`/profiles/${address}`)
 
       expect(r.status).toBe(404)
     })
