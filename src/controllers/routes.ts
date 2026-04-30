@@ -51,6 +51,7 @@ export async function setupRouter(globalContext: GlobalContext): Promise<Router<
   router.get('/users/:address/lands-permissions', userLandsPermissionsHandler)
   router.post('/profiles', profilesHandler)
   router.get('/profiles/:id', profileHandler)
+  // legacy /lambdas/profile/:id — see profileAliasHandler for the contract divergence
   router.get('/profile/:id', profileAliasHandler)
   router.get('/nfts/collections', allCollectionsHandler)
   router.get('/outfits/:id', outfitsHandler)
@@ -60,6 +61,10 @@ export async function setupRouter(globalContext: GlobalContext): Promise<Router<
   router.get('/explorer/:address/wearables', explorerHandler)
   router.get('/explorer/:address/emotes', explorerEmotesHandler)
   router.get('/parcels/:x/:y/operators', parcelOperatorsHandler)
+  // The endpoints below were ported verbatim from the deprecated lambdas
+  // service. Their request and response shapes are external wire contracts;
+  // changing them requires a coordinated client migration. See each handler's
+  // header for the legacy source path and the specific contract details.
   router.post(
     '/crypto/validate-signature',
     schemaValidator.withSchemaValidatorMiddleware(validateSignatureBodySchema),

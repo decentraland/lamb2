@@ -1,3 +1,10 @@
+// Port of legacy POST /lambdas/crypto/validate-signature
+// (catalyst/lambdas/src/apis/crypto/controllers/crypto.ts). Wire contract:
+//   request:  { timestamp?, signedMessage?, authChain }
+//   response: { valid, ownerAddress?, error? }   (always 200 on a parseable body)
+// External clients depend on this exact shape — do not change without a
+// coordinated migration.
+
 import { Authenticator, ValidationResult } from '@dcl/crypto'
 import { AuthChain } from '@dcl/schemas'
 import { Schema } from 'ajv'

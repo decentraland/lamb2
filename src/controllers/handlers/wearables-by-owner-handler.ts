@@ -1,3 +1,10 @@
+// Port of legacy GET /lambdas/collections/wearables-by-owner/:owner
+// (catalyst/lambdas/src/apis/collections/controllers/wearables.ts → getWearablesByOwnerHandler).
+// Wire contract:
+//   response: [{ urn, amount, definition? }]   — flat array, no pagination
+//   ?collectionId=<third-party-urn>            — switches to the third-party path
+//   ?includeDefinitions                         — presence-only flag (any value enables it)
+
 import { WearableDefinition } from '@dcl/schemas'
 import { getItemsByOwner, ItemByOwnerEntry } from '../../logic/items-by-owner'
 import { HandlerContextWithPath } from '../../types'

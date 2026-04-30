@@ -1,3 +1,9 @@
+// Port of legacy GET /lambdas/collections/emotes — the global catalog query
+// (catalyst/lambdas/src/apis/collections/controllers/emotes.ts → getEmotesHandler).
+// Same wire contract as wearables-catalog-handler.ts but L2-only (no base
+// emotes, no off-chain merge) and the id query param is `emoteId` instead
+// of `wearableId`.
+
 import { EmoteDefinition } from '@dcl/schemas'
 import { fetchEmotesByFilters, ItemsByFiltersCriteria } from '../../logic/fetch-elements/fetch-items-by-filters'
 import { buildNextQuery, paginateCatalogResults, parseCatalogQuery } from '../../logic/items-catalog'

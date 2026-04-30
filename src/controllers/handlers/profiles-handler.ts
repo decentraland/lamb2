@@ -56,11 +56,12 @@ export async function profileHandler(
   }
 }
 
-// Legacy /profile/:id never 404'd — when no profile existed it returned a stub
-// `{ avatars: [], timestamp: 0 }`. Callers (governance, decentraland-gatsby,
-// top-scenes, dao-landing, public sdk docs) lean on `.avatars` always being
-// an array. The alias preserves that contract; the canonical /profiles/:id
-// keeps the stricter 404 behavior.
+// Port of legacy GET /lambdas/profile/:id (catalyst/lambdas/src/apis/profiles/...
+// initializeIndividualProfileRoutes). Wire contract diverges from the canonical
+// /profiles/:id on the missing-profile path: legacy /profile returned 200 with
+// the stub `{ avatars: [], timestamp: 0 }`, while /profiles 404s. External
+// callers dereference `.avatars` without checking response.ok, so the alias
+// must keep the 200+stub.
 export async function profileAliasHandler(
   context: Pick<HandlerContextWithPath<'profiles', '/profile/:id'>, 'components' | 'params'>
 ): Promise<{ status: 200; body: Profile | { avatars: []; timestamp: 0 } }> {

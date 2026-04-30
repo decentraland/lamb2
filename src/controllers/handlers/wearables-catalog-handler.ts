@@ -1,3 +1,11 @@
+// Port of legacy GET /lambdas/collections/wearables — the global catalog
+// query (catalyst/lambdas/src/apis/collections/controllers/wearables.ts → getWearablesHandler).
+// Wire contract:
+//   query:    collectionId[], wearableId[], textSearch, limit, lastId
+//   response: { wearables, filters, pagination: { limit, lastId, next } }
+// Off-chain (base avatars) > on-chain ordering and the urn-keyed cursor are
+// preserved verbatim from legacy.
+
 import { Wearable, WearableDefinition } from '@dcl/schemas'
 import { extractWearableDefinitionFromEntity } from '../../adapters/definitions'
 import { BASE_AVATARS_COLLECTION_ID, fetchBaseWearables } from '../../logic/fetch-elements/fetch-base-items'

@@ -1,3 +1,8 @@
+// Port of legacy GET /lambdas/collections/emotes-by-owner/:owner
+// (catalyst/lambdas/src/apis/collections/controllers/emotes.ts → getEmotesByOwnerHandler).
+// Same wire contract as wearables-by-owner-handler.ts: flat array of
+// { urn, amount, definition? } with optional ?collectionId and ?includeDefinitions.
+
 import { EmoteDefinition } from '@dcl/schemas'
 import { getItemsByOwner, ItemByOwnerEntry } from '../../logic/items-by-owner'
 import { HandlerContextWithPath } from '../../types'
