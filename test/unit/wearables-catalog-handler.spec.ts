@@ -8,25 +8,11 @@ describe('wearables-catalog-handler: GET /collections/wearables', () => {
   let fetchBaseSpy: jest.SpyInstance
   let fetchByFiltersSpy: jest.SpyInstance
 
-  beforeEach(() => {
-    fetchBaseSpy = jest.spyOn(fetchBaseItemsModule, 'fetchBaseWearables')
-    fetchByFiltersSpy = jest.spyOn(fetchWearablesByFiltersModule, 'fetchWearablesByFilters')
-  })
-
-  afterEach(() => {
-    jest.resetAllMocks()
-  })
-
-  function buildContext(
-    urlPath: string,
-    fetchItemsDefinitions: jest.Mock = jest.fn().mockResolvedValue([])
-  ) {
+  function buildContext(urlPath: string, fetchItemsDefinitions: jest.Mock = jest.fn().mockResolvedValue([])) {
     return {
       components: {
         theGraph: {} as any,
-        wearableDefinitionsFetcher: {
-          fetchItemsDefinitions
-        } as any,
+        wearableDefinitionsFetcher: { fetchItemsDefinitions } as any,
         entitiesFetcher: {} as any,
         contentServerUrl: 'http://content.test'
       },
@@ -56,104 +42,165 @@ describe('wearables-catalog-handler: GET /collections/wearables', () => {
     }
   }
 
+  beforeEach(() => {
+    fetchBaseSpy = jest.spyOn(fetchBaseItemsModule, 'fetchBaseWearables')
+    fetchByFiltersSpy = jest.spyOn(fetchWearablesByFiltersModule, 'fetchWearablesByFilters')
+  })
+
+  afterEach(() => {
+    jest.resetAllMocks()
+  })
+
   describe('when no filter is provided', () => {
-    it('should throw InvalidRequestError', async () => {
-      await expect(wearablesCatalogHandler(buildContext('/collections/wearables'))).rejects.toThrow(InvalidRequestError)
+    let context: ReturnType<typeof buildContext>
+
+    beforeEach(() => {
+      context = buildContext('/collections/wearables')
+    })
+
+    it('should reject with InvalidRequestError without invoking either fetcher', async () => {
+      await expect(wearablesCatalogHandler(context)).rejects.toThrow(InvalidRequestError)
       expect(fetchBaseSpy).not.toHaveBeenCalled()
       expect(fetchByFiltersSpy).not.toHaveBeenCalled()
     })
   })
 
   describe('when textSearch is shorter than 3 characters', () => {
-    it('should throw InvalidRequestError', async () => {
-      await expect(
-        wearablesCatalogHandler(buildContext('/collections/wearables?textSearch=ab'))
-      ).rejects.toThrow(InvalidRequestError)
+    let context: ReturnType<typeof buildContext>
+
+    beforeEach(() => {
+      context = buildContext('/collections/wearables?textSearch=ab')
+    })
+
+    it("should reject with a 'must be at least 3 characters' InvalidRequestError", async () => {
+      await expect(wearablesCatalogHandler(context)).rejects.toThrow(InvalidRequestError)
     })
   })
 
   describe('when more than 500 wearableIds are passed', () => {
-    it('should throw InvalidRequestError', async () => {
+    let context: ReturnType<typeof buildContext>
+
+    beforeEach(() => {
       const ids = Array.from({ length: 501 }, (_, i) => `wearableId=urn${i}`).join('&')
-      await expect(wearablesCatalogHandler(buildContext(`/collections/wearables?${ids}`))).rejects.toThrow(
-        InvalidRequestError
-      )
+      context = buildContext(`/collections/wearables?${ids}`)
+    })
+
+    it('should reject with InvalidRequestError', async () => {
+      await expect(wearablesCatalogHandler(context)).rejects.toThrow(InvalidRequestError)
     })
   })
 
   describe('when more than 500 collectionIds are passed', () => {
-    it('should throw InvalidRequestError', async () => {
+    let context: ReturnType<typeof buildContext>
+
+    beforeEach(() => {
       const ids = Array.from({ length: 501 }, (_, i) => `collectionId=urn${i}`).join('&')
-      await expect(wearablesCatalogHandler(buildContext(`/collections/wearables?${ids}`))).rejects.toThrow(
-        InvalidRequestError
-      )
+      context = buildContext(`/collections/wearables?${ids}`)
+    })
+
+    it('should reject with InvalidRequestError', async () => {
+      await expect(wearablesCatalogHandler(context)).rejects.toThrow(InvalidRequestError)
     })
   })
 
   describe('when called with on-chain results only', () => {
-    const definitionA = { id: 'urn:matic:a' } as WearableDefinition
-    const definitionB = { id: 'urn:matic:b' } as WearableDefinition
+    let definitionA: WearableDefinition
+    let definitionB: WearableDefinition
 
     beforeEach(() => {
+      definitionA = { id: 'urn:matic:a' } as WearableDefinition
+      definitionB = { id: 'urn:matic:b' } as WearableDefinition
       fetchBaseSpy.mockResolvedValueOnce([])
       fetchByFiltersSpy.mockResolvedValueOnce(['urn:matic:a', 'urn:matic:b'])
     })
 
-    it('should pass lowercased filters and a default 500 limit to the fetcher', async () => {
-      const fetchItemsDefinitions = jest.fn().mockResolvedValueOnce([definitionA, definitionB])
-      const response = await wearablesCatalogHandler(
-        buildContext('/collections/wearables?collectionId=URN:A&wearableId=URN:1&textSearch=Hat', fetchItemsDefinitions)
-      )
+    describe('and no limit is provided', () => {
+      let fetchItemsDefinitions: jest.Mock
+      let context: ReturnType<typeof buildContext>
 
-      expect(fetchByFiltersSpy).toHaveBeenCalledWith(
-        expect.anything(),
-        { collectionIds: ['urn:a'], itemIds: ['urn:1'], textSearch: 'hat' },
-        expect.objectContaining({ limit: 501, lastId: undefined })
-      )
-      expect(fetchItemsDefinitions).toHaveBeenCalledWith(['urn:matic:a', 'urn:matic:b'])
-      expect(response.body.wearables).toEqual([definitionA, definitionB])
-      expect(response.body.pagination).toEqual({ limit: 500, lastId: undefined, next: undefined })
+      beforeEach(() => {
+        fetchItemsDefinitions = jest.fn().mockResolvedValueOnce([definitionA, definitionB])
+        context = buildContext(
+          '/collections/wearables?collectionId=URN:A&wearableId=URN:1&textSearch=Hat',
+          fetchItemsDefinitions
+        )
+      })
+
+      it('should pass lowercased filters and a default 500 limit (501 with overflow detection) to the fetcher', async () => {
+        await wearablesCatalogHandler(context)
+
+        expect(fetchByFiltersSpy).toHaveBeenCalledWith(
+          expect.anything(),
+          { collectionIds: ['urn:a'], itemIds: ['urn:1'], textSearch: 'hat' },
+          expect.objectContaining({ limit: 501, lastId: undefined })
+        )
+      })
+
+      it('should resolve definitions for the returned urns and respond with the catalog body', async () => {
+        const response = await wearablesCatalogHandler(context)
+
+        expect(fetchItemsDefinitions).toHaveBeenCalledWith(['urn:matic:a', 'urn:matic:b'])
+        expect(response.body.wearables).toEqual([definitionA, definitionB])
+        expect(response.body.pagination).toEqual({ limit: 500, lastId: undefined, next: undefined })
+      })
     })
 
-    it('should clamp out-of-range limits to 500', async () => {
-      await wearablesCatalogHandler(
-        buildContext(
+    describe('and the limit query param is out of range', () => {
+      let context: ReturnType<typeof buildContext>
+
+      beforeEach(() => {
+        context = buildContext(
           '/collections/wearables?textSearch=hat&limit=99999',
           jest.fn().mockResolvedValueOnce([definitionA, definitionB])
         )
-      )
-      expect(fetchByFiltersSpy).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.anything(),
-        expect.objectContaining({ limit: 501 })
-      )
+      })
+
+      it('should clamp the limit to 500 (501 with overflow detection)', async () => {
+        await wearablesCatalogHandler(context)
+
+        expect(fetchByFiltersSpy).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.anything(),
+          expect.objectContaining({ limit: 501 })
+        )
+      })
     })
 
-    it('should accept a valid limit and request limit+1 from the fetcher to detect more pages', async () => {
-      await wearablesCatalogHandler(
-        buildContext('/collections/wearables?textSearch=hat&limit=42', jest.fn().mockResolvedValueOnce([definitionA]))
-      )
-      expect(fetchByFiltersSpy).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.anything(),
-        expect.objectContaining({ limit: 43 })
-      )
+    describe('and the limit is within range', () => {
+      let context: ReturnType<typeof buildContext>
+
+      beforeEach(() => {
+        context = buildContext(
+          '/collections/wearables?textSearch=hat&limit=42',
+          jest.fn().mockResolvedValueOnce([definitionA])
+        )
+      })
+
+      it('should request limit+1 from the fetcher to detect more pages', async () => {
+        await wearablesCatalogHandler(context)
+
+        expect(fetchByFiltersSpy).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.anything(),
+          expect.objectContaining({ limit: 43 })
+        )
+      })
     })
   })
 
   describe('when off-chain base wearables match the filter', () => {
-    const baseUrn = 'urn:decentraland:off-chain:base-avatars:eyebrows_00'
-    const baseWearable = makeBaseWearable(baseUrn, 'Eyebrows', 'eyebrows english')
+    let baseUrn: string
+    let context: ReturnType<typeof buildContext>
 
     beforeEach(() => {
-      fetchBaseSpy.mockResolvedValueOnce([baseWearable])
+      baseUrn = 'urn:decentraland:off-chain:base-avatars:eyebrows_00'
+      fetchBaseSpy.mockResolvedValueOnce([makeBaseWearable(baseUrn, 'Eyebrows', 'eyebrows english')])
       fetchByFiltersSpy.mockResolvedValueOnce([])
+      context = buildContext(`/collections/wearables?wearableId=${encodeURIComponent(baseUrn)}`)
     })
 
-    it('should return the base wearable definition before any on-chain results', async () => {
-      const response = await wearablesCatalogHandler(
-        buildContext(`/collections/wearables?wearableId=${encodeURIComponent(baseUrn)}`)
-      )
+    it('should return the extracted base wearable definition before any on-chain results', async () => {
+      const response = await wearablesCatalogHandler(context)
 
       expect(response.body.wearables).toHaveLength(1)
       expect(response.body.wearables[0]).toMatchObject({ id: baseUrn, name: 'Eyebrows' })
@@ -161,16 +208,18 @@ describe('wearables-catalog-handler: GET /collections/wearables', () => {
   })
 
   describe('when textSearch only matches the english i18n text of a base wearable', () => {
-    const baseUrn = 'urn:decentraland:off-chain:base-avatars:bee_t_shirt'
-    const baseWearable = makeBaseWearable(baseUrn, 'something else', 'bee shirt translated')
+    let baseUrn: string
+    let context: ReturnType<typeof buildContext>
 
     beforeEach(() => {
-      fetchBaseSpy.mockResolvedValueOnce([baseWearable])
+      baseUrn = 'urn:decentraland:off-chain:base-avatars:bee_t_shirt'
+      fetchBaseSpy.mockResolvedValueOnce([makeBaseWearable(baseUrn, 'something else', 'bee shirt translated')])
       fetchByFiltersSpy.mockResolvedValueOnce([])
+      context = buildContext('/collections/wearables?textSearch=translated')
     })
 
     it('should still match the base wearable via its english i18n text', async () => {
-      const response = await wearablesCatalogHandler(buildContext('/collections/wearables?textSearch=translated'))
+      const response = await wearablesCatalogHandler(context)
 
       expect(response.body.wearables).toHaveLength(1)
       expect(response.body.wearables[0]).toMatchObject({ id: baseUrn })
@@ -178,32 +227,32 @@ describe('wearables-catalog-handler: GET /collections/wearables', () => {
   })
 
   describe('when filters explicitly scope to the base avatars collection only', () => {
-    const baseUrn = 'urn:decentraland:off-chain:base-avatars:eyebrows_00'
-    const baseWearable = makeBaseWearable(baseUrn, 'Eyebrows')
+    let context: ReturnType<typeof buildContext>
 
     beforeEach(() => {
-      fetchBaseSpy.mockResolvedValueOnce([baseWearable])
+      const baseUrn = 'urn:decentraland:off-chain:base-avatars:eyebrows_00'
+      fetchBaseSpy.mockResolvedValueOnce([makeBaseWearable(baseUrn, 'Eyebrows')])
+      context = buildContext('/collections/wearables?collectionId=urn:decentraland:off-chain:base-avatars')
     })
 
-    it('should not query the on-chain subgraph at all', async () => {
-      await wearablesCatalogHandler(
-        buildContext('/collections/wearables?collectionId=urn:decentraland:off-chain:base-avatars')
-      )
+    it('should not query the on-chain fetcher at all', async () => {
+      await wearablesCatalogHandler(context)
       expect(fetchByFiltersSpy).not.toHaveBeenCalled()
     })
   })
 
   describe('when the lastId cursor has already advanced past base avatars', () => {
-    const onChainCursor = 'urn:decentraland:matic:collections-v2:0xabc:0'
+    let onChainCursor: string
+    let context: ReturnType<typeof buildContext>
 
     beforeEach(() => {
+      onChainCursor = 'urn:decentraland:matic:collections-v2:0xabc:0'
       fetchByFiltersSpy.mockResolvedValueOnce([])
+      context = buildContext(`/collections/wearables?textSearch=hat&lastId=${encodeURIComponent(onChainCursor)}`)
     })
 
-    it('should skip the off-chain fetch entirely', async () => {
-      await wearablesCatalogHandler(
-        buildContext(`/collections/wearables?textSearch=hat&lastId=${encodeURIComponent(onChainCursor)}`)
-      )
+    it('should skip the off-chain fetch and forward the cursor (lowercased) to the on-chain fetcher', async () => {
+      await wearablesCatalogHandler(context)
 
       expect(fetchBaseSpy).not.toHaveBeenCalled()
       expect(fetchByFiltersSpy).toHaveBeenCalledWith(
@@ -215,23 +264,27 @@ describe('wearables-catalog-handler: GET /collections/wearables', () => {
   })
 
   describe('when off-chain alone returns more items than the requested limit', () => {
-    const baseUrns = [
-      'urn:decentraland:off-chain:base-avatars:a',
-      'urn:decentraland:off-chain:base-avatars:b',
-      'urn:decentraland:off-chain:base-avatars:c'
-    ]
-    const baseWearables = baseUrns.map((urn) => makeBaseWearable(urn, urn))
+    let baseUrns: string[]
+    let context: ReturnType<typeof buildContext>
 
     beforeEach(() => {
-      fetchBaseSpy.mockResolvedValueOnce(baseWearables)
+      baseUrns = [
+        'urn:decentraland:off-chain:base-avatars:a',
+        'urn:decentraland:off-chain:base-avatars:b',
+        'urn:decentraland:off-chain:base-avatars:c'
+      ]
+      fetchBaseSpy.mockResolvedValueOnce(baseUrns.map((urn) => makeBaseWearable(urn, urn)))
+      context = buildContext('/collections/wearables?textSearch=urn&limit=2')
     })
 
-    it('should slice off-chain results and skip the on-chain query entirely', async () => {
-      const response = await wearablesCatalogHandler(
-        buildContext('/collections/wearables?textSearch=urn&limit=2')
-      )
-
+    it('should not call the on-chain fetcher', async () => {
+      await wearablesCatalogHandler(context)
       expect(fetchByFiltersSpy).not.toHaveBeenCalled()
+    })
+
+    it('should slice the off-chain results to the limit and emit a next cursor pointing to the last sliced urn', async () => {
+      const response = await wearablesCatalogHandler(context)
+
       expect(response.body.wearables).toHaveLength(2)
       expect(response.body.pagination.next).toBeDefined()
       const nextParams = new URLSearchParams(response.body.pagination.next!.slice(1))
@@ -240,32 +293,29 @@ describe('wearables-catalog-handler: GET /collections/wearables', () => {
   })
 
   describe('when off-chain returns some items and on-chain is queried fresh', () => {
-    const baseUrns = [
-      'urn:decentraland:off-chain:base-avatars:a',
-      'urn:decentraland:off-chain:base-avatars:b'
-    ]
-    const baseWearables = baseUrns.map((urn) => makeBaseWearable(urn, urn))
-    const onChainDefinitions = [
-      { id: 'urn:decentraland:matic:1' },
-      { id: 'urn:decentraland:matic:2' },
-      { id: 'urn:decentraland:matic:3' },
-      { id: 'urn:decentraland:matic:4' }
-    ] as WearableDefinition[]
+    let baseUrns: string[]
+    let onChainDefinitions: WearableDefinition[]
+    let context: ReturnType<typeof buildContext>
 
     beforeEach(() => {
-      fetchBaseSpy.mockResolvedValueOnce(baseWearables)
+      baseUrns = ['urn:decentraland:off-chain:base-avatars:a', 'urn:decentraland:off-chain:base-avatars:b']
+      onChainDefinitions = [
+        { id: 'urn:decentraland:matic:1' },
+        { id: 'urn:decentraland:matic:2' },
+        { id: 'urn:decentraland:matic:3' },
+        { id: 'urn:decentraland:matic:4' }
+      ] as WearableDefinition[]
+      fetchBaseSpy.mockResolvedValueOnce(baseUrns.map((urn) => makeBaseWearable(urn, urn)))
       fetchByFiltersSpy.mockResolvedValueOnce(onChainDefinitions.map((d) => d.id))
+      context = buildContext(
+        '/collections/wearables?textSearch=urn&limit=5',
+        jest.fn().mockResolvedValueOnce(onChainDefinitions)
+      )
     })
 
     it('should call the on-chain fetcher with a cleared cursor and remaining+1 limit', async () => {
-      await wearablesCatalogHandler(
-        buildContext(
-          '/collections/wearables?textSearch=urn&limit=5',
-          jest.fn().mockResolvedValueOnce(onChainDefinitions)
-        )
-      )
+      await wearablesCatalogHandler(context)
 
-      // limit=5, off-chain returns 2 → remaining=3 → fetcher asked for remaining+1=4
       expect(fetchByFiltersSpy).toHaveBeenCalledWith(
         expect.anything(),
         expect.anything(),
@@ -273,13 +323,8 @@ describe('wearables-catalog-handler: GET /collections/wearables', () => {
       )
     })
 
-    it('should merge off-chain and on-chain results in order, off-chain first', async () => {
-      const response = await wearablesCatalogHandler(
-        buildContext(
-          '/collections/wearables?textSearch=urn&limit=5',
-          jest.fn().mockResolvedValueOnce(onChainDefinitions)
-        )
-      )
+    it('should merge off-chain and on-chain results in order with off-chain first', async () => {
+      const response = await wearablesCatalogHandler(context)
 
       expect(response.body.wearables).toHaveLength(5)
       const ids = response.body.wearables.map((w) => w.id)
@@ -289,21 +334,22 @@ describe('wearables-catalog-handler: GET /collections/wearables', () => {
   })
 
   describe('when the fetcher returns more results than the requested limit', () => {
-    const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k']
-    const definitions = letters.map((l) => ({ id: `urn:matic:${l}` })) as WearableDefinition[]
+    let definitions: WearableDefinition[]
+    let context: ReturnType<typeof buildContext>
 
     beforeEach(() => {
+      const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k']
+      definitions = letters.map((l) => ({ id: `urn:matic:${l}` })) as WearableDefinition[]
       fetchBaseSpy.mockResolvedValueOnce([])
       fetchByFiltersSpy.mockResolvedValueOnce(definitions.map((d) => d.id))
+      context = buildContext(
+        '/collections/wearables?collectionId=urn:c&wearableId=urn:1&textSearch=hat&limit=10',
+        jest.fn().mockResolvedValueOnce(definitions)
+      )
     })
 
-    it('should slice to the limit and return a next cursor preserving the filters', async () => {
-      const response = await wearablesCatalogHandler(
-        buildContext(
-          '/collections/wearables?collectionId=urn:c&wearableId=urn:1&textSearch=hat&limit=10',
-          jest.fn().mockResolvedValueOnce(definitions)
-        )
-      )
+    it('should slice to the requested limit and emit a next cursor preserving every filter', async () => {
+      const response = await wearablesCatalogHandler(context)
 
       expect(response.body.wearables).toHaveLength(10)
       const next = response.body.pagination.next

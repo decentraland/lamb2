@@ -10,7 +10,6 @@ import {
 } from '../mocks/items-by-owner-fixtures'
 
 describe('wearables-by-owner-handler: GET /collections/wearables-by-owner/:owner', () => {
-  const owner = generateRandomAddress()
   const wearableA: OnChainWearable = {
     urn: 'urn:decentraland:matic:collections-v2:0xa:0',
     name: 'A',
@@ -32,6 +31,9 @@ describe('wearables-by-owner-handler: GET /collections/wearables-by-owner/:owner
     individualData: [{ id: 'b:1', tokenId: '1', transferredAt: 0, price: 0 }]
   }
 
+  let owner: string
+  let components: ReturnType<typeof buildComponents>
+
   function buildComponents() {
     return {
       wearablesFetcher: makeOwnedFetcherMock(),
@@ -40,7 +42,7 @@ describe('wearables-by-owner-handler: GET /collections/wearables-by-owner/:owner
     }
   }
 
-  function buildContext(components: ReturnType<typeof buildComponents>, urlPath: string) {
+  function buildContext(urlPath: string) {
     return {
       components,
       params: { owner },
@@ -48,20 +50,33 @@ describe('wearables-by-owner-handler: GET /collections/wearables-by-owner/:owner
     } as any
   }
 
+  beforeEach(() => {
+    owner = generateRandomAddress()
+    components = buildComponents()
+  })
+
+  afterEach(() => {
+    jest.resetAllMocks()
+  })
+
   describe('when called without query params', () => {
-    it('should return owned wearables as urn+amount entries', async () => {
-      const components = buildComponents()
+    beforeEach(() => {
       components.wearablesFetcher.fetchOwnedElements.mockResolvedValueOnce({
         elements: [wearableA, wearableB],
         totalAmount: 2
       })
+    })
 
-      const response = await wearablesByOwnerHandler(
-        buildContext(components, `/collections/wearables-by-owner/${owner}`)
-      )
+    it('should query the on-chain wearables fetcher with the owner address and skip the definitions fetcher', async () => {
+      await wearablesByOwnerHandler(buildContext(`/collections/wearables-by-owner/${owner}`))
 
       expect(components.wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(owner)
       expect(components.wearableDefinitionsFetcher.fetchItemsDefinitions).not.toHaveBeenCalled()
+    })
+
+    it('should respond 200 with one urn+amount entry per owned wearable and no definition field', async () => {
+      const response = await wearablesByOwnerHandler(buildContext(`/collections/wearables-by-owner/${owner}`))
+
       expect(response.status).toBe(200)
       expect(response.body).toEqual([
         { urn: wearableA.urn, amount: 2 },
@@ -71,70 +86,80 @@ describe('wearables-by-owner-handler: GET /collections/wearables-by-owner/:owner
   })
 
   describe('when called with ?includeDefinitions', () => {
-    it('should attach the wearable definition to each entry', async () => {
-      const components = buildComponents()
-      const definition = { id: wearableA.urn, name: 'A def' } as WearableDefinition
-      components.wearablesFetcher.fetchOwnedElements.mockResolvedValueOnce({
-        elements: [wearableA],
-        totalAmount: 1
-      })
-      components.wearableDefinitionsFetcher.fetchItemsDefinitions.mockResolvedValueOnce([definition])
+    let urlPath: string
 
-      const response = await wearablesByOwnerHandler(
-        buildContext(components, `/collections/wearables-by-owner/${owner}?includeDefinitions`)
-      )
-
-      expect(components.wearableDefinitionsFetcher.fetchItemsDefinitions).toHaveBeenCalledWith([wearableA.urn])
-      expect(response.body).toEqual([{ urn: wearableA.urn, amount: 2, definition }])
+    beforeEach(() => {
+      urlPath = `/collections/wearables-by-owner/${owner}?includeDefinitions`
     })
 
-    it('should return undefined definition when the fetcher cannot resolve one', async () => {
-      const components = buildComponents()
-      components.wearablesFetcher.fetchOwnedElements.mockResolvedValueOnce({
-        elements: [wearableA],
-        totalAmount: 1
+    describe('and the definitions fetcher resolves a definition for the owned urn', () => {
+      let definition: WearableDefinition
+
+      beforeEach(() => {
+        definition = { id: wearableA.urn, name: 'A def' } as WearableDefinition
+        components.wearablesFetcher.fetchOwnedElements.mockResolvedValueOnce({
+          elements: [wearableA],
+          totalAmount: 1
+        })
+        components.wearableDefinitionsFetcher.fetchItemsDefinitions.mockResolvedValueOnce([definition])
       })
-      components.wearableDefinitionsFetcher.fetchItemsDefinitions.mockResolvedValueOnce([undefined])
 
-      const response = await wearablesByOwnerHandler(
-        buildContext(components, `/collections/wearables-by-owner/${owner}?includeDefinitions`)
-      )
+      it('should call the definitions fetcher with the owned urns', async () => {
+        await wearablesByOwnerHandler(buildContext(urlPath))
 
-      expect(response.body).toEqual([{ urn: wearableA.urn, amount: 2, definition: undefined }])
+        expect(components.wearableDefinitionsFetcher.fetchItemsDefinitions).toHaveBeenCalledWith([wearableA.urn])
+      })
+
+      it('should attach the definition to each urn+amount entry', async () => {
+        const response = await wearablesByOwnerHandler(buildContext(urlPath))
+
+        expect(response.body).toEqual([{ urn: wearableA.urn, amount: 2, definition }])
+      })
+    })
+
+    describe('and the definitions fetcher cannot resolve a definition for the owned urn', () => {
+      beforeEach(() => {
+        components.wearablesFetcher.fetchOwnedElements.mockResolvedValueOnce({
+          elements: [wearableA],
+          totalAmount: 1
+        })
+        components.wearableDefinitionsFetcher.fetchItemsDefinitions.mockResolvedValueOnce([undefined])
+      })
+
+      it('should leave the definition field undefined on the entry', async () => {
+        const response = await wearablesByOwnerHandler(buildContext(urlPath))
+
+        expect(response.body).toEqual([{ urn: wearableA.urn, amount: 2, definition: undefined }])
+      })
     })
   })
 
   describe('when ?collectionId is a valid third-party collection URN', () => {
     const thirdPartyCollection = 'urn:decentraland:matic:collections-thirdparty:baby-doge-coin'
-    const thirdPartyWearable = {
-      urn: `${thirdPartyCollection}:asset-1`,
-      amount: 3,
-      individualData: [{ id: '1' }],
-      name: 'tp',
-      category: 'hat',
-      entity: {} as any
-    }
-
+    let thirdPartyItem: { urn: string; amount: number; individualData: { id: string }[]; name: string; category: string; entity: any }
+    let urlPath: string
     let fetchSpy: jest.SpyInstance
 
     beforeEach(() => {
+      thirdPartyItem = {
+        urn: `${thirdPartyCollection}:asset-1`,
+        amount: 3,
+        individualData: [{ id: '1' }],
+        name: 'tp',
+        category: 'hat',
+        entity: {} as any
+      }
+      urlPath = `/collections/wearables-by-owner/${owner}?collectionId=${encodeURIComponent(thirdPartyCollection)}`
       fetchSpy = jest.spyOn(fetchThirdPartyModule, 'fetchThirdPartyWearablesFromThirdPartyName')
+      fetchSpy.mockResolvedValueOnce([thirdPartyItem])
     })
 
     afterEach(() => {
       fetchSpy.mockRestore()
     })
 
-    it('should delegate to fetchThirdPartyWearablesFromThirdPartyName and map to urn+amount', async () => {
-      fetchSpy.mockResolvedValueOnce([thirdPartyWearable])
-      const components = buildComponents()
-
-      const response = await wearablesByOwnerHandler(
-        buildContext(
-          components,
-          `/collections/wearables-by-owner/${owner}?collectionId=${encodeURIComponent(thirdPartyCollection)}`
-        )
-      )
+    it('should delegate to fetchThirdPartyWearablesFromThirdPartyName with the parsed third-party urn and skip the on-chain fetcher', async () => {
+      await wearablesByOwnerHandler(buildContext(urlPath))
 
       expect(fetchSpy).toHaveBeenCalledWith(
         expect.any(Object),
@@ -142,18 +167,25 @@ describe('wearables-by-owner-handler: GET /collections/wearables-by-owner/:owner
         expect.objectContaining({ thirdPartyName: 'baby-doge-coin' })
       )
       expect(components.wearablesFetcher.fetchOwnedElements).not.toHaveBeenCalled()
-      expect(response.body).toEqual([{ urn: thirdPartyWearable.urn, amount: 3 }])
+    })
+
+    it('should respond with the third-party item mapped to the urn+amount shape', async () => {
+      const response = await wearablesByOwnerHandler(buildContext(urlPath))
+
+      expect(response.body).toEqual([{ urn: thirdPartyItem.urn, amount: 3 }])
     })
   })
 
   describe('when ?collectionId is not a third-party collection URN', () => {
-    it('should throw InvalidRequestError', async () => {
-      const components = buildComponents()
-      const context = buildContext(
-        components,
+    let context: ReturnType<typeof buildContext>
+
+    beforeEach(() => {
+      context = buildContext(
         `/collections/wearables-by-owner/${owner}?collectionId=urn:decentraland:off-chain:base-avatars`
       )
+    })
 
+    it("should reject with InvalidRequestError and never call the on-chain fetcher", async () => {
       await expect(wearablesByOwnerHandler(context)).rejects.toThrow(InvalidRequestError)
       expect(components.wearablesFetcher.fetchOwnedElements).not.toHaveBeenCalled()
     })

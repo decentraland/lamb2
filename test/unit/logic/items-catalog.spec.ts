@@ -3,90 +3,175 @@ import { InvalidRequestError } from '../../../src/types'
 
 describe('parseCatalogQuery', () => {
   describe('when no filter is provided', () => {
-    it('should throw InvalidRequestError mentioning the configured id param name', () => {
-      const params = new URL('http://localhost/').searchParams
-      expect(() => parseCatalogQuery(params, 'wearableId')).toThrow(InvalidRequestError)
-      expect(() => parseCatalogQuery(params, 'wearableId')).toThrow(/wearableId/)
-      expect(() => parseCatalogQuery(params, 'emoteId')).toThrow(/emoteId/)
+    let searchParams: URLSearchParams
+
+    beforeEach(() => {
+      searchParams = new URL('http://localhost/').searchParams
+    })
+
+    it('should reject with InvalidRequestError', () => {
+      expect(() => parseCatalogQuery(searchParams, 'wearableId')).toThrow(InvalidRequestError)
+    })
+
+    it('should mention the wearableId param name in the wearables variant', () => {
+      expect(() => parseCatalogQuery(searchParams, 'wearableId')).toThrow(/wearableId/)
+    })
+
+    it('should mention the emoteId param name in the emotes variant', () => {
+      expect(() => parseCatalogQuery(searchParams, 'emoteId')).toThrow(/emoteId/)
     })
   })
 
   describe('when textSearch is shorter than 3 characters', () => {
-    it('should throw InvalidRequestError', () => {
-      const params = new URL('http://localhost/?textSearch=ab').searchParams
-      expect(() => parseCatalogQuery(params, 'wearableId')).toThrow(InvalidRequestError)
+    let searchParams: URLSearchParams
+
+    beforeEach(() => {
+      searchParams = new URL('http://localhost/?textSearch=ab').searchParams
+    })
+
+    it('should reject with InvalidRequestError', () => {
+      expect(() => parseCatalogQuery(searchParams, 'wearableId')).toThrow(InvalidRequestError)
     })
   })
 
   describe('when too many ids are passed', () => {
-    it('should throw with the wearables label for wearableId', () => {
-      const ids = Array.from({ length: 501 }, (_, i) => `wearableId=urn${i}`).join('&')
-      const params = new URL(`http://localhost/?${ids}`).searchParams
-      expect(() => parseCatalogQuery(params, 'wearableId')).toThrow(/wearables/)
+    describe('and the variant is wearableId', () => {
+      let searchParams: URLSearchParams
+
+      beforeEach(() => {
+        const ids = Array.from({ length: 501 }, (_, i) => `wearableId=urn${i}`).join('&')
+        searchParams = new URL(`http://localhost/?${ids}`).searchParams
+      })
+
+      it('should reject with the wearables label in the error message', () => {
+        expect(() => parseCatalogQuery(searchParams, 'wearableId')).toThrow(/wearables/)
+      })
     })
 
-    it('should throw with the emotes label for emoteId', () => {
-      const ids = Array.from({ length: 501 }, (_, i) => `emoteId=urn${i}`).join('&')
-      const params = new URL(`http://localhost/?${ids}`).searchParams
-      expect(() => parseCatalogQuery(params, 'emoteId')).toThrow(/emotes/)
+    describe('and the variant is emoteId', () => {
+      let searchParams: URLSearchParams
+
+      beforeEach(() => {
+        const ids = Array.from({ length: 501 }, (_, i) => `emoteId=urn${i}`).join('&')
+        searchParams = new URL(`http://localhost/?${ids}`).searchParams
+      })
+
+      it('should reject with the emotes label in the error message', () => {
+        expect(() => parseCatalogQuery(searchParams, 'emoteId')).toThrow(/emotes/)
+      })
     })
   })
 
   describe('when given valid input', () => {
-    it('should lowercase ids and textSearch and clamp limit', () => {
-      const params = new URL(
-        'http://localhost/?collectionId=URN:A&wearableId=URN:1&textSearch=Hat&limit=99999'
-      ).searchParams
+    describe('and the limit is out of range', () => {
+      let searchParams: URLSearchParams
 
-      const result = parseCatalogQuery(params, 'wearableId')
+      beforeEach(() => {
+        searchParams = new URL(
+          'http://localhost/?collectionId=URN:A&wearableId=URN:1&textSearch=Hat&limit=99999'
+        ).searchParams
+      })
 
-      expect(result.filters).toEqual({ collectionIds: ['urn:a'], itemIds: ['urn:1'], textSearch: 'hat' })
-      expect(result.limit).toBe(500)
-      expect(result.lastId).toBeUndefined()
+      it('should lowercase collectionIds, itemIds, and textSearch', () => {
+        const result = parseCatalogQuery(searchParams, 'wearableId')
+
+        expect(result.filters).toEqual({ collectionIds: ['urn:a'], itemIds: ['urn:1'], textSearch: 'hat' })
+      })
+
+      it('should clamp the limit to the 500 maximum', () => {
+        const result = parseCatalogQuery(searchParams, 'wearableId')
+
+        expect(result.limit).toBe(500)
+      })
+
+      it('should leave lastId undefined when not provided', () => {
+        const result = parseCatalogQuery(searchParams, 'wearableId')
+
+        expect(result.lastId).toBeUndefined()
+      })
     })
 
-    it('should accept a valid limit and lowercase the cursor', () => {
-      const params = new URL('http://localhost/?textSearch=hat&limit=42&lastId=URN:Cursor').searchParams
+    describe('and the limit and cursor are within range', () => {
+      let searchParams: URLSearchParams
 
-      const result = parseCatalogQuery(params, 'wearableId')
+      beforeEach(() => {
+        searchParams = new URL('http://localhost/?textSearch=hat&limit=42&lastId=URN:Cursor').searchParams
+      })
 
-      expect(result.limit).toBe(42)
-      expect(result.lastId).toBe('urn:cursor')
+      it('should accept the requested limit verbatim', () => {
+        const result = parseCatalogQuery(searchParams, 'wearableId')
+
+        expect(result.limit).toBe(42)
+      })
+
+      it('should lowercase the cursor', () => {
+        const result = parseCatalogQuery(searchParams, 'wearableId')
+
+        expect(result.lastId).toBe('urn:cursor')
+      })
     })
   })
 })
 
 describe('paginateCatalogResults', () => {
   describe('when the merged set fits within the limit', () => {
-    it('should return all items and no nextLastId', () => {
-      const result = paginateCatalogResults([{ id: 'a' }, { id: 'b' }], [{ id: 'c' }], 10)
+    let preMerge: { id: string }[]
+    let fetched: { id: string }[]
+
+    beforeEach(() => {
+      preMerge = [{ id: 'a' }, { id: 'b' }]
+      fetched = [{ id: 'c' }]
+    })
+
+    it('should return every item and no nextLastId', () => {
+      const result = paginateCatalogResults(preMerge, fetched, 10)
+
       expect(result.items.map((i) => i.id)).toEqual(['a', 'b', 'c'])
       expect(result.nextLastId).toBeUndefined()
     })
   })
 
   describe('when the merged set exceeds the limit', () => {
-    it('should slice and emit nextLastId from the last sliced item', () => {
-      const result = paginateCatalogResults(
-        [{ id: 'a' }],
-        [{ id: 'b' }, { id: 'c' }, { id: 'd' }],
-        2
-      )
+    let preMerge: { id: string }[]
+    let fetched: { id: string }[]
+
+    beforeEach(() => {
+      preMerge = [{ id: 'a' }]
+      fetched = [{ id: 'b' }, { id: 'c' }, { id: 'd' }]
+    })
+
+    it('should slice to the limit and emit nextLastId pointing to the last sliced item', () => {
+      const result = paginateCatalogResults(preMerge, fetched, 2)
+
       expect(result.items.map((i) => i.id)).toEqual(['a', 'b'])
       expect(result.nextLastId).toBe('b')
     })
   })
 
   describe('when the on-chain definitions arrive out of order', () => {
+    let fetched: { id: string }[]
+
+    beforeEach(() => {
+      fetched = [{ id: 'c' }, { id: 'a' }, { id: 'b' }]
+    })
+
     it('should re-sort defensively before merging', () => {
-      const result = paginateCatalogResults<{ id: string }>([], [{ id: 'c' }, { id: 'a' }, { id: 'b' }], 10)
+      const result = paginateCatalogResults<{ id: string }>([], fetched, 10)
+
       expect(result.items.map((i) => i.id)).toEqual(['a', 'b', 'c'])
     })
   })
 
   describe('when some definitions are undefined (cache miss)', () => {
-    it('should drop them silently', () => {
-      const result = paginateCatalogResults<{ id: string }>([], [{ id: 'a' }, undefined, { id: 'b' }], 10)
+    let fetched: ({ id: string } | undefined)[]
+
+    beforeEach(() => {
+      fetched = [{ id: 'a' }, undefined, { id: 'b' }]
+    })
+
+    it('should drop the undefined entries silently', () => {
+      const result = paginateCatalogResults<{ id: string }>([], fetched, 10)
+
       expect(result.items.map((i) => i.id)).toEqual(['a', 'b'])
     })
   })
@@ -94,17 +179,29 @@ describe('paginateCatalogResults', () => {
 
 describe('buildNextQuery', () => {
   describe('when called for the wearables catalog', () => {
-    it('should serialize collectionIds, itemIds (as wearableId), textSearch, limit, and lastId', () => {
-      const query = buildNextQuery(
+    let query: string
+
+    beforeEach(() => {
+      query = buildNextQuery(
         { collectionIds: ['urn:c1', 'urn:c2'], itemIds: ['urn:1'], textSearch: 'hat' },
         10,
         'urn:cursor',
         'wearableId'
       )
+    })
 
+    it('should serialize every collectionId as a repeated collectionId param', () => {
       const params = new URLSearchParams(query)
       expect(params.getAll('collectionId')).toEqual(['urn:c1', 'urn:c2'])
+    })
+
+    it('should serialize itemIds under the wearableId param name', () => {
+      const params = new URLSearchParams(query)
       expect(params.getAll('wearableId')).toEqual(['urn:1'])
+    })
+
+    it('should preserve textSearch, limit, and lastId', () => {
+      const params = new URLSearchParams(query)
       expect(params.get('textSearch')).toBe('hat')
       expect(params.get('limit')).toBe('10')
       expect(params.get('lastId')).toBe('urn:cursor')
@@ -112,11 +209,19 @@ describe('buildNextQuery', () => {
   })
 
   describe('when called for the emotes catalog', () => {
-    it('should serialize itemIds as emoteId', () => {
-      const query = buildNextQuery({ itemIds: ['urn:e:1', 'urn:e:2'] }, 5, 'urn:e:c', 'emoteId')
+    let query: string
 
+    beforeEach(() => {
+      query = buildNextQuery({ itemIds: ['urn:e:1', 'urn:e:2'] }, 5, 'urn:e:c', 'emoteId')
+    })
+
+    it('should serialize itemIds under the emoteId param name', () => {
       const params = new URLSearchParams(query)
       expect(params.getAll('emoteId')).toEqual(['urn:e:1', 'urn:e:2'])
+    })
+
+    it('should not emit any wearableId entries', () => {
+      const params = new URLSearchParams(query)
       expect(params.has('wearableId')).toBe(false)
     })
   })

@@ -6,6 +6,16 @@ import { InvalidRequestError } from '../../src/types'
 describe('emotes-catalog-handler: GET /collections/emotes', () => {
   let fetchEmotesSpy: jest.SpyInstance
 
+  function buildContext(urlPath: string, fetchItemsDefinitions: jest.Mock = jest.fn().mockResolvedValue([])) {
+    return {
+      components: {
+        theGraph: {} as any,
+        emoteDefinitionsFetcher: { fetchItemsDefinitions } as any
+      },
+      url: new URL(`http://localhost${urlPath}`)
+    } as any
+  }
+
   beforeEach(() => {
     fetchEmotesSpy = jest.spyOn(itemsByFiltersModule, 'fetchEmotesByFilters')
   })
@@ -14,69 +24,87 @@ describe('emotes-catalog-handler: GET /collections/emotes', () => {
     jest.resetAllMocks()
   })
 
-  function buildContext(
-    urlPath: string,
-    fetchItemsDefinitions: jest.Mock = jest.fn().mockResolvedValue([])
-  ) {
-    return {
-      components: {
-        theGraph: {} as any,
-        emoteDefinitionsFetcher: {
-          fetchItemsDefinitions
-        } as any
-      },
-      url: new URL(`http://localhost${urlPath}`)
-    } as any
-  }
-
   describe('when no filter is provided', () => {
-    it('should throw InvalidRequestError', async () => {
-      await expect(emotesCatalogHandler(buildContext('/collections/emotes'))).rejects.toThrow(InvalidRequestError)
+    let context: ReturnType<typeof buildContext>
+
+    beforeEach(() => {
+      context = buildContext('/collections/emotes')
+    })
+
+    it('should reject with InvalidRequestError without invoking the fetcher', async () => {
+      await expect(emotesCatalogHandler(context)).rejects.toThrow(InvalidRequestError)
       expect(fetchEmotesSpy).not.toHaveBeenCalled()
     })
   })
 
   describe('when textSearch is shorter than 3 characters', () => {
-    it('should throw InvalidRequestError', async () => {
-      await expect(emotesCatalogHandler(buildContext('/collections/emotes?textSearch=ab'))).rejects.toThrow(
-        InvalidRequestError
-      )
+    let context: ReturnType<typeof buildContext>
+
+    beforeEach(() => {
+      context = buildContext('/collections/emotes?textSearch=ab')
+    })
+
+    it("should reject with a 'must be at least 3 characters' InvalidRequestError", async () => {
+      await expect(emotesCatalogHandler(context)).rejects.toThrow(InvalidRequestError)
     })
   })
 
   describe('when more than 500 emoteIds are passed', () => {
-    it('should throw InvalidRequestError', async () => {
+    let context: ReturnType<typeof buildContext>
+
+    beforeEach(() => {
       const ids = Array.from({ length: 501 }, (_, i) => `emoteId=urn${i}`).join('&')
-      await expect(emotesCatalogHandler(buildContext(`/collections/emotes?${ids}`))).rejects.toThrow(InvalidRequestError)
+      context = buildContext(`/collections/emotes?${ids}`)
+    })
+
+    it('should reject with InvalidRequestError', async () => {
+      await expect(emotesCatalogHandler(context)).rejects.toThrow(InvalidRequestError)
     })
   })
 
   describe('when more than 500 collectionIds are passed', () => {
-    it('should throw InvalidRequestError', async () => {
+    let context: ReturnType<typeof buildContext>
+
+    beforeEach(() => {
       const ids = Array.from({ length: 501 }, (_, i) => `collectionId=urn${i}`).join('&')
-      await expect(emotesCatalogHandler(buildContext(`/collections/emotes?${ids}`))).rejects.toThrow(InvalidRequestError)
+      context = buildContext(`/collections/emotes?${ids}`)
+    })
+
+    it('should reject with InvalidRequestError', async () => {
+      await expect(emotesCatalogHandler(context)).rejects.toThrow(InvalidRequestError)
     })
   })
 
   describe('when called with valid filters', () => {
-    const definitionA = { id: 'urn:matic:e:a' } as EmoteDefinition
-    const definitionB = { id: 'urn:matic:e:b' } as EmoteDefinition
+    let definitionA: EmoteDefinition
+    let definitionB: EmoteDefinition
+    let fetchItemsDefinitions: jest.Mock
+    let context: ReturnType<typeof buildContext>
 
     beforeEach(() => {
+      definitionA = { id: 'urn:matic:e:a' } as EmoteDefinition
+      definitionB = { id: 'urn:matic:e:b' } as EmoteDefinition
       fetchEmotesSpy.mockResolvedValueOnce(['urn:matic:e:a', 'urn:matic:e:b'])
+      fetchItemsDefinitions = jest.fn().mockResolvedValueOnce([definitionA, definitionB])
+      context = buildContext(
+        '/collections/emotes?collectionId=URN:A&emoteId=URN:1&textSearch=Dance',
+        fetchItemsDefinitions
+      )
     })
 
     it('should pass lowercased filters and request limit+1 to detect more pages', async () => {
-      const fetchItemsDefinitions = jest.fn().mockResolvedValueOnce([definitionA, definitionB])
-      const response = await emotesCatalogHandler(
-        buildContext('/collections/emotes?collectionId=URN:A&emoteId=URN:1&textSearch=Dance', fetchItemsDefinitions)
-      )
+      await emotesCatalogHandler(context)
 
       expect(fetchEmotesSpy).toHaveBeenCalledWith(
         expect.anything(),
         { collectionIds: ['urn:a'], itemIds: ['urn:1'], textSearch: 'dance' },
         expect.objectContaining({ limit: 501, lastId: undefined })
       )
+    })
+
+    it('should resolve definitions for the returned urns and respond with the catalog body', async () => {
+      const response = await emotesCatalogHandler(context)
+
       expect(fetchItemsDefinitions).toHaveBeenCalledWith(['urn:matic:e:a', 'urn:matic:e:b'])
       expect(response.body.emotes).toEqual([definitionA, definitionB])
       expect(response.body.pagination).toEqual({ limit: 500, lastId: undefined, next: undefined })
@@ -84,20 +112,21 @@ describe('emotes-catalog-handler: GET /collections/emotes', () => {
   })
 
   describe('when the fetcher returns more results than the requested limit', () => {
-    const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k']
-    const definitions = letters.map((l) => ({ id: `urn:matic:e:${l}` })) as EmoteDefinition[]
+    let definitions: EmoteDefinition[]
+    let context: ReturnType<typeof buildContext>
 
     beforeEach(() => {
+      const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k']
+      definitions = letters.map((l) => ({ id: `urn:matic:e:${l}` })) as EmoteDefinition[]
       fetchEmotesSpy.mockResolvedValueOnce(definitions.map((d) => d.id))
+      context = buildContext(
+        '/collections/emotes?collectionId=urn:c&emoteId=urn:1&textSearch=dance&limit=10',
+        jest.fn().mockResolvedValueOnce(definitions)
+      )
     })
 
-    it('should slice to the limit and return a next cursor preserving the filters with emoteId param', async () => {
-      const response = await emotesCatalogHandler(
-        buildContext(
-          '/collections/emotes?collectionId=urn:c&emoteId=urn:1&textSearch=dance&limit=10',
-          jest.fn().mockResolvedValueOnce(definitions)
-        )
-      )
+    it('should slice to the requested limit and emit a next cursor preserving the filters with emoteId param', async () => {
+      const response = await emotesCatalogHandler(context)
 
       expect(response.body.emotes).toHaveLength(10)
       const next = response.body.pagination.next

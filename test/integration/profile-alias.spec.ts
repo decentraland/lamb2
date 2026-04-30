@@ -3,37 +3,40 @@ import { profileEntityFullWithExtendedItems } from './data/profiles-responses'
 import { generateRandomAddress } from '../helpers'
 
 test('profile alias: GET /profile/:id mirrors /profiles/:id', function ({ components }) {
-  const address = generateRandomAddress()
-  const profile = { timestamp: Date.now(), ...profileEntityFullWithExtendedItems.metadata }
+  let address: string
 
   beforeEach(() => {
-    components.profiles.getProfile = jest.fn().mockResolvedValue(profile)
+    address = generateRandomAddress()
   })
 
-  describe('when both /profile/:id and /profiles/:id are fetched for the same address', () => {
-    it('returns identical bodies', async () => {
-      const { localFetch } = components
+  describe('when the profile exists', () => {
+    let profile: { timestamp: number } & Record<string, unknown>
+    let aliasResponse: Awaited<ReturnType<typeof components.localFetch.fetch>>
+    let canonicalResponse: Awaited<ReturnType<typeof components.localFetch.fetch>>
+    let aliasBody: any
+    let canonicalBody: any
 
-      const [aliasResponse, canonicalResponse] = await Promise.all([
-        localFetch.fetch(`/profile/${address}`),
-        localFetch.fetch(`/profiles/${address}`)
+    beforeEach(async () => {
+      profile = { timestamp: Date.now(), ...profileEntityFullWithExtendedItems.metadata } as typeof profile
+      components.profiles.getProfile = jest.fn().mockResolvedValue(profile)
+      ;[aliasResponse, canonicalResponse] = await Promise.all([
+        components.localFetch.fetch(`/profile/${address}`),
+        components.localFetch.fetch(`/profiles/${address}`)
       ])
+      aliasBody = await aliasResponse.json()
+      canonicalBody = await canonicalResponse.json()
+    })
 
+    it('should respond 200 on both routes', () => {
       expect(aliasResponse.status).toBe(200)
       expect(canonicalResponse.status).toBe(200)
+    })
 
-      const aliasBody = await aliasResponse.json()
-      const canonicalBody = await canonicalResponse.json()
-
+    it('should return identical bodies on both routes', () => {
       expect(aliasBody).toEqual(canonicalBody)
     })
 
-    it('calls profiles.getProfile with the address for both routes', async () => {
-      const { localFetch } = components
-
-      await localFetch.fetch(`/profile/${address}`)
-      await localFetch.fetch(`/profiles/${address}`)
-
+    it('should call profiles.getProfile with the address exactly once per route', () => {
       expect(components.profiles.getProfile).toHaveBeenCalledWith(address)
       expect(components.profiles.getProfile).toHaveBeenCalledTimes(2)
     })
@@ -44,21 +47,31 @@ test('profile alias: GET /profile/:id mirrors /profiles/:id', function ({ compon
       components.profiles.getProfile = jest.fn().mockResolvedValue(undefined)
     })
 
-    it('returns 200 with the legacy { avatars: [], timestamp: 0 } stub on the alias', async () => {
-      const { localFetch } = components
+    describe('and the alias /profile/:id is fetched', () => {
+      let response: Awaited<ReturnType<typeof components.localFetch.fetch>>
+      let body: any
 
-      const r = await localFetch.fetch(`/profile/${address}`)
+      beforeEach(async () => {
+        response = await components.localFetch.fetch(`/profile/${address}`)
+        body = await response.json()
+      })
 
-      expect(r.status).toBe(200)
-      expect(await r.json()).toEqual({ avatars: [], timestamp: 0 })
+      it('should respond 200 with the legacy { avatars: [], timestamp: 0 } stub', () => {
+        expect(response.status).toBe(200)
+        expect(body).toEqual({ avatars: [], timestamp: 0 })
+      })
     })
 
-    it('still 404s on the canonical /profiles/:id (legacy contract divergence preserved)', async () => {
-      const { localFetch } = components
+    describe('and the canonical /profiles/:id is fetched', () => {
+      let response: Awaited<ReturnType<typeof components.localFetch.fetch>>
 
-      const r = await localFetch.fetch(`/profiles/${address}`)
+      beforeEach(async () => {
+        response = await components.localFetch.fetch(`/profiles/${address}`)
+      })
 
-      expect(r.status).toBe(404)
+      it('should respond 404 (the contract divergence with the alias is preserved)', () => {
+        expect(response.status).toBe(404)
+      })
     })
   })
 })
