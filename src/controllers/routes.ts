@@ -4,7 +4,7 @@ import { allCollectionsHandler } from './handlers/all-collections-handler'
 import { emotesHandler } from './handlers/emotes-handler'
 import { landsHandler } from './handlers/lands-handler'
 import { namesHandler } from './handlers/names-handler'
-import { profileHandler, profilesHandler } from './handlers/profiles-handler'
+import { profileAliasHandler, profileHandler, profilesHandler } from './handlers/profiles-handler'
 import { statusHandler } from './handlers/status-handler'
 import {
   thirdPartyCollectionWearablesHandler,
@@ -24,11 +24,18 @@ import { parcelPermissionsHandler } from './handlers/parcel-permissions-handler'
 import { parcelOperatorsHandler } from './handlers/parcel-operators-handler'
 import { nameOwnerHandler } from './handlers/name-owner-handler'
 import { userLandsPermissionsHandler } from './handlers/user-lands-permissions-handler'
+import { validateSignatureBodySchema, validateSignatureHandler } from './handlers/validate-signature-handler'
+import { emotesByOwnerHandler } from './handlers/emotes-by-owner-handler'
+import { emotesCatalogHandler } from './handlers/emotes-catalog-handler'
+import { wearablesByOwnerHandler } from './handlers/wearables-by-owner-handler'
+import { wearablesCatalogHandler } from './handlers/wearables-catalog-handler'
 
 // We return the entire router because it will be easier to test than a whole server
-export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContext>> {
+export async function setupRouter(globalContext: GlobalContext): Promise<Router<GlobalContext>> {
   const router = new Router<GlobalContext>()
   router.use(errorHandler)
+
+  const { schemaValidator } = globalContext.components
 
   router.get('/status', statusHandler)
   router.get('/about', aboutHandler)
@@ -44,6 +51,8 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
   router.get('/users/:address/lands-permissions', userLandsPermissionsHandler)
   router.post('/profiles', profilesHandler)
   router.get('/profiles/:id', profileHandler)
+  // legacy /lambdas/profile/:id — see profileAliasHandler for the contract divergence
+  router.get('/profile/:id', profileAliasHandler)
   router.get('/nfts/collections', allCollectionsHandler)
   router.get('/outfits/:id', outfitsHandler)
   router.get('/contracts/servers', getCatalystServersHandler)
@@ -52,6 +61,19 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
   router.get('/explorer/:address/wearables', explorerHandler)
   router.get('/explorer/:address/emotes', explorerEmotesHandler)
   router.get('/parcels/:x/:y/operators', parcelOperatorsHandler)
+  // The endpoints below were ported verbatim from the deprecated lambdas
+  // service. Their request and response shapes are external wire contracts;
+  // changing them requires a coordinated client migration. See each handler's
+  // header for the legacy source path and the specific contract details.
+  router.post(
+    '/crypto/validate-signature',
+    schemaValidator.withSchemaValidatorMiddleware(validateSignatureBodySchema),
+    validateSignatureHandler
+  )
+  router.get('/collections/wearables-by-owner/:owner', wearablesByOwnerHandler)
+  router.get('/collections/wearables', wearablesCatalogHandler)
+  router.get('/collections/emotes-by-owner/:owner', emotesByOwnerHandler)
+  router.get('/collections/emotes', emotesCatalogHandler)
 
   return router
 }

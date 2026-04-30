@@ -1,6 +1,8 @@
 import { Wearable } from '@dcl/schemas'
 import { AppComponents, BaseWearable, WearableId } from '../../types'
 
+export const BASE_AVATARS_COLLECTION_ID = 'urn:decentraland:off-chain:base-avatars'
+
 export const BASE_WEARABLES: WearableId[] = [
   'urn:decentraland:off-chain:base-avatars:BaseFemale',
   'urn:decentraland:off-chain:base-avatars:BaseMale',
