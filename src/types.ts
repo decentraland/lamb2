@@ -39,6 +39,7 @@ import { ThirdPartyItemChecker } from './ports/ownership-checker/third-party-ite
 import { ParcelRightsFetcher } from './adapters/parcel-rights-fetcher'
 import { MarketplaceApiFetcher } from './adapters/marketplace-api-fetcher'
 import { ThirdPartyCollectionsCacheWarmer } from './adapters/third-party-collections-cache-warmer'
+import { ISchemaValidatorComponent } from '@dcl/schema-validator-component'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -83,6 +84,7 @@ export type BaseComponents = {
   marketplaceApiFetcher?: MarketplaceApiFetcher
   nameOwnerFetcher: ElementsFetcher<NameOwner>
   thirdPartyCollectionsCacheWarmer: ThirdPartyCollectionsCacheWarmer
+  schemaValidator: ISchemaValidatorComponent<GlobalContext>
 }
 
 // components used in runtime
