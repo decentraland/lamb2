@@ -253,6 +253,46 @@ describe('Parcel Rights Fetcher Component', () => {
         })
       })
 
+      describe('and has a parcel-level updateOperator set via LANDRegistry.setUpdateOperator', () => {
+        const PARCEL_UPDATE_OPERATOR_ADDRESS = '0xparcelupdateoperator'
+
+        beforeEach(() => {
+          parcel.updateOperator = PARCEL_UPDATE_OPERATOR_ADDRESS
+          estate.updateOperator = ESTATE_UPDATE_OPERATOR_ADDRESS
+        })
+
+        it('should return the parcel-level updateOperator taking precedence over the estate-level one', async () => {
+          const result = await parcelRightsFetcher.getOperatorsOfParcel(X, Y)
+          expect(result).toEqual({
+            owner: ESTATE_OWNER_ADDRESS,
+            operator: null,
+            updateOperator: PARCEL_UPDATE_OPERATOR_ADDRESS,
+            updateManagers: [],
+            approvedForAll: []
+          })
+        })
+      })
+
+      describe('and has a parcel-level updateOperator but no estate-level updateOperator', () => {
+        const PARCEL_UPDATE_OPERATOR_ADDRESS = '0xparcelupdateoperator'
+
+        beforeEach(() => {
+          parcel.updateOperator = PARCEL_UPDATE_OPERATOR_ADDRESS
+          estate.updateOperator = null
+        })
+
+        it('should return the parcel-level updateOperator', async () => {
+          const result = await parcelRightsFetcher.getOperatorsOfParcel(X, Y)
+          expect(result).toEqual({
+            owner: ESTATE_OWNER_ADDRESS,
+            operator: null,
+            updateOperator: PARCEL_UPDATE_OPERATOR_ADDRESS,
+            updateManagers: [],
+            approvedForAll: []
+          })
+        })
+      })
+
       describe('and has no operator in the estate', () => {
         beforeEach(() => {
           parcel.operator = null
