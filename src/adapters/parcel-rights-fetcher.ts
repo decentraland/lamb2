@@ -180,7 +180,7 @@ export async function createParcelRightsComponent(
       owner = result.estates[0].owner.address
       operator = result.estates[0].operator
       // Parcel-level updateOperator takes precedence over estate-level (more specific)
-      updateOperator = result.parcels[0]?.updateOperator || result.estates[0].updateOperator
+      updateOperator = result.parcels[0]?.updateOperator ?? result.estates[0].updateOperator
     } else if (result.parcels.length > 0) {
       owner = result.parcels[0].owner.address
       operator = result.parcels[0].operator
