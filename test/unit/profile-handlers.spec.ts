@@ -118,6 +118,13 @@ describe('POST /profiles handler unit test', () => {
     expect(profilesHandler({ components, request })).rejects.toThrowError(InvalidRequestError)
   })
 
+  it('when more than the maximum allowed ids are provided it should throw InvalidRequestError', async () => {
+    const components = mockComponents(undefined)
+    const request = makeRequest({ ids: new Array(1001).fill('0x0000000000000000000000000000000000000001') })
+
+    expect(profilesHandler({ components, request })).rejects.toThrowError(InvalidRequestError)
+  })
+
   it('profiles should be returned when if-modified-since is not provided', async () => {
     const components = mockComponents([profile])
     const request = makeRequest({ ids: addresses })
