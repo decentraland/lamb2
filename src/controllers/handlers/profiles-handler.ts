@@ -1,4 +1,5 @@
 import { HandlerContextWithPath, InvalidRequestError, NotFoundError } from '../../types'
+import { PAGINATION_DEFAULTS } from '../../logic/pagination-constants'
 import { Profile } from '@dcl/catalyst-api-specs/lib/client'
 
 export async function profilesHandler(
@@ -8,8 +9,16 @@ export async function profilesHandler(
 
   const body = await request.json()
 
-  if (!body.ids) {
+  if (!Array.isArray(body.ids) || body.ids.length === 0) {
     throw new InvalidRequestError('No profile ids were specified. Expected ids:string[] in body')
+  }
+
+  // Cap the batch size: this endpoint is public and each profile fans out to
+  // several subgraph/content lookups, so an unbounded id list is a DoS amplifier.
+  if (body.ids.length > PAGINATION_DEFAULTS.MAX_PAGE_SIZE) {
+    throw new InvalidRequestError(
+      `Too many profile ids were specified. Maximum allowed is ${PAGINATION_DEFAULTS.MAX_PAGE_SIZE}`
+    )
   }
 
   let modifiedSince: number | undefined = undefined
