@@ -6,7 +6,7 @@ import { createLocalFetchCompoment, createRunner, defaultServerConfig } from '@w
 import { createConfigComponent } from '@well-known-components/env-config-provider'
 import { IConfigComponent, IFetchComponent } from '@well-known-components/interfaces'
 import { createLogComponent } from '@well-known-components/logger'
-import { createTestMetricsComponent } from '@well-known-components/metrics'
+import { createTestMetricsComponent } from '@dcl/metrics'
 import {
   createEmoteDefinitionsFetcherComponent,
   createWearableDefinitionsFetcherComponent

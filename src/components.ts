@@ -4,9 +4,9 @@ import {
   createServerComponent,
   createStatusCheckComponent,
   instrumentHttpServerWithPromClientRegistry
-} from '@well-known-components/http-server'
+} from '@dcl/http-server'
 import { createLogComponent } from '@well-known-components/logger'
-import { createMetricsComponent } from '@well-known-components/metrics'
+import { createMetricsComponent } from '@dcl/metrics'
 import { createContentClient } from 'dcl-catalyst-client'
 import { HTTPProvider } from 'eth-connect'
 import { createCatalystsFetcher } from './adapters/catalysts-fetcher'

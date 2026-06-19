@@ -2,7 +2,6 @@ import { profileHandler, profilesHandler } from '../../src/controllers/handlers/
 import { InvalidRequestError, NotFoundError, ProfileMetadata } from '../../src/types'
 import { generateRandomAddress } from '../helpers'
 import { profileEntityFullWithExtendedItems } from '../integration/data/profiles-responses'
-import { Request } from 'node-fetch'
 import { sanitizeLinks } from '../../src/adapters/profiles'
 
 const profile = { timestamp: Date.now(), ...profileEntityFullWithExtendedItems.metadata }

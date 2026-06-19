@@ -1,4 +1,3 @@
-import { Request } from 'node-fetch'
 import { Authenticator, AuthLinkType, ValidationResult } from '@dcl/crypto'
 import { validateSignatureHandler } from '../../src/controllers/handlers/validate-signature-handler'
 import { InvalidRequestError } from '../../src/types'

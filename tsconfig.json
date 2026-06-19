@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "strict": true,
+    "skipLibCheck": true,
     "outDir": "dist",
     "target": "es2020",
     "module": "commonjs",

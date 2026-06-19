@@ -13,10 +13,10 @@ import type {
   IBaseComponent,
   IConfigComponent,
   IFetchComponent,
-  IHttpServerComponent,
   ILoggerComponent,
   IMetricsComponent
 } from '@well-known-components/interfaces'
+import type { IHttpServerComponent } from '@dcl/core-commons'
 import { Variables } from '@well-known-components/thegraph-component'
 import { ContentClient } from 'dcl-catalyst-client'
 import { HTTPProvider } from 'eth-connect'
