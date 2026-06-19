@@ -1,5 +1,5 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
-import { ISubgraphComponent, createSubgraphComponent } from '@well-known-components/thegraph-component'
+import { ISubgraphComponent, createSubgraphComponent } from '@dcl/thegraph-component'
 import { AppComponents } from '../types'
 
 export type TheGraphComponent = IBaseComponent & {

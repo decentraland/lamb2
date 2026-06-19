@@ -1,4 +1,4 @@
-import { ISubgraphComponent } from '@well-known-components/thegraph-component'
+import { ISubgraphComponent } from '@dcl/thegraph-component'
 import { TheGraphComponent } from '../../src/ports/the-graph'
 import { QueryGraph } from '../../src/types'
 

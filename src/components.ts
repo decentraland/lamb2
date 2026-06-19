@@ -4,11 +4,11 @@ import {
   createServerComponent,
   createStatusCheckComponent,
   instrumentHttpServerWithPromClientRegistry
-} from '@well-known-components/http-server'
+} from '@dcl/http-server'
 import { createLogComponent } from '@well-known-components/logger'
-import { createMetricsComponent } from '@well-known-components/metrics'
+import { createMetricsComponent } from '@dcl/metrics'
 import { createContentClient } from 'dcl-catalyst-client'
-import { HTTPProvider } from 'eth-connect'
+import { FetchFunction, HTTPProvider } from 'eth-connect'
 import { createCatalystsFetcher } from './adapters/catalysts-fetcher'
 import { createContentServerUrls } from './adapters/content-server-url'
 import {
@@ -27,14 +27,16 @@ import { fetchLands } from './logic/fetch-elements/fetch-lands'
 import { fetchNames } from './logic/fetch-elements/fetch-names'
 import { fetchAllThirdPartyWearables } from './logic/fetch-elements/fetch-third-party-wearables'
 import { metricDeclarations } from './metrics'
-import { createFetchComponent } from './ports/fetch'
+import { createTracedFetcherComponent } from '@dcl/traced-fetch-component'
+import { createHttpTracerComponent } from '@dcl/http-tracer-component'
+import { createTracerComponent } from '@well-known-components/tracer-component'
 import { createOwnershipCachesComponent } from './ports/ownership-caches'
 import { createTheGraphComponent, TheGraphComponent } from './ports/the-graph'
 import { AppComponents, BaseWearable, GlobalContext } from './types'
 import { createThirdPartyProvidersGraphFetcherComponent } from './adapters/third-party-providers-graph-fetcher'
 import { createThirdPartyProvidersStorage } from './logic/third-party-providers-storage'
 import { createProfilesComponent } from './adapters/profiles'
-import { IFetchComponent } from '@well-known-components/interfaces'
+import { IFetchComponent } from '@dcl/core-commons'
 import { createAlchemyNftFetcher } from './adapters/alchemy-nft-fetcher'
 import { createMarketplaceApiFetcher } from './adapters/marketplace-api-fetcher'
 import { createThirdPartyContractRegistry } from './ports/ownership-checker/third-party-contract-registry'
@@ -52,6 +54,7 @@ export async function initComponents(
 ): Promise<AppComponents> {
   const config = await createDotEnvConfigComponent({ path: ['.env.default', '.env'] })
   const logs = await createLogComponent({})
+  const tracer = createTracerComponent()
   const server = await createServerComponent<GlobalContext>(
     { config, logs },
     {
@@ -60,8 +63,12 @@ export async function initComponents(
       }
     }
   )
+  // Instrument the server so each incoming request runs inside a trace span (continuing the
+  // caller's W3C traceparent when present). This is what makes the traced fetcher below
+  // propagate the trace on outbound calls instead of being a no-op.
+  createHttpTracerComponent({ server, tracer })
   const statusChecks = await createStatusCheckComponent({ server, config })
-  const fetch = fetchComponent ? fetchComponent : await createFetchComponent()
+  const fetch = fetchComponent ? fetchComponent : await createTracedFetcherComponent({ tracer })
   const metrics = await createMetricsComponent(metricDeclarations, { config })
   await instrumentHttpServerWithPromClientRegistry({ server, metrics, config, registry: metrics.registry! })
 
@@ -131,11 +138,15 @@ export async function initComponents(
     throw new Error(`Invalid ETH_NETWORK ${l1Network}`)
   }
   const l2Network: L2Network = l1Network === 'mainnet' ? 'polygon' : 'amoy'
+  // eth-connect's HTTPProvider expects a loosely-typed FetchFunction (e.g. `mode?: string`), while
+  // the native fetch component (@dcl/fetch-component) is stricter (`mode?: RequestMode`). They are
+  // runtime-compatible, so adapt the type at this boundary.
+  const ethConnectFetch = fetch.fetch as unknown as FetchFunction
   const l1Provider = new HTTPProvider(`https://rpc.decentraland.org/${encodeURIComponent(l1Network)}?project=lamb2`, {
-    fetch: fetch.fetch
+    fetch: ethConnectFetch
   })
   const l2Provider = new HTTPProvider(`https://rpc.decentraland.org/${encodeURIComponent(l2Network)}?project=lamb2`, {
-    fetch: fetch.fetch
+    fetch: ethConnectFetch
   })
   const catalystsFetcher = await createCatalystsFetcher({ l1Provider }, l1Network)
   const poisFetcher = await createPOIsFetcher({ l2Provider }, l2Network)

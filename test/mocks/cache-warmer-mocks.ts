@@ -1,9 +1,5 @@
-import {
-  IConfigComponent,
-  ILoggerComponent,
-  IFetchComponent,
-  IMetricsComponent
-} from '@well-known-components/interfaces'
+import { IConfigComponent, ILoggerComponent, IMetricsComponent } from '@well-known-components/interfaces'
+import { IFetchComponent } from '@dcl/core-commons'
 import { ThirdPartyProvidersStorage } from '../../src/logic/third-party-providers-storage'
 import { EntitiesFetcher } from '../../src/adapters/entities-fetcher'
 

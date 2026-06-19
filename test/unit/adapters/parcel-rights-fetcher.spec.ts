@@ -7,7 +7,7 @@ import {
   ParcelRightsFetcher
 } from '../../../src/adapters/parcel-rights-fetcher'
 import { AppComponents, ParcelOrStateNotFoundError } from '../../../src/types'
-import { ISubgraphComponent } from '@well-known-components/thegraph-component'
+import { ISubgraphComponent } from '@dcl/thegraph-component'
 
 const LANDS_CONTRACT_ADDRESS = '0xlands'
 const ESTATES_CONTRACT_ADDRESS = '0xestates'

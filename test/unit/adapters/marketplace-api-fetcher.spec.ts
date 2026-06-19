@@ -1,5 +1,5 @@
 import { createLogComponent } from '@well-known-components/logger'
-import { IFetchComponent } from '@well-known-components/interfaces'
+import { IFetchComponent } from '@dcl/core-commons'
 import { createMarketplaceApiFetcher, MarketplaceApiError } from '../../../src/adapters/marketplace-api-fetcher'
 import { WearableCategory, EmoteCategory } from '@dcl/schemas'
 
