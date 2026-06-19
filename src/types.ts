@@ -12,12 +12,11 @@ import {
 import type {
   IBaseComponent,
   IConfigComponent,
-  IFetchComponent,
   ILoggerComponent,
   IMetricsComponent
 } from '@well-known-components/interfaces'
-import type { IHttpServerComponent } from '@dcl/core-commons'
-import { Variables } from '@well-known-components/thegraph-component'
+import type { IFetchComponent, IHttpServerComponent } from '@dcl/core-commons'
+import { Variables } from '@dcl/thegraph-component'
 import { ContentClient } from 'dcl-catalyst-client'
 import { HTTPProvider } from 'eth-connect'
 import { CatalystsFetcher } from './adapters/catalysts-fetcher'

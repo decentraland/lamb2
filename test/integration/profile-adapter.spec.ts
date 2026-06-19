@@ -1,6 +1,5 @@
 import { defaultServerConfig } from '@well-known-components/test-helpers'
 import { testWithComponents } from '../components'
-import { Response } from 'node-fetch'
 import sinon from 'sinon'
 import {
   profileEntityFull,
