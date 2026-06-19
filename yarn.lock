@@ -299,7 +299,7 @@
     eslint-plugin-prettier "^5.1.3"
     prettier "^3.3.2"
 
-"@dcl/fetch-component@^1.0.1":
+"@dcl/fetch-component@1.0.1":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@dcl/fetch-component/-/fetch-component-1.0.1.tgz#7cfb6d2d2bc6b40c9eca238be212626d511284c4"
   integrity sha512-OgkOeBtIfxuQ96caFnE+JDORiQEBKajF3DpB7T5ZcoVkbnKGnJ1fmk4eOklzA+Eqt2LOAKsXfKa1RqR9bPwUlg==
@@ -325,6 +325,14 @@
     on-finished "^2.4.1"
     path-to-regexp "^6.3.0"
     reflect-metadata "^0.2.2"
+
+"@dcl/http-tracer-component@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@dcl/http-tracer-component/-/http-tracer-component-2.0.0.tgz#c977476ba4c93f6c371bb2f60e662c9bc9acb910"
+  integrity sha512-wtYpB757L3Ie+Sm5QB7xFjLwjqtNhS389LOQ5ihpScE1JweMZd/rh6QwTHBHRdm9PCuZgSnQkbCqs7B8U08LAA==
+  dependencies:
+    "@dcl/core-commons" "0.10.0"
+    "@well-known-components/interfaces" "^1.5.2"
 
 "@dcl/metrics@^1.0.1":
   version "1.0.1"
@@ -378,6 +386,15 @@
   integrity sha512-SA35YkjB4KDuz32ln1tY6Qt8nsHi8n32SvhqqL+N3+ZadtZqSrsJ1cTduNdk7wNqcrR8rNpNGZKzpp1U70hM3A==
   dependencies:
     "@dcl/core-commons" "0.10.0"
+    "@well-known-components/interfaces" "^1.5.2"
+
+"@dcl/traced-fetch-component@^1.0.6":
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/@dcl/traced-fetch-component/-/traced-fetch-component-1.0.6.tgz#9983ad9b5c56e3401bd1d06b6309e85cfb709ed9"
+  integrity sha512-lmEk0v93HUbF+FfKQ4om6brseSJcR8tTfsbWaD6TWkzs5tRvnUwTpjl9hLbjiXT0d6xMtePesd6+/vtZuOXiNQ==
+  dependencies:
+    "@dcl/core-commons" "0.10.0"
+    "@dcl/fetch-component" "1.0.1"
     "@well-known-components/interfaces" "^1.5.2"
 
 "@dcl/urn-resolver@^3.6.0":
@@ -1043,19 +1060,19 @@
     "@well-known-components/interfaces" "^1.4.1"
     cross-fetch "^3.1.5"
 
-"@well-known-components/interfaces@^1.4.1", "@well-known-components/interfaces@^1.4.3":
-  version "1.4.3"
-  resolved "https://registry.npmjs.org/@well-known-components/interfaces/-/interfaces-1.4.3.tgz"
-  integrity sha512-roVtoOHG6uaH+nL4C0ISnAwkkopc2FLsS7fqX+roI22EdX9PAknPoImhPU8/3u6jgRAVpglX5Zj4nWZkSaXPkQ==
+"@well-known-components/interfaces@^1.2.0", "@well-known-components/interfaces@^1.5.1", "@well-known-components/interfaces@^1.5.2":
+  version "1.5.2"
+  resolved "https://registry.yarnpkg.com/@well-known-components/interfaces/-/interfaces-1.5.2.tgz#ef7001a19d410459e65b216dd948d15be19e4efa"
+  integrity sha512-TzKQblOci2Azczk1DZ4JL5aJW7hwq7kHrFMO4lCRMmW51bA71BtiZlq0WP72Dln067xTSoHQAU4WHCFJlGYvEQ==
   dependencies:
     "@types/node" "^20.3.1"
     "@types/node-fetch" "^2.5.12"
     typed-url-params "^1.0.1"
 
-"@well-known-components/interfaces@^1.5.1", "@well-known-components/interfaces@^1.5.2":
-  version "1.5.2"
-  resolved "https://registry.yarnpkg.com/@well-known-components/interfaces/-/interfaces-1.5.2.tgz#ef7001a19d410459e65b216dd948d15be19e4efa"
-  integrity sha512-TzKQblOci2Azczk1DZ4JL5aJW7hwq7kHrFMO4lCRMmW51bA71BtiZlq0WP72Dln067xTSoHQAU4WHCFJlGYvEQ==
+"@well-known-components/interfaces@^1.4.1", "@well-known-components/interfaces@^1.4.3":
+  version "1.4.3"
+  resolved "https://registry.npmjs.org/@well-known-components/interfaces/-/interfaces-1.4.3.tgz"
+  integrity sha512-roVtoOHG6uaH+nL4C0ISnAwkkopc2FLsS7fqX+roI22EdX9PAknPoImhPU8/3u6jgRAVpglX5Zj4nWZkSaXPkQ==
   dependencies:
     "@types/node" "^20.3.1"
     "@types/node-fetch" "^2.5.12"
@@ -1078,6 +1095,14 @@
     node-fetch "2.x"
     sinon "^18.0.0"
     ts-jest "^29.1.0"
+
+"@well-known-components/tracer-component@^1.2.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@well-known-components/tracer-component/-/tracer-component-1.2.0.tgz#fb849356546caa56477457f3d67649f8cefa0c06"
+  integrity sha512-yoXk/DhX6vy0mydkW+w0I1ekXZfIjCm3RFyxTgbx+LPYKF/OnDWstF4+SqozoRYo6wxsCbPmMmG7LIOM1tfBEQ==
+  dependencies:
+    "@well-known-components/interfaces" "^1.2.0"
+    tslib "^2.5.0"
 
 acorn-jsx@^5.3.2:
   version "5.3.2"
@@ -3418,6 +3443,11 @@ ts-jest@^29.1.0:
     make-error "1.x"
     semver "^7.5.3"
     yargs-parser "^21.0.1"
+
+tslib@^2.5.0:
+  version "2.8.1"
+  resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.8.1.tgz#612efe4ed235d567e8aba5f2a5fab70280ade83f"
+  integrity sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==
 
 tslib@^2.6.2:
   version "2.6.2"

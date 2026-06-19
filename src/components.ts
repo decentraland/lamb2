@@ -27,7 +27,9 @@ import { fetchLands } from './logic/fetch-elements/fetch-lands'
 import { fetchNames } from './logic/fetch-elements/fetch-names'
 import { fetchAllThirdPartyWearables } from './logic/fetch-elements/fetch-third-party-wearables'
 import { metricDeclarations } from './metrics'
-import { createFetchComponent } from '@dcl/fetch-component'
+import { createTracedFetcherComponent } from '@dcl/traced-fetch-component'
+import { createHttpTracerComponent } from '@dcl/http-tracer-component'
+import { createTracerComponent } from '@well-known-components/tracer-component'
 import { createOwnershipCachesComponent } from './ports/ownership-caches'
 import { createTheGraphComponent, TheGraphComponent } from './ports/the-graph'
 import { AppComponents, BaseWearable, GlobalContext } from './types'
@@ -52,6 +54,7 @@ export async function initComponents(
 ): Promise<AppComponents> {
   const config = await createDotEnvConfigComponent({ path: ['.env.default', '.env'] })
   const logs = await createLogComponent({})
+  const tracer = createTracerComponent()
   const server = await createServerComponent<GlobalContext>(
     { config, logs },
     {
@@ -60,8 +63,12 @@ export async function initComponents(
       }
     }
   )
+  // Instrument the server so each incoming request runs inside a trace span (continuing the
+  // caller's W3C traceparent when present). This is what makes the traced fetcher below
+  // propagate the trace on outbound calls instead of being a no-op.
+  createHttpTracerComponent({ server, tracer })
   const statusChecks = await createStatusCheckComponent({ server, config })
-  const fetch = fetchComponent ? fetchComponent : createFetchComponent()
+  const fetch = fetchComponent ? fetchComponent : await createTracedFetcherComponent({ tracer })
   const metrics = await createMetricsComponent(metricDeclarations, { config })
   await instrumentHttpServerWithPromClientRegistry({ server, metrics, config, registry: metrics.registry! })
 
