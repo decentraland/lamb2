@@ -1,5 +1,5 @@
 import { LambdasError } from '@dcl/catalyst-api-specs/lib/client'
-import { IHttpServerComponent } from '@dcl/core-commons'
+import type { IHttpServerComponent } from '@dcl/core-commons'
 import { InvalidRequestError, NotFoundError, ParcelOrStateNotFoundError } from '../../types'
 import { FetcherError } from '../../adapters/elements-fetcher'
 
