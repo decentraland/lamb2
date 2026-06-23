@@ -65,7 +65,9 @@ export async function createEntitiesFetcherComponent({
     const url = `${internalContentServerUrl}/entities/active/collections/${collectionId}?pageSize=${MAX_COLLECTION_PAGE_SIZE}&pageNum=${pageNum}`
     const response = await fetch.fetch(url)
     if (!response.ok) {
-      return response.status === 404
+      const status = response.status
+      await response.body?.cancel().catch(() => undefined)
+      return status === 404
         ? {
             total: 0,
             entities: []

@@ -280,7 +280,9 @@ export async function createMarketplaceApiFetcher(
       })
 
       if (!response.ok) {
-        throw new MarketplaceApiError(`Marketplace API returned ${response.status}: ${response.statusText}`)
+        const error = new MarketplaceApiError(`Marketplace API returned ${response.status}: ${response.statusText}`)
+        await response.body?.cancel().catch(() => undefined)
+        throw error
       }
 
       const data = await response.json()

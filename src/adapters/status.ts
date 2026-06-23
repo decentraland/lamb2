@@ -30,6 +30,7 @@ export async function createStatusComponent(
           }
         })
         if (!response.ok) {
+          await response.body?.cancel().catch(() => undefined)
           return undefined
         }
         return response.json()

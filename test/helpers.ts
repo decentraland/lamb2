@@ -8,6 +8,6 @@ export function generateRandomAddress(): string {
     privKey = randomBytes(32)
   } while (!secp256k1.privateKeyVerify(privKey))
 
-  const pubKey = secp256k1.publicKeyCreate(privKey)
+  const pubKey = secp256k1.publicKeyCreate(privKey, false)
   return computeAddress(pubKey)
 }
