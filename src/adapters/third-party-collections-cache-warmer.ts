@@ -64,6 +64,7 @@ export async function createThirdPartyCollectionsCacheWarmer(
           status: response.status,
           statusText: response.statusText
         })
+        await response.body?.cancel().catch(() => undefined)
         return false
       }
 

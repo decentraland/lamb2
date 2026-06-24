@@ -34,6 +34,7 @@ export async function createAlchemyNftFetcher({
 
     if (!response.ok) {
       logger.error(`Error fetching NFTs from Alchemy: ${response.status} - ${response.statusText}`)
+      await response.body?.cancel().catch(() => undefined)
       return []
     }
 
