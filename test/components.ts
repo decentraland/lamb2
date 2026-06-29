@@ -28,6 +28,43 @@ import { createTheGraphComponentMock } from './mocks/the-graph-mock'
 import { createAlchemyNftFetcherMock } from './mocks/alchemy-mock'
 import { createMarketplaceApiFetcherMock } from './mocks/marketplace-api-mock'
 
+type LocalFetchComponent = Awaited<ReturnType<typeof createLocalFetchComponent>>
+
+/**
+ * Wraps a local fetch component so a transient connection error is retried once.
+ *
+ * Every test suite spins up its own server on the same fixed HTTP_SERVER_PORT and
+ * tears it down in afterAll. The native fetch (undici) backing createLocalFetchComponent
+ * keeps connections alive and pools them, so the first request of a suite can land on a
+ * socket left over from the previous suite's now-closed server and fail with
+ * "fetch failed" / ECONNRESET. The old node-fetch helper did not pool, so it never hit
+ * this. Retrying once forces a fresh connection and makes the suites deterministic.
+ */
+function withConnectionRetry(localFetch: LocalFetchComponent): LocalFetchComponent {
+  const isTransientConnectionError = (error: unknown): boolean => {
+    if (!(error instanceof Error)) {
+      return false
+    }
+    const cause = (error as { cause?: unknown }).cause
+    const causeMessage = cause instanceof Error ? cause.message : ''
+    return /fetch failed|ECONNRESET|ECONNREFUSED|other side closed|socket hang up/i.test(
+      `${error.message} ${causeMessage}`
+    )
+  }
+  return {
+    async fetch(url, init) {
+      try {
+        return await localFetch.fetch(url, init)
+      } catch (error) {
+        if (!isTransientConnectionError(error)) {
+          throw error
+        }
+        return localFetch.fetch(url, init)
+      }
+    }
+  }
+}
+
 /**
  * Behaves like Jest "describe" function, used to describe a test for a
  * use case, it creates a whole new program and components to run an
@@ -186,7 +223,7 @@ async function initComponents(
     config,
     metrics,
     ownershipCaches,
-    localFetch: await createLocalFetchComponent(config),
+    localFetch: withConnectionRetry(await createLocalFetchComponent(config)),
     theGraph: theGraphMock,
     content,
     contentServerUrl,
