@@ -31,14 +31,16 @@ import { createMarketplaceApiFetcherMock } from './mocks/marketplace-api-mock'
 type LocalFetchComponent = Awaited<ReturnType<typeof createLocalFetchComponent>>
 
 /**
- * Wraps a local fetch component so a transient connection error is retried once.
+ * Wraps a local fetch component so transient connection errors are retried with backoff.
  *
  * Every test suite spins up its own server on the same fixed HTTP_SERVER_PORT and
  * tears it down in afterAll. The native fetch (undici) backing createLocalFetchComponent
  * keeps connections alive and pools them, so the first request of a suite can land on a
  * socket left over from the previous suite's now-closed server and fail with
- * "fetch failed" / ECONNRESET. The old node-fetch helper did not pool, so it never hit
- * this. Retrying once forces a fresh connection and makes the suites deterministic.
+ * "fetch failed" / "other side closed". The old node-fetch helper did not pool, so it
+ * never hit this. A single immediate retry can still race undici's socket eviction (it
+ * was not enough under CI timing), so retry a few times with a short backoff to give
+ * undici time to drop the dead socket and reconnect, which makes the suites deterministic.
  */
 function withConnectionRetry(localFetch: LocalFetchComponent): LocalFetchComponent {
   const isTransientConnectionError = (error: unknown): boolean => {
@@ -51,16 +53,24 @@ function withConnectionRetry(localFetch: LocalFetchComponent): LocalFetchCompone
       `${error.message} ${causeMessage}`
     )
   }
+  const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
+  const MAX_ATTEMPTS = 6
   return {
     async fetch(url, init) {
-      try {
-        return await localFetch.fetch(url, init)
-      } catch (error) {
-        if (!isTransientConnectionError(error)) {
-          throw error
+      let lastError: unknown
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        try {
+          return await localFetch.fetch(url, init)
+        } catch (error) {
+          if (!isTransientConnectionError(error)) {
+            throw error
+          }
+          lastError = error
+          // Give undici time to evict the dead pooled socket before reconnecting.
+          await delay(30 * attempt)
         }
-        return localFetch.fetch(url, init)
       }
+      throw lastError
     }
   }
 }
