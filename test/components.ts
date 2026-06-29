@@ -1,7 +1,7 @@
 // This file is the "test-environment" analogous for src/components.ts
 // Here we define the test components to be used in the testing environment
 
-import { createLocalFetchCompoment, createRunner, defaultServerConfig } from '@well-known-components/test-helpers'
+import { createLocalFetchComponent, createRunner, defaultServerConfig } from '@dcl/test-helpers'
 
 import { createConfigComponent } from '@well-known-components/env-config-provider'
 import { IConfigComponent } from '@well-known-components/interfaces'
@@ -84,12 +84,12 @@ async function initComponents(
       HTTP_SERVER_PORT: '7272',
       MARKETPLACE_API_URL: 'https://marketplace-api-test.com' // Enable marketplace API for tests
     })
-  // createLocalFetchCompoment (from the WKC test-helpers) is typed against the node-fetch
+  // createLocalFetchComponent (from the WKC test-helpers) is typed against the node-fetch
   // IFetchComponent, while the app now uses the native-fetch IFetchComponent (@dcl/core-commons).
   // The local fetch hits the in-process test server over real HTTP and only the common response
   // surface (status, json, text, headers) is read, so bridge the type here for tests.
   const fetch =
-    fetchComponent ?? ((await createLocalFetchCompoment(config)) as unknown as IFetchComponent)
+    fetchComponent ?? ((await createLocalFetchComponent(config)) as unknown as IFetchComponent)
   const theGraphMock = theGraphComponent ? theGraphComponent : createTheGraphComponentMock()
   if (!theGraphComponent) {
     jest.spyOn(theGraphMock.thirdPartyRegistrySubgraph, 'query').mockResolvedValue({
@@ -186,7 +186,7 @@ async function initComponents(
     config,
     metrics,
     ownershipCaches,
-    localFetch: await createLocalFetchCompoment(config),
+    localFetch: await createLocalFetchComponent(config),
     theGraph: theGraphMock,
     content,
     contentServerUrl,

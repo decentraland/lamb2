@@ -99,7 +99,11 @@ test('validate-signature-handler: POST /crypto/validate-signature', function ({ 
 
       it('should respond 400 with the schema-validator shape including ajv errors', () => {
         expect(response.status).toBe(400)
-        expect(body).toMatchObject({ ok: false, data: expect.any(Array) })
+        expect(body).toMatchObject({ ok: false })
+        // body.data is parsed by the native-fetch (undici) realm, so its
+        // constructor is not the test realm's Array; use the realm-agnostic
+        // Array.isArray instead of expect.any(Array).
+        expect(Array.isArray(body.data)).toBe(true)
       })
     })
 
@@ -118,7 +122,11 @@ test('validate-signature-handler: POST /crypto/validate-signature', function ({ 
 
       it('should respond 400 with the schema-validator shape including ajv errors', () => {
         expect(response.status).toBe(400)
-        expect(body).toMatchObject({ ok: false, data: expect.any(Array) })
+        expect(body).toMatchObject({ ok: false })
+        // body.data is parsed by the native-fetch (undici) realm, so its
+        // constructor is not the test realm's Array; use the realm-agnostic
+        // Array.isArray instead of expect.any(Array).
+        expect(Array.isArray(body.data)).toBe(true)
       })
     })
 
@@ -140,7 +148,11 @@ test('validate-signature-handler: POST /crypto/validate-signature', function ({ 
 
       it('should respond 400 with the schema-validator shape including ajv errors', () => {
         expect(response.status).toBe(400)
-        expect(body).toMatchObject({ ok: false, data: expect.any(Array) })
+        expect(body).toMatchObject({ ok: false })
+        // body.data is parsed by the native-fetch (undici) realm, so its
+        // constructor is not the test realm's Array; use the realm-agnostic
+        // Array.isArray instead of expect.any(Array).
+        expect(Array.isArray(body.data)).toBe(true)
       })
     })
   })
