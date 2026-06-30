@@ -1,4 +1,4 @@
-import { defaultServerConfig } from '@well-known-components/test-helpers'
+import { defaultServerConfig } from '@dcl/test-helpers'
 import { Entity, EntityType, Outfits, WearableCategory } from '@dcl/schemas'
 import { testWithComponents } from '../components'
 import { createConfigComponent } from '@well-known-components/env-config-provider'
@@ -8,7 +8,8 @@ testWithComponents(() => {
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
   it('return outfits when all wearables are owned', async () => {
     const { localFetch } = components
-    const { content, theGraph } = stubComponents
+    const { content } = stubComponents
+    const { theGraph } = components
     const address = '0x1'
 
     const outfitsMetadata: Outfits = {
@@ -54,7 +55,7 @@ testWithComponents(() => {
       content: []
     }
 
-    content.fetchEntitiesByPointers.resolves([outfitsEntity])
+    content.fetchEntitiesByPointers.mockResolvedValue([outfitsEntity])
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
       return Promise.resolve({
         nfts: [
@@ -203,7 +204,8 @@ testWithComponents(() => {
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
   it('return and extends outfits when all wearables are owned and ERC-721 is disabled', async () => {
     const { localFetch } = components
-    const { content, theGraph } = stubComponents
+    const { content } = stubComponents
+    const { theGraph } = components
     const address = '0x1'
 
     const outfitsMetadata: Outfits = {
@@ -249,7 +251,7 @@ testWithComponents(() => {
       content: []
     }
 
-    content.fetchEntitiesByPointers.resolves([outfitsEntity])
+    content.fetchEntitiesByPointers.mockResolvedValue([outfitsEntity])
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
       return Promise.resolve({
         nfts: [
@@ -430,7 +432,8 @@ testWithComponents(() => {
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
   it('return extended outfits when all extended wearables are owned', async () => {
     const { localFetch } = components
-    const { content, theGraph } = stubComponents
+    const { content } = stubComponents
+    const { theGraph } = components
     const address = '0x1'
 
     const outfitsMetadata: Outfits = {
@@ -476,7 +479,7 @@ testWithComponents(() => {
       content: []
     }
 
-    content.fetchEntitiesByPointers.resolves([outfitsEntity])
+    content.fetchEntitiesByPointers.mockResolvedValue([outfitsEntity])
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
       return Promise.resolve({
         nfts: [
@@ -611,7 +614,8 @@ testWithComponents(() => {
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
   it('remove outfit when wearables are not owned', async () => {
     const { localFetch } = components
-    const { content, theGraph } = stubComponents
+    const { content } = stubComponents
+    const { theGraph } = components
     const address = '0x1'
 
     const outfitsMetadata: Outfits = {
@@ -657,7 +661,7 @@ testWithComponents(() => {
       content: []
     }
 
-    content.fetchEntitiesByPointers.resolves([outfitsEntity])
+    content.fetchEntitiesByPointers.mockResolvedValue([outfitsEntity])
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
       return Promise.resolve({
         nfts: [
@@ -808,7 +812,8 @@ testWithComponents(() => {
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
   it('return complete outfits when its contain base wearables and an owned wearable', async () => {
     const { localFetch } = components
-    const { content, theGraph } = stubComponents
+    const { content } = stubComponents
+    const { theGraph } = components
     const address = '0x1'
 
     const outfitsMetadata: Outfits = {
@@ -980,7 +985,7 @@ testWithComponents(() => {
       content: []
     }
 
-    content.fetchEntitiesByPointers.resolves([outfitsEntity])
+    content.fetchEntitiesByPointers.mockResolvedValue([outfitsEntity])
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
       return Promise.resolve({
         nfts: []
@@ -1043,7 +1048,8 @@ testWithComponents(() => {
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
   it('return complete outfit without extensions when outfit comes extended from content-server but ERC-721 standard is disabled', async () => {
     const { localFetch } = components
-    const { content, theGraph } = stubComponents
+    const { content } = stubComponents
+    const { theGraph } = components
     const address = '0x1'
 
     const outfitsMetadata: Outfits = {
@@ -1215,7 +1221,7 @@ testWithComponents(() => {
       content: []
     }
 
-    content.fetchEntitiesByPointers.resolves([outfitsEntity])
+    content.fetchEntitiesByPointers.mockResolvedValue([outfitsEntity])
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
       return Promise.resolve({
         nfts: []
@@ -1286,7 +1292,8 @@ testWithComponents(() => {
 })('integration tests for /outfits/:id', function ({ components, stubComponents }) {
   it('return complete extended outfit when outfit comes extended from content-server', async () => {
     const { localFetch } = components
-    const { content, theGraph } = stubComponents
+    const { content } = stubComponents
+    const { theGraph } = components
     const address = '0x1'
 
     const outfitsMetadata: Outfits = {
@@ -1458,7 +1465,7 @@ testWithComponents(() => {
       content: []
     }
 
-    content.fetchEntitiesByPointers.resolves([outfitsEntity])
+    content.fetchEntitiesByPointers.mockResolvedValue([outfitsEntity])
     theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockImplementation((query: string) => {
       return Promise.resolve({
         nfts: []

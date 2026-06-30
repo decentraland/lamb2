@@ -1,7 +1,7 @@
 // This file is the "test-environment" analogous for src/components.ts
 // Here we define the test components to be used in the testing environment
 
-import { createLocalFetchCompoment, createRunner, defaultServerConfig } from '@well-known-components/test-helpers'
+import { createLocalFetchComponent, createRunner, defaultServerConfig } from '@dcl/test-helpers'
 
 import { createConfigComponent } from '@well-known-components/env-config-provider'
 import { IConfigComponent } from '@well-known-components/interfaces'
@@ -27,6 +27,53 @@ import { createContentClientMock } from './mocks/content-mock'
 import { createTheGraphComponentMock } from './mocks/the-graph-mock'
 import { createAlchemyNftFetcherMock } from './mocks/alchemy-mock'
 import { createMarketplaceApiFetcherMock } from './mocks/marketplace-api-mock'
+
+type LocalFetchComponent = Awaited<ReturnType<typeof createLocalFetchComponent>>
+
+/**
+ * Wraps a local fetch component so transient connection errors are retried with backoff.
+ *
+ * Every test suite spins up its own server on the same fixed HTTP_SERVER_PORT and
+ * tears it down in afterAll. The native fetch (undici) backing createLocalFetchComponent
+ * keeps connections alive and pools them, so the first request of a suite can land on a
+ * socket left over from the previous suite's now-closed server and fail with
+ * "fetch failed" / "other side closed". The old node-fetch helper did not pool, so it
+ * never hit this. A single immediate retry can still race undici's socket eviction (it
+ * was not enough under CI timing), so retry a few times with a short backoff to give
+ * undici time to drop the dead socket and reconnect, which makes the suites deterministic.
+ */
+function withConnectionRetry(localFetch: LocalFetchComponent): LocalFetchComponent {
+  const isTransientConnectionError = (error: unknown): boolean => {
+    if (!(error instanceof Error)) {
+      return false
+    }
+    const cause = (error as { cause?: unknown }).cause
+    const causeMessage = cause instanceof Error ? cause.message : ''
+    return /fetch failed|ECONNRESET|ECONNREFUSED|other side closed|socket hang up/i.test(
+      `${error.message} ${causeMessage}`
+    )
+  }
+  const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
+  const MAX_ATTEMPTS = 6
+  return {
+    async fetch(url, init) {
+      let lastError: unknown
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        try {
+          return await localFetch.fetch(url, init)
+        } catch (error) {
+          if (!isTransientConnectionError(error)) {
+            throw error
+          }
+          lastError = error
+          // Give undici time to evict the dead pooled socket before reconnecting.
+          await delay(30 * attempt)
+        }
+      }
+      throw lastError
+    }
+  }
+}
 
 /**
  * Behaves like Jest "describe" function, used to describe a test for a
@@ -84,12 +131,12 @@ async function initComponents(
       HTTP_SERVER_PORT: '7272',
       MARKETPLACE_API_URL: 'https://marketplace-api-test.com' // Enable marketplace API for tests
     })
-  // createLocalFetchCompoment (from the WKC test-helpers) is typed against the node-fetch
+  // createLocalFetchComponent (from the WKC test-helpers) is typed against the node-fetch
   // IFetchComponent, while the app now uses the native-fetch IFetchComponent (@dcl/core-commons).
   // The local fetch hits the in-process test server over real HTTP and only the common response
   // surface (status, json, text, headers) is read, so bridge the type here for tests.
   const fetch =
-    fetchComponent ?? ((await createLocalFetchCompoment(config)) as unknown as IFetchComponent)
+    fetchComponent ?? ((await createLocalFetchComponent(config)) as unknown as IFetchComponent)
   const theGraphMock = theGraphComponent ? theGraphComponent : createTheGraphComponentMock()
   if (!theGraphComponent) {
     jest.spyOn(theGraphMock.thirdPartyRegistrySubgraph, 'query').mockResolvedValue({
@@ -186,7 +233,7 @@ async function initComponents(
     config,
     metrics,
     ownershipCaches,
-    localFetch: await createLocalFetchCompoment(config),
+    localFetch: withConnectionRetry(await createLocalFetchComponent(config)),
     theGraph: theGraphMock,
     content,
     contentServerUrl,

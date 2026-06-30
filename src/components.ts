@@ -29,7 +29,7 @@ import { fetchAllThirdPartyWearables } from './logic/fetch-elements/fetch-third-
 import { metricDeclarations } from './metrics'
 import { createTracedFetcherComponent } from '@dcl/traced-fetch-component'
 import { createHttpTracerComponent } from '@dcl/http-tracer-component'
-import { createTracerComponent } from '@well-known-components/tracer-component'
+import { createTracerComponent } from '@dcl/tracer-component'
 import { createOwnershipCachesComponent } from './ports/ownership-caches'
 import { createTheGraphComponent, TheGraphComponent } from './ports/the-graph'
 import { AppComponents, BaseWearable, GlobalContext } from './types'

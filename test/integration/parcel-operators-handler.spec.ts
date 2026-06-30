@@ -10,7 +10,7 @@ test('integration tests for parcel operators handler', function ({ components, s
     const parcelX = 10
     const parcelY = 20
 
-    stubComponents.parcelRightsFetcher.getOperatorsOfParcel.resolves({
+    stubComponents.parcelRightsFetcher.getOperatorsOfParcel.mockResolvedValue({
       owner: ownerAddress,
       operator: operatorAddress,
       updateOperator: null,

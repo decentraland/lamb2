@@ -1,6 +1,5 @@
-import { defaultServerConfig } from '@well-known-components/test-helpers'
+import { defaultServerConfig } from '@dcl/test-helpers'
 import { testWithComponents } from '../components'
-import sinon from 'sinon'
 import {
   profileEntityFull,
   profileEntityFullWithExtendedItems,
@@ -114,10 +113,11 @@ testWithComponents(() => {
       l1ThirdPartyItemChecker,
       l2ThirdPartyItemChecker
     } = components
-    const { alchemyNftFetcher, entitiesFetcher, theGraph, fetch, content } = stubComponents
+    const { alchemyNftFetcher, entitiesFetcher, fetch, content } = stubComponents
+    const { theGraph } = components
     const address = '0x1'
 
-    content.fetchEntitiesByPointers.withArgs([address]).resolves(await Promise.all([profileEntityFull]))
+    content.fetchEntitiesByPointers.mockResolvedValue(await Promise.all([profileEntityFull]))
 
     theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ nfts: [{ id: 'id1', name: 'cryptonico' }] })
 
@@ -134,14 +134,11 @@ testWithComponents(() => {
       }
     ])
     fetch.fetch
-      .withArgs('https://api.swappable.io/api/v1/registry/ntr1-meta/address/0x1/assets')
-      .onCall(0)
-      .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
-      .onCall(1)
-      .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
-    entitiesFetcher.fetchEntities
-      .withArgs(tpwResolverResponseFull.assets.map((a) => a.urn.decentraland))
-      .resolves(tpwResolverResponseFull.assets.map((a) => generateWearableEntity(a.urn.decentraland)))
+      .mockResolvedValueOnce(new Response(JSON.stringify(tpwResolverResponseFull)))
+      .mockResolvedValueOnce(new Response(JSON.stringify(tpwResolverResponseFull)))
+    entitiesFetcher.fetchEntities.mockResolvedValue(
+      tpwResolverResponseFull.assets.map((a) => generateWearableEntity(a.urn.decentraland))
+    )
 
     const profilesComponent = await createProfilesComponent({
       alchemyNftFetcher,
@@ -165,7 +162,8 @@ testWithComponents(() => {
     expect(profiles).toHaveLength(1)
     const profile = profiles[0]
 
-    sinon.assert.calledOnceWithMatch(content.fetchEntitiesByPointers, [address])
+    expect(content.fetchEntitiesByPointers).toHaveBeenCalledTimes(1)
+    expect(content.fetchEntitiesByPointers).toHaveBeenCalledWith([address])
 
     expect(profile.avatars.length).toEqual(1)
     expect(profile.avatars?.[0].hasClaimedName).toEqual(true)
@@ -306,10 +304,11 @@ testWithComponents(() => {
         l1ThirdPartyItemChecker,
         l2ThirdPartyItemChecker
       } = components
-      const { alchemyNftFetcher, entitiesFetcher, theGraph, fetch, content } = stubComponents
+      const { alchemyNftFetcher, entitiesFetcher, fetch, content } = stubComponents
+      const { theGraph } = components
       const address = '0x1'
 
-      content.fetchEntitiesByPointers.withArgs([address]).resolves(await Promise.all([profileEntityFull]))
+      content.fetchEntitiesByPointers.mockResolvedValue(await Promise.all([profileEntityFull]))
 
       theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ nfts: [{ id: 'id1', name: 'cryptonico' }] })
 
@@ -326,14 +325,11 @@ testWithComponents(() => {
         }
       ])
       fetch.fetch
-        .withArgs('https://api.swappable.io/api/v1/registry/ntr1-meta/address/0x1/assets')
-        .onCall(0)
-        .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
-        .onCall(1)
-        .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
-      entitiesFetcher.fetchEntities
-        .withArgs(tpwResolverResponseFull.assets.map((a) => a.urn.decentraland))
-        .resolves(tpwResolverResponseFull.assets.map((a) => generateWearableEntity(a.urn.decentraland)))
+        .mockResolvedValueOnce(new Response(JSON.stringify(tpwResolverResponseFull)))
+        .mockResolvedValueOnce(new Response(JSON.stringify(tpwResolverResponseFull)))
+      entitiesFetcher.fetchEntities.mockResolvedValue(
+        tpwResolverResponseFull.assets.map((a) => generateWearableEntity(a.urn.decentraland))
+      )
 
       const profilesComponent = await createProfilesComponent({
         alchemyNftFetcher,
@@ -358,7 +354,8 @@ testWithComponents(() => {
       expect(profiles).toHaveLength(1)
       const profile = profiles[0]
 
-      sinon.assert.calledOnceWithMatch(content.fetchEntitiesByPointers, [address])
+      expect(content.fetchEntitiesByPointers).toHaveBeenCalledTimes(1)
+      expect(content.fetchEntitiesByPointers).toHaveBeenCalledWith([address])
 
       expect(profile.avatars?.[0].avatar.wearables).toEqual([
         'urn:decentraland:off-chain:base-avatars:eyebrows_00',
@@ -489,12 +486,11 @@ testWithComponents(() => {
         l1ThirdPartyItemChecker,
         l2ThirdPartyItemChecker
       } = components
-      const { alchemyNftFetcher, entitiesFetcher, theGraph, fetch, content } = stubComponents
+      const { alchemyNftFetcher, entitiesFetcher, fetch, content } = stubComponents
+      const { theGraph } = components
       const address = '0x1'
 
-      content.fetchEntitiesByPointers
-        .withArgs([address])
-        .resolves(await Promise.all([profileEntityFullWithExtendedItems]))
+      content.fetchEntitiesByPointers.mockResolvedValue(await Promise.all([profileEntityFullWithExtendedItems]))
       theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockImplementation(async (_query: string) => {
         return {
           nfts: [
@@ -630,14 +626,11 @@ testWithComponents(() => {
         }
       ])
       fetch.fetch
-        .withArgs('https://api.swappable.io/api/v1/registry/ntr1-meta/address/0x1/assets')
-        .onCall(0)
-        .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
-        .onCall(1)
-        .resolves(new Response(JSON.stringify(tpwResolverResponseFull)))
-      entitiesFetcher.fetchEntities
-        .withArgs(tpwResolverResponseFull.assets.map((a) => a.urn.decentraland))
-        .resolves(tpwResolverResponseFull.assets.map((a) => generateWearableEntity(a.urn.decentraland)))
+        .mockResolvedValueOnce(new Response(JSON.stringify(tpwResolverResponseFull)))
+        .mockResolvedValueOnce(new Response(JSON.stringify(tpwResolverResponseFull)))
+      entitiesFetcher.fetchEntities.mockResolvedValue(
+        tpwResolverResponseFull.assets.map((a) => generateWearableEntity(a.urn.decentraland))
+      )
 
       const profilesComponent = await createProfilesComponent({
         alchemyNftFetcher,
@@ -662,7 +655,8 @@ testWithComponents(() => {
 
       const profile = profiles[0]
 
-      sinon.assert.calledOnceWithMatch(content.fetchEntitiesByPointers, [address])
+      expect(content.fetchEntitiesByPointers).toHaveBeenCalledTimes(1)
+      expect(content.fetchEntitiesByPointers).toHaveBeenCalledWith([address])
 
       expect(profile.avatars.length).toEqual(1)
 
@@ -722,10 +716,11 @@ testWithComponents(() => {
       l1ThirdPartyItemChecker,
       l2ThirdPartyItemChecker
     } = components
-    const { theGraph, content, fetch } = stubComponents
+    const { content, fetch } = stubComponents
+    const { theGraph } = components
     const addresses = ['0x3']
 
-    content.fetchEntitiesByPointers.withArgs(addresses).resolves(await Promise.all([profileEntityTwoEthWearables]))
+    content.fetchEntitiesByPointers.mockResolvedValue(await Promise.all([profileEntityTwoEthWearables]))
 
     theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
 
@@ -827,10 +822,11 @@ testWithComponents(() => {
       l1ThirdPartyItemChecker,
       l2ThirdPartyItemChecker
     } = components
-    const { alchemyNftFetcher, entitiesFetcher, theGraph, fetch, content } = stubComponents
+    const { alchemyNftFetcher, entitiesFetcher, fetch, content } = stubComponents
+    const { theGraph } = components
     const address = '0x20'
 
-    content.fetchEntitiesByPointers.withArgs([address]).resolves(await Promise.all([profileEntityWithBaseEmotes]))
+    content.fetchEntitiesByPointers.mockResolvedValue(await Promise.all([profileEntityWithBaseEmotes]))
 
     theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
 
@@ -875,10 +871,11 @@ testWithComponents(() => {
       l1ThirdPartyItemChecker,
       l2ThirdPartyItemChecker
     } = components
-    const { alchemyNftFetcher, entitiesFetcher, theGraph, fetch, content } = stubComponents
+    const { alchemyNftFetcher, entitiesFetcher, fetch, content } = stubComponents
+    const { theGraph } = components
     const address = '0x21'
 
-    content.fetchEntitiesByPointers.withArgs([address]).resolves(await Promise.all([profileEntityWithOwnedEmotes]))
+    content.fetchEntitiesByPointers.mockResolvedValue(await Promise.all([profileEntityWithOwnedEmotes]))
 
     theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
 
@@ -924,10 +921,11 @@ testWithComponents(() => {
       l1ThirdPartyItemChecker,
       l2ThirdPartyItemChecker
     } = components
-    const { alchemyNftFetcher, entitiesFetcher, theGraph, fetch, content } = stubComponents
+    const { alchemyNftFetcher, entitiesFetcher, fetch, content } = stubComponents
+    const { theGraph } = components
     const address = '0x22'
 
-    content.fetchEntitiesByPointers.withArgs([address]).resolves(await Promise.all([profileEntityWithMixedEmotes]))
+    content.fetchEntitiesByPointers.mockResolvedValue(await Promise.all([profileEntityWithMixedEmotes]))
 
     theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
 
