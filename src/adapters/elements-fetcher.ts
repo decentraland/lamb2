@@ -6,8 +6,16 @@ import { PAGINATION_DEFAULTS } from '../logic/pagination-constants'
 
 const CACHE_DEFAULTS = {
   MAX_ENTRIES: 10000,
-  TTL: PAGINATION_DEFAULTS.CACHE_TTL
+  TTL: PAGINATION_DEFAULTS.CACHE_TTL,
+  // Ceiling on refreshes running detached from a request (see the serveStale branch below).
+  MAX_BACKGROUND_REFRESHES: 50
 } as const
+
+/** A cached result plus when it was stored, so each reader can judge its age against its own TTL. */
+type CacheEntry<T> = {
+  result: ElementsResult<T>
+  storedAt: number
+}
 
 /**
  * Create a cache key that includes all parameters for caching
@@ -58,11 +66,38 @@ export type LegacyElementsFetcher<T> = IBaseComponent & {
   fetchOwnedElements(address: string): Promise<T[]>
 }
 
+export type FetchElementsOptions = {
+  /**
+   * How old a cached entry may be, in ms, before THIS caller considers it stale. Defaults to
+   * PAGINATION_DEFAULTS.CACHE_TTL.
+   *
+   * The default suits looking at SOMEONE ELSE's items, where minutes-old data is fine. It is far too
+   * long for a caller reading its own inventory right after changing it — buying, selling or
+   * transferring an item and then being served the pre-change list reads as the change having failed.
+   *
+   * This is evaluated per READ rather than stored with the entry on purpose. The cache is shared by
+   * callers that disagree about acceptable age, and their keys collide: /explorer/:address/emotes and
+   * the profiles path both key on nothing but the address. Storing the TTL alongside the value let
+   * whichever caller happened to write first decide for everyone — a profile fetch would pin the entry
+   * as "fresh" for ten minutes and the backpack, asking for twenty seconds, was handed the stale list
+   * with no refresh. Freshness has to belong to the question being asked, not to the entry.
+   */
+  ttl?: number
+  /**
+   * Answer with an entry that is stale for this caller and refresh it behind the request, instead of
+   * making the caller wait. Opt-in: a route that is READING OWNERSHIP to make a decision (who owns a
+   * NAME, who may deploy to a parcel) must keep failing closed when the upstream is down rather than
+   * confidently serving an old answer, which is what it did before this existed.
+   */
+  serveStale?: boolean
+}
+
 export type ElementsFetcher<T> = IBaseComponent & {
   fetchOwnedElements(
     address: string,
     pagination?: { pageSize: number; pageNum: number },
-    filters?: ElementsFilters
+    filters?: ElementsFilters,
+    options?: FetchElementsOptions
   ): Promise<ElementsResult<T>>
   clearCache?(): void
 }
@@ -88,38 +123,81 @@ export function createElementsFetcherComponent<T>(
   const { logs } = dependencies
   const logger = logs.getLogger('elements-fetcher')
 
-  // Universal cache that stores complete ElementsResult for any parameter combination
-  const cache = createLowerCaseKeysCache<ElementsResult<T>>({
+  // Entries carry WHEN they were stored, because each caller decides for itself how old is too old
+  // (see FetchElementsOptions.ttl). The lru ttl is only a retention ceiling now; `allowStale` and
+  // `noDeleteOnStaleGet` are load-bearing TOGETHER to make that possible — without the latter, reading
+  // an entry past the lru ttl would delete it, so a caller willing to serve it would find nothing.
+  const cache = createLowerCaseKeysCache<CacheEntry<T>>({
     max: CACHE_DEFAULTS.MAX_ENTRIES,
-    ttl: CACHE_DEFAULTS.TTL
-    // No fetchMethod needed - we handle cache manually with get/set
+    ttl: CACHE_DEFAULTS.TTL,
+    allowStale: true,
+    noDeleteOnStaleGet: true
   })
+
+  // One in-flight load per key, so N concurrent readers cause ONE upstream fetch.
+  const refreshing = new Map<string, Promise<ElementsResult<T>>>()
+
+  function load(
+    cacheKey: string,
+    address: string,
+    pagination?: { pageSize: number; pageNum: number },
+    filters?: ElementsFilters
+  ): Promise<ElementsResult<T>> {
+    const inFlight = refreshing.get(cacheKey)
+    if (inFlight) {
+      return inFlight
+    }
+
+    const promise = fetchElements(dependencies, address.toLowerCase(), pagination, filters)
+      .then((result) => {
+        cache.set(cacheKey, { result, storedAt: Date.now() })
+        return result
+      })
+      .finally(() => {
+        // Only retract our own entry: clearCache() may have dropped it and a newer load may own the slot.
+        if (refreshing.get(cacheKey) === promise) {
+          refreshing.delete(cacheKey)
+        }
+      })
+
+    refreshing.set(cacheKey, promise)
+    return promise
+  }
 
   return {
     async fetchOwnedElements(
       address: string,
       pagination?: { pageSize: number; pageNum: number },
-      filters?: ElementsFilters
+      filters?: ElementsFilters,
+      options?: FetchElementsOptions
     ) {
-      // Always try cache first with intelligent key
       const cacheKey = createCacheKey(address, pagination, filters)
+      const maxAge = options?.ttl ?? CACHE_DEFAULTS.TTL
 
-      // Check if we have this exact combination cached
-      const cachedResult = cache.get(cacheKey)
-      if (cachedResult) {
-        return cachedResult
+      const entry = cache.get(cacheKey, { allowStale: true })
+      if (entry && Date.now() - entry.storedAt <= maxAge) {
+        return entry.result
       }
 
-      // Not in cache, fetch from API/Graph and cache the result
+      // Too old for this caller, but usable: answer with it and refresh behind the request, so a short
+      // TTL costs latency only on the very first read rather than on every expiry.
+      if (entry && options?.serveStale) {
+        // The refresh is detached from the request, so nothing upstream throttles it: without a ceiling,
+        // traffic across many addresses could fan out into unbounded concurrent full-inventory fetches.
+        // Over the ceiling we simply answer stale and let a later request schedule the refresh.
+        if (refreshing.size < CACHE_DEFAULTS.MAX_BACKGROUND_REFRESHES) {
+          load(cacheKey, address, pagination, filters).catch((err: any) => {
+            // Keep the stack: this failure no longer reaches the request, so the log is all there is.
+            logger.warn(`Background refresh failed for ${address}, serving stale`, {
+              error: err?.stack ?? err?.message ?? String(err)
+            })
+          })
+        }
+        return entry.result
+      }
+
       try {
-        // Convert address to lowercase for consistency (as the original cache did)
-        const normalizedAddress = address.toLowerCase()
-        const result = await fetchElements(dependencies, normalizedAddress, pagination, filters)
-
-        // Cache the complete result for future requests with same parameters
-        cache.set(cacheKey, result)
-
-        return result
+        return await load(cacheKey, address, pagination, filters)
       } catch (err: any) {
         logger.error(err)
         throw new FetcherError(`Cannot fetch elements for ${address}`)
@@ -129,6 +207,7 @@ export function createElementsFetcherComponent<T>(
     clearCache() {
       // Clear all cached entries - useful for tests
       cache.clear()
+      refreshing.clear()
     }
   }
 }

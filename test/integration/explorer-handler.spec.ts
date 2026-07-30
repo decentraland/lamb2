@@ -14,6 +14,7 @@ import { leastRareOptional, nameAZ, nameZA, rarestOptional } from '../../src/log
 import { BaseWearable, ThirdPartyAsset } from '../../src/types'
 import { createTheGraphComponentMock } from '../mocks/the-graph-mock'
 import { generateRandomAddress } from '../helpers'
+import { EXPLORER_CACHE_OPTIONS } from '../../src/logic/pagination-constants'
 
 type ContentInfo = {
   entities: Entity[]
@@ -805,9 +806,14 @@ testWithComponents(() => {
         expect(response.elements.every((el: any) => el.type === 'on-chain')).toBe(true)
 
         // Verify wearablesFetcher was called with smartWearable itemType
-        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
-          itemType: 'smartWearable'
-        })
+        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(
+          wallet,
+          undefined,
+          {
+            itemType: 'smartWearable'
+          },
+          EXPLORER_CACHE_OPTIONS
+        )
       })
 
       it('should return only on-chain smart wearables when isSmartWearable=1', async () => {
@@ -824,9 +830,14 @@ testWithComponents(() => {
         expect(response.elements.every((el: any) => el.type === 'on-chain')).toBe(true)
 
         // Verify wearablesFetcher was called with smartWearable itemType
-        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
-          itemType: 'smartWearable'
-        })
+        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(
+          wallet,
+          undefined,
+          {
+            itemType: 'smartWearable'
+          },
+          EXPLORER_CACHE_OPTIONS
+        )
       })
 
       it('should exclude base wearables when isSmartWearable=true', async () => {
@@ -871,7 +882,9 @@ testWithComponents(() => {
       it('should work with sorting when isSmartWearable=true', async () => {
         const { localFetch } = components
 
-        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?isSmartWearable=true&orderBy=name&direction=asc`)
+        const r = await localFetch.fetch(
+          `/explorer/${wallet}/wearables?isSmartWearable=true&orderBy=name&direction=asc`
+        )
 
         expect(r.status).toBe(200)
         const response = await r.json()
@@ -933,9 +946,14 @@ testWithComponents(() => {
         expect(response.totalAmount).toBe(6)
 
         // Verify wearablesFetcher was called with wearable itemType (not smartWearable)
-        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
-          itemType: 'wearable'
-        })
+        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(
+          wallet,
+          undefined,
+          {
+            itemType: 'wearable'
+          },
+          EXPLORER_CACHE_OPTIONS
+        )
       })
 
       it('should return all wearable types when isSmartWearable=0', async () => {
@@ -951,9 +969,14 @@ testWithComponents(() => {
         expect(response.totalAmount).toBe(6)
 
         // Verify wearablesFetcher was called with wearable itemType (not smartWearable)
-        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
-          itemType: 'wearable'
-        })
+        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(
+          wallet,
+          undefined,
+          {
+            itemType: 'wearable'
+          },
+          EXPLORER_CACHE_OPTIONS
+        )
       })
     })
 
@@ -1008,9 +1031,14 @@ testWithComponents(() => {
         expect(response.totalAmount).toBe(6)
 
         // Verify wearablesFetcher was called with wearable itemType (default behavior)
-        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
-          itemType: 'wearable'
-        })
+        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(
+          wallet,
+          undefined,
+          {
+            itemType: 'wearable'
+          },
+          EXPLORER_CACHE_OPTIONS
+        )
       })
     })
 
@@ -1065,9 +1093,14 @@ testWithComponents(() => {
         expect(response.totalAmount).toBe(6)
 
         // Verify wearablesFetcher was called with wearable itemType (default behavior)
-        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
-          itemType: 'wearable'
-        })
+        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(
+          wallet,
+          undefined,
+          {
+            itemType: 'wearable'
+          },
+          EXPLORER_CACHE_OPTIONS
+        )
       })
     })
   })
@@ -1145,10 +1178,15 @@ testWithComponents(() => {
         expect(response.elements.every((el: any) => el.type === 'on-chain')).toBe(true)
 
         // Verify wearablesFetcher was called with network: Network.MATIC
-        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
-          itemType: 'wearable',
-          network: Network.MATIC
-        })
+        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(
+          wallet,
+          undefined,
+          {
+            itemType: 'wearable',
+            network: Network.MATIC
+          },
+          EXPLORER_CACHE_OPTIONS
+        )
       })
 
       it('should exclude base wearables when network=MATIC', async () => {
@@ -1256,10 +1294,15 @@ testWithComponents(() => {
         expect(response.elements.every((el: any) => el.type === 'on-chain')).toBe(true)
 
         // Verify wearablesFetcher was called with network: Network.ETHEREUM
-        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
-          itemType: 'wearable',
-          network: Network.ETHEREUM
-        })
+        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(
+          wallet,
+          undefined,
+          {
+            itemType: 'wearable',
+            network: Network.ETHEREUM
+          },
+          EXPLORER_CACHE_OPTIONS
+        )
       })
 
       it('should exclude base wearables when network=ETHEREUM', async () => {
@@ -1366,10 +1409,15 @@ testWithComponents(() => {
         expect(response.totalAmount).toBe(6)
 
         // Verify wearablesFetcher was called with wearable itemType and no network (queries both)
-        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
-          itemType: 'wearable',
-          network: undefined
-        })
+        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(
+          wallet,
+          undefined,
+          {
+            itemType: 'wearable',
+            network: undefined
+          },
+          EXPLORER_CACHE_OPTIONS
+        )
       })
     })
 
@@ -1424,10 +1472,15 @@ testWithComponents(() => {
         expect(response.totalAmount).toBe(6)
 
         // Verify wearablesFetcher was called with wearable itemType and no network (queries both)
-        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
-          itemType: 'wearable',
-          network: undefined
-        })
+        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(
+          wallet,
+          undefined,
+          {
+            itemType: 'wearable',
+            network: undefined
+          },
+          EXPLORER_CACHE_OPTIONS
+        )
       })
     })
 
@@ -1472,10 +1525,15 @@ testWithComponents(() => {
         expect(response.elements.every((el: any) => el.type === 'on-chain')).toBe(true)
 
         // Verify wearablesFetcher was called with network: Network.ETHEREUM
-        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
-          itemType: 'wearable',
-          network: Network.ETHEREUM
-        })
+        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(
+          wallet,
+          undefined,
+          {
+            itemType: 'wearable',
+            network: Network.ETHEREUM
+          },
+          EXPLORER_CACHE_OPTIONS
+        )
       })
 
       it('should accept MATIC enum value', async () => {
@@ -1492,10 +1550,15 @@ testWithComponents(() => {
         expect(response.elements.every((el: any) => el.type === 'on-chain')).toBe(true)
 
         // Verify wearablesFetcher was called with network: Network.MATIC
-        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(wallet, undefined, {
-          itemType: 'wearable',
-          network: Network.MATIC
-        })
+        expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledWith(
+          wallet,
+          undefined,
+          {
+            itemType: 'wearable',
+            network: Network.MATIC
+          },
+          EXPLORER_CACHE_OPTIONS
+        )
       })
     })
   })
@@ -1528,7 +1591,9 @@ testWithComponents(() => {
       })
 
       content.fetchEntitiesByPointers = jest.fn(async (pointers) =>
-        pointers.map((pointer) => entities.find((def) => def.id === pointer)).filter((e): e is Entity => e !== undefined)
+        pointers
+          .map((pointer) => entities.find((def) => def.id === pointer))
+          .filter((e): e is Entity => e !== undefined)
       )
       theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
       theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
@@ -1695,7 +1760,9 @@ testWithComponents(() => {
       it('should work with includeAmount and isSmartWearable', async () => {
         const { localFetch } = components
 
-        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=true&includeAmount=true&isSmartWearable=true`)
+        const r = await localFetch.fetch(
+          `/explorer/${wallet}/wearables?trimmed=true&includeAmount=true&isSmartWearable=true`
+        )
 
         expect(r.status).toBe(200)
         const response = await r.json()
@@ -1726,7 +1793,9 @@ testWithComponents(() => {
       it('should work with includeAmount and sorting', async () => {
         const { localFetch } = components
 
-        const r = await localFetch.fetch(`/explorer/${wallet}/wearables?trimmed=true&includeAmount=true&orderBy=name&direction=asc`)
+        const r = await localFetch.fetch(
+          `/explorer/${wallet}/wearables?trimmed=true&includeAmount=true&orderBy=name&direction=asc`
+        )
 
         expect(r.status).toBe(200)
         const response = await r.json()

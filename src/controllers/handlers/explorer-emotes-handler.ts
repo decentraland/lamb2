@@ -1,5 +1,6 @@
 import { Entity } from '@dcl/schemas'
 import { fetchAndPaginate, paginationObject } from '../../logic/pagination'
+import { EXPLORER_CACHE_OPTIONS } from '../../logic/pagination-constants'
 import { createCombinedSorting } from '../../logic/sorting'
 import { ExplorerEmoteEntity, buildTrimmedEmoteEntity } from '../../logic/utils'
 import {
@@ -35,7 +36,12 @@ async function fetchCombinedElements(
   address: string
 ): Promise<MixedEmote[]> {
   async function fetchOnChainEmotes(): Promise<MixedOnChainEmote[]> {
-    const { elements } = await components.emotesFetcher.fetchOwnedElements(address)
+    const { elements } = await components.emotesFetcher.fetchOwnedElements(
+      address,
+      undefined,
+      undefined,
+      EXPLORER_CACHE_OPTIONS
+    )
     if (!elements.length) {
       return []
     }
