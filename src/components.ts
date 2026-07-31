@@ -109,25 +109,31 @@ export async function initComponents(
     contentServerUrl
   })
   const baseWearablesFetcher = createElementsFetcherComponent<BaseWearable>(
-    { logs, theGraph, marketplaceApiFetcher },
+    { logs, theGraph, marketplaceApiFetcher, metrics },
     async (_deps, _address) => {
       const elements = await fetchBaseWearables({ entitiesFetcher })
       return { elements, totalAmount: elements.length }
     }
   )
 
-  const wearablesFetcher = createElementsFetcherComponent({ logs, theGraph, marketplaceApiFetcher }, fetchWearables)
+  const wearablesFetcher = createElementsFetcherComponent(
+    { logs, theGraph, marketplaceApiFetcher, metrics },
+    fetchWearables
+  )
 
-  const emotesFetcher = createElementsFetcherComponent({ logs, theGraph, marketplaceApiFetcher }, fetchEmotes)
+  const emotesFetcher = createElementsFetcherComponent({ logs, theGraph, marketplaceApiFetcher, metrics }, fetchEmotes)
 
-  const namesFetcher = createElementsFetcherComponent({ logs, theGraph, marketplaceApiFetcher }, fetchNames)
+  const namesFetcher = createElementsFetcherComponent({ logs, theGraph, marketplaceApiFetcher, metrics }, fetchNames)
 
   const landsFetcher = createLegacyElementsFetcherComponent({ logs }, async (address) => fetchLands(theGraph, address))
 
-  const landsPermissionsFetcher = createElementsFetcherComponent({ logs, theGraph }, async (_deps, address) => {
-    const elements = await fetchAllPermissions({ theGraph }, address)
-    return { elements, totalAmount: elements.length }
-  })
+  const landsPermissionsFetcher = createElementsFetcherComponent(
+    { logs, theGraph, metrics },
+    async (_deps, address) => {
+      const elements = await fetchAllPermissions({ theGraph }, address)
+      return { elements, totalAmount: elements.length }
+    }
+  )
 
   const resourcesStatusCheck = createResourcesStatusComponent({ logs })
   const status = await createStatusComponent({ logs, fetch })
@@ -179,7 +185,7 @@ export async function initComponents(
   })
 
   const thirdPartyWearablesFetcher = createElementsFetcherComponent(
-    { logs, theGraph, marketplaceApiFetcher },
+    { logs, theGraph, marketplaceApiFetcher, metrics },
     async (_deps, address) => {
       const elements = await fetchAllThirdPartyWearables(
         { alchemyNftFetcher, contentServerUrl, thirdPartyProvidersStorage, fetch, entitiesFetcher, metrics },
@@ -191,7 +197,7 @@ export async function initComponents(
 
   const alchemyNftFetcher = await createAlchemyNftFetcher({ config, logs, fetch })
 
-  const nameOwnerFetcher = createElementsFetcherComponent({ logs, theGraph }, async (_deps, name) => {
+  const nameOwnerFetcher = createElementsFetcherComponent({ logs, theGraph, metrics }, async (_deps, name) => {
     const { owner } = await fetchNameOwner({ theGraph }, name)
     return { elements: owner ? [{ owner }] : [], totalAmount: owner ? 1 : 0 }
   })

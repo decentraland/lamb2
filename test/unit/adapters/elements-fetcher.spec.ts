@@ -283,3 +283,69 @@ it('caps how many refreshes run detached from a request', async () => {
   expect(peak).toBeGreaterThan(0)
   expect(peak).toBeLessThanOrEqual(50)
 })
+
+// Without an age ceiling this branch made things WORSE than a plain expiring cache: entries are never
+// dropped on their own, so an hours-old list would be served forever, while a cache that simply expired
+// would have refetched and shown the purchase. Past the retention ceiling the caller must block.
+//
+// The age is measured with the fetcher's own monotonic clock, so shifting that is enough to age an entry
+// past the ten-minute ceiling — no waiting, and no dependence on lru-cache's internal clock.
+it('blocks instead of serving stale once the entry passes the retention ceiling', async () => {
+  const logs = await createLogComponent({})
+  const { fetcher, calls } = countingFetcher(logs)
+  const realNow = performance.now.bind(performance)
+
+  await fetcher.fetchOwnedElements('anAddress', undefined, undefined, EXPLORER)
+  expect(calls()).toBe(1)
+
+  const elevenMinutes = 11 * 60 * 1000
+  const clock = jest.spyOn(performance, 'now').mockImplementation(() => realNow() + elevenMinutes)
+  try {
+    // Not the previous value — the caller waited and got the current one.
+    expect(await fetcher.fetchOwnedElements('anAddress', undefined, undefined, EXPLORER)).toEqual({
+      elements: [2],
+      totalAmount: 1
+    })
+    expect(calls()).toBe(2)
+  } finally {
+    clock.mockRestore()
+  }
+})
+
+// The ceiling on detached refreshes must not be spent by loads that have a caller waiting on them.
+// Sharing one number let ordinary traffic (a big POST /profiles fans out one load per id) exhaust the
+// budget, so the backpack served stale and scheduled nothing to heal it — silently.
+it('does not let request-blocking loads exhaust the background-refresh budget', async () => {
+  const logs = await createLogComponent({})
+  let backpackFetches = 0
+  let release: (() => void) | undefined
+  const blocked = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  const fetcher = createElementsFetcherComponent<number>(
+    { logs, theGraph: null as any, marketplaceApiFetcher: null as any },
+    async (_deps, address) => {
+      if (address === 'backpack-user') {
+        backpackFetches++
+        return { elements: [backpackFetches], totalAmount: 1 }
+      }
+      await blocked // the profiles fan-out, parked upstream
+      return { elements: [0], totalAmount: 1 }
+    }
+  )
+
+  // Prime the backpack key and let it go stale.
+  await fetcher.fetchOwnedElements('backpack-user', undefined, undefined, EXPLORER)
+  await sleep(SHORT_TTL * 2)
+
+  // 60 ordinary, request-bound loads now sit in flight — more than the ceiling.
+  const parked = Array.from({ length: 60 }, (_, i) => fetcher.fetchOwnedElements(`profile-${i}`))
+  await sleep(20)
+
+  // The backpack read must still schedule its refresh.
+  await fetcher.fetchOwnedElements('backpack-user', undefined, undefined, EXPLORER)
+  expect(backpackFetches).toBe(2)
+
+  release!()
+  await Promise.all(parked)
+})

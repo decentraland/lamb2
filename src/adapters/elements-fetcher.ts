@@ -11,10 +11,19 @@ const CACHE_DEFAULTS = {
   MAX_BACKGROUND_REFRESHES: 50
 } as const
 
+/**
+ * Monotonic milliseconds. Ages are measured against a clock that cannot step: on the wall clock an NTP
+ * correction backwards pins every entry as fresh, and one forwards expires them all at once.
+ */
+function now(): number {
+  return performance.now()
+}
+
 /** A cached result plus when it was stored, so each reader can judge its age against its own TTL. */
 type CacheEntry<T> = {
   result: ElementsResult<T>
   storedAt: number
+  generation: number
 }
 
 /**
@@ -102,7 +111,10 @@ export type ElementsFetcher<T> = IBaseComponent & {
   clearCache?(): void
 }
 
-export type ElementsFetcherDependencies = Pick<AppComponents, 'logs' | 'theGraph' | 'marketplaceApiFetcher'>
+// `metrics` is optional so every existing construction site and test keeps compiling: without it the
+// counters below are simply not recorded.
+export type ElementsFetcherDependencies = Pick<AppComponents, 'logs' | 'theGraph' | 'marketplaceApiFetcher'> &
+  Partial<Pick<AppComponents, 'metrics'>>
 
 export class FetcherError extends Error {
   constructor(message: string) {
@@ -120,7 +132,7 @@ export function createElementsFetcherComponent<T>(
     filters?: ElementsFilters
   ) => Promise<ElementsResult<T>>
 ): ElementsFetcher<T> {
-  const { logs } = dependencies
+  const { logs, metrics } = dependencies
   const logger = logs.getLogger('elements-fetcher')
 
   // Entries carry WHEN they were stored, because each caller decides for itself how old is too old
@@ -136,6 +148,10 @@ export function createElementsFetcherComponent<T>(
 
   // One in-flight load per key, so N concurrent readers cause ONE upstream fetch.
   const refreshing = new Map<string, Promise<ElementsResult<T>>>()
+  // Detached refreshes only — see the serveStale branch for why this is not `refreshing.size`.
+  let backgroundRefreshes = 0
+  // Bumped by clearCache so a load started before it cannot write its pre-clear result back in.
+  let generation = 0
 
   function load(
     cacheKey: string,
@@ -148,9 +164,13 @@ export function createElementsFetcherComponent<T>(
       return inFlight
     }
 
+    const startedAt = generation
     const promise = fetchElements(dependencies, address.toLowerCase(), pagination, filters)
       .then((result) => {
-        cache.set(cacheKey, { result, storedAt: Date.now() })
+        if (startedAt !== generation) {
+          return result
+        }
+        cache.set(cacheKey, { result, storedAt: now(), generation })
         return result
       })
       .finally(() => {
@@ -175,28 +195,62 @@ export function createElementsFetcherComponent<T>(
       const maxAge = options?.ttl ?? CACHE_DEFAULTS.TTL
 
       const entry = cache.get(cacheKey, { allowStale: true })
-      if (entry && Date.now() - entry.storedAt <= maxAge) {
+      const age = entry ? now() - entry.storedAt : Infinity
+      if (entry && age <= maxAge) {
+        metrics?.increment('elements_cache_reads_total', { result: 'fresh' })
         return entry.result
       }
 
-      // Too old for this caller, but usable: answer with it and refresh behind the request, so a short
-      // TTL costs latency only on the very first read rather than on every expiry.
-      if (entry && options?.serveStale) {
+      // Too old for this caller but recent enough to stand in: answer with it and refresh behind the
+      // request, so a short TTL costs latency only on the very first read rather than on every expiry.
+      //
+      // The age ceiling is what keeps this from making things WORSE than no cache at all. Entries are
+      // never dropped on their own (allowStale + noDeleteOnStaleGet, and lru-cache has no ttlAutopurge),
+      // so without it an hours-old list would be served forever: the buyer who last opened their backpack
+      // before the retention ceiling would be handed the pre-purchase list, where a plain expiring cache
+      // would have refetched and shown the purchase. Past the ceiling we fall through and block.
+      const withinRetention = age <= CACHE_DEFAULTS.TTL
+      if (entry && options?.serveStale && withinRetention) {
         // The refresh is detached from the request, so nothing upstream throttles it: without a ceiling,
         // traffic across many addresses could fan out into unbounded concurrent full-inventory fetches.
         // Over the ceiling we simply answer stale and let a later request schedule the refresh.
-        if (refreshing.size < CACHE_DEFAULTS.MAX_BACKGROUND_REFRESHES) {
-          load(cacheKey, address, pagination, filters).catch((err: any) => {
-            // Keep the stack: this failure no longer reaches the request, so the log is all there is.
-            logger.warn(`Background refresh failed for ${address}, serving stale`, {
+        // Counted separately from `refreshing`, which also holds request-blocking loads: sharing that
+        // number let a burst of ordinary traffic (a big POST /profiles fans out one load per id) spend
+        // the whole budget, silently leaving the backpack stale with no refresh scheduled to heal it.
+        if (backgroundRefreshes < CACHE_DEFAULTS.MAX_BACKGROUND_REFRESHES) {
+          backgroundRefreshes++
+          metrics?.increment('elements_cache_background_refresh_total', { outcome: 'started' })
+          try {
+            load(cacheKey, address, pagination, filters)
+              .catch((err: any) => {
+                // Keep the stack: this failure no longer reaches the request, so the log is all there is.
+                metrics?.increment('elements_cache_background_refresh_total', { outcome: 'failed' })
+                logger.warn(`Background refresh failed for ${address}, serving stale`, {
+                  error: err?.stack ?? err?.message ?? String(err)
+                })
+              })
+              .finally(() => {
+                backgroundRefreshes--
+              })
+          } catch (err: any) {
+            // A synchronous throw out of fetchElements never becomes a promise, so nothing above would
+            // have decremented or logged it.
+            backgroundRefreshes--
+            metrics?.increment('elements_cache_background_refresh_total', { outcome: 'failed' })
+            logger.warn(`Background refresh threw for ${address}, serving stale`, {
               error: err?.stack ?? err?.message ?? String(err)
             })
-          })
+          }
+        } else {
+          // Only visible as a metric: the request still succeeds, it just stops self-healing.
+          metrics?.increment('elements_cache_background_refresh_total', { outcome: 'skipped' })
         }
+        metrics?.increment('elements_cache_reads_total', { result: 'stale' })
         return entry.result
       }
 
       try {
+        metrics?.increment('elements_cache_reads_total', { result: entry ? 'expired' : 'miss' })
         return await load(cacheKey, address, pagination, filters)
       } catch (err: any) {
         logger.error(err)
@@ -206,8 +260,10 @@ export function createElementsFetcherComponent<T>(
 
     clearCache() {
       // Clear all cached entries - useful for tests
+      generation++
       cache.clear()
       refreshing.clear()
+      backgroundRefreshes = 0
     }
   }
 }
