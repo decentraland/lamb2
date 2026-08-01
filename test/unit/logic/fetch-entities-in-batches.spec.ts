@@ -176,6 +176,66 @@ describe('when one of the batches fails', () => {
   })
 })
 
+describe('when cancelled sibling batches take time to settle', () => {
+  let releaseCancelledBatches: () => void
+  let resultSettled: boolean
+  let resultObservation: Promise<void>
+  let cancelledBatchesSettled: number
+
+  beforeEach(async () => {
+    const pointers = generatePointers(MAX_POINTERS_PER_REQUEST * 3)
+    let startedBatches = 0
+    let releaseCleanup: () => void = () => undefined
+    const cleanupGate = new Promise<void>((resolve) => {
+      releaseCleanup = resolve
+    })
+
+    releaseCancelledBatches = releaseCleanup
+    resultSettled = false
+    cancelledBatchesSettled = 0
+    fetchBatch = jest.fn(async (_batch, { abortController }) => {
+      if (startedBatches++ === 0) {
+        throw new Error('content server unavailable')
+      }
+
+      await new Promise<void>((resolve) => {
+        if (abortController.signal.aborted) {
+          resolve()
+        } else {
+          abortController.signal.addEventListener('abort', () => resolve(), { once: true })
+        }
+      })
+      await cleanupGate
+      cancelledBatchesSettled++
+      throw new Error('Request aborted (timed out)')
+    })
+
+    const result = fetchEntitiesInBatches(pointers, fetchBatch, logger)
+    resultObservation = result.then(
+      () => {
+        resultSettled = true
+      },
+      () => {
+        resultSettled = true
+      }
+    )
+
+    await new Promise<void>((resolve) => setImmediate(resolve))
+  })
+
+  it('should wait for cancelled sibling batches before rejecting', async () => {
+    const resultSettledBeforeCleanup = resultSettled
+
+    releaseCancelledBatches()
+    await resultObservation
+
+    expect({ cancelledBatchesSettled, resultSettledBeforeCleanup }).toEqual({
+      cancelledBatchesSettled: 2,
+      resultSettledBeforeCleanup: false
+    })
+  })
+})
+
 describe('when a batch resolves with no entities', () => {
   let pointers: string[]
   let entities: Entity[]

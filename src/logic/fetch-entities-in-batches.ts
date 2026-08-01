@@ -67,10 +67,14 @@ export async function fetchEntitiesInBatches(
   }
 
   const workers = Math.min(MAX_CONCURRENT_POINTER_REQUESTS, batches.length)
+  const workerPromises = Array.from({ length: workers }, () => worker())
 
   try {
-    await Promise.all(Array.from({ length: workers }, () => worker()))
+    await Promise.all(workerPromises)
   } catch (error) {
+    // Aborting only signals the other requests to stop. Wait until every worker
+    // has observed the signal and finished cleaning up before returning.
+    await Promise.allSettled(workerPromises)
     const reason = firstError ?? error
     logger.warn('Cancelled the remaining entity batches after one of them failed', {
       batches: batches.length,
