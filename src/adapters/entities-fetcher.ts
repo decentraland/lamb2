@@ -34,6 +34,13 @@ export type EntitiesFetcher = IBaseComponent & {
 const MAX_COLLECTION_PAGE_SIZE = 1000
 const TWO_DAYS_IN_MS = 48 * 60 * 60 * 1000
 
+/**
+ * The content server validates `POST /entities/active` against a JSON schema that caps
+ * `pointers` at 1000 items, answering 400 when it is exceeded. Requests are split into
+ * batches below that cap so wallets owning more items than the limit can still be resolved.
+ */
+const MAX_POINTERS_PER_REQUEST = 500
+
 export async function createEntitiesFetcherComponent({
   config,
   content,
@@ -91,10 +98,22 @@ export async function createEntitiesFetcherComponent({
     }
 
     if (nonCachedURNs.length !== 0) {
-      const entities = await content.fetchEntitiesByPointers(nonCachedURNs)
-      for (const entity of entities) {
-        entititesCache.set(entity.metadata.id, entity)
-        entitiesByUrn.set(entity.metadata.id, entity)
+      const batches: string[][] = []
+      for (let i = 0; i < nonCachedURNs.length; i += MAX_POINTERS_PER_REQUEST) {
+        batches.push(nonCachedURNs.slice(i, i + MAX_POINTERS_PER_REQUEST))
+      }
+
+      const fetchedBatches = await Promise.all(batches.map((batch) => content.fetchEntitiesByPointers(batch)))
+
+      for (const entity of fetchedBatches.flat()) {
+        const urn = entity.metadata?.id
+        if (!urn) {
+          logger.warn('Skipping entity without metadata id', { entityId: entity.id })
+          continue
+        }
+
+        entititesCache.set(urn, entity)
+        entitiesByUrn.set(urn, entity)
       }
     }
 

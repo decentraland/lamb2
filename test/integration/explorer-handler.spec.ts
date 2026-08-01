@@ -308,6 +308,60 @@ testWithComponents(() => {
     expect(response12.elements).toHaveLength(2)
   })
 
+  it('return on-chain wearables for a wallet owning more items than the content server pointers limit', async () => {
+    const { content, fetch, localFetch, theGraph, baseWearablesFetcher, wearablesFetcher, alchemyNftFetcher } =
+      components
+
+    // The content server validates `POST /entities/active` with `pointers` capped at 1000
+    // items and answers 400 when exceeded. Asking for every owned entity in one request
+    // made that 400 surface as a 500, leaving the backpack empty for these wallets.
+    const CONTENT_SERVER_POINTERS_LIMIT = 1000
+    // The entities cache lives in the components shared by the whole suite, so these urns are
+    // namespaced to keep the assertions on the issued requests independent of the other tests.
+    const onChainWearables = generateWearables(CONTENT_SERVER_POINTERS_LIMIT + 1).map((wearable, index) => ({
+      ...wearable,
+      urn: `urn-over-limit-${index}`
+    }))
+    const entities = generateWearableEntities(onChainWearables.map((wearable) => wearable.urn))
+    const entitiesByUrn = new Map(entities.map((entity) => [entity.id, entity]))
+
+    alchemyNftFetcher.getNFTsForOwner = jest.fn().mockResolvedValue([])
+    baseWearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({ elements: [], totalAmount: 0 })
+    wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+      elements: convertWearablesToOnChain(onChainWearables),
+      totalAmount: onChainWearables.length
+    })
+    content.fetchEntitiesByPointers = jest.fn(async (pointers) => {
+      if (pointers.length > CONTENT_SERVER_POINTERS_LIMIT) {
+        throw new Error(`Invalid JSON body: pointers must NOT have more than ${CONTENT_SERVER_POINTERS_LIMIT} items`)
+      }
+      return pointers.map((pointer) => entitiesByUrn.get(pointer))
+    })
+    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+    fetch.fetch = jest.fn().mockResolvedValue({ ok: true, json: () => ({ entities: [] }) })
+
+    const wallet = generateRandomAddress()
+    const r = await localFetch.fetch(`/explorer/${wallet}/wearables?pageNum=1&pageSize=16&collectionType=on-chain`)
+
+    expect(r.status).toBe(200)
+    const response = await r.json()
+    expect(response).toMatchObject({
+      pageNum: 1,
+      pageSize: 16,
+      totalAmount: onChainWearables.length
+    })
+    expect(response.elements).toHaveLength(16)
+
+    // Every owned wearable is resolved, and no single request goes over the limit
+    const requestedPointers = (content.fetchEntitiesByPointers as jest.Mock).mock.calls.map((call) => call[0])
+    expect(requestedPointers.length).toBeGreaterThan(1)
+    for (const pointers of requestedPointers) {
+      expect(pointers.length).toBeLessThanOrEqual(CONTENT_SERVER_POINTERS_LIMIT)
+    }
+    expect(requestedPointers.flat().sort()).toEqual(onChainWearables.map((wearable) => wearable.urn).sort())
+  })
+
   it('return trimmed response when trimmed=true parameter is provided', async () => {
     const { content, fetch, localFetch, theGraph, baseWearablesFetcher, wearablesFetcher, alchemyNftFetcher } =
       components
