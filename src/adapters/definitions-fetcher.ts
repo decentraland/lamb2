@@ -4,19 +4,21 @@ import { AppComponents } from '../types'
 import { extractEmoteDefinitionFromEntity, extractWearableDefinitionFromEntity } from './definitions'
 import { createLowerCaseKeysCache } from './lowercase-keys-cache'
 import { createLowerCaseKeysMap } from './lowercase-keys-map'
+import { fetchEntitiesInBatches } from '../logic/fetch-entities-in-batches'
 
 export type DefinitionsFetcher<T extends WearableDefinition | EmoteDefinition> = IBaseComponent & {
   fetchItemsDefinitions(urns: string[]): Promise<(T | undefined)[]>
 }
 
 async function createDefinitionsFetcherComponent<T extends WearableDefinition | EmoteDefinition>(
-  { config, content, contentServerUrl }: Pick<AppComponents, 'logs' | 'config' | 'content' | 'contentServerUrl'>,
+  { config, content, contentServerUrl, logs }: Pick<AppComponents, 'logs' | 'config' | 'content' | 'contentServerUrl'>,
   entityMapper: (components: Pick<AppComponents, 'contentServerUrl'>, entity: Entity) => T
 ): Promise<DefinitionsFetcher<T>> {
   const itemsSize = (await config.getNumber('ITEMS_CACHE_MAX_SIZE')) ?? 10000
   const itemsAge = (await config.getNumber('ITEMS_CACHE_MAX_AGE')) ?? 600000 // 10 minutes by default
 
   const itemDefinitionsCache = createLowerCaseKeysCache<T>({ max: itemsSize, ttl: itemsAge })
+  const logger = logs.getLogger('definitions-fetcher')
 
   return {
     async fetchItemsDefinitions(urns: string[]): Promise<(T | undefined)[]> {
@@ -32,11 +34,30 @@ async function createDefinitionsFetcherComponent<T extends WearableDefinition | 
       }
 
       if (nonCachedURNs.length !== 0) {
-        const entities = await content.fetchEntitiesByPointers(nonCachedURNs)
+        const entities = await fetchEntitiesInBatches(
+          nonCachedURNs,
+          (batch, { abortController }) => content.fetchEntitiesByPointers(batch, { abortController }),
+          logger
+        )
+
         for (const entity of entities) {
-          const definition = entityMapper({ contentServerUrl }, entity)
-          itemDefinitionsCache.set(definition.id, definition)
-          definitionsByUrn.set(definition.id, definition)
+          if (!entity?.metadata?.id) {
+            logger.warn('Skipping entity without metadata id', { entityId: entity?.id ?? '<unknown>' })
+            continue
+          }
+
+          try {
+            const definition = entityMapper({ contentServerUrl }, entity)
+            itemDefinitionsCache.set(definition.id, definition)
+            definitionsByUrn.set(definition.id, definition)
+          } catch (error) {
+            // The mapper reads nested metadata, so one malformed entity must not cost the
+            // definitions of every other item in the request.
+            logger.warn('Skipping entity that could not be mapped to a definition', {
+              entityId: entity.id,
+              error: error instanceof Error ? error.message : 'Unknown error'
+            })
+          }
         }
       }
 

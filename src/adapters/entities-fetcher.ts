@@ -3,6 +3,7 @@ import { AppComponents } from '../types'
 import { Entity, Mappings } from '@dcl/schemas'
 import { createLowerCaseKeysCache } from './lowercase-keys-cache'
 import { createLowerCaseKeysMap } from './lowercase-keys-map'
+import { fetchEntitiesInBatches } from '../logic/fetch-entities-in-batches'
 import { filterByUserNfts } from '../logic/linked-wearables-mapper'
 
 /**
@@ -91,10 +92,21 @@ export async function createEntitiesFetcherComponent({
     }
 
     if (nonCachedURNs.length !== 0) {
-      const entities = await content.fetchEntitiesByPointers(nonCachedURNs)
+      const entities = await fetchEntitiesInBatches(
+        nonCachedURNs,
+        (batch, { abortController }) => content.fetchEntitiesByPointers(batch, { abortController }),
+        logger
+      )
+
       for (const entity of entities) {
-        entititesCache.set(entity.metadata.id, entity)
-        entitiesByUrn.set(entity.metadata.id, entity)
+        const urn = entity?.metadata?.id
+        if (!urn) {
+          logger.warn('Skipping entity without metadata id', { entityId: entity?.id ?? '<unknown>' })
+          continue
+        }
+
+        entititesCache.set(urn, entity)
+        entitiesByUrn.set(urn, entity)
       }
     }
 
