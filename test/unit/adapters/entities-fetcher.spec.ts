@@ -54,7 +54,9 @@ describe('when fetching fewer urns than the content server pointers limit', () =
 
   it('should resolve them in a single request', () => {
     expect(content.fetchEntitiesByPointers).toHaveBeenCalledTimes(1)
-    expect(content.fetchEntitiesByPointers).toHaveBeenCalledWith(urns)
+    expect(content.fetchEntitiesByPointers).toHaveBeenCalledWith(urns, {
+      abortController: expect.any(AbortController)
+    })
   })
 
   it('should return one entity per urn, aligned with the requested order', () => {

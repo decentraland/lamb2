@@ -311,3 +311,42 @@ describe('when fetching more urns than the content server pointers limit', () =>
     expect(definitions.map((definition) => definition?.id)).toEqual(urns)
   })
 })
+
+describe('when an entity cannot be mapped to a definition', () => {
+  let contentMock: ReturnType<typeof createContentClientMock>
+  let definitions: (WearableDefinition | undefined)[]
+
+  beforeEach(async () => {
+    contentMock = createContentClientMock()
+    const malformed = buildWearableEntity('urn:wearable:malformed')
+    // A wearable whose metadata carries an id but no `data` makes the mapper throw.
+    delete (malformed.metadata as Partial<Wearable>).data
+    contentMock.fetchEntitiesByPointers = jest
+      .fn()
+      .mockResolvedValue([malformed, buildWearableEntity('urn:wearable:sound')])
+
+    const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent({
+      config: await createDotEnvConfigComponent({ path: ['.env.default', '.env'] }),
+      logs: await createLogComponent({}),
+      content: contentMock,
+      contentServerUrl: 'baseUrl'
+    })
+
+    definitions = await wearableDefinitionsFetcher.fetchItemsDefinitions([
+      'urn:wearable:malformed',
+      'urn:wearable:sound'
+    ])
+  })
+
+  afterEach(() => {
+    jest.resetAllMocks()
+  })
+
+  it('should report the unmappable entity as a miss', () => {
+    expect(definitions[0]).toBeUndefined()
+  })
+
+  it('should still map the entities alongside it instead of failing the whole request', () => {
+    expect(definitions[1]?.id).toBe('urn:wearable:sound')
+  })
+})

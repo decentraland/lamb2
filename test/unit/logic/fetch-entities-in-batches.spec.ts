@@ -1,6 +1,7 @@
 import { Entity, EntityType } from '@dcl/schemas'
 import { ILoggerComponent } from '@well-known-components/interfaces'
 import {
+  EntityBatchFailedError,
   MAX_CONCURRENT_POINTER_REQUESTS,
   MAX_POINTERS_PER_REQUEST,
   fetchEntitiesInBatches
@@ -45,7 +46,7 @@ describe('when the pointers fit in a single batch', () => {
 
   it('should issue a single request holding every pointer', () => {
     expect(fetchBatch).toHaveBeenCalledTimes(1)
-    expect(fetchBatch).toHaveBeenCalledWith(pointers)
+    expect(fetchBatch).toHaveBeenCalledWith(pointers, { abortController: expect.any(AbortController) })
   })
 
   it('should return one entity per pointer', () => {
@@ -91,7 +92,7 @@ describe('when the pointers exceed the maximum per request', () => {
   })
 })
 
-describe('and the batch count is above the concurrency limit', () => {
+describe('when the batch count is above the concurrency limit', () => {
   let pointers: string[]
   let maxInFlight: number
 
@@ -118,28 +119,75 @@ describe('and the batch count is above the concurrency limit', () => {
   })
 })
 
-describe('and one of the batches fails', () => {
+describe('when one of the batches fails', () => {
+  let pointers: string[]
+  let result: Promise<Entity[]>
+
+  beforeEach(() => {
+    // Three batches, all started at once under the concurrency limit: the first fails and
+    // the other two stay in flight until they are cancelled.
+    pointers = generatePointers(MAX_POINTERS_PER_REQUEST * 3)
+    let started = 0
+    fetchBatch = jest.fn(async (batch: string[], { abortController }: { abortController: AbortController }) => {
+      if (started++ === 0) {
+        throw new Error('content server unavailable')
+      }
+
+      await new Promise<void>((resolve) => {
+        if (abortController.signal.aborted) {
+          resolve()
+          return
+        }
+        abortController.signal.addEventListener('abort', () => resolve(), { once: true })
+      })
+
+      throw new Error('Request aborted (timed out)')
+    })
+    result = fetchEntitiesInBatches(pointers, fetchBatch, logger)
+  })
+
+  it('should reject instead of returning the entities the other batches resolved', async () => {
+    await expect(result).rejects.toThrow(EntityBatchFailedError)
+  })
+
+  it('should report the original failure rather than the cancellations it caused', async () => {
+    await expect(result).rejects.toThrow('content server unavailable')
+  })
+
+  it('should cancel the batches still in flight through a single shared controller', async () => {
+    await expect(result).rejects.toThrow()
+
+    const controllers = (fetchBatch.mock.calls as [string[], { abortController: AbortController }][]).map(
+      ([, options]) => options.abortController
+    )
+
+    expect(controllers).toHaveLength(3)
+    expect(new Set(controllers).size).toBe(1)
+    expect(controllers[0].signal.aborted).toBe(true)
+  })
+
+  it('should log a warning naming the failure', async () => {
+    await expect(result).rejects.toThrow()
+
+    expect(logger.warn).toHaveBeenCalledWith('Cancelled the remaining entity batches after one of them failed', {
+      batches: 3,
+      error: 'content server unavailable'
+    })
+  })
+})
+
+describe('when a batch resolves with no entities', () => {
   let pointers: string[]
   let entities: Entity[]
 
   beforeEach(async () => {
-    pointers = generatePointers(MAX_POINTERS_PER_REQUEST * 2)
-    fetchBatch = jest
-      .fn()
-      .mockRejectedValueOnce(new Error('content server unavailable'))
-      .mockImplementation(async (batch: string[]) => batch.map(generateEntity))
+    pointers = generatePointers(10)
+    fetchBatch = jest.fn().mockResolvedValue([])
     entities = await fetchEntitiesInBatches(pointers, fetchBatch, logger)
   })
 
-  it('should return the entities resolved by the batches that succeeded', () => {
-    expect(entities).toHaveLength(MAX_POINTERS_PER_REQUEST)
-  })
-
-  it('should log a warning naming the failure', () => {
-    expect(logger.warn).toHaveBeenCalledWith('Failed to fetch a batch of entities', {
-      pointers: MAX_POINTERS_PER_REQUEST,
-      error: 'content server unavailable'
-    })
+  it('should return no entities without treating the empty result as a failure', () => {
+    expect(entities).toEqual([])
   })
 })
 

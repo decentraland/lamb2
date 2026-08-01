@@ -94,7 +94,7 @@ export async function createEntitiesFetcherComponent({
     if (nonCachedURNs.length !== 0) {
       const entities = await fetchEntitiesInBatches(
         nonCachedURNs,
-        (batch) => content.fetchEntitiesByPointers(batch),
+        (batch, { abortController }) => content.fetchEntitiesByPointers(batch, { abortController }),
         logger
       )
 

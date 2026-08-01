@@ -36,7 +36,7 @@ async function createDefinitionsFetcherComponent<T extends WearableDefinition | 
       if (nonCachedURNs.length !== 0) {
         const entities = await fetchEntitiesInBatches(
           nonCachedURNs,
-          (batch) => content.fetchEntitiesByPointers(batch),
+          (batch, { abortController }) => content.fetchEntitiesByPointers(batch, { abortController }),
           logger
         )
 
@@ -46,9 +46,18 @@ async function createDefinitionsFetcherComponent<T extends WearableDefinition | 
             continue
           }
 
-          const definition = entityMapper({ contentServerUrl }, entity)
-          itemDefinitionsCache.set(definition.id, definition)
-          definitionsByUrn.set(definition.id, definition)
+          try {
+            const definition = entityMapper({ contentServerUrl }, entity)
+            itemDefinitionsCache.set(definition.id, definition)
+            definitionsByUrn.set(definition.id, definition)
+          } catch (error) {
+            // The mapper reads nested metadata, so one malformed entity must not cost the
+            // definitions of every other item in the request.
+            logger.warn('Skipping entity that could not be mapped to a definition', {
+              entityId: entity.id,
+              error: error instanceof Error ? error.message : 'Unknown error'
+            })
+          }
         }
       }
 
