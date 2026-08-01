@@ -3,6 +3,7 @@ import { AppComponents } from '../types'
 import { Entity, Mappings } from '@dcl/schemas'
 import { createLowerCaseKeysCache } from './lowercase-keys-cache'
 import { createLowerCaseKeysMap } from './lowercase-keys-map'
+import { fetchEntitiesInBatches } from '../logic/fetch-entities-in-batches'
 import { filterByUserNfts } from '../logic/linked-wearables-mapper'
 
 /**
@@ -33,13 +34,6 @@ export type EntitiesFetcher = IBaseComponent & {
 
 const MAX_COLLECTION_PAGE_SIZE = 1000
 const TWO_DAYS_IN_MS = 48 * 60 * 60 * 1000
-
-/**
- * The content server validates `POST /entities/active` against a JSON schema that caps
- * `pointers` at 1000 items, answering 400 when it is exceeded. Requests are split into
- * batches below that cap so wallets owning more items than the limit can still be resolved.
- */
-const MAX_POINTERS_PER_REQUEST = 500
 
 export async function createEntitiesFetcherComponent({
   config,
@@ -98,17 +92,16 @@ export async function createEntitiesFetcherComponent({
     }
 
     if (nonCachedURNs.length !== 0) {
-      const batches: string[][] = []
-      for (let i = 0; i < nonCachedURNs.length; i += MAX_POINTERS_PER_REQUEST) {
-        batches.push(nonCachedURNs.slice(i, i + MAX_POINTERS_PER_REQUEST))
-      }
+      const entities = await fetchEntitiesInBatches(
+        nonCachedURNs,
+        (batch) => content.fetchEntitiesByPointers(batch),
+        logger
+      )
 
-      const fetchedBatches = await Promise.all(batches.map((batch) => content.fetchEntitiesByPointers(batch)))
-
-      for (const entity of fetchedBatches.flat()) {
-        const urn = entity.metadata?.id
+      for (const entity of entities) {
+        const urn = entity?.metadata?.id
         if (!urn) {
-          logger.warn('Skipping entity without metadata id', { entityId: entity.id })
+          logger.warn('Skipping entity without metadata id', { entityId: entity?.id ?? '<unknown>' })
           continue
         }
 

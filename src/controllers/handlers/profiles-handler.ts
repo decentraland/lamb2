@@ -15,6 +15,8 @@ export async function profilesHandler(
 
   // Cap the batch size: this endpoint is public and each profile fans out to
   // several subgraph/content lookups, so an unbounded id list is a DoS amplifier.
+  // This cap must stay at or below the content server's 1000-pointer limit on
+  // POST /entities/active: `profiles.getProfiles` sends the ids there unbatched.
   if (body.ids.length > PAGINATION_DEFAULTS.MAX_PAGE_SIZE) {
     throw new InvalidRequestError(
       `Too many profile ids were specified. Maximum allowed is ${PAGINATION_DEFAULTS.MAX_PAGE_SIZE}`
