@@ -217,6 +217,8 @@ export async function createProfilesComponent(
 
             avatars.push({
               ...avatar,
+              // The pointer is the authoritative identity, not the deployed metadata
+              ...(isDefaultProfile ? {} : { userId: ethAddress, ethAddress }),
               links: sanitizeLinks(avatar.links),
               hasClaimedName: ownedNames.findIndex((name) => name.name === avatar.name) !== -1,
               avatar: {

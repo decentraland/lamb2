@@ -9,7 +9,7 @@ import {
   profileEntityWithOwnedEmotes,
   profileEntityWithMixedEmotes
 } from './data/profiles-responses'
-import { WearableCategory } from '@dcl/schemas'
+import { Avatar, WearableCategory } from '@dcl/schemas'
 import { createProfilesComponent } from '../../src/adapters/profiles'
 import { createConfigComponent } from '@well-known-components/env-config-provider'
 import { generateWearableEntity } from '../data/wearables'
@@ -956,5 +956,77 @@ testWithComponents(() => {
       { slot: 2, urn: 'clap' },
       { slot: 3, urn: 'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:10:10' }
     ])
+  })
+
+  describe('and the deployed metadata has a different address than the pointer', () => {
+    const pointer = '0x1'
+    const otherAddress = '0x2222222222222222222222222222222222222222'
+    let servedAvatar: Avatar
+
+    beforeEach(async () => {
+      const {
+        metrics,
+        config,
+        contentServerUrl,
+        ownershipCaches,
+        thirdPartyProvidersStorage,
+        logs,
+        wearablesFetcher,
+        emotesFetcher,
+        namesFetcher,
+        l1ThirdPartyItemChecker,
+        l2ThirdPartyItemChecker,
+        theGraph
+      } = components
+      const { alchemyNftFetcher, entitiesFetcher, fetch, content } = stubComponents
+
+      content.fetchEntitiesByPointers.mockResolvedValue([
+        {
+          ...profileEntityFull,
+          pointers: [pointer],
+          metadata: {
+            ...profileEntityFull.metadata,
+            avatars: profileEntityFull.metadata.avatars.map((avatar) => ({
+              ...avatar,
+              userId: otherAddress,
+              ethAddress: otherAddress
+            }))
+          }
+        }
+      ])
+      theGraph.ensSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+      jest.spyOn(components.thirdPartyProvidersStorage, 'getAll').mockResolvedValue([])
+      entitiesFetcher.fetchEntities.mockResolvedValue([])
+
+      const profilesComponent = await createProfilesComponent({
+        alchemyNftFetcher,
+        entitiesFetcher,
+        metrics,
+        content,
+        contentServerUrl,
+        theGraph,
+        config,
+        fetch,
+        ownershipCaches,
+        l1ThirdPartyItemChecker,
+        l2ThirdPartyItemChecker,
+        thirdPartyProvidersStorage,
+        logs,
+        wearablesFetcher,
+        emotesFetcher,
+        namesFetcher
+      })
+
+      const profiles = await profilesComponent.getProfiles([pointer])
+      servedAvatar = profiles[0].avatars[0]
+    })
+
+    it('should serve the pointer as the ethAddress', () => {
+      expect(servedAvatar.ethAddress).toEqual(pointer)
+    })
+
+    it('should serve the pointer as the userId', () => {
+      expect(servedAvatar.userId).toEqual(pointer)
+    })
   })
 })
