@@ -183,7 +183,7 @@ describe('fetchEmotes', () => {
           name: 'common dance'
         }
       ] as OnChainEmote[],
-      totalAmount: 3
+      totalAmount: 2
     })
   })
 
@@ -478,7 +478,7 @@ describe('fetchWearables', () => {
           name: 'unique earring'
         }
       ] as OnChainWearable[],
-      totalAmount: 3
+      totalAmount: 2
     })
   })
 

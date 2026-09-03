@@ -1,5 +1,16 @@
 import { EmoteCategory, WearableCategory, Network } from '@dcl/schemas'
-import { Item, ItemType, OnChainEmote, OnChainWearable, Pagination } from '../../types'
+import {
+  HasDate,
+  HasName,
+  HasRarity,
+  InvalidRequestError,
+  Item,
+  ItemType,
+  OnChainEmote,
+  OnChainWearable,
+  Pagination,
+  SortingFunction
+} from '../../types'
 import { MarketplaceApiParams } from '../../adapters/marketplace-api-fetcher'
 import {
   ElementsFilters,
@@ -7,8 +18,10 @@ import {
   ItemType as ItemTypeFilter
 } from '../../adapters/elements-fetcher'
 
-import { fetchNFTsPaginated, createItemQueryBuilder } from './graph-pagination'
+import { ItemQueryBuilder, createItemQueryBuilder, fetchOwnedNFTs } from './graph-pagination'
+import { leastRare, nameAZ, nameZA, newest, oldest, rarest } from '../sorting'
 import { fetchWithMarketplaceFallback } from '../api-with-fallback'
+import { ISubgraphComponent } from '@dcl/thegraph-component'
 
 export function buildMarketplaceApiParams(
   filters?: ElementsFilters,
@@ -52,6 +65,72 @@ export function buildMarketplaceApiParams(
   }
 
   return params
+}
+
+type SortableItem = HasName & HasRarity & HasDate
+
+/**
+ * Maps the requested order onto the in-memory comparators.
+ *
+ * Ordering cannot be pushed down to the subgraph: `rarity` follows the rarity scale rather
+ * than alphabetical order, and `date` compares the min/max transfer dates that only exist
+ * once the rows have been grouped by URN.
+ */
+function selectSorting<T extends SortableItem>(filters?: ElementsFilters): SortingFunction<T> | undefined {
+  if (!filters?.orderBy) {
+    return undefined
+  }
+
+  const orderBy = filters.orderBy.toLowerCase()
+  // Mirrors the query-string defaults: name ascends, everything else descends.
+  const direction = (filters.direction ?? (orderBy === 'name' ? 'asc' : 'desc')).toLowerCase()
+  const ascending = direction === 'asc'
+
+  switch (orderBy) {
+    case 'name':
+      return ascending ? nameAZ : nameZA
+    case 'date':
+      return ascending ? oldest : newest
+    case 'rarity':
+      return ascending ? leastRare : rarest
+    default:
+      throw new InvalidRequestError(
+        `Invalid sorting requested: '${orderBy} ${direction}'. Valid options are '[rarity, name, date] [ASC, DESC]'.`
+      )
+  }
+}
+
+/**
+ * Orders the grouped items and cuts out the requested page. `totalAmount` counts the grouped
+ * items, so it is the real total rather than the size of the page.
+ */
+function paginateItems<T extends SortableItem>(
+  items: T[],
+  pagination?: Pick<Pagination, 'pageNum' | 'pageSize'>,
+  filters?: ElementsFilters
+): { elements: T[]; totalAmount: number } {
+  const sorting = selectSorting<T>(filters)
+  if (sorting) {
+    items.sort(sorting)
+  }
+
+  if (!pagination) {
+    return { elements: items, totalAmount: items.length }
+  }
+
+  const offset = (pagination.pageNum - 1) * pagination.pageSize
+  return { elements: items.slice(offset, offset + pagination.pageSize), totalAmount: items.length }
+}
+
+/** Runs the owner query, or resolves to no rows when the filters cannot match anything. */
+async function queryOwnedNFTs<E extends { id: string }>(
+  subgraph: ISubgraphComponent,
+  buildQuery: ItemQueryBuilder,
+  owner: string,
+  filters?: ElementsFilters
+): Promise<E[]> {
+  const query = buildQuery(filters)
+  return query ? fetchOwnedNFTs<E>(subgraph, query, owner) : []
 }
 
 function groupItemsByURN<
@@ -154,22 +233,18 @@ export async function fetchEmotes(
     async () => {
       // TheGraph fallback implementation
       // There are no emotes on Ethereum, only on Polygon
-      const emoteQueryBuilder = createItemQueryBuilder('emote')
-
-      const maticResult = await fetchNFTsPaginated<EmoteFromQuery>(
+      const maticResult = await queryOwnedNFTs<EmoteFromQuery>(
         theGraph.maticCollectionsSubgraph,
-        emoteQueryBuilder,
+        createItemQueryBuilder('emote'),
         owner,
-        pagination,
         filters
       )
 
-      const emotesGrouped = groupItemsByURN(maticResult.elements, (item) => item.metadata.emote)
+      // Grouping collapses every token of a URN into one item, so it has to happen before the
+      // page is cut: a page of rows is not a page of items.
+      const emotesGrouped = groupItemsByURN(maticResult, (item) => item.metadata.emote)
 
-      return {
-        elements: emotesGrouped,
-        totalAmount: maticResult.totalAmount
-      }
+      return paginateItems(emotesGrouped, pagination, filters)
     }
   )
 }
@@ -211,32 +286,24 @@ export async function fetchWearables(
 
       const [ethereumResult, maticResult] = await Promise.all([
         shouldQueryEthereum
-          ? fetchNFTsPaginated<WearableFromQuery>(
+          ? queryOwnedNFTs<WearableFromQuery>(
               theGraph.ethereumCollectionsSubgraph,
               wearableQueryBuilder,
               owner,
-              pagination,
               filters
             )
-          : Promise.resolve({ elements: [], totalAmount: 0 }),
+          : Promise.resolve([] as WearableFromQuery[]),
         shouldQueryMatic
-          ? fetchNFTsPaginated<WearableFromQuery>(
-              theGraph.maticCollectionsSubgraph,
-              wearableQueryBuilder,
-              owner,
-              pagination,
-              filters
-            )
-          : Promise.resolve({ elements: [], totalAmount: 0 })
+          ? queryOwnedNFTs<WearableFromQuery>(theGraph.maticCollectionsSubgraph, wearableQueryBuilder, owner, filters)
+          : Promise.resolve([] as WearableFromQuery[])
       ])
 
-      const allWearables = [...ethereumResult.elements, ...maticResult.elements]
+      // Both networks have to be merged and grouped before the page is cut: paging each
+      // subgraph separately would take the same offset from each and concatenate the results.
+      const allWearables = [...ethereumResult, ...maticResult]
       const wearables = groupItemsByURN(allWearables, (item) => item.metadata.wearable)
 
-      return {
-        elements: wearables,
-        totalAmount: ethereumResult.totalAmount + maticResult.totalAmount
-      }
+      return paginateItems(wearables, pagination, filters)
     }
   )
 }
