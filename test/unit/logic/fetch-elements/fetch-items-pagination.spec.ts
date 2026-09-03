@@ -1,7 +1,7 @@
 import { Rarity } from '@dcl/schemas'
 import { ElementsFilters } from '../../../../src/adapters/elements-fetcher'
 import { WearableFromQuery, fetchWearables } from '../../../../src/logic/fetch-elements/fetch-items'
-import { OnChainWearable } from '../../../../src/types'
+import { InvalidRequestError, OnChainWearable } from '../../../../src/types'
 import { createTheGraphComponentMock } from '../../../mocks/the-graph-mock'
 
 const logs = {
@@ -144,6 +144,21 @@ describe('when fetching owned wearables from the subgraph fallback', () => {
 
     it('should order the items from newest to oldest', () => {
       expect(result.elements.map((element) => element.urn)).toEqual(['urn:new', 'urn:mid', 'urn:old'])
+    })
+  })
+
+  describe('and an unrecognized sort direction is requested', () => {
+    let filters: ElementsFilters
+
+    beforeEach(() => {
+      filters = { orderBy: 'name', direction: 'sideways' }
+      theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [wearableRow('urn:a', '1')] })
+    })
+
+    it('should reject it instead of silently falling back to a direction', async () => {
+      await expect(fetchWearables({ theGraph, logs }, owner, { pageSize: 10, pageNum: 1 }, filters)).rejects.toThrow(
+        InvalidRequestError
+      )
     })
   })
 

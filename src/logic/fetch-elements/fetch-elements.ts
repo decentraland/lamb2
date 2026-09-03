@@ -26,7 +26,7 @@ export async function fetchAllNFTs<E extends NFT>(
       idFrom
     })
 
-    if (result.nfts.length === 0) {
+    if (!result?.nfts || result.nfts.length === 0) {
       break
     }
 
@@ -41,6 +41,6 @@ export async function fetchAllNFTs<E extends NFT>(
     }
 
     idFrom = idFromLastElement
-  } while (result.nfts.length === THE_GRAPH_PAGE_SIZE)
+  } while (result?.nfts?.length === THE_GRAPH_PAGE_SIZE)
   return elements
 }

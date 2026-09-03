@@ -18,8 +18,9 @@ import {
   ItemType as ItemTypeFilter
 } from '../../adapters/elements-fetcher'
 
-import { ItemQueryBuilder, createItemQueryBuilder, fetchOwnedNFTs } from './graph-pagination'
-import { leastRare, nameAZ, nameZA, newest, oldest, rarest } from '../sorting'
+import { ItemQueryBuilder, createItemQueryBuilder } from './graph-pagination'
+import { fetchAllNFTs } from './fetch-elements'
+import { selectSortingFunction } from '../sorting'
 import { fetchWithMarketplaceFallback } from '../api-with-fallback'
 import { ISubgraphComponent } from '@dcl/thegraph-component'
 
@@ -70,7 +71,8 @@ export function buildMarketplaceApiParams(
 type SortableItem = HasName & HasRarity & HasDate
 
 /**
- * Maps the requested order onto the in-memory comparators.
+ * Maps the requested order onto the in-memory comparators, reusing the same selector the
+ * handlers validate against so sort semantics have a single source of truth.
  *
  * Ordering cannot be pushed down to the subgraph: `rarity` follows the rarity scale rather
  * than alphabetical order, and `date` compares the min/max transfer dates that only exist
@@ -81,23 +83,18 @@ function selectSorting<T extends SortableItem>(filters?: ElementsFilters): Sorti
     return undefined
   }
 
-  const orderBy = filters.orderBy.toLowerCase()
-  // Mirrors the query-string defaults: name ascends, everything else descends.
-  const direction = (filters.direction ?? (orderBy === 'name' ? 'asc' : 'desc')).toLowerCase()
-  const ascending = direction === 'asc'
+  const sort = filters.orderBy.toLowerCase()
+  // Mirrors `sortDirectionParams`: name ascends by default, everything else descends.
+  const direction = (filters.direction ?? (sort === 'name' ? 'asc' : 'desc')).toUpperCase()
+  const sorting = selectSortingFunction<T>(sort, direction)
 
-  switch (orderBy) {
-    case 'name':
-      return ascending ? nameAZ : nameZA
-    case 'date':
-      return ascending ? oldest : newest
-    case 'rarity':
-      return ascending ? leastRare : rarest
-    default:
-      throw new InvalidRequestError(
-        `Invalid sorting requested: '${orderBy} ${direction}'. Valid options are '[rarity, name, date] [ASC, DESC]'.`
-      )
+  if (!sorting) {
+    throw new InvalidRequestError(
+      `Invalid sorting requested: '${sort} ${direction}'. Valid options are '[rarity, name, date] [ASC, DESC]'.`
+    )
   }
+
+  return sorting
 }
 
 /**
@@ -110,16 +107,15 @@ function paginateItems<T extends SortableItem>(
   filters?: ElementsFilters
 ): { elements: T[]; totalAmount: number } {
   const sorting = selectSorting<T>(filters)
-  if (sorting) {
-    items.sort(sorting)
-  }
+  // Copied rather than sorted in place: the caller's array is not ours to reorder.
+  const ordered = sorting ? [...items].sort(sorting) : items
 
   if (!pagination) {
-    return { elements: items, totalAmount: items.length }
+    return { elements: ordered, totalAmount: ordered.length }
   }
 
   const offset = (pagination.pageNum - 1) * pagination.pageSize
-  return { elements: items.slice(offset, offset + pagination.pageSize), totalAmount: items.length }
+  return { elements: ordered.slice(offset, offset + pagination.pageSize), totalAmount: ordered.length }
 }
 
 /** Runs the owner query, or resolves to no rows when the filters cannot match anything. */
@@ -130,7 +126,7 @@ async function queryOwnedNFTs<E extends { id: string }>(
   filters?: ElementsFilters
 ): Promise<E[]> {
   const query = buildQuery(filters)
-  return query ? fetchOwnedNFTs<E>(subgraph, query, owner) : []
+  return query ? fetchAllNFTs<E>(subgraph, query, owner) : []
 }
 
 function groupItemsByURN<

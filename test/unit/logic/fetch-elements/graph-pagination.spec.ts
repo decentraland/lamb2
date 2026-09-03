@@ -1,7 +1,8 @@
 import { Network } from '@dcl/schemas'
 import { ISubgraphComponent } from '@dcl/thegraph-component'
 import { ElementsFilters } from '../../../../src/adapters/elements-fetcher'
-import { createItemQueryBuilder, fetchOwnedNFTs } from '../../../../src/logic/fetch-elements/graph-pagination'
+import { fetchAllNFTs } from '../../../../src/logic/fetch-elements/fetch-elements'
+import { createItemQueryBuilder } from '../../../../src/logic/fetch-elements/graph-pagination'
 import { InvalidRequestError } from '../../../../src/types'
 
 describe('when building the owned items query', () => {
@@ -15,11 +16,11 @@ describe('when building the owned items query', () => {
     })
 
     it('should bind the id cursor, which the subgraph rejects when left unbound', () => {
-      expect(query).toContain('where: { id_gt: $idFrom,')
+      expect(query).toMatch(/where:\s*\{\s*id_gt:\s*\$idFrom\s*,/)
     })
 
     it('should order by id ascending, the only order the id cursor can walk', () => {
-      expect(query).toContain('orderBy: id,\n        orderDirection: asc')
+      expect(query).toMatch(/orderBy:\s*id\s*,\s*orderDirection:\s*asc/)
     })
   })
 
@@ -30,7 +31,7 @@ describe('when building the owned items query', () => {
     })
 
     it('should keep ordering by id, leaving the requested order to the in-memory layer', () => {
-      expect(query).toContain('orderBy: id,\n        orderDirection: asc')
+      expect(query).toMatch(/orderBy:\s*id\s*,\s*orderDirection:\s*asc/)
     })
 
     it('should not emit an uppercase direction, which is not a valid enum value', () => {
@@ -110,7 +111,7 @@ describe('when walking the NFTs owned by an address', () => {
   describe('and the owner holds fewer NFTs than one page', () => {
     beforeEach(async () => {
       subgraph = { query: jest.fn().mockResolvedValue({ nfts: [{ id: 'a' }] }) }
-      await fetchOwnedNFTs(subgraph, query, owner)
+      await fetchAllNFTs(subgraph, query, owner)
     })
 
     it('should bind the cursor to an empty string on the only request', () => {
@@ -129,7 +130,7 @@ describe('when walking the NFTs owned by an address', () => {
           .mockResolvedValueOnce({ nfts: firstPage })
           .mockResolvedValueOnce({ nfts: [{ id: 'id-last' }] })
       }
-      await fetchOwnedNFTs(subgraph, query, owner)
+      await fetchAllNFTs(subgraph, query, owner)
     })
 
     it('should advance the cursor to the last id of the previous page', () => {

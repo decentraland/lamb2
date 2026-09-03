@@ -34,7 +34,7 @@ export async function emotesHandler(
   }
 
   // Extract pagination and filters (includes sorting validation)
-  const { pagination, filters } = createPaginationAndFilters(context.url, PAGINATION_DEFAULTS.MAX_PAGE_SIZE)
+  const { pagination, filters } = createPaginationAndFilters(context.url, PAGINATION_DEFAULTS.MAX_PAGE_SIZE, 'emote')
 
   // Fetch elements (fetcher handles caching transparently)
   const { elements, totalAmount } = await emotesFetcher.fetchOwnedElements(address, pagination, filters)

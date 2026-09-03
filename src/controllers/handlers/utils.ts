@@ -1,7 +1,8 @@
-import { Entity, WearableDefinition, EmoteDefinition } from '@dcl/schemas'
+import { Entity, WearableDefinition, EmoteDefinition, EmoteCategory, WearableCategory } from '@dcl/schemas'
 import { ElementsFilters } from '../../adapters/elements-fetcher'
 import { paginationObject } from '../../logic/pagination'
 import { createSorting } from '../../logic/sorting'
+import { InvalidRequestError } from '../../types'
 
 /**
  * Extracts filters from URL search parameters
@@ -29,10 +30,31 @@ export function extractFiltersFromURL(url: URL): ElementsFilters {
 }
 
 /**
+ * Rejects a category the item type does not define, so the request fails the same way whether
+ * it is served by the marketplace API or by the subgraph fallback.
+ */
+function validateCategory(filters: ElementsFilters, itemType: 'wearable' | 'emote'): void {
+  if (!filters.category) {
+    return
+  }
+
+  const category = filters.category.toLowerCase()
+  const isValid = itemType === 'emote' ? EmoteCategory.validate(category) : WearableCategory.validate(category)
+
+  if (!isValid) {
+    throw new InvalidRequestError(`Invalid category requested: '${filters.category}'.`)
+  }
+}
+
+/**
  * Creates pagination and filters from URL, handling defaults consistently
  * Always returns valid pagination with defaults to prevent fetching all elements
  */
-export function createPaginationAndFilters(url: URL, maxPageSize: number = Number.MAX_VALUE) {
+export function createPaginationAndFilters(
+  url: URL,
+  maxPageSize: number = Number.MAX_VALUE,
+  itemType?: 'wearable' | 'emote'
+) {
   // Extract filters first
   const filters = extractFiltersFromURL(url)
 
@@ -43,6 +65,10 @@ export function createPaginationAndFilters(url: URL, maxPageSize: number = Numbe
   // Validate sorting if present
   if (url.searchParams.has('orderBy')) {
     createSorting(url) // This will throw InvalidRequestError if invalid
+  }
+
+  if (itemType) {
+    validateCategory(filters, itemType)
   }
 
   return { pagination, filters }

@@ -1,18 +1,7 @@
-import { ISubgraphComponent } from '@dcl/thegraph-component'
 import { EmoteCategory, Network, WearableCategory } from '@dcl/schemas'
 import { ElementsFilters, ItemType } from '../../adapters/elements-fetcher'
 import { InvalidRequestError } from '../../types'
-
-interface NFT {
-  id: string
-  [key: string]: any
-}
-
-interface QueryResults<T> {
-  nfts: T[]
-}
-
-const THE_GRAPH_PAGE_SIZE = 1000
+import { THE_GRAPH_PAGE_SIZE } from './fetch-elements'
 
 /** Builds the owner query for the given filters, or returns null when they cannot match anything. */
 export type ItemQueryBuilder = (filters?: ElementsFilters) => string | null
@@ -72,54 +61,16 @@ function buildItemTypeFilter(category: ItemType, network?: Network): string {
 }
 
 /**
- * Walks every NFT held by the owner, a page at a time, advancing the `id_gt` keyset cursor.
- *
- * The caller needs the whole set rather than a single page: rows are grouped by URN before
- * being returned, so a page of rows is not a page of items, and ordering by rarity or by the
- * grouped transfer dates cannot be expressed in the subgraph at all. `skip` is not the
- * alternative — The Graph's docs advise against it because it performs poorly at depth.
- */
-export async function fetchOwnedNFTs<E extends NFT>(
-  subgraph: ISubgraphComponent,
-  query: string,
-  address: string
-): Promise<E[]> {
-  const elements: E[] = []
-  const owner = address.toLowerCase()
-  let idFrom: string = ''
-  let result: QueryResults<E>
-
-  do {
-    result = await subgraph.query<QueryResults<E>>(query, {
-      owner,
-      idFrom
-    })
-
-    if (!result?.nfts || result.nfts.length === 0) {
-      break
-    }
-
-    for (const nft of result.nfts) {
-      elements.push(nft)
-    }
-
-    const idFromLastElement = elements[elements.length - 1].id
-    if (!idFromLastElement) {
-      throw new Error('Error getting id from last entity from previous page')
-    }
-
-    idFrom = idFromLastElement
-  } while (result?.nfts?.length === THE_GRAPH_PAGE_SIZE)
-
-  return elements
-}
-
-/**
  * Creates a query builder for items (wearables/emotes).
  *
- * The query is always ordered by `id` ascending: that is the only order the `id_gt` cursor
- * below can walk without skipping or repeating rows. The order the caller asked for is
- * applied in memory, after grouping.
+ * The query is always ordered by `id` ascending: that is the only order the `id_gt` keyset
+ * cursor in `fetchAllNFTs` can walk without skipping or repeating rows. The order the caller
+ * asked for is applied in memory, after grouping.
+ *
+ * The whole set has to be walked rather than paged in the subgraph: rows are grouped by URN
+ * before being returned, so a page of rows is not a page of items, and ordering by rarity or
+ * by the grouped transfer dates cannot be expressed here at all. `skip` is not the
+ * alternative either -- The Graph's docs advise against it because it performs poorly at depth.
  */
 export function createItemQueryBuilder(category: ItemType, network?: Network): ItemQueryBuilder {
   const itemTypeFilter = buildItemTypeFilter(category, network)
