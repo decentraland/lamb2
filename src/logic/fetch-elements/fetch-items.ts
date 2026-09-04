@@ -115,6 +115,11 @@ function paginateItems<T extends SortableItem>(
   }
 
   const offset = (pagination.pageNum - 1) * pagination.pageSize
+  // A page before the first has nothing on it; a negative offset would slice the tail instead.
+  if (pagination.pageSize <= 0 || offset < 0) {
+    return { elements: [], totalAmount: ordered.length }
+  }
+
   return { elements: ordered.slice(offset, offset + pagination.pageSize), totalAmount: ordered.length }
 }
 

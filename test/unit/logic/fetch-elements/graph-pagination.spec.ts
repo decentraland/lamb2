@@ -3,7 +3,6 @@ import { ISubgraphComponent } from '@dcl/thegraph-component'
 import { ElementsFilters } from '../../../../src/adapters/elements-fetcher'
 import { fetchAllNFTs } from '../../../../src/logic/fetch-elements/fetch-elements'
 import { createItemQueryBuilder } from '../../../../src/logic/fetch-elements/graph-pagination'
-import { InvalidRequestError } from '../../../../src/types'
 
 describe('when building the owned items query', () => {
   let filters: ElementsFilters | undefined
@@ -86,10 +85,11 @@ describe('when building the owned items query', () => {
   describe('and the results are filtered by a category the subgraph cannot express', () => {
     beforeEach(() => {
       filters = { category: 'not_a_category' }
+      query = createItemQueryBuilder('wearable', Network.MATIC)(filters)
     })
 
-    it('should throw an invalid request error instead of interpolating it into the query', () => {
-      expect(() => createItemQueryBuilder('wearable', Network.MATIC)(filters)).toThrow(InvalidRequestError)
+    it('should resolve to no query so the request answers empty instead of failing', () => {
+      expect(query).toBeNull()
     })
   })
 })

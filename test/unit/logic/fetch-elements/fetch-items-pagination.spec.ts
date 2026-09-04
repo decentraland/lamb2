@@ -87,6 +87,41 @@ describe('when fetching owned wearables from the subgraph fallback', () => {
     })
   })
 
+  describe('and a page before the first is requested', () => {
+    beforeEach(async () => {
+      theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({
+        nfts: [wearableRow('urn:a', '1'), wearableRow('urn:b', '1'), wearableRow('urn:c', '1')]
+      })
+      result = await fetchWearables({ theGraph, logs }, owner, { pageSize: 2, pageNum: -1 })
+    })
+
+    it('should return no items rather than the tail of the list', () => {
+      expect(result.elements).toEqual([])
+    })
+
+    it('should still report the real total', () => {
+      expect(result.totalAmount).toBe(3)
+    })
+  })
+
+  describe('and the items are filtered by a category the subgraph cannot express', () => {
+    let filters: ElementsFilters
+
+    beforeEach(async () => {
+      filters = { category: 'not_a_category' }
+      theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [wearableRow('urn:a', '1')] })
+      result = await fetchWearables({ theGraph, logs }, owner, { pageSize: 10, pageNum: 1 }, filters)
+    })
+
+    it('should answer empty without querying the subgraph', () => {
+      expect(theGraph.maticCollectionsSubgraph.query).not.toHaveBeenCalled()
+    })
+
+    it('should report a total of zero', () => {
+      expect(result).toEqual({ elements: [], totalAmount: 0 })
+    })
+  })
+
   describe('and the items are ordered by name descending', () => {
     let filters: ElementsFilters
 

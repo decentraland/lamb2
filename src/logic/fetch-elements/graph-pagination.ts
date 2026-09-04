@@ -1,6 +1,5 @@
 import { EmoteCategory, Network, WearableCategory } from '@dcl/schemas'
 import { ElementsFilters, ItemType } from '../../adapters/elements-fetcher'
-import { InvalidRequestError } from '../../types'
 import { THE_GRAPH_PAGE_SIZE } from './fetch-elements'
 
 /** Builds the owner query for the given filters, or returns null when they cannot match anything. */
@@ -8,33 +7,29 @@ export type ItemQueryBuilder = (filters?: ElementsFilters) => string | null
 
 /**
  * Builds the category `where` condition, or returns null when the requested category cannot
- * match any collection NFT so the caller can skip the query.
+ * match any collection NFT so the caller can skip the query and answer empty.
  *
  * The item category lives in `searchWearableCategory`/`searchEmoteCategory`: `nft.category`
  * holds the entity kind (wearable/emote/parcel/…), so filtering it by an item category
  * silently matches nothing. Both fields are GraphQL enums, so the value is interpolated
- * unquoted and has to be validated rather than trusted.
+ * unquoted: anything outside the enum is treated as matching nothing rather than trusted.
  */
 function buildCategoryCondition(itemType: ItemType, filters?: ElementsFilters): string | null {
-  if (!filters?.category) {
+  const category = filters?.category
+  if (!category) {
     return ''
   }
 
-  const category = filters.category.toLowerCase()
-
   if (itemType === 'emote') {
-    if (!EmoteCategory.validate(category)) {
-      throw new InvalidRequestError(`Invalid category requested: '${filters.category}'.`)
-    }
-    return `, searchEmoteCategory: ${category}`
-  }
-
-  if (!WearableCategory.validate(category)) {
-    throw new InvalidRequestError(`Invalid category requested: '${filters.category}'.`)
+    return EmoteCategory.validate(category) ? `, searchEmoteCategory: ${category}` : null
   }
 
   // The subgraph's WearableCategory enum has no `body_shape`: no collection NFT carries it.
-  return category === WearableCategory.BODY_SHAPE ? null : `, searchWearableCategory: ${category}`
+  if (!WearableCategory.validate(category) || category === WearableCategory.BODY_SHAPE) {
+    return null
+  }
+
+  return `, searchWearableCategory: ${category}`
 }
 
 function buildItemTypeFilter(category: ItemType, network?: Network): string {

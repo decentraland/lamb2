@@ -34,7 +34,7 @@ export async function wearablesHandler(
   }
 
   // Extract pagination and filters (includes sorting validation)
-  const { pagination, filters } = createPaginationAndFilters(context.url, PAGINATION_DEFAULTS.MAX_PAGE_SIZE, 'wearable')
+  const { pagination, filters } = createPaginationAndFilters(context.url, PAGINATION_DEFAULTS.MAX_PAGE_SIZE)
 
   // Fetch elements (fetcher handles caching transparently)
   const { elements, totalAmount } = await wearablesFetcher.fetchOwnedElements(address, pagination, filters)
