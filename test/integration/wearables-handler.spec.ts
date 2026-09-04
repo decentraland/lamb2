@@ -409,8 +409,9 @@ describe('wearables-handler: GET /users/:address/wearables', () => {
 
           expect(r.status).toBe(200)
           const response = await r.json()
-          expect(response.totalAmount).toBe(17)
-          expect(response.elements).toHaveLength(17)
+          // name-3 and name-13 out of name-0..name-16
+          expect(response.totalAmount).toBe(2)
+          expect(response.elements).toHaveLength(2)
         })
 
         it('handles definitions correctly with The Graph fallback', async () => {

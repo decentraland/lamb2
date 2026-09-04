@@ -98,17 +98,36 @@ function selectSorting<T extends SortableItem>(filters?: ElementsFilters): Sorti
 }
 
 /**
- * Orders the grouped items and cuts out the requested page. `totalAmount` counts the grouped
- * items, so it is the real total rather than the size of the page.
+ * Applies the name and rarity filters the marketplace API applies server-side, so the fallback
+ * answers a filtered request with the same set. Mirrors `createFilters` in items-commons, except
+ * that an unknown rarity matches nothing rather than rejecting the request.
+ */
+function filterItems<T extends SortableItem>(items: T[], filters?: ElementsFilters): T[] {
+  const name = filters?.name?.toLowerCase()
+  const rarity = filters?.rarity?.toLowerCase()
+
+  if (!name && !rarity) {
+    return items
+  }
+
+  return items.filter(
+    (item) => (!rarity || item.rarity === rarity) && (!name || (!!item.name && item.name.toLowerCase().includes(name)))
+  )
+}
+
+/**
+ * Filters and orders the grouped items, then cuts out the requested page. `totalAmount` counts
+ * the grouped items left after filtering, so it is the real total rather than the size of the page.
  */
 function paginateItems<T extends SortableItem>(
   items: T[],
   pagination?: Pick<Pagination, 'pageNum' | 'pageSize'>,
   filters?: ElementsFilters
 ): { elements: T[]; totalAmount: number } {
+  const filtered = filterItems(items, filters)
   const sorting = selectSorting<T>(filters)
   // Copied rather than sorted in place: the caller's array is not ours to reorder.
-  const ordered = sorting ? [...items].sort(sorting) : items
+  const ordered = sorting ? [...filtered].sort(sorting) : filtered
 
   if (!pagination) {
     return { elements: ordered, totalAmount: ordered.length }

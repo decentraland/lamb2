@@ -122,6 +122,64 @@ describe('when fetching owned wearables from the subgraph fallback', () => {
     })
   })
 
+  describe('and the items are filtered by rarity', () => {
+    let filters: ElementsFilters
+
+    beforeEach(async () => {
+      filters = { rarity: 'rare' }
+      theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({
+        nfts: [
+          wearableRow('urn:common', '1', { rarity: Rarity.COMMON }),
+          wearableRow('urn:rare-a', '1', { rarity: Rarity.RARE }),
+          wearableRow('urn:rare-b', '1', { rarity: Rarity.RARE })
+        ]
+      })
+      result = await fetchWearables({ theGraph, logs }, owner, { pageSize: 1, pageNum: 1 }, filters)
+    })
+
+    it('should keep only the items of that rarity', () => {
+      expect(result.elements.map((element) => element.urn)).toEqual(['urn:rare-a'])
+    })
+
+    it('should count the total over the filtered items rather than the whole inventory', () => {
+      expect(result.totalAmount).toBe(2)
+    })
+  })
+
+  describe('and the items are filtered by name', () => {
+    let filters: ElementsFilters
+
+    beforeEach(async () => {
+      filters = { name: 'HAT' }
+      theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({
+        nfts: [
+          wearableRow('urn:a', '1', { name: 'Bucket Hat' }),
+          wearableRow('urn:b', '1', { name: 'Sneakers' }),
+          wearableRow('urn:c', '1', { name: 'hatchling mask' })
+        ]
+      })
+      result = await fetchWearables({ theGraph, logs }, owner, { pageSize: 10, pageNum: 1 }, filters)
+    })
+
+    it('should match the name as a case-insensitive substring', () => {
+      expect(result.elements.map((element) => element.urn)).toEqual(['urn:a', 'urn:c'])
+    })
+  })
+
+  describe('and the items are filtered by a rarity no item has', () => {
+    let filters: ElementsFilters
+
+    beforeEach(async () => {
+      filters = { rarity: 'not_a_rarity' }
+      theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [wearableRow('urn:a', '1')] })
+      result = await fetchWearables({ theGraph, logs }, owner, { pageSize: 10, pageNum: 1 }, filters)
+    })
+
+    it('should answer empty instead of rejecting the request', () => {
+      expect(result).toEqual({ elements: [], totalAmount: 0 })
+    })
+  })
+
   describe('and the items are ordered by name descending', () => {
     let filters: ElementsFilters
 
