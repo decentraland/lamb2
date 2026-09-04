@@ -82,7 +82,7 @@ export async function fetchNFTsPaginated<E extends NFT>(
   if (offset === 0) {
     // First page - direct fetch
     const query = baseQuery(graphFilters, orderBy, orderDirection, first)
-    const result = await subgraph.query<QueryResults<E>>(query, { owner })
+    const result = await subgraph.query<QueryResults<E>>(query, { owner, idFrom: '' })
 
     return {
       elements: result?.nfts || [],

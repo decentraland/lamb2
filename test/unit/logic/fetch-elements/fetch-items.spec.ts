@@ -66,6 +66,45 @@ describe('fetchEmotes', () => {
     })
   })
 
+  it('includes idFrom in first-page paginated queries', async () => {
+    theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+    theGraph.ethereumCollectionsSubgraph.query = jest.fn().mockResolvedValue({ nfts: [] })
+
+    const owner = 'anOwner'
+    await fetchEmotes({ theGraph, logs: mockLogs }, owner, { pageNum: 1, pageSize: 10 })
+
+    const expectedQuery = `
+    query fetchItemsByOwner($owner: String, $idFrom: ID) {
+      nfts(
+        where: { id_gt: $idFrom, owner: $owner, itemType: emote_v1},
+        orderBy: id,
+        orderDirection: asc,
+        first: 10
+      ) {
+        urn,
+        id,
+        tokenId,
+        category,
+        itemType,
+        transferredAt,
+        metadata {
+          emote {
+            name,
+            category
+          }
+        },
+        item {
+          rarity,
+          price
+        }
+      }
+    }`
+    expect(theGraph.maticCollectionsSubgraph.query).toBeCalledWith(expectedQuery, {
+      owner: owner.toLowerCase(),
+      idFrom: ''
+    })
+  })
+
   it('emotes are mapped correctly', async () => {
     theGraph.maticCollectionsSubgraph.query = jest.fn().mockResolvedValue({
       nfts: [
