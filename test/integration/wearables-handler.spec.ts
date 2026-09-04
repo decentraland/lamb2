@@ -435,10 +435,10 @@ describe('wearables-handler: GET /users/:address/wearables', () => {
           expect(response.totalAmount).toBe(2)
           expect(response.elements).toHaveLength(2)
           expect(response.elements[0]).toHaveProperty('definition')
-          expect(content.fetchEntitiesByPointers).toHaveBeenCalledWith([
-            `urn-definitions-test-${uniqueId}-0`,
-            `urn-definitions-test-${uniqueId}-1`
-          ])
+          expect(content.fetchEntitiesByPointers).toHaveBeenCalledWith(
+            [`urn-definitions-test-${uniqueId}-0`, `urn-definitions-test-${uniqueId}-1`],
+            expect.objectContaining({ abortController: expect.any(AbortController) })
+          )
         })
       })
     })
