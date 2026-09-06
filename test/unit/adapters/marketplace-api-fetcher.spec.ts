@@ -375,3 +375,74 @@ describe('MarketplaceApiFetcher', () => {
     })
   })
 })
+
+describe('when the owned items span several pages', () => {
+  const PAGES = 10
+  let fetch: { fetch: jest.Mock }
+  let inFlight: number
+  let maxInFlight: number
+  let names: string[]
+
+  beforeEach(async () => {
+    inFlight = 0
+    maxInFlight = 0
+    // Later pages answer sooner than earlier ones, so page order in the result is not
+    // completion order.
+    fetch = {
+      fetch: jest.fn(async (url: string) => {
+        const page = Number(new URL(url).searchParams.get('offset')) / 1000 + 1
+        inFlight++
+        maxInFlight = Math.max(maxInFlight, inFlight)
+        await new Promise((resolve) => setTimeout(resolve, (PAGES + 1 - page) * 3))
+        inFlight--
+        return {
+          ok: true,
+          json: async () => ({
+            ok: true,
+            data: {
+              elements: [
+                {
+                  urn: `urn:${page}`,
+                  amount: 1,
+                  individualData: [{ id: `id-${page}`, tokenId: '1', transferredAt: '1', price: '1' }],
+                  name: `Item ${page}`,
+                  rarity: 'common',
+                  minTransferredAt: 1,
+                  maxTransferredAt: 1,
+                  category: WearableCategory.HAT
+                }
+              ],
+              page,
+              pages: PAGES,
+              limit: 1000,
+              total: PAGES
+            }
+          })
+        }
+      })
+    }
+    const logs = await createLogComponent({})
+    const fetcher = await createMarketplaceApiFetcher({
+      config: { getString: jest.fn().mockResolvedValue('https://marketplace-api.com') } as any,
+      fetch: fetch as any,
+      logs
+    })
+    names = (await fetcher.fetchUserWearables('0xabc')).wearables.map((wearable) => wearable.name)
+  })
+
+  afterEach(() => {
+    jest.resetAllMocks()
+  })
+
+  it('should request every page once', () => {
+    expect(fetch.fetch).toHaveBeenCalledTimes(PAGES)
+  })
+
+  it('should stitch the elements back in page order even though later pages finished first', () => {
+    expect(names).toEqual(Array.from({ length: PAGES }, (_, index) => `Item ${index + 1}`))
+  })
+
+  it('should fetch the remaining pages concurrently, never more than four at a time', () => {
+    expect(maxInFlight).toBe(4)
+  })
+})

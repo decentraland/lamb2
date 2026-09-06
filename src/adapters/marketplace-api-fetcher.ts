@@ -300,27 +300,37 @@ export async function createMarketplaceApiFetcher(
     }
   }
 
+  /** How many of the remaining pages are requested at once after the first one. */
+  const MAX_CONCURRENT_PAGE_REQUESTS = 4
+
   /**
-   * Fetches all pages of data from a paginated endpoint
+   * Fetches every page of a paginated endpoint. The first page reveals how many there are, so
+   * the rest are requested concurrently (bounded) rather than one after another, and stitched
+   * back together in page order.
    */
   async function fetchAllPages<T>(baseEndpoint: string): Promise<T[]> {
-    const allItems: T[] = []
-    let page = 1
-    let hasMore = true
     const PAGE_SIZE = 1000
-
-    while (hasMore) {
-      const endpoint = `${baseEndpoint}${baseEndpoint.includes('?') ? '&' : '?'}limit=${PAGE_SIZE}&offset=${(page - 1) * PAGE_SIZE}`
-      const response = await makeApiRequest<MarketplaceApiResponse<T>>(endpoint)
-
-      allItems.push(...response.data.elements)
-
-      // Check if there are more pages
-      hasMore = page < response.data.pages
-      page++
+    function pageEndpoint(page: number): string {
+      return `${baseEndpoint}${baseEndpoint.includes('?') ? '&' : '?'}limit=${PAGE_SIZE}&offset=${(page - 1) * PAGE_SIZE}`
     }
 
-    return allItems
+    const first = await makeApiRequest<MarketplaceApiResponse<T>>(pageEndpoint(1))
+    const remainingPages = Array.from({ length: Math.max(first.data.pages - 1, 0) }, (_, index) => index + 2)
+    const elementsByPage: T[][] = [first.data.elements]
+
+    let nextIndex = 0
+    async function worker(): Promise<void> {
+      while (nextIndex < remainingPages.length) {
+        const page = remainingPages[nextIndex++]
+        const response = await makeApiRequest<MarketplaceApiResponse<T>>(pageEndpoint(page))
+        elementsByPage[page - 1] = response.data.elements
+      }
+    }
+
+    const workers = Math.min(MAX_CONCURRENT_PAGE_REQUESTS, remainingPages.length)
+    await Promise.all(Array.from({ length: workers }, () => worker()))
+
+    return elementsByPage.flat()
   }
 
   async function fetchUserWearables(

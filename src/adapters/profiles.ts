@@ -193,9 +193,11 @@ export async function createProfilesComponent(
     return Promise.all(
       profiles.map(async ({ entity, ethAddress, isDefaultProfile, metadata }, index) => {
         const [wearablesResult, emotesResult, namesResult] = ownedByProfile[index]
-        const ownedWearables = wearablesResult.elements
-        const ownedEmotes = emotesResult.elements
-        const ownedNames = namesResult.elements
+        // Indexed once: an avatar is validated against the whole inventory, and whales own
+        // thousands of items.
+        const ownedWearablesByUrn = new Map(wearablesResult.elements.map((wearable) => [wearable.urn, wearable]))
+        const ownedEmotesByUrn = new Map(emotesResult.elements.map((emote) => [emote.urn, emote]))
+        const ownedNames = new Set(namesResult.elements.map((name) => name.name))
 
         const thirdPartyWearables = isDefaultProfile
           ? []
@@ -212,11 +214,12 @@ export async function createProfilesComponent(
 
             const { urn, tokenId } = splitUrnAndTokenId(wearable)
 
-            const matchingOwnedWearable = ownedWearables.find(
-              (ownedWearable) =>
-                ownedWearable.urn === urn &&
-                (!tokenId || ownedWearable.individualData.find((itemData) => itemData.tokenId === tokenId))
-            )
+            const ownedWearable = ownedWearablesByUrn.get(urn)
+            const matchingOwnedWearable =
+              ownedWearable &&
+              (!tokenId || ownedWearable.individualData.some((itemData) => itemData.tokenId === tokenId))
+                ? ownedWearable
+                : undefined
 
             if (matchingOwnedWearable) {
               validatedWearables.push(
@@ -238,11 +241,11 @@ export async function createProfilesComponent(
 
             const { urn, tokenId } = splitUrnAndTokenId(emote.urn)
 
-            const matchingOwnedEmote = ownedEmotes.find(
-              (ownedEmote) =>
-                ownedEmote.urn === urn &&
-                (!tokenId || ownedEmote.individualData.find((itemData) => itemData.tokenId === tokenId))
-            )
+            const ownedEmote = ownedEmotesByUrn.get(urn)
+            const matchingOwnedEmote =
+              ownedEmote && (!tokenId || ownedEmote.individualData.some((itemData) => itemData.tokenId === tokenId))
+                ? ownedEmote
+                : undefined
 
             if (matchingOwnedEmote) {
               const urnToReturn = ensureERC721
@@ -258,7 +261,7 @@ export async function createProfilesComponent(
             // The pointer is the authoritative identity, not the deployed metadata
             ...(isDefaultProfile ? {} : { userId: ethAddress, ethAddress }),
             links: sanitizeLinks(avatar.links),
-            hasClaimedName: ownedNames.findIndex((name) => name.name === avatar.name) !== -1,
+            hasClaimedName: ownedNames.has(avatar.name),
             avatar: {
               ...avatar.avatar,
               emotes: validatedEmotes,
