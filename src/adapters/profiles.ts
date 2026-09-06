@@ -3,6 +3,7 @@ import { Avatar, Entity, LinkUrl, Snapshots } from '@dcl/schemas'
 import { parseUrn } from '@dcl/urn-resolver'
 import { splitUrnAndTokenId } from '../logic/utils'
 import { createTPWOwnershipChecker } from '../ports/ownership-checker/tpw-ownership-checker'
+import LRU from 'lru-cache'
 
 type OwnedElements = [{ elements: OnChainWearable[] }, { elements: OnChainEmote[] }, { elements: Name[] }]
 
@@ -104,6 +105,12 @@ export async function createProfilesComponent(
 
   const ensureERC721 = (await config.getString('ENSURE_ERC_721')) !== 'false'
   const baseUrl = (await config.getString('PROFILE_CDN_BASE_URL')) ?? 'https://profile-images.decentraland.org'
+  const assembledSize = (await config.getNumber('PROFILES_CACHE_MAX_SIZE')) ?? 10_000
+  const assembledAge = (await config.getNumber('PROFILES_CACHE_MAX_AGE')) ?? 60_000
+
+  // Keyed by entity id: a new deployment gets a new id, so an entry can only go stale through
+  // an ownership change, and the age bounds how long that is served.
+  const assembledProfiles = new LRU<string, ProfileMetadata>({ max: assembledSize, ttl: assembledAge })
 
   /**
    * The non-base wearables an avatar wears, in the urn format the fetchers use. Legacy `dcl://`
@@ -115,6 +122,135 @@ export async function createProfilesComponent(
       .filter((wearableId) => !isBaseWearable(wearableId))
     const translated = await Promise.all(wearableIds.map(translateWearablesIdFormat))
     return translated.filter((wearableId): wearableId is string => !!wearableId)
+  }
+
+  /** Resolves ownership for the given profile entities and builds their public representation. */
+  async function assembleProfiles(profileEntities: Entity[]): Promise<ProfileMetadata[]> {
+    // Every profile registers its third-party wearables before the check runs, so ownership
+    // is resolved once for the whole batch rather than once per profile.
+    const thirdPartyWearablesOwnershipChecker = createTPWOwnershipChecker(components)
+    const profiles = await Promise.all(
+      profileEntities.map(async (entity) => {
+        const ethAddress = entity.pointers[0]
+        const isDefaultProfile: boolean = ethAddress.startsWith('default')
+        const metadata: ProfileMetadata = entity.metadata
+
+        metadata.timestamp = entity.timestamp
+
+        if (!isDefaultProfile) {
+          thirdPartyWearablesOwnershipChecker.addNFTsForAddress(ethAddress, await collectWearableIds(metadata))
+        }
+
+        return { entity, ethAddress, isDefaultProfile, metadata }
+      })
+    )
+
+    const [ownedByProfile] = await Promise.all([
+      Promise.all(
+        profiles.map(({ ethAddress, isDefaultProfile }): Promise<OwnedElements> => {
+          if (isDefaultProfile) {
+            return Promise.resolve(NOTHING_OWNED)
+          }
+
+          return Promise.all([
+            wearablesFetcher.fetchOwnedElements(ethAddress),
+            emotesFetcher.fetchOwnedElements(ethAddress),
+            namesFetcher.fetchOwnedElements(ethAddress)
+          ])
+        })
+      ),
+      thirdPartyWearablesOwnershipChecker.checkNFTsOwnership()
+    ])
+
+    return Promise.all(
+      profiles.map(async ({ entity, ethAddress, isDefaultProfile, metadata }, index) => {
+        const [wearablesResult, emotesResult, namesResult] = ownedByProfile[index]
+        const ownedWearables = wearablesResult.elements
+        const ownedEmotes = emotesResult.elements
+        const ownedNames = namesResult.elements
+
+        const thirdPartyWearables = isDefaultProfile
+          ? []
+          : thirdPartyWearablesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
+
+        const avatars: Avatar[] = []
+        for (const avatar of metadata.avatars) {
+          const validatedWearables: string[] = []
+          for (const wearable of avatar.avatar.wearables) {
+            if (isBaseWearable(wearable)) {
+              validatedWearables.push(wearable)
+              continue
+            }
+
+            const { urn, tokenId } = splitUrnAndTokenId(wearable)
+
+            const matchingOwnedWearable = ownedWearables.find(
+              (ownedWearable) =>
+                ownedWearable.urn === urn &&
+                (!tokenId || ownedWearable.individualData.find((itemData) => itemData.tokenId === tokenId))
+            )
+
+            if (matchingOwnedWearable) {
+              validatedWearables.push(
+                ensureERC721
+                  ? `${matchingOwnedWearable.urn}:${
+                      tokenId ? tokenId : matchingOwnedWearable.individualData[0].tokenId
+                    }`
+                  : matchingOwnedWearable.urn
+              )
+            }
+          }
+
+          const validatedEmotes: { slot: number; urn: string }[] = []
+          for (const emote of avatar.avatar.emotes ?? []) {
+            if (!emote.urn.includes(':') || isBaseEmote(emote.urn)) {
+              validatedEmotes.push(emote)
+              continue
+            }
+
+            const { urn, tokenId } = splitUrnAndTokenId(emote.urn)
+
+            const matchingOwnedEmote = ownedEmotes.find(
+              (ownedEmote) =>
+                ownedEmote.urn === urn &&
+                (!tokenId || ownedEmote.individualData.find((itemData) => itemData.tokenId === tokenId))
+            )
+
+            if (matchingOwnedEmote) {
+              const urnToReturn = ensureERC721
+                ? `${matchingOwnedEmote.urn}:${tokenId ? tokenId : matchingOwnedEmote.individualData[0].tokenId}`
+                : matchingOwnedEmote.urn
+
+              validatedEmotes.push({ urn: urnToReturn, slot: emote.slot })
+            }
+          }
+
+          avatars.push({
+            ...avatar,
+            // The pointer is the authoritative identity, not the deployed metadata
+            ...(isDefaultProfile ? {} : { userId: ethAddress, ethAddress }),
+            links: sanitizeLinks(avatar.links),
+            hasClaimedName: ownedNames.findIndex((name) => name.name === avatar.name) !== -1,
+            avatar: {
+              ...avatar.avatar,
+              emotes: validatedEmotes,
+              bodyShape: (await translateWearablesIdFormat(avatar.avatar.bodyShape)) ?? '',
+              snapshots: addBaseUrlToSnapshots(
+                entity.id,
+                baseUrl,
+                avatar.avatar.snapshots || { face256: '', body: '' }
+              ),
+              wearables: Array.from(new Set(validatedWearables.concat(thirdPartyWearables)))
+            }
+          })
+        }
+
+        return {
+          timestamp: metadata.timestamp,
+          avatars
+        }
+      })
+    )
   }
 
   async function getProfiles(
@@ -134,131 +270,25 @@ export async function createProfilesComponent(
 
       profileEntities = profileEntities.filter((entity) => !!entity.metadata)
 
-      // Every profile registers its third-party wearables before the check runs, so ownership
-      // is resolved once for the whole batch rather than once per profile.
-      const thirdPartyWearablesOwnershipChecker = createTPWOwnershipChecker(components)
-      const profiles = await Promise.all(
-        profileEntities.map(async (entity) => {
-          const ethAddress = entity.pointers[0]
-          const isDefaultProfile: boolean = ethAddress.startsWith('default')
-          const metadata: ProfileMetadata = entity.metadata
+      // Only profiles not already assembled for this exact deployment go through ownership.
+      const cached = new Map<string, ProfileMetadata>()
+      const entitiesToAssemble: Entity[] = []
+      for (const entity of profileEntities) {
+        const assembled = assembledProfiles.get(entity.id)
+        if (assembled) {
+          cached.set(entity.id, assembled)
+        } else {
+          entitiesToAssemble.push(entity)
+        }
+      }
 
-          metadata.timestamp = entity.timestamp
+      const fresh = entitiesToAssemble.length > 0 ? await assembleProfiles(entitiesToAssemble) : []
+      const freshById = new Map(entitiesToAssemble.map((entity, index) => [entity.id, fresh[index]]))
+      for (const [entityId, profile] of freshById) {
+        assembledProfiles.set(entityId, profile)
+      }
 
-          if (!isDefaultProfile) {
-            thirdPartyWearablesOwnershipChecker.addNFTsForAddress(ethAddress, await collectWearableIds(metadata))
-          }
-
-          return { entity, ethAddress, isDefaultProfile, metadata }
-        })
-      )
-
-      const [ownedByProfile] = await Promise.all([
-        Promise.all(
-          profiles.map(({ ethAddress, isDefaultProfile }): Promise<OwnedElements> => {
-            if (isDefaultProfile) {
-              return Promise.resolve(NOTHING_OWNED)
-            }
-
-            return Promise.all([
-              wearablesFetcher.fetchOwnedElements(ethAddress),
-              emotesFetcher.fetchOwnedElements(ethAddress),
-              namesFetcher.fetchOwnedElements(ethAddress)
-            ])
-          })
-        ),
-        thirdPartyWearablesOwnershipChecker.checkNFTsOwnership()
-      ])
-
-      return await Promise.all(
-        profiles.map(async ({ entity, ethAddress, isDefaultProfile, metadata }, index) => {
-          const [wearablesResult, emotesResult, namesResult] = ownedByProfile[index]
-          const ownedWearables = wearablesResult.elements
-          const ownedEmotes = emotesResult.elements
-          const ownedNames = namesResult.elements
-
-          const thirdPartyWearables = isDefaultProfile
-            ? []
-            : thirdPartyWearablesOwnershipChecker.getOwnedNFTsForAddress(ethAddress)
-
-          const avatars: Avatar[] = []
-          for (const avatar of metadata.avatars) {
-            const validatedWearables: string[] = []
-            for (const wearable of avatar.avatar.wearables) {
-              if (isBaseWearable(wearable)) {
-                validatedWearables.push(wearable)
-                continue
-              }
-
-              const { urn, tokenId } = splitUrnAndTokenId(wearable)
-
-              const matchingOwnedWearable = ownedWearables.find(
-                (ownedWearable) =>
-                  ownedWearable.urn === urn &&
-                  (!tokenId || ownedWearable.individualData.find((itemData) => itemData.tokenId === tokenId))
-              )
-
-              if (matchingOwnedWearable) {
-                validatedWearables.push(
-                  ensureERC721
-                    ? `${matchingOwnedWearable.urn}:${
-                        tokenId ? tokenId : matchingOwnedWearable.individualData[0].tokenId
-                      }`
-                    : matchingOwnedWearable.urn
-                )
-              }
-            }
-
-            const validatedEmotes: { slot: number; urn: string }[] = []
-            for (const emote of avatar.avatar.emotes ?? []) {
-              if (!emote.urn.includes(':') || isBaseEmote(emote.urn)) {
-                validatedEmotes.push(emote)
-                continue
-              }
-
-              const { urn, tokenId } = splitUrnAndTokenId(emote.urn)
-
-              const matchingOwnedEmote = ownedEmotes.find(
-                (ownedEmote) =>
-                  ownedEmote.urn === urn &&
-                  (!tokenId || ownedEmote.individualData.find((itemData) => itemData.tokenId === tokenId))
-              )
-
-              if (matchingOwnedEmote) {
-                const urnToReturn = ensureERC721
-                  ? `${matchingOwnedEmote.urn}:${tokenId ? tokenId : matchingOwnedEmote.individualData[0].tokenId}`
-                  : matchingOwnedEmote.urn
-
-                validatedEmotes.push({ urn: urnToReturn, slot: emote.slot })
-              }
-            }
-
-            avatars.push({
-              ...avatar,
-              // The pointer is the authoritative identity, not the deployed metadata
-              ...(isDefaultProfile ? {} : { userId: ethAddress, ethAddress }),
-              links: sanitizeLinks(avatar.links),
-              hasClaimedName: ownedNames.findIndex((name) => name.name === avatar.name) !== -1,
-              avatar: {
-                ...avatar.avatar,
-                emotes: validatedEmotes,
-                bodyShape: (await translateWearablesIdFormat(avatar.avatar.bodyShape)) ?? '',
-                snapshots: addBaseUrlToSnapshots(
-                  entity.id,
-                  baseUrl,
-                  avatar.avatar.snapshots || { face256: '', body: '' }
-                ),
-                wearables: Array.from(new Set(validatedWearables.concat(thirdPartyWearables)))
-              }
-            })
-          }
-
-          return {
-            timestamp: metadata.timestamp,
-            avatars
-          }
-        })
-      )
+      return profileEntities.map((entity) => cached.get(entity.id) ?? freshById.get(entity.id)!)
     } catch (error: any) {
       logger.error(error)
       return []
