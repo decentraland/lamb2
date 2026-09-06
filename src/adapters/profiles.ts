@@ -1,8 +1,12 @@
-import { AppComponents, ProfileMetadata } from '../types'
+import { AppComponents, Name, OnChainEmote, OnChainWearable, ProfileMetadata } from '../types'
 import { Avatar, Entity, LinkUrl, Snapshots } from '@dcl/schemas'
 import { parseUrn } from '@dcl/urn-resolver'
 import { splitUrnAndTokenId } from '../logic/utils'
 import { createTPWOwnershipChecker } from '../ports/ownership-checker/tpw-ownership-checker'
+
+type OwnedElements = [{ elements: OnChainWearable[] }, { elements: OnChainEmote[] }, { elements: Name[] }]
+
+const NOTHING_OWNED: OwnedElements = [{ elements: [] }, { elements: [] }, { elements: [] }]
 
 function isBaseWearable(wearable: string): boolean {
   return wearable.includes('base-avatars')
@@ -101,6 +105,18 @@ export async function createProfilesComponent(
   const ensureERC721 = (await config.getString('ENSURE_ERC_721')) !== 'false'
   const baseUrl = (await config.getString('PROFILE_CDN_BASE_URL')) ?? 'https://profile-images.decentraland.org'
 
+  /**
+   * The non-base wearables an avatar wears, in the urn format the fetchers use. Legacy `dcl://`
+   * ids are translated; base wearables are always owned and skipped.
+   */
+  async function collectWearableIds(metadata: ProfileMetadata): Promise<string[]> {
+    const wearableIds = metadata.avatars
+      .flatMap((avatar) => avatar.avatar.wearables)
+      .filter((wearableId) => !isBaseWearable(wearableId))
+    const translated = await Promise.all(wearableIds.map(translateWearablesIdFormat))
+    return translated.filter((wearableId): wearableId is string => !!wearableId)
+  }
+
   async function getProfiles(
     ethAddresses: string[],
     ifModifiedSinceTimestamp?: number | undefined
@@ -117,9 +133,11 @@ export async function createProfilesComponent(
       }
 
       profileEntities = profileEntities.filter((entity) => !!entity.metadata)
-      const thirdPartyWearablesOwnershipChecker = createTPWOwnershipChecker(components)
 
-      return await Promise.all(
+      // Every profile registers its third-party wearables before the check runs, so ownership
+      // is resolved once for the whole batch rather than once per profile.
+      const thirdPartyWearablesOwnershipChecker = createTPWOwnershipChecker(components)
+      const profiles = await Promise.all(
         profileEntities.map(async (entity) => {
           const ethAddress = entity.pointers[0]
           const isDefaultProfile: boolean = ethAddress.startsWith('default')
@@ -127,34 +145,34 @@ export async function createProfilesComponent(
 
           metadata.timestamp = entity.timestamp
 
-          const names: string[] = []
-          const wearables: string[] = []
-          for (const { hasClaimedName, avatar, name } of metadata.avatars) {
-            if (hasClaimedName && name && name.trim().length > 0) {
-              names.push(name)
-            }
-
-            for (const wearableId of avatar.wearables) {
-              if (!isBaseWearable(wearableId)) {
-                const translatedWearableId = await translateWearablesIdFormat(wearableId)
-                if (translatedWearableId) {
-                  wearables.push(translatedWearableId)
-                }
-              }
-            }
+          if (!isDefaultProfile) {
+            thirdPartyWearablesOwnershipChecker.addNFTsForAddress(ethAddress, await collectWearableIds(metadata))
           }
 
-          isDefaultProfile || thirdPartyWearablesOwnershipChecker.addNFTsForAddress(ethAddress, wearables)
+          return { entity, ethAddress, isDefaultProfile, metadata }
+        })
+      )
 
-          const [wearablesResult, emotesResult, namesResult] = isDefaultProfile
-            ? [{ elements: [] }, { elements: [] }, { elements: [] }]
-            : await Promise.all([
-                wearablesFetcher.fetchOwnedElements(ethAddress),
-                emotesFetcher.fetchOwnedElements(ethAddress),
-                namesFetcher.fetchOwnedElements(ethAddress),
-                thirdPartyWearablesOwnershipChecker.checkNFTsOwnership()
-              ])
+      const [ownedByProfile] = await Promise.all([
+        Promise.all(
+          profiles.map(({ ethAddress, isDefaultProfile }): Promise<OwnedElements> => {
+            if (isDefaultProfile) {
+              return Promise.resolve(NOTHING_OWNED)
+            }
 
+            return Promise.all([
+              wearablesFetcher.fetchOwnedElements(ethAddress),
+              emotesFetcher.fetchOwnedElements(ethAddress),
+              namesFetcher.fetchOwnedElements(ethAddress)
+            ])
+          })
+        ),
+        thirdPartyWearablesOwnershipChecker.checkNFTsOwnership()
+      ])
+
+      return await Promise.all(
+        profiles.map(async ({ entity, ethAddress, isDefaultProfile, metadata }, index) => {
+          const [wearablesResult, emotesResult, namesResult] = ownedByProfile[index]
           const ownedWearables = wearablesResult.elements
           const ownedEmotes = emotesResult.elements
           const ownedNames = namesResult.elements
