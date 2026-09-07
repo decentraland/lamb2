@@ -1,5 +1,5 @@
 import { Network } from '@dcl/schemas'
-import { AppComponents, InvalidRequestError } from '../types'
+import { AppComponents, InvalidRequestError, ServiceOverloadedError } from '../types'
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { createLowerCaseKeysCache } from './lowercase-keys-cache'
 import LRU from 'lru-cache'
@@ -132,9 +132,9 @@ export function createElementsFetcherComponent<T>(
 
         return result
       } catch (err: any) {
-        // A rejected request is the caller's fault, not an upstream failure: let it keep its
-        // 400 instead of being reported as an upstream 502.
-        if (err instanceof InvalidRequestError) {
+        // A rejected request is the caller's fault and shed load is a retryable overload: neither
+        // is an upstream failure, so neither is reported as a 502.
+        if (err instanceof InvalidRequestError || err instanceof ServiceOverloadedError) {
           throw err
         }
 

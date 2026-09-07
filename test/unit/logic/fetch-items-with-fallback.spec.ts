@@ -1,7 +1,11 @@
 import { createLogComponent } from '@well-known-components/logger'
 import { fetchWearables, fetchEmotes } from '../../../src/logic/fetch-elements/fetch-items'
 import { fetchNames } from '../../../src/logic/fetch-elements/fetch-names'
-import { MarketplaceApiFetcher, MarketplaceApiError } from '../../../src/adapters/marketplace-api-fetcher'
+import {
+  MarketplaceApiFetcher,
+  MarketplaceApiError,
+  MarketplaceApiSaturatedError
+} from '../../../src/adapters/marketplace-api-fetcher'
 import { WearableCategory, EmoteCategory } from '@dcl/schemas'
 import { TheGraphComponent } from '../../../src/ports/the-graph'
 
@@ -268,5 +272,39 @@ describe('Fetch Functions with Marketplace API Fallback', () => {
       expect(result.elements[0].name).toBe('directname.dcl.eth')
       expect(result.elements[0].price).toBeUndefined()
     })
+  })
+})
+
+describe('when the marketplace API sheds the request because it is saturated', () => {
+  let theGraph: TheGraphComponent
+  let marketplaceApiFetcher: MarketplaceApiFetcher
+  let outcome: PromiseSettledResult<unknown>
+
+  beforeEach(async () => {
+    theGraph = {
+      ethereumCollectionsSubgraph: { query: jest.fn().mockResolvedValue({ nfts: [] }) },
+      maticCollectionsSubgraph: { query: jest.fn().mockResolvedValue({ nfts: [] }) },
+      ensSubgraph: { query: jest.fn() }
+    } as any
+    marketplaceApiFetcher = {
+      fetchUserWearables: jest.fn().mockRejectedValue(new MarketplaceApiSaturatedError('full')),
+      fetchUserEmotes: jest.fn(),
+      fetchUserNames: jest.fn()
+    }
+    ;[outcome] = await Promise.allSettled([
+      fetchWearables({ theGraph, logs: await createLogComponent({}), marketplaceApiFetcher }, '0xtest')
+    ])
+  })
+
+  afterEach(() => {
+    jest.resetAllMocks()
+  })
+
+  it('should not fall back to the subgraph, which would only move the overload', () => {
+    expect(theGraph.maticCollectionsSubgraph.query).not.toHaveBeenCalled()
+  })
+
+  it('should surface the saturation to the caller', () => {
+    expect(outcome.status === 'rejected' && outcome.reason instanceof MarketplaceApiSaturatedError).toBe(true)
   })
 })

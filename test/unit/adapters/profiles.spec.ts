@@ -1,10 +1,17 @@
 import { Entity } from '@dcl/schemas'
 import { createProfilesComponent, IProfilesComponent } from '../../../src/adapters/profiles'
 import { createOwnershipCachesComponent } from '../../../src/ports/ownership-caches'
-import { ProfileMetadata } from '../../../src/types'
+import { ProfileMetadata, ServiceOverloadedError } from '../../../src/types'
 
 const THIRD_PARTY_WEARABLE =
   'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f'
+
+type Harness = {
+  profiles: IProfilesComponent
+  content: { fetchEntitiesByPointers: jest.Mock }
+  wearablesFetcher: { fetchOwnedElements: jest.Mock }
+  l2ThirdPartyItemChecker: { checkThirdPartyItems: jest.Mock }
+}
 
 function profileEntity(address: string, wearables: string[]): Entity {
   return {
@@ -33,37 +40,43 @@ function profileEntity(address: string, wearables: string[]): Entity {
   } as unknown as Entity
 }
 
+async function createHarness(numbers: Record<string, number> = {}): Promise<Harness> {
+  const nothingOwned = () => ({ fetchOwnedElements: jest.fn().mockResolvedValue({ elements: [], totalAmount: 0 }) })
+  const config = {
+    getString: jest.fn().mockResolvedValue(undefined),
+    getNumber: jest.fn(async (key: string) => numbers[key])
+  }
+  const content = { fetchEntitiesByPointers: jest.fn() }
+  const wearablesFetcher = nothingOwned()
+  const l2ThirdPartyItemChecker = { checkThirdPartyItems: jest.fn().mockResolvedValue([]) }
+
+  const profiles = await createProfilesComponent({
+    content,
+    config,
+    logs: {
+      getLogger: () => ({ debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn(), log: jest.fn() })
+    },
+    ownershipCaches: await createOwnershipCachesComponent({ config } as any),
+    l1ThirdPartyItemChecker: { checkThirdPartyItems: jest.fn().mockResolvedValue([]) },
+    l2ThirdPartyItemChecker,
+    wearablesFetcher,
+    emotesFetcher: nothingOwned(),
+    namesFetcher: nothingOwned()
+  } as any)
+
+  return { profiles, content, wearablesFetcher, l2ThirdPartyItemChecker }
+}
+
 describe('when fetching a batch of profiles', () => {
   let profiles: IProfilesComponent
-  let content: { fetchEntitiesByPointers: jest.Mock }
-  let l1ThirdPartyItemChecker: { checkThirdPartyItems: jest.Mock }
-  let l2ThirdPartyItemChecker: { checkThirdPartyItems: jest.Mock }
+  let content: Harness['content']
+  let wearablesFetcher: Harness['wearablesFetcher']
+  let l2ThirdPartyItemChecker: Harness['l2ThirdPartyItemChecker']
   let addresses: string[]
   let result: ProfileMetadata[] | undefined
 
   beforeEach(async () => {
-    const nothingOwned = () => ({ fetchOwnedElements: jest.fn().mockResolvedValue({ elements: [], totalAmount: 0 }) })
-    const config = {
-      getString: jest.fn().mockResolvedValue(undefined),
-      getNumber: jest.fn().mockResolvedValue(undefined)
-    }
-    content = { fetchEntitiesByPointers: jest.fn() }
-    l1ThirdPartyItemChecker = { checkThirdPartyItems: jest.fn().mockResolvedValue([]) }
-    l2ThirdPartyItemChecker = { checkThirdPartyItems: jest.fn().mockResolvedValue([]) }
-
-    profiles = await createProfilesComponent({
-      content,
-      config,
-      logs: {
-        getLogger: () => ({ debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn(), log: jest.fn() })
-      },
-      ownershipCaches: await createOwnershipCachesComponent({ config } as any),
-      l1ThirdPartyItemChecker,
-      l2ThirdPartyItemChecker,
-      wearablesFetcher: nothingOwned(),
-      emotesFetcher: nothingOwned(),
-      namesFetcher: nothingOwned()
-    } as any)
+    ;({ profiles, content, wearablesFetcher, l2ThirdPartyItemChecker } = await createHarness())
   })
 
   afterEach(() => {
@@ -109,6 +122,139 @@ describe('when fetching a batch of profiles', () => {
 
     it('should still return one profile per address', () => {
       expect(result).toHaveLength(addresses.length)
+    })
+  })
+
+  describe('and the same profile deployment is requested again', () => {
+    let first: ProfileMetadata[] | undefined
+
+    beforeEach(async () => {
+      content.fetchEntitiesByPointers.mockResolvedValue([profileEntity('0x1', [])])
+      first = await profiles.getProfiles(['0x1'])
+      result = await profiles.getProfiles(['0x1'])
+    })
+
+    it('should resolve ownership only once and serve the repeat from memory', () => {
+      expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledTimes(1)
+    })
+
+    it('should answer both requests with the same profile', () => {
+      expect(result).toEqual(first)
+    })
+  })
+
+  describe('and the profile was redeployed between two requests', () => {
+    beforeEach(async () => {
+      content.fetchEntitiesByPointers.mockResolvedValueOnce([profileEntity('0x1', [])])
+      await profiles.getProfiles(['0x1'])
+      content.fetchEntitiesByPointers.mockResolvedValueOnce([{ ...profileEntity('0x1', []), id: 'entity-0x1-v2' }])
+      result = await profiles.getProfiles(['0x1'])
+    })
+
+    it('should resolve ownership again for the new deployment', () => {
+      expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  describe('and the memory window elapsed between two requests', () => {
+    beforeEach(async () => {
+      ;({ profiles, content, wearablesFetcher } = await createHarness({ PROFILES_CACHE_MAX_AGE: 20 }))
+      content.fetchEntitiesByPointers.mockResolvedValue([profileEntity('0x1', [])])
+      await profiles.getProfiles(['0x1'])
+      await new Promise((resolve) => setTimeout(resolve, 40))
+      result = await profiles.getProfiles(['0x1'])
+    })
+
+    it('should resolve ownership again', () => {
+      expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  describe('and the batch holds more profiles than are fetched at once', () => {
+    let inFlight: number
+    let maxInFlight: number
+
+    beforeEach(async () => {
+      inFlight = 0
+      maxInFlight = 0
+      addresses = Array.from({ length: 20 }, (_, index) => `0x${index + 1}`)
+      content.fetchEntitiesByPointers.mockResolvedValue(addresses.map((address) => profileEntity(address, [])))
+      wearablesFetcher.fetchOwnedElements.mockImplementation(async () => {
+        inFlight++
+        maxInFlight = Math.max(maxInFlight, inFlight)
+        await new Promise((resolve) => setTimeout(resolve, 5))
+        inFlight--
+        return { elements: [], totalAmount: 0 }
+      })
+      result = await profiles.getProfiles(addresses)
+    })
+
+    it('should fetch at most eight profiles at a time', () => {
+      expect(maxInFlight).toBe(8)
+    })
+
+    it('should still return every profile', () => {
+      expect(result).toHaveLength(addresses.length)
+    })
+  })
+
+  describe('and two requests for the same deployment arrive together', () => {
+    let first: ProfileMetadata[] | undefined
+
+    beforeEach(async () => {
+      content.fetchEntitiesByPointers.mockResolvedValue([profileEntity('0x1', [])])
+      wearablesFetcher.fetchOwnedElements.mockImplementation(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 10))
+        return { elements: [], totalAmount: 0 }
+      })
+      ;[first, result] = await Promise.all([profiles.getProfiles(['0x1']), profiles.getProfiles(['0x1'])])
+    })
+
+    it('should assemble the deployment once and let the second request join it', () => {
+      expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledTimes(1)
+    })
+
+    it('should answer both requests with the same profile', () => {
+      expect(result).toEqual(first)
+    })
+  })
+
+  describe('and two addresses resolve to entities sharing one id', () => {
+    beforeEach(async () => {
+      content.fetchEntitiesByPointers.mockResolvedValueOnce([{ ...profileEntity('0x1', []), id: 'shared' }])
+      await profiles.getProfiles(['0x1'])
+      content.fetchEntitiesByPointers.mockResolvedValueOnce([{ ...profileEntity('0x2', []), id: 'shared' }])
+      result = await profiles.getProfiles(['0x2'])
+    })
+
+    it("should serve the second address its own identity rather than the first one's memoized profile", () => {
+      expect(result?.[0].avatars[0].ethAddress).toBe('0x2')
+    })
+
+    it('should resolve ownership for the second address separately', () => {
+      expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  describe('and a memoized profile is handed back', () => {
+    beforeEach(async () => {
+      content.fetchEntitiesByPointers.mockResolvedValue([profileEntity('0x1', [])])
+      result = await profiles.getProfiles(['0x1'])
+    })
+
+    it('should be frozen all the way down so a mutation cannot poison later requests', () => {
+      expect(Object.isFrozen(result?.[0].avatars[0].avatar)).toBe(true)
+    })
+  })
+
+  describe('and the marketplace is shedding load', () => {
+    beforeEach(() => {
+      content.fetchEntitiesByPointers.mockResolvedValue([profileEntity('0x1', [])])
+      wearablesFetcher.fetchOwnedElements.mockRejectedValue(new ServiceOverloadedError('shed'))
+    })
+
+    it('should fail the request as an overload rather than answer with no profiles', async () => {
+      await expect(profiles.getProfiles(['0x1'])).rejects.toThrow(ServiceOverloadedError)
     })
   })
 })

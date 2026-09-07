@@ -1,6 +1,7 @@
+import { BulkheadSaturatedError, createBulkhead, mapWithConcurrency } from '../logic/concurrency'
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { WearableCategory, EmoteCategory, Network } from '@dcl/schemas'
-import { OnChainWearable, OnChainEmote, Name, AppComponents } from '../types'
+import { AppComponents, Name, OnChainEmote, OnChainWearable, ServiceOverloadedError } from '../types'
 import { ItemType as ItemTypeFilter } from './elements-fetcher'
 import { ItemType } from '../types'
 
@@ -125,6 +126,19 @@ export type MarketplaceApiFetcher = IBaseComponent & {
 /**
  * Error thrown when marketplace API is unavailable or returns an error
  */
+/**
+ * Thrown when the marketplace bulkhead is full. Deliberately not a MarketplaceApiError: shedding
+ * load must not send the request down the subgraph fallback, which would only move the overload.
+ * As a ServiceOverloadedError it reaches the client as a retryable 503 instead of a 502 or an
+ * empty result.
+ */
+export class MarketplaceApiSaturatedError extends ServiceOverloadedError {
+  constructor(message: string) {
+    super(message)
+    this.name = 'MarketplaceApiSaturatedError'
+  }
+}
+
 export class MarketplaceApiError extends Error {
   constructor(
     message: string,
@@ -195,9 +209,9 @@ function mapApiNameToName(apiName: MarketplaceApiName): Name {
  * Creates a MarketplaceApiFetcher component
  */
 export async function createMarketplaceApiFetcher(
-  components: Pick<AppComponents, 'config' | 'fetch' | 'logs'>
+  components: Pick<AppComponents, 'config' | 'fetch' | 'logs' | 'metrics'>
 ): Promise<MarketplaceApiFetcher> {
-  const { config, fetch, logs } = components
+  const { config, fetch, logs, metrics } = components
   const logger = logs.getLogger('marketplace-api-fetcher')
 
   // Get marketplace API base URL from config
@@ -207,6 +221,29 @@ export async function createMarketplaceApiFetcher(
   }
 
   const baseUrl = marketplaceApiUrl.replace(/\/$/, '') // Remove trailing slash
+
+  async function integerSetting(name: string, fallback: number, min: number): Promise<number> {
+    const value = await config.getNumber(name)
+    if (value === undefined) {
+      return fallback
+    }
+    // `??` would accept 0, NaN, fractions or Infinity, each of which breaks the bound below.
+    if (!Number.isInteger(value) || value < min) {
+      throw new Error(`${name} must be an integer of at least ${min}, got ${String(value)}`)
+    }
+    return value
+  }
+
+  // One slot per inventory fetch, shared by every caller in the process, so aggregate marketplace
+  // traffic stays bounded however many requests are in flight: at most fetches × pages-in-flight
+  // HTTP requests. Past the queue a fetch fails fast instead of piling up. A cold profile batch
+  // takes up to 24 slots (8 profiles × 3 fetchers), so the defaults only bite in real overload.
+  const maxConcurrentFetches = await integerSetting('MARKETPLACE_API_MAX_CONCURRENT_FETCHES', 128, 1)
+  const maxQueuedFetches = await integerSetting('MARKETPLACE_API_MAX_QUEUED_FETCHES', 1024, 0)
+  const bulkhead = createBulkhead(maxConcurrentFetches, maxQueuedFetches, ({ running, queued }) => {
+    metrics.observe('marketplace_api_fetches', { state: 'running' }, running)
+    metrics.observe('marketplace_api_fetches', { state: 'queued' }, queued)
+  })
 
   /**
    * Builds endpoint URL with query parameters (transparent pass-through)
@@ -263,6 +300,23 @@ export async function createMarketplaceApiFetcher(
   }
 
   /**
+   * Runs one inventory fetch inside the bulkhead. The unit is the whole fetch, not each page: a
+   * fetch that holds its slot runs its page fan-out freely and can never be starved by itself.
+   */
+  async function withinBulkhead<T>(operation: string, fn: () => Promise<T>): Promise<T> {
+    try {
+      return await bulkhead.run(fn)
+    } catch (error) {
+      if (error instanceof BulkheadSaturatedError) {
+        metrics.increment('marketplace_api_fetches_shed_total', { operation })
+        logger.warn('Marketplace fetch shed, bulkhead saturated', { operation, ...bulkhead.stats() })
+        throw new MarketplaceApiSaturatedError(error.message)
+      }
+      throw error
+    }
+  }
+
+  /**
    * Makes a request to the marketplace API with error handling
    */
   async function makeApiRequest<T>(endpoint: string): Promise<T> {
@@ -300,27 +354,41 @@ export async function createMarketplaceApiFetcher(
     }
   }
 
+  /** How many of the remaining pages are requested at once after the first one. */
+  const MAX_CONCURRENT_PAGE_REQUESTS = 4
+
+  /** More pages than this is not a real inventory; rather than fetch it, the request fails explicitly. */
+  const MAX_PAGES = 100
+
   /**
-   * Fetches all pages of data from a paginated endpoint
+   * Fetches every page of a paginated endpoint. The first page reveals how many there are, so
+   * the rest are requested concurrently (bounded) rather than one after another, and stitched
+   * back together in page order.
    */
   async function fetchAllPages<T>(baseEndpoint: string): Promise<T[]> {
-    const allItems: T[] = []
-    let page = 1
-    let hasMore = true
     const PAGE_SIZE = 1000
 
-    while (hasMore) {
-      const endpoint = `${baseEndpoint}${baseEndpoint.includes('?') ? '&' : '?'}limit=${PAGE_SIZE}&offset=${(page - 1) * PAGE_SIZE}`
-      const response = await makeApiRequest<MarketplaceApiResponse<T>>(endpoint)
-
-      allItems.push(...response.data.elements)
-
-      // Check if there are more pages
-      hasMore = page < response.data.pages
-      page++
+    function pageEndpoint(page: number): string {
+      return `${baseEndpoint}${baseEndpoint.includes('?') ? '&' : '?'}limit=${PAGE_SIZE}&offset=${(page - 1) * PAGE_SIZE}`
     }
 
-    return allItems
+    const first = await makeApiRequest<MarketplaceApiResponse<T>>(pageEndpoint(1))
+    const declaredPages = first.data.pages
+    if (!Number.isInteger(declaredPages) || declaredPages < 0) {
+      throw new MarketplaceApiError(`Invalid page count from the marketplace API: ${String(declaredPages)}`)
+    }
+    // Never hand back part of an inventory as if it were all of it: failing here lets the caller
+    // fall back to a source that can walk the whole thing.
+    if (declaredPages > MAX_PAGES) {
+      throw new MarketplaceApiError(`Inventory spans ${declaredPages} pages, more than the ${MAX_PAGES} fetched`)
+    }
+
+    const remainingPages = Array.from({ length: Math.max(declaredPages - 1, 0) }, (_, index) => index + 2)
+    const rest = await mapWithConcurrency(remainingPages, MAX_CONCURRENT_PAGE_REQUESTS, (page) =>
+      makeApiRequest<MarketplaceApiResponse<T>>(pageEndpoint(page))
+    )
+
+    return [first.data.elements, ...rest.map((response) => response.data.elements)].flat()
   }
 
   async function fetchUserWearables(
@@ -443,8 +511,8 @@ export async function createMarketplaceApiFetcher(
   }
 
   return {
-    fetchUserWearables,
-    fetchUserEmotes,
-    fetchUserNames
+    fetchUserWearables: (address, params) => withinBulkhead('wearables', () => fetchUserWearables(address, params)),
+    fetchUserEmotes: (address, params) => withinBulkhead('emotes', () => fetchUserEmotes(address, params)),
+    fetchUserNames: (address, params) => withinBulkhead('names', () => fetchUserNames(address, params))
   }
 }
