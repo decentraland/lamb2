@@ -37,25 +37,39 @@ describe('when mapping items with bounded concurrency', () => {
     })
   })
 
-  describe('and one item fails', () => {
+  describe('and one item fails while another is still running', () => {
     let failing: jest.Mock
+    let inFlightAtRejection: number
 
-    beforeEach(() => {
+    beforeEach(async () => {
+      inFlightAtRejection = -1
       failing = jest.fn(async (item: number) => {
-        if (item === 2) {
-          throw new Error('boom')
+        inFlight++
+        try {
+          await new Promise((resolve) => setTimeout(resolve, item === 2 ? 5 : 30))
+          if (item === 2) {
+            throw new Error('boom')
+          }
+          return item
+        } finally {
+          inFlight--
         }
-        return item
+      })
+      await mapWithConcurrency([1, 2, 3, 4], 2, failing).catch(() => {
+        inFlightAtRejection = inFlight
       })
     })
 
     it('should reject with that failure', async () => {
-      await expect(mapWithConcurrency([1, 2, 3, 4], 1, failing)).rejects.toThrow('boom')
+      await expect(mapWithConcurrency([1, 2, 3, 4], 2, failing)).rejects.toThrow('boom')
     })
 
-    it('should not start the items after the failure', async () => {
-      await mapWithConcurrency([1, 2, 3, 4], 1, failing).catch(() => undefined)
+    it('should not start the items after the failure', () => {
       expect(failing).toHaveBeenCalledTimes(2)
+    })
+
+    it('should only reject once every call it had started has settled', () => {
+      expect(inFlightAtRejection).toBe(0)
     })
   })
 

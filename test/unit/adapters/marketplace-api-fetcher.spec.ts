@@ -661,3 +661,50 @@ describe('when a fetch is shed', () => {
     expect(new MarketplaceApiSaturatedError('full')).toBeInstanceOf(ServiceOverloadedError)
   })
 })
+
+describe('when a page request fails while another fetch is queued behind the bulkhead', () => {
+  let events: string[]
+
+  beforeEach(async () => {
+    events = []
+    const fetch = {
+      fetch: jest.fn(async (url: string) => {
+        const parsed = new URL(url)
+        const address = parsed.pathname.split('/')[3]
+        const page = Number(parsed.searchParams.get('offset')) / 1000 + 1
+        events.push(`start ${address} ${page}`)
+        // Inventory a: page 2 fails quickly while page 3 is still in flight; b is a single page.
+        const delay = address === 'a' && page === 3 ? 60 : 5
+        await new Promise((resolve) => setTimeout(resolve, delay))
+        events.push(`end ${address} ${page}`)
+        if (address === 'a' && page === 2) {
+          return { ok: false, status: 500, statusText: 'boom' }
+        }
+        return {
+          ok: true,
+          json: async () => ({
+            ok: true,
+            data: { elements: [], page, pages: address === 'a' ? 3 : 1, limit: 1000, total: 0 }
+          })
+        }
+      })
+    }
+    const settings: Record<string, number> = {
+      MARKETPLACE_API_MAX_CONCURRENT_FETCHES: 1,
+      MARKETPLACE_API_MAX_QUEUED_FETCHES: 1
+    }
+    const fetcher = await createMarketplaceApiFetcher({
+      config: {
+        getString: jest.fn().mockResolvedValue('https://marketplace-api.com'),
+        getNumber: jest.fn(async (key: string) => settings[key])
+      } as any,
+      fetch: fetch as any,
+      logs: await createLogComponent({})
+    })
+    await Promise.allSettled([fetcher.fetchUserWearables('a'), fetcher.fetchUserWearables('b')])
+  })
+
+  it('should not let the queued fetch start until the failed fetch has no request in flight', () => {
+    expect(events.indexOf('start b 1')).toBeGreaterThan(events.indexOf('end a 3'))
+  })
+})

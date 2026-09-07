@@ -1,7 +1,9 @@
 /**
  * Maps `items` through `fn` with at most `limit` calls in flight, preserving order. Workers pull
- * the next item as soon as they finish, so one slow item never idles the other slots. The first
- * failure stops the remaining items from starting and is what the returned promise rejects with.
+ * the next item as soon as they finish, so one slow item never idles the other slots. After the
+ * first failure no further item starts, and the returned promise rejects with that failure only
+ * once every call already started has settled, so a caller holding a resource around this can
+ * release it knowing nothing is still running.
  */
 export async function mapWithConcurrency<T, R>(
   items: T[],
@@ -11,6 +13,7 @@ export async function mapWithConcurrency<T, R>(
   const results: R[] = new Array(items.length)
   let next = 0
   let failed = false
+  let firstFailure: unknown
 
   async function worker(): Promise<void> {
     while (next < items.length && !failed) {
@@ -18,14 +21,21 @@ export async function mapWithConcurrency<T, R>(
       try {
         results[index] = await fn(items[index], index)
       } catch (error) {
-        failed = true
-        throw error
+        if (!failed) {
+          failed = true
+          firstFailure = error
+        }
       }
     }
   }
 
   const workers = Math.min(Math.max(limit, 1), items.length)
   await Promise.all(Array.from({ length: workers }, () => worker()))
+
+  if (failed) {
+    throw firstFailure
+  }
+
   return results
 }
 
