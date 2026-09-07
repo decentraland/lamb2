@@ -10,7 +10,8 @@ export function extractFiltersFromURL(url: URL): ElementsFilters {
   const filters: ElementsFilters = {}
 
   if (url.searchParams.has('category')) {
-    filters.category = url.searchParams.get('category')!
+    // Lowercased once here so the cache key, the marketplace API and the subgraph enum agree.
+    filters.category = url.searchParams.get('category')!.toLowerCase()
   }
   if (url.searchParams.has('rarity')) {
     filters.rarity = url.searchParams.get('rarity')!
