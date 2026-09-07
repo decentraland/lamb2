@@ -1,4 +1,4 @@
-import { mapWithConcurrency } from '../logic/concurrency'
+import { BulkheadSaturatedError, createBulkhead, mapWithConcurrency } from '../logic/concurrency'
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { WearableCategory, EmoteCategory, Network } from '@dcl/schemas'
 import { OnChainWearable, OnChainEmote, Name, AppComponents } from '../types'
@@ -126,6 +126,17 @@ export type MarketplaceApiFetcher = IBaseComponent & {
 /**
  * Error thrown when marketplace API is unavailable or returns an error
  */
+/**
+ * Thrown when the marketplace bulkhead is full. Deliberately not a MarketplaceApiError: shedding
+ * load must not send the request down the subgraph fallback, which would only move the overload.
+ */
+export class MarketplaceApiSaturatedError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'MarketplaceApiSaturatedError'
+  }
+}
+
 export class MarketplaceApiError extends Error {
   constructor(
     message: string,
@@ -209,6 +220,12 @@ export async function createMarketplaceApiFetcher(
 
   const baseUrl = marketplaceApiUrl.replace(/\/$/, '') // Remove trailing slash
 
+  const maxConcurrentRequests = (await config.getNumber('MARKETPLACE_API_MAX_CONCURRENT_REQUESTS')) ?? 64
+  const maxQueuedRequests = (await config.getNumber('MARKETPLACE_API_MAX_QUEUED_REQUESTS')) ?? 256
+  // Shared by every caller in the process, so aggregate marketplace traffic stays bounded no
+  // matter how many requests are in flight; past the queue a call fails fast instead of piling up.
+  const bulkhead = createBulkhead(maxConcurrentRequests, maxQueuedRequests)
+
   /**
    * Builds endpoint URL with query parameters (transparent pass-through)
    */
@@ -264,9 +281,20 @@ export async function createMarketplaceApiFetcher(
   }
 
   /**
-   * Makes a request to the marketplace API with error handling
+   * Makes a request to the marketplace API through the bulkhead.
    */
   async function makeApiRequest<T>(endpoint: string): Promise<T> {
+    try {
+      return await bulkhead.run(() => performRequest<T>(endpoint))
+    } catch (error) {
+      if (error instanceof BulkheadSaturatedError) {
+        throw new MarketplaceApiSaturatedError(error.message)
+      }
+      throw error
+    }
+  }
+
+  async function performRequest<T>(endpoint: string): Promise<T> {
     const url = `${baseUrl}${endpoint}`
     logger.debug(`Fetching from marketplace API: ${url}`)
 
@@ -304,7 +332,7 @@ export async function createMarketplaceApiFetcher(
   /** How many of the remaining pages are requested at once after the first one. */
   const MAX_CONCURRENT_PAGE_REQUESTS = 4
 
-  /** A page count above this cannot be a real inventory; the upstream value is not trusted past it. */
+  /** More pages than this is not a real inventory; rather than fetch it, the request fails explicitly. */
   const MAX_PAGES = 100
 
   /**
@@ -321,12 +349,16 @@ export async function createMarketplaceApiFetcher(
 
     const first = await makeApiRequest<MarketplaceApiResponse<T>>(pageEndpoint(1))
     const declaredPages = first.data.pages
-    const pages = Number.isInteger(declaredPages) && declaredPages > 0 ? Math.min(declaredPages, MAX_PAGES) : 1
-    if (pages !== declaredPages) {
-      logger.warn('Unexpected page count from the marketplace API', { endpoint: baseEndpoint, declaredPages, pages })
+    if (!Number.isInteger(declaredPages) || declaredPages < 0) {
+      throw new MarketplaceApiError(`Invalid page count from the marketplace API: ${String(declaredPages)}`)
+    }
+    // Never hand back part of an inventory as if it were all of it: failing here lets the caller
+    // fall back to a source that can walk the whole thing.
+    if (declaredPages > MAX_PAGES) {
+      throw new MarketplaceApiError(`Inventory spans ${declaredPages} pages, more than the ${MAX_PAGES} fetched`)
     }
 
-    const remainingPages = Array.from({ length: pages - 1 }, (_, index) => index + 2)
+    const remainingPages = Array.from({ length: Math.max(declaredPages - 1, 0) }, (_, index) => index + 2)
     const rest = await mapWithConcurrency(remainingPages, MAX_CONCURRENT_PAGE_REQUESTS, (page) =>
       makeApiRequest<MarketplaceApiResponse<T>>(pageEndpoint(page))
     )

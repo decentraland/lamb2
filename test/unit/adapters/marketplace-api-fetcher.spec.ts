@@ -1,6 +1,10 @@
 import { createLogComponent } from '@well-known-components/logger'
 import { IFetchComponent } from '@dcl/core-commons'
-import { createMarketplaceApiFetcher, MarketplaceApiError } from '../../../src/adapters/marketplace-api-fetcher'
+import {
+  createMarketplaceApiFetcher,
+  MarketplaceApiError,
+  MarketplaceApiSaturatedError
+} from '../../../src/adapters/marketplace-api-fetcher'
 import { WearableCategory, EmoteCategory } from '@dcl/schemas'
 
 describe('MarketplaceApiFetcher', () => {
@@ -12,7 +16,8 @@ describe('MarketplaceApiFetcher', () => {
     logs = await createLogComponent({})
 
     mockConfig = {
-      getString: jest.fn().mockResolvedValue('https://marketplace-api.com')
+      getString: jest.fn().mockResolvedValue('https://marketplace-api.com'),
+      getNumber: jest.fn().mockResolvedValue(undefined)
     }
 
     mockFetch = {
@@ -423,7 +428,10 @@ describe('when the owned items span several pages', () => {
     }
     const logs = await createLogComponent({})
     const fetcher = await createMarketplaceApiFetcher({
-      config: { getString: jest.fn().mockResolvedValue('https://marketplace-api.com') } as any,
+      config: {
+        getString: jest.fn().mockResolvedValue('https://marketplace-api.com'),
+        getNumber: jest.fn().mockResolvedValue(undefined)
+      } as any,
       fetch: fetch as any,
       logs
     })
@@ -454,7 +462,10 @@ describe('when the upstream declares an implausible page count', () => {
   beforeEach(async () => {
     fetch = { fetch: jest.fn() }
     fetcher = await createMarketplaceApiFetcher({
-      config: { getString: jest.fn().mockResolvedValue('https://marketplace-api.com') } as any,
+      config: {
+        getString: jest.fn().mockResolvedValue('https://marketplace-api.com'),
+        getNumber: jest.fn().mockResolvedValue(undefined)
+      } as any,
       fetch: fetch as any,
       logs: await createLogComponent({})
     })
@@ -472,24 +483,77 @@ describe('when the upstream declares an implausible page count', () => {
   }
 
   describe('and the count is absurdly large', () => {
-    beforeEach(async () => {
+    beforeEach(() => {
       fetch.fetch.mockImplementation(async () => pageWith(1_000_000_000))
-      await fetcher.fetchUserWearables('0xabc')
     })
 
-    it('should stop at the page cap instead of trusting it', () => {
-      expect(fetch.fetch).toHaveBeenCalledTimes(100)
+    it('should fail explicitly rather than return part of the inventory as all of it', async () => {
+      await expect(fetcher.fetchUserWearables('0xabc')).rejects.toThrow(MarketplaceApiError)
+    })
+
+    it('should not request any further page', async () => {
+      await fetcher.fetchUserWearables('0xabc').catch(() => undefined)
+      expect(fetch.fetch).toHaveBeenCalledTimes(1)
     })
   })
 
-  describe('and the count is not a positive integer', () => {
-    beforeEach(async () => {
+  describe('and the count is not an integer', () => {
+    beforeEach(() => {
       fetch.fetch.mockImplementation(async () => pageWith('lots'))
-      await fetcher.fetchUserWearables('0xabc')
     })
 
-    it('should request the first page only', () => {
-      expect(fetch.fetch).toHaveBeenCalledTimes(1)
+    it('should fail explicitly', async () => {
+      await expect(fetcher.fetchUserWearables('0xabc')).rejects.toThrow(MarketplaceApiError)
     })
+  })
+
+  describe('and the inventory is empty, declared as zero pages', () => {
+    let result: Awaited<ReturnType<typeof fetcher.fetchUserWearables>>
+
+    beforeEach(async () => {
+      fetch.fetch.mockImplementation(async () => pageWith(0))
+      result = await fetcher.fetchUserWearables('0xabc')
+    })
+
+    it('should answer empty from the single request', () => {
+      expect(result.wearables).toEqual([])
+    })
+  })
+})
+
+describe('when more marketplace requests are in flight than the bulkhead allows', () => {
+  let outcomes: PromiseSettledResult<unknown>[]
+
+  beforeEach(async () => {
+    const limits: Record<string, number> = {
+      MARKETPLACE_API_MAX_CONCURRENT_REQUESTS: 1,
+      MARKETPLACE_API_MAX_QUEUED_REQUESTS: 0
+    }
+    const fetch = {
+      fetch: jest.fn(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 20))
+        return {
+          ok: true,
+          json: async () => ({ ok: true, data: { elements: [], page: 1, pages: 1, limit: 1000, total: 0 } })
+        }
+      })
+    }
+    const fetcher = await createMarketplaceApiFetcher({
+      config: {
+        getString: jest.fn().mockResolvedValue('https://marketplace-api.com'),
+        getNumber: jest.fn(async (key: string) => limits[key])
+      } as any,
+      fetch: fetch as any,
+      logs: await createLogComponent({})
+    })
+    outcomes = await Promise.allSettled([fetcher.fetchUserWearables('0x1'), fetcher.fetchUserWearables('0x2')])
+  })
+
+  it('should serve the request that found a slot', () => {
+    expect(outcomes[0].status).toBe('fulfilled')
+  })
+
+  it('should fail the excess request fast with a saturation error, not a marketplace error', () => {
+    expect(outcomes[1].status === 'rejected' && outcomes[1].reason instanceof MarketplaceApiSaturatedError).toBe(true)
   })
 })

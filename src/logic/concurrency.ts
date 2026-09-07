@@ -28,3 +28,62 @@ export async function mapWithConcurrency<T, R>(
   await Promise.all(Array.from({ length: workers }, () => worker()))
   return results
 }
+
+/** Thrown by a bulkhead that has no slot free and no room left in its queue. */
+export class BulkheadSaturatedError extends Error {
+  constructor(limit: number, maxQueued: number) {
+    super(`Bulkhead saturated: ${limit} running and ${maxQueued} queued`)
+    this.name = 'BulkheadSaturatedError'
+  }
+}
+
+export type Bulkhead = {
+  run<T>(fn: () => Promise<T>): Promise<T>
+  stats(): { running: number; queued: number }
+}
+
+/**
+ * Bounds how many calls run at once across every caller. Calls beyond `limit` wait in a queue
+ * of at most `maxQueued`; beyond that they fail immediately, so an overload is shed instead of
+ * piling up without bound. A finishing call hands its slot straight to the next waiter.
+ */
+export function createBulkhead(limit: number, maxQueued: number): Bulkhead {
+  let running = 0
+  const queue: Array<() => void> = []
+
+  function release(): void {
+    const next = queue.shift()
+    if (next) {
+      next()
+    } else {
+      running--
+    }
+  }
+
+  async function acquire(): Promise<void> {
+    if (running < limit) {
+      running++
+      return
+    }
+
+    if (queue.length >= maxQueued) {
+      throw new BulkheadSaturatedError(limit, maxQueued)
+    }
+
+    await new Promise<void>((resolve) => queue.push(resolve))
+  }
+
+  return {
+    async run(fn) {
+      await acquire()
+      try {
+        return await fn()
+      } finally {
+        release()
+      }
+    },
+    stats() {
+      return { running, queued: queue.length }
+    }
+  }
+}

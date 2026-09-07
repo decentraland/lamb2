@@ -1,4 +1,4 @@
-import { MarketplaceApiError } from '../adapters/marketplace-api-fetcher'
+import { MarketplaceApiError, MarketplaceApiSaturatedError } from '../adapters/marketplace-api-fetcher'
 import { AppComponents } from '../types'
 
 /**
@@ -26,6 +26,11 @@ export async function fetchWithMarketplaceFallback<T>(
     logger.debug(`Successfully fetched ${operation} from marketplace API`)
     return result
   } catch (error) {
+    // Load being shed must not be redirected to the more expensive backend.
+    if (error instanceof MarketplaceApiSaturatedError) {
+      throw error
+    }
+
     if (error instanceof MarketplaceApiError) {
       logger.warn(`Marketplace API failed for ${operation}, falling back to The Graph`, {
         error: error.message
