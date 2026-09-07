@@ -3,11 +3,39 @@ import { Avatar, Entity, LinkUrl, Snapshots } from '@dcl/schemas'
 import { parseUrn } from '@dcl/urn-resolver'
 import { splitUrnAndTokenId } from '../logic/utils'
 import { createTPWOwnershipChecker } from '../ports/ownership-checker/tpw-ownership-checker'
-import LRU from 'lru-cache'
+import { LRUCache } from 'lru-cache'
 
 type OwnedElements = [{ elements: OnChainWearable[] }, { elements: OnChainEmote[] }, { elements: Name[] }]
 
 const NOTHING_OWNED: OwnedElements = [{ elements: [] }, { elements: [] }, { elements: [] }]
+
+/**
+ * Memo key for an assembled profile. The entity id alone is not enough: the assembled value
+ * carries the pointer as its identity and is filtered by that address's ownership.
+ */
+function assembledProfileKey(entity: Entity): string {
+  return `${entity.pointers[0]}:${entity.id}`
+}
+
+/**
+ * Memoized profiles are shared between requests and must not alias the entity they were built
+ * from, so the stored value is a private copy, frozen: an accidental mutation throws instead of
+ * poisoning later requests, and the entity's own objects stay untouched.
+ */
+function freezeCopy<T>(value: T): T {
+  return deepFreeze(structuredClone(value))
+}
+
+function deepFreeze<T>(value: T): T {
+  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
+    Object.freeze(value)
+    for (const nested of Object.values(value as Record<string, unknown>)) {
+      deepFreeze(nested)
+    }
+  }
+
+  return value
+}
 
 function isBaseWearable(wearable: string): boolean {
   return wearable.includes('base-avatars')
@@ -110,7 +138,7 @@ export async function createProfilesComponent(
 
   // Keyed by entity id: a new deployment gets a new id, so an entry can only go stale through
   // an ownership change, and the age bounds how long that is served.
-  const assembledProfiles = new LRU<string, ProfileMetadata>({ max: assembledSize, ttl: assembledAge })
+  const assembledProfiles = new LRUCache<string, ProfileMetadata>({ max: assembledSize, ttl: assembledAge })
 
   /**
    * The non-base wearables an avatar wears, in the urn format the fetchers use. Legacy `dcl://`
@@ -274,21 +302,25 @@ export async function createProfilesComponent(
       const cached = new Map<string, ProfileMetadata>()
       const entitiesToAssemble: Entity[] = []
       for (const entity of profileEntities) {
-        const assembled = assembledProfiles.get(entity.id)
+        const assembled = assembledProfiles.get(assembledProfileKey(entity))
         if (assembled) {
-          cached.set(entity.id, assembled)
+          cached.set(assembledProfileKey(entity), assembled)
         } else {
           entitiesToAssemble.push(entity)
         }
       }
 
       const fresh = entitiesToAssemble.length > 0 ? await assembleProfiles(entitiesToAssemble) : []
-      const freshById = new Map(entitiesToAssemble.map((entity, index) => [entity.id, fresh[index]]))
-      for (const [entityId, profile] of freshById) {
-        assembledProfiles.set(entityId, profile)
+      const freshByKey = new Map(
+        entitiesToAssemble.map((entity, index) => [assembledProfileKey(entity), freezeCopy(fresh[index])])
+      )
+      for (const [key, profile] of freshByKey) {
+        assembledProfiles.set(key, profile)
       }
 
-      return profileEntities.map((entity) => cached.get(entity.id) ?? freshById.get(entity.id)!)
+      return profileEntities.map(
+        (entity) => cached.get(assembledProfileKey(entity)) ?? freshByKey.get(assembledProfileKey(entity))!
+      )
     } catch (error: any) {
       logger.error(error)
       return []

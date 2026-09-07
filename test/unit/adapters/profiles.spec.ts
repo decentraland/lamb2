@@ -169,4 +169,32 @@ describe('when fetching a batch of profiles', () => {
       expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledTimes(2)
     })
   })
+
+  describe('and two addresses resolve to entities sharing one id', () => {
+    beforeEach(async () => {
+      content.fetchEntitiesByPointers.mockResolvedValueOnce([{ ...profileEntity('0x1', []), id: 'shared' }])
+      await profiles.getProfiles(['0x1'])
+      content.fetchEntitiesByPointers.mockResolvedValueOnce([{ ...profileEntity('0x2', []), id: 'shared' }])
+      result = await profiles.getProfiles(['0x2'])
+    })
+
+    it("should serve the second address its own identity rather than the first one's memoized profile", () => {
+      expect(result?.[0].avatars[0].ethAddress).toBe('0x2')
+    })
+
+    it('should resolve ownership for the second address separately', () => {
+      expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  describe('and a memoized profile is handed back', () => {
+    beforeEach(async () => {
+      content.fetchEntitiesByPointers.mockResolvedValue([profileEntity('0x1', [])])
+      result = await profiles.getProfiles(['0x1'])
+    })
+
+    it('should be frozen all the way down so a mutation cannot poison later requests', () => {
+      expect(Object.isFrozen(result?.[0].avatars[0].avatar)).toBe(true)
+    })
+  })
 })
