@@ -2,7 +2,7 @@ import {
   createElementsFetcherComponent,
   ElementsFetcher,
   FetcherError,
-  readElementsCacheOptions
+  readElementsCacheSettings
 } from '../../../src/adapters/elements-fetcher'
 
 const logs = {
@@ -150,22 +150,38 @@ describe('when reading the elements cache settings', () => {
   }
 
   describe('and nothing is configured', () => {
-    it('should default to one minute so ownership answers stay close to the chain', async () => {
-      await expect(readElementsCacheOptions(configWith({}))).resolves.toEqual({ maxEntries: 10000, maxAge: 60_000 })
+    let settings: Awaited<ReturnType<typeof readElementsCacheSettings>>
+
+    beforeEach(async () => {
+      settings = await readElementsCacheSettings(configWith({}))
+    })
+
+    it('should default owned elements to one minute so ownership answers stay close to the chain', () => {
+      expect(settings.elements).toEqual({ maxEntries: 10000, maxAge: 60_000 })
+    })
+
+    it('should keep linked wearables at ten minutes, since filling that entry is expensive and rarely changes', () => {
+      expect(settings.thirdPartyWearables).toEqual({ maxEntries: 10000, maxAge: 600_000 })
     })
   })
 
-  describe('and an age is configured', () => {
-    it('should use it', async () => {
-      await expect(readElementsCacheOptions(configWith({ ELEMENTS_CACHE_MAX_AGE: 5000 }))).resolves.toMatchObject({
-        maxAge: 5000
-      })
+  describe('and ages are configured', () => {
+    let settings: Awaited<ReturnType<typeof readElementsCacheSettings>>
+
+    beforeEach(async () => {
+      settings = await readElementsCacheSettings(
+        configWith({ ELEMENTS_CACHE_MAX_AGE: 5000, THIRD_PARTY_WEARABLES_CACHE_MAX_AGE: 7000 })
+      )
+    })
+
+    it('should apply each age to its own cache', () => {
+      expect([settings.elements.maxAge, settings.thirdPartyWearables.maxAge]).toEqual([5000, 7000])
     })
   })
 
   describe('and a setting is not a positive integer', () => {
     it('should refuse to start rather than run with a broken cache', async () => {
-      await expect(readElementsCacheOptions(configWith({ ELEMENTS_CACHE_MAX_AGE: 0 }))).rejects.toThrow(
+      await expect(readElementsCacheSettings(configWith({ ELEMENTS_CACHE_MAX_AGE: 0 }))).rejects.toThrow(
         'ELEMENTS_CACHE_MAX_AGE'
       )
     })

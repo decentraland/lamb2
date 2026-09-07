@@ -18,7 +18,7 @@ import {
 import {
   createElementsFetcherComponent,
   createLegacyElementsFetcherComponent,
-  readElementsCacheOptions
+  readElementsCacheSettings
 } from './adapters/elements-fetcher'
 import { createEntitiesFetcherComponent } from './adapters/entities-fetcher'
 import { createNameDenylistFetcher } from './adapters/name-denylist-fetcher'
@@ -86,7 +86,7 @@ export async function initComponents(
     : await createTheGraphComponent({ config, logs, fetch, metrics })
 
   const ownershipCaches = await createOwnershipCachesComponent({ config })
-  const elementsCacheOptions = await readElementsCacheOptions(config)
+  const elementsCache = await readElementsCacheSettings(config)
 
   const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent({
     config,
@@ -119,25 +119,25 @@ export async function initComponents(
       const elements = await fetchBaseWearables({ entitiesFetcher })
       return { elements, totalAmount: elements.length }
     },
-    elementsCacheOptions
+    elementsCache.elements
   )
 
   const wearablesFetcher = createElementsFetcherComponent(
     { logs, theGraph, marketplaceApiFetcher },
     fetchWearables,
-    elementsCacheOptions
+    elementsCache.elements
   )
 
   const emotesFetcher = createElementsFetcherComponent(
     { logs, theGraph, marketplaceApiFetcher },
     fetchEmotes,
-    elementsCacheOptions
+    elementsCache.elements
   )
 
   const namesFetcher = createElementsFetcherComponent(
     { logs, theGraph, marketplaceApiFetcher },
     fetchNames,
-    elementsCacheOptions
+    elementsCache.elements
   )
 
   const landsFetcher = createLegacyElementsFetcherComponent({ logs }, async (address) => fetchLands(theGraph, address))
@@ -148,7 +148,7 @@ export async function initComponents(
       const elements = await fetchAllPermissions({ theGraph }, address)
       return { elements, totalAmount: elements.length }
     },
-    elementsCacheOptions
+    elementsCache.elements
   )
 
   const resourcesStatusCheck = createResourcesStatusComponent({ logs })
@@ -209,7 +209,7 @@ export async function initComponents(
       )
       return { elements, totalAmount: elements.length }
     },
-    elementsCacheOptions
+    elementsCache.thirdPartyWearables
   )
 
   const alchemyNftFetcher = await createAlchemyNftFetcher({ config, logs, fetch })
@@ -220,7 +220,7 @@ export async function initComponents(
       const { owner } = await fetchNameOwner({ theGraph }, name)
       return { elements: owner ? [{ owner }] : [], totalAmount: owner ? 1 : 0 }
     },
-    elementsCacheOptions
+    elementsCache.elements
   )
 
   const profiles = await createProfilesComponent({

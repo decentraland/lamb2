@@ -25,7 +25,20 @@ export type ElementsCacheOptions = {
  */
 export const ELEMENTS_CACHE_DEFAULTS: ElementsCacheOptions = { maxEntries: 10000, maxAge: 60_000 }
 
-export async function readElementsCacheOptions(config: AppComponents['config']): Promise<ElementsCacheOptions> {
+/**
+ * Linked wearables keep the previous ten minutes. Filling an entry means asking the NFT worker for
+ * the wallet's tokens across every registered contract and then the content server for the matching
+ * collections, and the tokens change rarely; their presence on a profile is validated per item
+ * through the ownership checker, not through this cache, so a longer age costs no correctness there.
+ */
+export const THIRD_PARTY_WEARABLES_CACHE_DEFAULTS: ElementsCacheOptions = { maxEntries: 10000, maxAge: 600_000 }
+
+export type ElementsCacheSettings = {
+  elements: ElementsCacheOptions
+  thirdPartyWearables: ElementsCacheOptions
+}
+
+export async function readElementsCacheSettings(config: AppComponents['config']): Promise<ElementsCacheSettings> {
   async function integerSetting(name: string, fallback: number): Promise<number> {
     const value = await config.getNumber(name)
     if (value === undefined) {
@@ -37,9 +50,17 @@ export async function readElementsCacheOptions(config: AppComponents['config']):
     return value
   }
 
+  const maxEntries = await integerSetting('ELEMENTS_CACHE_MAX_SIZE', ELEMENTS_CACHE_DEFAULTS.maxEntries)
+
   return {
-    maxEntries: await integerSetting('ELEMENTS_CACHE_MAX_SIZE', ELEMENTS_CACHE_DEFAULTS.maxEntries),
-    maxAge: await integerSetting('ELEMENTS_CACHE_MAX_AGE', ELEMENTS_CACHE_DEFAULTS.maxAge)
+    elements: {
+      maxEntries,
+      maxAge: await integerSetting('ELEMENTS_CACHE_MAX_AGE', ELEMENTS_CACHE_DEFAULTS.maxAge)
+    },
+    thirdPartyWearables: {
+      maxEntries,
+      maxAge: await integerSetting('THIRD_PARTY_WEARABLES_CACHE_MAX_AGE', THIRD_PARTY_WEARABLES_CACHE_DEFAULTS.maxAge)
+    }
   }
 }
 
