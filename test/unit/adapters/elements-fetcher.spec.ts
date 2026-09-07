@@ -124,6 +124,7 @@ describe('when fetching owned elements', () => {
       stale = createElementsFetcherComponent<string>({ logs } as any, fetchElements, {
         maxEntries: 10,
         maxAge: 20,
+        maxStaleAge: 200,
         serveStale: true
       })
       served = []
@@ -157,6 +158,7 @@ describe('when stale serving is off for a fetcher', () => {
     fetcher = createElementsFetcherComponent<string>({ logs } as any, fetchElements, {
       maxEntries: 10,
       maxAge: 20,
+      maxStaleAge: 0,
       serveStale: false
     })
   })
@@ -217,6 +219,7 @@ describe('when the elements cache is metered', () => {
     fetcher = createElementsFetcherComponent<string>({ logs, metrics } as any, fetchElements, {
       maxEntries: 10,
       maxAge: 20,
+      maxStaleAge: 200,
       serveStale: true
     })
   })
@@ -242,6 +245,36 @@ describe('when the elements cache is metered', () => {
 
     it('should record the one background refresh as successful', () => {
       expect(refreshOutcomes()).toEqual(['ok'])
+    })
+  })
+
+  describe('and an entry has been idle past the grace window', () => {
+    let served: string[][]
+
+    beforeEach(async () => {
+      let call = 0
+      fetchElements.mockImplementation(async () => settled([`v${++call}`]))
+      fetcher = createElementsFetcherComponent<string>({ logs, metrics } as any, fetchElements, {
+        maxEntries: 10,
+        maxAge: 20,
+        maxStaleAge: 20,
+        serveStale: true
+      })
+      served = [(await fetcher.fetchOwnedElements('0x1')).elements]
+      await new Promise((resolve) => setTimeout(resolve, 60))
+      served.push((await fetcher.fetchOwnedElements('0x1')).elements)
+    })
+
+    it('should not trust the old entry: the read blocks and answers with the fresh value', () => {
+      expect(served).toEqual([['v1'], ['v2']])
+    })
+
+    it('should record that read as a miss, since it waited on upstream', () => {
+      expect(resultsRecorded()).toEqual(['miss', 'miss'])
+    })
+
+    it('should not count the blocking refresh as a background one', () => {
+      expect(refreshOutcomes()).toEqual([])
     })
   })
 
@@ -287,15 +320,25 @@ describe('when reading the elements cache settings', () => {
     })
 
     it('should default owned elements to one minute, served stale while refreshing', () => {
-      expect(settings.elements).toEqual({ maxEntries: 10000, maxAge: 60_000, serveStale: true })
+      expect(settings.elements).toEqual({ maxEntries: 10000, maxAge: 60_000, maxStaleAge: 60_000, serveStale: true })
     })
 
     it('should keep linked wearables at ten minutes, since filling that entry is expensive and rarely changes', () => {
-      expect(settings.thirdPartyWearables).toEqual({ maxEntries: 10000, maxAge: 600_000, serveStale: true })
+      expect(settings.thirdPartyWearables).toEqual({
+        maxEntries: 10000,
+        maxAge: 600_000,
+        maxStaleAge: 60_000,
+        serveStale: true
+      })
     })
 
     it('should never serve ownership decisions stale, so they fail closed on an outage', () => {
-      expect(settings.ownershipDecisions).toEqual({ maxEntries: 10000, maxAge: 60_000, serveStale: false })
+      expect(settings.ownershipDecisions).toEqual({
+        maxEntries: 10000,
+        maxAge: 60_000,
+        maxStaleAge: 0,
+        serveStale: false
+      })
     })
   })
 
@@ -304,7 +347,11 @@ describe('when reading the elements cache settings', () => {
 
     beforeEach(async () => {
       settings = await readElementsCacheSettings(
-        configWith({ ELEMENTS_CACHE_MAX_AGE: 5000, THIRD_PARTY_WEARABLES_CACHE_MAX_AGE: 7000 })
+        configWith({
+          ELEMENTS_CACHE_MAX_AGE: 5000,
+          THIRD_PARTY_WEARABLES_CACHE_MAX_AGE: 7000,
+          ELEMENTS_CACHE_MAX_STALE_AGE: 9000
+        })
       )
     })
 
@@ -314,6 +361,10 @@ describe('when reading the elements cache settings', () => {
         settings.thirdPartyWearables.maxAge,
         settings.ownershipDecisions.maxAge
       ]).toEqual([5000, 7000, 5000])
+    })
+
+    it('should apply the grace window to every fetcher that serves stale', () => {
+      expect([settings.elements.maxStaleAge, settings.thirdPartyWearables.maxStaleAge]).toEqual([9000, 9000])
     })
   })
 

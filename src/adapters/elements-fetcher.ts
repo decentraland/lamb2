@@ -16,6 +16,12 @@ export type ElementsCacheOptions = {
   /** Milliseconds an entry is served as fresh before a request triggers its refresh. */
   maxAge: number
   /**
+   * Milliseconds past `maxAge` during which an expired entry may still be answered while it is
+   * refreshed. Beyond that an idle entry is not trusted and the read blocks on a fresh fetch, so
+   * no reader gets an inventory older than `maxAge + maxStaleAge`.
+   */
+  maxStaleAge: number
+  /**
    * Answer an expired entry immediately and refresh it in the background. Off for fetchers whose
    * answer decides ownership: on an outage those must fail rather than confidently serve the
    * previous owner.
@@ -29,7 +35,12 @@ export type ElementsCacheOptions = {
  * one refresh runs in the background, so a short age costs one upstream fetch per hot key per
  * minute, not one per request.
  */
-export const ELEMENTS_CACHE_DEFAULTS: ElementsCacheOptions = { maxEntries: 10000, maxAge: 60_000, serveStale: true }
+export const ELEMENTS_CACHE_DEFAULTS: ElementsCacheOptions = {
+  maxEntries: 10000,
+  maxAge: 60_000,
+  maxStaleAge: 60_000,
+  serveStale: true
+}
 
 /**
  * Linked wearables keep the previous ten minutes. Filling an entry means asking the NFT worker for
@@ -40,6 +51,7 @@ export const ELEMENTS_CACHE_DEFAULTS: ElementsCacheOptions = { maxEntries: 10000
 export const THIRD_PARTY_WEARABLES_CACHE_DEFAULTS: ElementsCacheOptions = {
   maxEntries: 10000,
   maxAge: 600_000,
+  maxStaleAge: 60_000,
   serveStale: true
 }
 
@@ -64,15 +76,17 @@ export async function readElementsCacheSettings(config: AppComponents['config'])
 
   const maxEntries = await integerSetting('ELEMENTS_CACHE_MAX_SIZE', ELEMENTS_CACHE_DEFAULTS.maxEntries)
   const elementsAge = await integerSetting('ELEMENTS_CACHE_MAX_AGE', ELEMENTS_CACHE_DEFAULTS.maxAge)
+  const maxStaleAge = await integerSetting('ELEMENTS_CACHE_MAX_STALE_AGE', ELEMENTS_CACHE_DEFAULTS.maxStaleAge)
 
   return {
-    elements: { maxEntries, maxAge: elementsAge, serveStale: true },
+    elements: { maxEntries, maxAge: elementsAge, maxStaleAge, serveStale: true },
     thirdPartyWearables: {
       maxEntries,
       maxAge: await integerSetting('THIRD_PARTY_WEARABLES_CACHE_MAX_AGE', THIRD_PARTY_WEARABLES_CACHE_DEFAULTS.maxAge),
+      maxStaleAge,
       serveStale: true
     },
-    ownershipDecisions: { maxEntries, maxAge: elementsAge, serveStale: false }
+    ownershipDecisions: { maxEntries, maxAge: elementsAge, maxStaleAge: 0, serveStale: false }
   }
 }
 
@@ -173,11 +187,11 @@ export function createElementsFetcherComponent<T>(
   async function fetchForKey(
     _key: string,
     staleValue: ElementsResult<T> | undefined,
-    { context }: { context: FetchContext }
+    { context, options: fetchOptions }: { context: FetchContext; options: { allowStale?: boolean } }
   ): Promise<ElementsResult<T>> {
-    // lru-cache hands over the expired value whenever there is one; only with stale serving on
-    // has the reader already been answered, making this a refresh behind the request.
-    const isBackgroundRefresh = staleValue !== undefined && options.serveStale
+    // lru-cache hands over the expired value whenever there is one; only when this call was allowed
+    // to serve it has the reader already been answered, making this a refresh behind the request.
+    const isBackgroundRefresh = staleValue !== undefined && fetchOptions.allowStale === true
     try {
       const result = await fetchElements(
         dependencies,
@@ -205,12 +219,12 @@ export function createElementsFetcherComponent<T>(
    * What this read will cost. `has` is false for a stale entry and for a cold load still in
    * flight, so a reader joining that load counts as blocked on upstream, which it is.
    */
-  function classifyRead(key: string): 'hit' | 'stale' | 'miss' {
+  function classifyRead(key: string, serveStaleNow: boolean): 'hit' | 'stale' | 'miss' {
     const remaining = cache.getRemainingTTL(key)
     if (remaining > 0 && cache.has(key)) {
       return 'hit'
     }
-    if (remaining < 0 && options.serveStale) {
+    if (remaining < 0 && serveStaleNow) {
       return 'stale'
     }
     return 'miss'
@@ -233,10 +247,16 @@ export function createElementsFetcherComponent<T>(
       filters?: ElementsFilters
     ) {
       const cacheKey = createCacheKey(address, pagination, filters)
-      metrics?.increment('elements_cache_reads_total', { result: classifyRead(cacheKey) })
+      // An entry idle for longer than the grace window is not trusted: the read blocks on a fresh
+      // fetch instead of answering with whatever age the entry has reached.
+      const serveStaleNow = options.serveStale && cache.getRemainingTTL(cacheKey) >= -options.maxStaleAge
+      metrics?.increment('elements_cache_reads_total', { result: classifyRead(cacheKey, serveStaleNow) })
 
       try {
-        const result = await cache.fetch(cacheKey, { context: { address, pagination, filters } })
+        const result = await cache.fetch(cacheKey, {
+          allowStale: serveStaleNow,
+          context: { address, pagination, filters }
+        })
         if (!result) {
           throw new Error('The elements fetch resolved without a result')
         }
