@@ -12,4 +12,14 @@ describe('when extracting the filters of an items request', () => {
       expect(createPaginationAndFilters(url, 1000).filters.category).toBe('hat')
     })
   })
+
+  describe('and the rarity is not lowercase', () => {
+    beforeEach(() => {
+      url = new URL('http://localhost/users/0x1/wearables?rarity=Rare')
+    })
+
+    it('should normalise it so the marketplace exact match and the fallback agree', () => {
+      expect(createPaginationAndFilters(url, 1000).filters.rarity).toBe('rare')
+    })
+  })
 })
