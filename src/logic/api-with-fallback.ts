@@ -1,5 +1,5 @@
 import { MarketplaceApiError } from '../adapters/marketplace-api-fetcher'
-import { AppComponents } from '../types'
+import { AppComponents, ServiceOverloadedError } from '../types'
 
 /**
  * Generic function to fetch data with marketplace API as primary source
@@ -26,6 +26,11 @@ export async function fetchWithMarketplaceFallback<T>(
     logger.debug(`Successfully fetched ${operation} from marketplace API`)
     return result
   } catch (error) {
+    // Load being shed must not be redirected to the more expensive backend.
+    if (error instanceof ServiceOverloadedError) {
+      throw error
+    }
+
     if (error instanceof MarketplaceApiError) {
       logger.warn(`Marketplace API failed for ${operation}, falling back to The Graph`, {
         error: error.message

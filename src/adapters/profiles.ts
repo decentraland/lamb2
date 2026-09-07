@@ -1,13 +1,20 @@
-import { AppComponents, Name, OnChainEmote, OnChainWearable, ProfileMetadata } from '../types'
+import { AppComponents, Name, OnChainEmote, OnChainWearable, ProfileMetadata, ServiceOverloadedError } from '../types'
 import { Avatar, Entity, LinkUrl, Snapshots } from '@dcl/schemas'
 import { parseUrn } from '@dcl/urn-resolver'
 import { splitUrnAndTokenId } from '../logic/utils'
 import { createTPWOwnershipChecker } from '../ports/ownership-checker/tpw-ownership-checker'
 import { LRUCache } from 'lru-cache'
+import { mapWithConcurrency } from '../logic/concurrency'
 
 type OwnedElements = [{ elements: OnChainWearable[] }, { elements: OnChainEmote[] }, { elements: Name[] }]
 
 const NOTHING_OWNED: OwnedElements = [{ elements: [] }, { elements: [] }, { elements: [] }]
+
+/**
+ * Profiles whose inventories are fetched at once within a single batch. The bound is per request,
+ * so a heavy batch slows only its own caller instead of queueing ahead of everyone else.
+ */
+const MAX_PROFILES_IN_FLIGHT = 8
 
 /**
  * Memo key for an assembled profile. The entity id alone is not enough: the assembled value
@@ -139,6 +146,8 @@ export async function createProfilesComponent(
   // Keyed by entity id: a new deployment gets a new id, so an entry can only go stale through
   // an ownership change, and the age bounds how long that is served.
   const assembledProfiles = new LRUCache<string, ProfileMetadata>({ max: assembledSize, ttl: assembledAge })
+  // Deployments being assembled right now, so a concurrent request joins them instead of repeating them.
+  const assembling = new Map<string, Promise<ProfileMetadata>>()
 
   /**
    * The non-base wearables an avatar wears, in the urn format the fetchers use. Legacy `dcl://`
@@ -174,28 +183,18 @@ export async function createProfilesComponent(
     )
 
     const [ownedByProfile] = await Promise.all([
-      Promise.all(
-        profiles.map(({ ethAddress, isDefaultProfile }): Promise<OwnedElements> => {
-          if (isDefaultProfile) {
-            return Promise.resolve(NOTHING_OWNED)
-          }
-
-          return Promise.all([
-            wearablesFetcher.fetchOwnedElements(ethAddress),
-            emotesFetcher.fetchOwnedElements(ethAddress),
-            namesFetcher.fetchOwnedElements(ethAddress)
-          ])
-        })
-      ),
+      mapWithConcurrency(profiles, MAX_PROFILES_IN_FLIGHT, fetchOwnedElementsOf),
       thirdPartyWearablesOwnershipChecker.checkNFTsOwnership()
     ])
 
     return Promise.all(
       profiles.map(async ({ entity, ethAddress, isDefaultProfile, metadata }, index) => {
         const [wearablesResult, emotesResult, namesResult] = ownedByProfile[index]
-        const ownedWearables = wearablesResult.elements
-        const ownedEmotes = emotesResult.elements
-        const ownedNames = namesResult.elements
+        // Indexed once: an avatar is validated against the whole inventory, and whales own
+        // thousands of items.
+        const ownedWearablesByUrn = new Map(wearablesResult.elements.map((wearable) => [wearable.urn, wearable]))
+        const ownedEmotesByUrn = new Map(emotesResult.elements.map((emote) => [emote.urn, emote]))
+        const ownedNames = new Set(namesResult.elements.map((name) => name.name))
 
         const thirdPartyWearables = isDefaultProfile
           ? []
@@ -212,11 +211,12 @@ export async function createProfilesComponent(
 
             const { urn, tokenId } = splitUrnAndTokenId(wearable)
 
-            const matchingOwnedWearable = ownedWearables.find(
-              (ownedWearable) =>
-                ownedWearable.urn === urn &&
-                (!tokenId || ownedWearable.individualData.find((itemData) => itemData.tokenId === tokenId))
-            )
+            const ownedWearable = ownedWearablesByUrn.get(urn)
+            const matchingOwnedWearable =
+              ownedWearable &&
+              (!tokenId || ownedWearable.individualData.some((itemData) => itemData.tokenId === tokenId))
+                ? ownedWearable
+                : undefined
 
             if (matchingOwnedWearable) {
               validatedWearables.push(
@@ -238,11 +238,11 @@ export async function createProfilesComponent(
 
             const { urn, tokenId } = splitUrnAndTokenId(emote.urn)
 
-            const matchingOwnedEmote = ownedEmotes.find(
-              (ownedEmote) =>
-                ownedEmote.urn === urn &&
-                (!tokenId || ownedEmote.individualData.find((itemData) => itemData.tokenId === tokenId))
-            )
+            const ownedEmote = ownedEmotesByUrn.get(urn)
+            const matchingOwnedEmote =
+              ownedEmote && (!tokenId || ownedEmote.individualData.some((itemData) => itemData.tokenId === tokenId))
+                ? ownedEmote
+                : undefined
 
             if (matchingOwnedEmote) {
               const urnToReturn = ensureERC721
@@ -258,7 +258,7 @@ export async function createProfilesComponent(
             // The pointer is the authoritative identity, not the deployed metadata
             ...(isDefaultProfile ? {} : { userId: ethAddress, ethAddress }),
             links: sanitizeLinks(avatar.links),
-            hasClaimedName: ownedNames.findIndex((name) => name.name === avatar.name) !== -1,
+            hasClaimedName: ownedNames.has(avatar.name),
             avatar: {
               ...avatar.avatar,
               emotes: validatedEmotes,
@@ -281,6 +281,57 @@ export async function createProfilesComponent(
     )
   }
 
+  /** The three inventories a profile is validated against; a default profile owns nothing. */
+  function fetchOwnedElementsOf({
+    ethAddress,
+    isDefaultProfile
+  }: {
+    ethAddress: string
+    isDefaultProfile: boolean
+  }): Promise<OwnedElements> {
+    if (isDefaultProfile) {
+      return Promise.resolve(NOTHING_OWNED)
+    }
+
+    return Promise.all([
+      wearablesFetcher.fetchOwnedElements(ethAddress),
+      emotesFetcher.fetchOwnedElements(ethAddress),
+      namesFetcher.fetchOwnedElements(ethAddress)
+    ])
+  }
+
+  /**
+   * Assembles the entities, publishing each one's pending result so a concurrent request joins it
+   * instead of assembling the same deployment twice, and memoizes the outcome.
+   */
+  async function assembleAndMemoize(entities: Entity[]): Promise<Map<string, ProfileMetadata>> {
+    if (entities.length === 0) {
+      return new Map()
+    }
+
+    const assembly = assembleProfiles(entities).then((profiles) => profiles.map(freezeCopy))
+    entities.forEach((entity, index) => {
+      const pending = assembly.then((profiles) => profiles[index])
+      // A joiner sees a failure through its own await; without this, a batch nobody joined would
+      // surface it as an unhandled rejection.
+      pending.catch(() => undefined)
+      assembling.set(assembledProfileKey(entity), pending)
+    })
+
+    try {
+      const profiles = await assembly
+      const byKey = new Map(entities.map((entity, index) => [assembledProfileKey(entity), profiles[index]]))
+      for (const [key, profile] of byKey) {
+        assembledProfiles.set(key, profile)
+      }
+      return byKey
+    } finally {
+      for (const entity of entities) {
+        assembling.delete(assembledProfileKey(entity))
+      }
+    }
+  }
+
   async function getProfiles(
     ethAddresses: string[],
     ifModifiedSinceTimestamp?: number | undefined
@@ -298,30 +349,41 @@ export async function createProfilesComponent(
 
       profileEntities = profileEntities.filter((entity) => !!entity.metadata)
 
-      // Only profiles not already assembled for this exact deployment go through ownership.
+      // Memoized deployments are served as they are, ones another request is already assembling
+      // are awaited from it, and only the rest go through ownership here.
       const cached = new Map<string, ProfileMetadata>()
+      const joined = new Map<string, Promise<ProfileMetadata>>()
       const entitiesToAssemble: Entity[] = []
       for (const entity of profileEntities) {
-        const assembled = assembledProfiles.get(assembledProfileKey(entity))
+        const key = assembledProfileKey(entity)
+        const assembled = assembledProfiles.get(key)
+        const pending = assembling.get(key)
         if (assembled) {
-          cached.set(assembledProfileKey(entity), assembled)
+          cached.set(key, assembled)
+        } else if (pending) {
+          joined.set(key, pending)
         } else {
           entitiesToAssemble.push(entity)
         }
       }
 
-      const fresh = entitiesToAssemble.length > 0 ? await assembleProfiles(entitiesToAssemble) : []
-      const freshByKey = new Map(
-        entitiesToAssemble.map((entity, index) => [assembledProfileKey(entity), freezeCopy(fresh[index])])
+      const freshByKey = await assembleAndMemoize(entitiesToAssemble)
+      const joinedByKey = new Map(
+        await Promise.all(Array.from(joined, async ([key, pending]) => [key, await pending] as const))
       )
-      for (const [key, profile] of freshByKey) {
-        assembledProfiles.set(key, profile)
-      }
 
       return profileEntities.map(
-        (entity) => cached.get(assembledProfileKey(entity)) ?? freshByKey.get(assembledProfileKey(entity))!
+        (entity) =>
+          cached.get(assembledProfileKey(entity)) ??
+          freshByKey.get(assembledProfileKey(entity)) ??
+          joinedByKey.get(assembledProfileKey(entity))!
       )
     } catch (error: any) {
+      // Shed load has to reach the client as a retryable failure, not as an empty profile list.
+      if (error instanceof ServiceOverloadedError) {
+        throw error
+      }
+
       logger.error(error)
       return []
     }

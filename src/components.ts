@@ -100,7 +100,7 @@ export async function initComponents(
   })
 
   // Create marketplace API fetcher for primary data source
-  const marketplaceApiFetcher = await createMarketplaceApiFetcher({ config, fetch, logs })
+  const marketplaceApiFetcher = await createMarketplaceApiFetcher({ config, fetch, logs, metrics })
 
   const emoteDefinitionsFetcher = await createEmoteDefinitionsFetcherComponent({
     config,

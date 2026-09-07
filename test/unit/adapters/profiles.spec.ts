@@ -1,7 +1,7 @@
 import { Entity } from '@dcl/schemas'
 import { createProfilesComponent, IProfilesComponent } from '../../../src/adapters/profiles'
 import { createOwnershipCachesComponent } from '../../../src/ports/ownership-caches'
-import { ProfileMetadata } from '../../../src/types'
+import { ProfileMetadata, ServiceOverloadedError } from '../../../src/types'
 
 const THIRD_PARTY_WEARABLE =
   'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f'
@@ -170,6 +170,55 @@ describe('when fetching a batch of profiles', () => {
     })
   })
 
+  describe('and the batch holds more profiles than are fetched at once', () => {
+    let inFlight: number
+    let maxInFlight: number
+
+    beforeEach(async () => {
+      inFlight = 0
+      maxInFlight = 0
+      addresses = Array.from({ length: 20 }, (_, index) => `0x${index + 1}`)
+      content.fetchEntitiesByPointers.mockResolvedValue(addresses.map((address) => profileEntity(address, [])))
+      wearablesFetcher.fetchOwnedElements.mockImplementation(async () => {
+        inFlight++
+        maxInFlight = Math.max(maxInFlight, inFlight)
+        await new Promise((resolve) => setTimeout(resolve, 5))
+        inFlight--
+        return { elements: [], totalAmount: 0 }
+      })
+      result = await profiles.getProfiles(addresses)
+    })
+
+    it('should fetch at most eight profiles at a time', () => {
+      expect(maxInFlight).toBe(8)
+    })
+
+    it('should still return every profile', () => {
+      expect(result).toHaveLength(addresses.length)
+    })
+  })
+
+  describe('and two requests for the same deployment arrive together', () => {
+    let first: ProfileMetadata[] | undefined
+
+    beforeEach(async () => {
+      content.fetchEntitiesByPointers.mockResolvedValue([profileEntity('0x1', [])])
+      wearablesFetcher.fetchOwnedElements.mockImplementation(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 10))
+        return { elements: [], totalAmount: 0 }
+      })
+      ;[first, result] = await Promise.all([profiles.getProfiles(['0x1']), profiles.getProfiles(['0x1'])])
+    })
+
+    it('should assemble the deployment once and let the second request join it', () => {
+      expect(wearablesFetcher.fetchOwnedElements).toHaveBeenCalledTimes(1)
+    })
+
+    it('should answer both requests with the same profile', () => {
+      expect(result).toEqual(first)
+    })
+  })
+
   describe('and two addresses resolve to entities sharing one id', () => {
     beforeEach(async () => {
       content.fetchEntitiesByPointers.mockResolvedValueOnce([{ ...profileEntity('0x1', []), id: 'shared' }])
@@ -195,6 +244,17 @@ describe('when fetching a batch of profiles', () => {
 
     it('should be frozen all the way down so a mutation cannot poison later requests', () => {
       expect(Object.isFrozen(result?.[0].avatars[0].avatar)).toBe(true)
+    })
+  })
+
+  describe('and the marketplace is shedding load', () => {
+    beforeEach(() => {
+      content.fetchEntitiesByPointers.mockResolvedValue([profileEntity('0x1', [])])
+      wearablesFetcher.fetchOwnedElements.mockRejectedValue(new ServiceOverloadedError('shed'))
+    })
+
+    it('should fail the request as an overload rather than answer with no profiles', async () => {
+      await expect(profiles.getProfiles(['0x1'])).rejects.toThrow(ServiceOverloadedError)
     })
   })
 })

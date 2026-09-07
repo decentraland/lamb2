@@ -48,6 +48,16 @@ export const metricDeclarations = {
     type: IMetricsComponent.HistogramType,
     labelNames: []
   },
+  marketplace_api_fetches_shed_total: {
+    help: 'Marketplace API inventory fetches rejected because the bulkhead was saturated',
+    type: IMetricsComponent.CounterType,
+    labelNames: ['operation']
+  },
+  marketplace_api_fetches: {
+    help: 'Marketplace API inventory fetches currently running or queued in the bulkhead',
+    type: IMetricsComponent.GaugeType,
+    labelNames: ['state']
+  },
   cache_warmer_last_warmup_timestamp: {
     help: 'Unix timestamp of the last successful cache warmup',
     type: IMetricsComponent.GaugeType,
