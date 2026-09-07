@@ -15,6 +15,7 @@ import {
   ThirdPartyWearable
 } from '../../types'
 import { createFilters } from './items-commons'
+import { EXPLORER_CACHE_OPTIONS } from '../../logic/pagination-constants'
 
 export const BASE_WEARABLE = 'base-wearable'
 export const ON_CHAIN = 'on-chain'
@@ -78,10 +79,15 @@ async function fetchCombinedElements(
       itemType = 'smartWearable'
     }
 
-    const { elements } = await components.wearablesFetcher.fetchOwnedElements(address, undefined, {
-      itemType,
-      network: filters.network
-    })
+    const { elements } = await components.wearablesFetcher.fetchOwnedElements(
+      address,
+      undefined,
+      {
+        itemType,
+        network: filters.network
+      },
+      EXPLORER_CACHE_OPTIONS
+    )
 
     if (!elements.length) {
       return []
@@ -105,7 +111,12 @@ async function fetchCombinedElements(
 
   async function fetchThirdPartyWearables(thirdPartyCollectionIds: string[]): Promise<MixedThirdPartyWearable[]> {
     if (thirdPartyCollectionIds.length === 0) {
-      const { elements } = await components.thirdPartyWearablesFetcher.fetchOwnedElements(address)
+      const { elements } = await components.thirdPartyWearablesFetcher.fetchOwnedElements(
+        address,
+        undefined,
+        undefined,
+        EXPLORER_CACHE_OPTIONS
+      )
       return elements.map((wearable: ThirdPartyWearable): MixedThirdPartyWearable => {
         const entity = wearable.entity
         return {

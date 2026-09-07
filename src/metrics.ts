@@ -23,6 +23,16 @@ export const metricDeclarations = {
     type: IMetricsComponent.HistogramType,
     labelNames: ['id']
   },
+  elements_cache_reads_total: {
+    help: 'Owned-elements cache reads, by what the read got. `stale` means a caller accepted an entry older than its TTL while a refresh ran behind it.',
+    type: IMetricsComponent.CounterType,
+    labelNames: ['result']
+  },
+  elements_cache_background_refresh_total: {
+    help: 'Refreshes of the owned-elements cache running detached from a request. `skipped` means the concurrency ceiling was hit, so that read did not self-heal.',
+    type: IMetricsComponent.CounterType,
+    labelNames: ['outcome']
+  },
   cache_warmer_collections_warmed_total: {
     help: 'Total number of collections successfully warmed by the cache warmer',
     type: IMetricsComponent.CounterType,
