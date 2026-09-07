@@ -446,3 +446,50 @@ describe('when the owned items span several pages', () => {
     expect(maxInFlight).toBe(4)
   })
 })
+
+describe('when the upstream declares an implausible page count', () => {
+  let fetch: { fetch: jest.Mock }
+  let fetcher: Awaited<ReturnType<typeof createMarketplaceApiFetcher>>
+
+  beforeEach(async () => {
+    fetch = { fetch: jest.fn() }
+    fetcher = await createMarketplaceApiFetcher({
+      config: { getString: jest.fn().mockResolvedValue('https://marketplace-api.com') } as any,
+      fetch: fetch as any,
+      logs: await createLogComponent({})
+    })
+  })
+
+  afterEach(() => {
+    jest.resetAllMocks()
+  })
+
+  function pageWith(pages: unknown) {
+    return {
+      ok: true,
+      json: async () => ({ ok: true, data: { elements: [], page: 1, pages, limit: 1000, total: 0 } })
+    }
+  }
+
+  describe('and the count is absurdly large', () => {
+    beforeEach(async () => {
+      fetch.fetch.mockImplementation(async () => pageWith(1_000_000_000))
+      await fetcher.fetchUserWearables('0xabc')
+    })
+
+    it('should stop at the page cap instead of trusting it', () => {
+      expect(fetch.fetch).toHaveBeenCalledTimes(100)
+    })
+  })
+
+  describe('and the count is not a positive integer', () => {
+    beforeEach(async () => {
+      fetch.fetch.mockImplementation(async () => pageWith('lots'))
+      await fetcher.fetchUserWearables('0xabc')
+    })
+
+    it('should request the first page only', () => {
+      expect(fetch.fetch).toHaveBeenCalledTimes(1)
+    })
+  })
+})

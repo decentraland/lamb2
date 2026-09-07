@@ -1,3 +1,4 @@
+import { mapWithConcurrency } from '../logic/concurrency'
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { WearableCategory, EmoteCategory, Network } from '@dcl/schemas'
 import { OnChainWearable, OnChainEmote, Name, AppComponents } from '../types'
@@ -303,6 +304,9 @@ export async function createMarketplaceApiFetcher(
   /** How many of the remaining pages are requested at once after the first one. */
   const MAX_CONCURRENT_PAGE_REQUESTS = 4
 
+  /** A page count above this cannot be a real inventory; the upstream value is not trusted past it. */
+  const MAX_PAGES = 100
+
   /**
    * Fetches every page of a paginated endpoint. The first page reveals how many there are, so
    * the rest are requested concurrently (bounded) rather than one after another, and stitched
@@ -310,27 +314,24 @@ export async function createMarketplaceApiFetcher(
    */
   async function fetchAllPages<T>(baseEndpoint: string): Promise<T[]> {
     const PAGE_SIZE = 1000
+
     function pageEndpoint(page: number): string {
       return `${baseEndpoint}${baseEndpoint.includes('?') ? '&' : '?'}limit=${PAGE_SIZE}&offset=${(page - 1) * PAGE_SIZE}`
     }
 
     const first = await makeApiRequest<MarketplaceApiResponse<T>>(pageEndpoint(1))
-    const remainingPages = Array.from({ length: Math.max(first.data.pages - 1, 0) }, (_, index) => index + 2)
-    const elementsByPage: T[][] = [first.data.elements]
-
-    let nextIndex = 0
-    async function worker(): Promise<void> {
-      while (nextIndex < remainingPages.length) {
-        const page = remainingPages[nextIndex++]
-        const response = await makeApiRequest<MarketplaceApiResponse<T>>(pageEndpoint(page))
-        elementsByPage[page - 1] = response.data.elements
-      }
+    const declaredPages = first.data.pages
+    const pages = Number.isInteger(declaredPages) && declaredPages > 0 ? Math.min(declaredPages, MAX_PAGES) : 1
+    if (pages !== declaredPages) {
+      logger.warn('Unexpected page count from the marketplace API', { endpoint: baseEndpoint, declaredPages, pages })
     }
 
-    const workers = Math.min(MAX_CONCURRENT_PAGE_REQUESTS, remainingPages.length)
-    await Promise.all(Array.from({ length: workers }, () => worker()))
+    const remainingPages = Array.from({ length: pages - 1 }, (_, index) => index + 2)
+    const rest = await mapWithConcurrency(remainingPages, MAX_CONCURRENT_PAGE_REQUESTS, (page) =>
+      makeApiRequest<MarketplaceApiResponse<T>>(pageEndpoint(page))
+    )
 
-    return elementsByPage.flat()
+    return [first.data.elements, ...rest.map((response) => response.data.elements)].flat()
   }
 
   async function fetchUserWearables(
