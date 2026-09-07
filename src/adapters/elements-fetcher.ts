@@ -2,6 +2,7 @@ import { Network } from '@dcl/schemas'
 import { AppComponents } from '../types'
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { createLowerCaseKeysCache } from './lowercase-keys-cache'
+import LRU from 'lru-cache'
 import { PAGINATION_DEFAULTS } from '../logic/pagination-constants'
 
 const CACHE_DEFAULTS = {
@@ -88,11 +89,26 @@ export function createElementsFetcherComponent<T>(
   const { logs } = dependencies
   const logger = logs.getLogger('elements-fetcher')
 
-  // Universal cache that stores complete ElementsResult for any parameter combination
-  const cache = createLowerCaseKeysCache<ElementsResult<T>>({
+  type FetchContext = {
+    address: string
+    pagination?: { pageSize: number; pageNum: number }
+    filters?: ElementsFilters
+  }
+
+  async function fetchForKey(
+    _key: string,
+    _staleValue: ElementsResult<T> | undefined,
+    { context }: { context: FetchContext }
+  ): Promise<ElementsResult<T>> {
+    return fetchElements(dependencies, context.address.toLowerCase(), context.pagination, context.filters)
+  }
+
+  // `fetch` hands every caller of a key the same in-flight promise, so concurrent misses for one
+  // address cost a single upstream fetch and an expiring hot entry is refreshed once, not by all.
+  const cache = new LRU<string, ElementsResult<T>, FetchContext>({
     max: CACHE_DEFAULTS.MAX_ENTRIES,
-    ttl: CACHE_DEFAULTS.TTL
-    // No fetchMethod needed - we handle cache manually with get/set
+    ttl: CACHE_DEFAULTS.TTL,
+    fetchMethod: fetchForKey
   })
 
   return {
@@ -101,23 +117,14 @@ export function createElementsFetcherComponent<T>(
       pagination?: { pageSize: number; pageNum: number },
       filters?: ElementsFilters
     ) {
-      // Always try cache first with intelligent key
       const cacheKey = createCacheKey(address, pagination, filters)
 
-      // Check if we have this exact combination cached
-      const cachedResult = cache.get(cacheKey)
-      if (cachedResult) {
-        return cachedResult
-      }
-
-      // Not in cache, fetch from API/Graph and cache the result
       try {
-        // Convert address to lowercase for consistency (as the original cache did)
-        const normalizedAddress = address.toLowerCase()
-        const result = await fetchElements(dependencies, normalizedAddress, pagination, filters)
-
-        // Cache the complete result for future requests with same parameters
-        cache.set(cacheKey, result)
+        // Lowercased as the shared cache wrapper does, so the key stays case-insensitive.
+        const result = await cache.fetch(cacheKey.toLowerCase(), { context: { address, pagination, filters } })
+        if (!result) {
+          throw new Error('The elements fetch resolved without a result')
+        }
 
         return result
       } catch (err: any) {
