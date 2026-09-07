@@ -10,6 +10,39 @@ const CACHE_DEFAULTS = {
   TTL: PAGINATION_DEFAULTS.CACHE_TTL
 } as const
 
+export type ElementsCacheOptions = {
+  /** Entries kept across all keys (addresses × page/filter combinations). */
+  maxEntries: number
+  /** Milliseconds an entry is served as fresh before a request triggers its refresh. */
+  maxAge: number
+}
+
+/**
+ * Short by design. Ownership answers drive profile validation, and a wearable bought a moment ago
+ * must not be stripped from an avatar for long. Stale entries are still served instantly while
+ * one refresh runs in the background, so a short age costs one upstream fetch per hot key per
+ * minute, not one per request.
+ */
+export const ELEMENTS_CACHE_DEFAULTS: ElementsCacheOptions = { maxEntries: 10000, maxAge: 60_000 }
+
+export async function readElementsCacheOptions(config: AppComponents['config']): Promise<ElementsCacheOptions> {
+  async function integerSetting(name: string, fallback: number): Promise<number> {
+    const value = await config.getNumber(name)
+    if (value === undefined) {
+      return fallback
+    }
+    if (!Number.isInteger(value) || value < 1) {
+      throw new Error(`${name} must be a positive integer, got ${String(value)}`)
+    }
+    return value
+  }
+
+  return {
+    maxEntries: await integerSetting('ELEMENTS_CACHE_MAX_SIZE', ELEMENTS_CACHE_DEFAULTS.maxEntries),
+    maxAge: await integerSetting('ELEMENTS_CACHE_MAX_AGE', ELEMENTS_CACHE_DEFAULTS.maxAge)
+  }
+}
+
 /**
  * Create a cache key that includes all parameters for caching.
  *
@@ -89,7 +122,8 @@ export function createElementsFetcherComponent<T>(
     address: string,
     pagination?: { pageSize: number; pageNum: number },
     filters?: ElementsFilters
-  ) => Promise<ElementsResult<T>>
+  ) => Promise<ElementsResult<T>>,
+  options: ElementsCacheOptions = ELEMENTS_CACHE_DEFAULTS
 ): ElementsFetcher<T> {
   const { logs } = dependencies
   const logger = logs.getLogger('elements-fetcher')
@@ -109,10 +143,12 @@ export function createElementsFetcherComponent<T>(
   }
 
   // `fetch` hands every caller of a key the same in-flight promise, so concurrent misses for one
-  // address cost a single upstream fetch and an expiring hot entry is refreshed once, not by all.
+  // address cost a single upstream fetch. With `allowStale`, an expired entry is answered at once
+  // while a single background refresh runs, so freshness does not cost latency or fan-out.
   const cache = new LRU<string, ElementsResult<T>, FetchContext>({
-    max: CACHE_DEFAULTS.MAX_ENTRIES,
-    ttl: CACHE_DEFAULTS.TTL,
+    max: options.maxEntries,
+    ttl: options.maxAge,
+    allowStale: true,
     fetchMethod: fetchForKey
   })
 
