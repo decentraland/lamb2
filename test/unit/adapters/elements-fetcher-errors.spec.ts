@@ -1,6 +1,6 @@
 import { createElementsFetcherComponent } from '../../../src/adapters/elements-fetcher'
 import { FetcherError } from '../../../src/adapters/elements-fetcher'
-import { InvalidRequestError } from '../../../src/types'
+import { InvalidRequestError, ServiceOverloadedError } from '../../../src/types'
 
 const dependencies = {
   logs: { getLogger: () => ({ debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn(), log: jest.fn() }) }
@@ -42,6 +42,20 @@ describe('when fetching owned elements fails', () => {
 
     it('should report it as a fetcher error', async () => {
       await expect(fetcher.fetchOwnedElements(address)).rejects.toThrow(FetcherError)
+    })
+  })
+
+  describe('and the upstream shed the request because it is overloaded', () => {
+    let fetcher: ReturnType<typeof createElementsFetcherComponent>
+
+    beforeEach(() => {
+      fetcher = createElementsFetcherComponent(dependencies, async () => {
+        throw new ServiceOverloadedError('shed')
+      })
+    })
+
+    it('should let the overload through untouched so it can become a retryable response', async () => {
+      await expect(fetcher.fetchOwnedElements(address)).rejects.toThrow(ServiceOverloadedError)
     })
   })
 })

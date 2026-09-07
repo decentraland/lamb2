@@ -1,7 +1,7 @@
 import { BulkheadSaturatedError, createBulkhead, mapWithConcurrency } from '../logic/concurrency'
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { WearableCategory, EmoteCategory, Network } from '@dcl/schemas'
-import { OnChainWearable, OnChainEmote, Name, AppComponents } from '../types'
+import { AppComponents, Name, OnChainEmote, OnChainWearable, ServiceOverloadedError } from '../types'
 import { ItemType as ItemTypeFilter } from './elements-fetcher'
 import { ItemType } from '../types'
 
@@ -129,8 +129,10 @@ export type MarketplaceApiFetcher = IBaseComponent & {
 /**
  * Thrown when the marketplace bulkhead is full. Deliberately not a MarketplaceApiError: shedding
  * load must not send the request down the subgraph fallback, which would only move the overload.
+ * As a ServiceOverloadedError it reaches the client as a retryable 503 instead of a 502 or an
+ * empty result.
  */
-export class MarketplaceApiSaturatedError extends Error {
+export class MarketplaceApiSaturatedError extends ServiceOverloadedError {
   constructor(message: string) {
     super(message)
     this.name = 'MarketplaceApiSaturatedError'
@@ -220,11 +222,24 @@ export async function createMarketplaceApiFetcher(
 
   const baseUrl = marketplaceApiUrl.replace(/\/$/, '') // Remove trailing slash
 
-  const maxConcurrentRequests = (await config.getNumber('MARKETPLACE_API_MAX_CONCURRENT_REQUESTS')) ?? 64
-  const maxQueuedRequests = (await config.getNumber('MARKETPLACE_API_MAX_QUEUED_REQUESTS')) ?? 256
-  // Shared by every caller in the process, so aggregate marketplace traffic stays bounded no
-  // matter how many requests are in flight; past the queue a call fails fast instead of piling up.
-  const bulkhead = createBulkhead(maxConcurrentRequests, maxQueuedRequests)
+  async function integerSetting(name: string, fallback: number, min: number): Promise<number> {
+    const value = await config.getNumber(name)
+    if (value === undefined) {
+      return fallback
+    }
+    // `??` would accept 0, NaN, fractions or Infinity, each of which breaks the bound below.
+    if (!Number.isInteger(value) || value < min) {
+      throw new Error(`${name} must be an integer of at least ${min}, got ${String(value)}`)
+    }
+    return value
+  }
+
+  // One slot per inventory fetch, shared by every caller in the process, so aggregate marketplace
+  // traffic stays bounded however many requests are in flight: at most fetches × pages-in-flight
+  // HTTP requests. Past the queue a fetch fails fast instead of piling up.
+  const maxConcurrentFetches = await integerSetting('MARKETPLACE_API_MAX_CONCURRENT_FETCHES', 32, 1)
+  const maxQueuedFetches = await integerSetting('MARKETPLACE_API_MAX_QUEUED_FETCHES', 128, 0)
+  const bulkhead = createBulkhead(maxConcurrentFetches, maxQueuedFetches)
 
   /**
    * Builds endpoint URL with query parameters (transparent pass-through)
@@ -281,20 +296,25 @@ export async function createMarketplaceApiFetcher(
   }
 
   /**
-   * Makes a request to the marketplace API through the bulkhead.
+   * Runs one inventory fetch inside the bulkhead. The unit is the whole fetch, not each page: a
+   * fetch that holds its slot runs its page fan-out freely and can never be starved by itself.
    */
-  async function makeApiRequest<T>(endpoint: string): Promise<T> {
+  async function withinBulkhead<T>(operation: string, fn: () => Promise<T>): Promise<T> {
     try {
-      return await bulkhead.run(() => performRequest<T>(endpoint))
+      return await bulkhead.run(fn)
     } catch (error) {
       if (error instanceof BulkheadSaturatedError) {
+        logger.warn('Marketplace fetch shed, bulkhead saturated', { operation, ...bulkhead.stats() })
         throw new MarketplaceApiSaturatedError(error.message)
       }
       throw error
     }
   }
 
-  async function performRequest<T>(endpoint: string): Promise<T> {
+  /**
+   * Makes a request to the marketplace API with error handling
+   */
+  async function makeApiRequest<T>(endpoint: string): Promise<T> {
     const url = `${baseUrl}${endpoint}`
     logger.debug(`Fetching from marketplace API: ${url}`)
 
@@ -486,8 +506,8 @@ export async function createMarketplaceApiFetcher(
   }
 
   return {
-    fetchUserWearables,
-    fetchUserEmotes,
-    fetchUserNames
+    fetchUserWearables: (address, params) => withinBulkhead('wearables', () => fetchUserWearables(address, params)),
+    fetchUserEmotes: (address, params) => withinBulkhead('emotes', () => fetchUserEmotes(address, params)),
+    fetchUserNames: (address, params) => withinBulkhead('names', () => fetchUserNames(address, params))
   }
 }

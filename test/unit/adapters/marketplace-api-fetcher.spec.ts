@@ -5,6 +5,7 @@ import {
   MarketplaceApiError,
   MarketplaceApiSaturatedError
 } from '../../../src/adapters/marketplace-api-fetcher'
+import { ServiceOverloadedError } from '../../../src/types'
 import { WearableCategory, EmoteCategory } from '@dcl/schemas'
 
 describe('MarketplaceApiFetcher', () => {
@@ -526,8 +527,8 @@ describe('when more marketplace requests are in flight than the bulkhead allows'
 
   beforeEach(async () => {
     const limits: Record<string, number> = {
-      MARKETPLACE_API_MAX_CONCURRENT_REQUESTS: 1,
-      MARKETPLACE_API_MAX_QUEUED_REQUESTS: 0
+      MARKETPLACE_API_MAX_CONCURRENT_FETCHES: 1,
+      MARKETPLACE_API_MAX_QUEUED_FETCHES: 0
     }
     const fetch = {
       fetch: jest.fn(async () => {
@@ -555,5 +556,108 @@ describe('when more marketplace requests are in flight than the bulkhead allows'
 
   it('should fail the excess request fast with a saturation error, not a marketplace error', () => {
     expect(outcomes[1].status === 'rejected' && outcomes[1].reason instanceof MarketplaceApiSaturatedError).toBe(true)
+  })
+})
+
+describe('when the bulkhead settings are invalid', () => {
+  let logs: any
+
+  beforeEach(async () => {
+    logs = await createLogComponent({})
+  })
+
+  function fetcherWith(settings: Record<string, number>) {
+    return createMarketplaceApiFetcher({
+      config: {
+        getString: jest.fn().mockResolvedValue('https://marketplace-api.com'),
+        getNumber: jest.fn(async (key: string) => settings[key])
+      } as any,
+      fetch: { fetch: jest.fn() } as any,
+      logs
+    })
+  }
+
+  it('should refuse a concurrency of zero, which would leave every fetch queued forever', async () => {
+    await expect(fetcherWith({ MARKETPLACE_API_MAX_CONCURRENT_FETCHES: 0 })).rejects.toThrow(
+      'MARKETPLACE_API_MAX_CONCURRENT_FETCHES'
+    )
+  })
+
+  it('should refuse a fractional concurrency', async () => {
+    await expect(fetcherWith({ MARKETPLACE_API_MAX_CONCURRENT_FETCHES: 1.5 })).rejects.toThrow(
+      'MARKETPLACE_API_MAX_CONCURRENT_FETCHES'
+    )
+  })
+
+  it('should refuse a non-numeric queue size, which would make the queue unbounded', async () => {
+    await expect(fetcherWith({ MARKETPLACE_API_MAX_QUEUED_FETCHES: NaN })).rejects.toThrow(
+      'MARKETPLACE_API_MAX_QUEUED_FETCHES'
+    )
+  })
+
+  it('should refuse a negative queue size', async () => {
+    await expect(fetcherWith({ MARKETPLACE_API_MAX_QUEUED_FETCHES: -1 })).rejects.toThrow(
+      'MARKETPLACE_API_MAX_QUEUED_FETCHES'
+    )
+  })
+})
+
+describe('when a multi-page inventory is fetched under the tightest bulkhead settings', () => {
+  let fetch: { fetch: jest.Mock }
+  let names: string[]
+
+  beforeEach(async () => {
+    fetch = {
+      fetch: jest.fn(async (url: string) => {
+        const page = Number(new URL(url).searchParams.get('offset')) / 1000 + 1
+        return {
+          ok: true,
+          json: async () => ({
+            ok: true,
+            data: {
+              elements: [
+                {
+                  urn: `urn:${page}`,
+                  amount: 1,
+                  individualData: [{ id: `id-${page}`, tokenId: '1', transferredAt: '1', price: '1' }],
+                  name: `Item ${page}`,
+                  rarity: 'common',
+                  minTransferredAt: 1,
+                  maxTransferredAt: 1,
+                  category: WearableCategory.HAT
+                }
+              ],
+              page,
+              pages: 3,
+              limit: 1000,
+              total: 3
+            }
+          })
+        }
+      })
+    }
+    const settings: Record<string, number> = {
+      MARKETPLACE_API_MAX_CONCURRENT_FETCHES: 1,
+      MARKETPLACE_API_MAX_QUEUED_FETCHES: 0
+    }
+    const fetcher = await createMarketplaceApiFetcher({
+      config: {
+        getString: jest.fn().mockResolvedValue('https://marketplace-api.com'),
+        getNumber: jest.fn(async (key: string) => settings[key])
+      } as any,
+      fetch: fetch as any,
+      logs: await createLogComponent({})
+    })
+    names = (await fetcher.fetchUserWearables('0xabc')).wearables.map((wearable) => wearable.name)
+  })
+
+  it('should fetch every page, since the bulkhead bounds fetches and a fetch cannot starve its own pages', () => {
+    expect(names).toEqual(['Item 1', 'Item 2', 'Item 3'])
+  })
+})
+
+describe('when a fetch is shed', () => {
+  it('should surface as a service overload, so it reaches the client as a retryable failure', () => {
+    expect(new MarketplaceApiSaturatedError('full')).toBeInstanceOf(ServiceOverloadedError)
   })
 })

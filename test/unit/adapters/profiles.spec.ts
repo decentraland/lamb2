@@ -1,7 +1,7 @@
 import { Entity } from '@dcl/schemas'
 import { createProfilesComponent, IProfilesComponent } from '../../../src/adapters/profiles'
 import { createOwnershipCachesComponent } from '../../../src/ports/ownership-caches'
-import { ProfileMetadata } from '../../../src/types'
+import { ProfileMetadata, ServiceOverloadedError } from '../../../src/types'
 
 const THIRD_PARTY_WEARABLE =
   'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f'
@@ -244,6 +244,17 @@ describe('when fetching a batch of profiles', () => {
 
     it('should be frozen all the way down so a mutation cannot poison later requests', () => {
       expect(Object.isFrozen(result?.[0].avatars[0].avatar)).toBe(true)
+    })
+  })
+
+  describe('and the marketplace is shedding load', () => {
+    beforeEach(() => {
+      content.fetchEntitiesByPointers.mockResolvedValue([profileEntity('0x1', [])])
+      wearablesFetcher.fetchOwnedElements.mockRejectedValue(new ServiceOverloadedError('shed'))
+    })
+
+    it('should fail the request as an overload rather than answer with no profiles', async () => {
+      await expect(profiles.getProfiles(['0x1'])).rejects.toThrow(ServiceOverloadedError)
     })
   })
 })

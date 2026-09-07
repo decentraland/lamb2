@@ -1,6 +1,6 @@
 import { LambdasError } from '@dcl/catalyst-api-specs/lib/client'
 import type { IHttpServerComponent } from '@dcl/core-commons'
-import { InvalidRequestError, NotFoundError, ParcelOrStateNotFoundError } from '../../types'
+import { InvalidRequestError, NotFoundError, ParcelOrStateNotFoundError, ServiceOverloadedError } from '../../types'
 import { FetcherError } from '../../adapters/elements-fetcher'
 
 function handleError(error: any): { status: number; body: LambdasError } {
@@ -9,6 +9,16 @@ function handleError(error: any): { status: number; body: LambdasError } {
       status: 400,
       body: {
         error: 'Bad request',
+        message: error.message
+      }
+    }
+  }
+
+  if (error instanceof ServiceOverloadedError) {
+    return {
+      status: 503,
+      body: {
+        error: 'Service overloaded, retry shortly',
         message: error.message
       }
     }

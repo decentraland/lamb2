@@ -1,4 +1,4 @@
-import { AppComponents, Name, OnChainEmote, OnChainWearable, ProfileMetadata } from '../types'
+import { AppComponents, Name, OnChainEmote, OnChainWearable, ProfileMetadata, ServiceOverloadedError } from '../types'
 import { Avatar, Entity, LinkUrl, Snapshots } from '@dcl/schemas'
 import { parseUrn } from '@dcl/urn-resolver'
 import { splitUrnAndTokenId } from '../logic/utils'
@@ -379,6 +379,11 @@ export async function createProfilesComponent(
           joinedByKey.get(assembledProfileKey(entity))!
       )
     } catch (error: any) {
+      // Shed load has to reach the client as a retryable failure, not as an empty profile list.
+      if (error instanceof ServiceOverloadedError) {
+        throw error
+      }
+
       logger.error(error)
       return []
     }

@@ -1,5 +1,5 @@
-import { MarketplaceApiError, MarketplaceApiSaturatedError } from '../adapters/marketplace-api-fetcher'
-import { AppComponents } from '../types'
+import { MarketplaceApiError } from '../adapters/marketplace-api-fetcher'
+import { AppComponents, ServiceOverloadedError } from '../types'
 
 /**
  * Generic function to fetch data with marketplace API as primary source
@@ -27,7 +27,7 @@ export async function fetchWithMarketplaceFallback<T>(
     return result
   } catch (error) {
     // Load being shed must not be redirected to the more expensive backend.
-    if (error instanceof MarketplaceApiSaturatedError) {
+    if (error instanceof ServiceOverloadedError) {
       throw error
     }
 
