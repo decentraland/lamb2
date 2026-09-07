@@ -14,7 +14,8 @@ export function extractFiltersFromURL(url: URL): ElementsFilters {
     filters.category = url.searchParams.get('category')!.toLowerCase()
   }
   if (url.searchParams.has('rarity')) {
-    filters.rarity = url.searchParams.get('rarity')!
+    // Lowercased like category: the marketplace compares rarity exactly against lowercase values.
+    filters.rarity = url.searchParams.get('rarity')!.toLowerCase()
   }
   if (url.searchParams.has('name')) {
     filters.name = url.searchParams.get('name')!
