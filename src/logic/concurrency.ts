@@ -47,9 +47,11 @@ export class BulkheadSaturatedError extends Error {
   }
 }
 
+export type BulkheadStats = { running: number; queued: number }
+
 export type Bulkhead = {
   run<T>(fn: () => Promise<T>): Promise<T>
-  stats(): { running: number; queued: number }
+  stats(): BulkheadStats
 }
 
 /**
@@ -57,9 +59,13 @@ export type Bulkhead = {
  * of at most `maxQueued`; beyond that they fail immediately, so an overload is shed instead of
  * piling up without bound. A finishing call hands its slot straight to the next waiter.
  */
-export function createBulkhead(limit: number, maxQueued: number): Bulkhead {
+export function createBulkhead(limit: number, maxQueued: number, onChange?: (stats: BulkheadStats) => void): Bulkhead {
   let running = 0
   const queue: Array<() => void> = []
+
+  function changed(): void {
+    onChange?.({ running, queued: queue.length })
+  }
 
   function release(): void {
     const next = queue.shift()
@@ -68,11 +74,13 @@ export function createBulkhead(limit: number, maxQueued: number): Bulkhead {
     } else {
       running--
     }
+    changed()
   }
 
   async function acquire(): Promise<void> {
     if (running < limit) {
       running++
+      changed()
       return
     }
 
@@ -80,7 +88,10 @@ export function createBulkhead(limit: number, maxQueued: number): Bulkhead {
       throw new BulkheadSaturatedError(limit, maxQueued)
     }
 
-    await new Promise<void>((resolve) => queue.push(resolve))
+    await new Promise<void>((resolve) => {
+      queue.push(resolve)
+      changed()
+    })
   }
 
   return {

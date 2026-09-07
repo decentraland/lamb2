@@ -209,9 +209,9 @@ function mapApiNameToName(apiName: MarketplaceApiName): Name {
  * Creates a MarketplaceApiFetcher component
  */
 export async function createMarketplaceApiFetcher(
-  components: Pick<AppComponents, 'config' | 'fetch' | 'logs'>
+  components: Pick<AppComponents, 'config' | 'fetch' | 'logs' | 'metrics'>
 ): Promise<MarketplaceApiFetcher> {
-  const { config, fetch, logs } = components
+  const { config, fetch, logs, metrics } = components
   const logger = logs.getLogger('marketplace-api-fetcher')
 
   // Get marketplace API base URL from config
@@ -236,10 +236,14 @@ export async function createMarketplaceApiFetcher(
 
   // One slot per inventory fetch, shared by every caller in the process, so aggregate marketplace
   // traffic stays bounded however many requests are in flight: at most fetches × pages-in-flight
-  // HTTP requests. Past the queue a fetch fails fast instead of piling up.
-  const maxConcurrentFetches = await integerSetting('MARKETPLACE_API_MAX_CONCURRENT_FETCHES', 32, 1)
-  const maxQueuedFetches = await integerSetting('MARKETPLACE_API_MAX_QUEUED_FETCHES', 128, 0)
-  const bulkhead = createBulkhead(maxConcurrentFetches, maxQueuedFetches)
+  // HTTP requests. Past the queue a fetch fails fast instead of piling up. A cold profile batch
+  // takes up to 24 slots (8 profiles × 3 fetchers), so the defaults only bite in real overload.
+  const maxConcurrentFetches = await integerSetting('MARKETPLACE_API_MAX_CONCURRENT_FETCHES', 128, 1)
+  const maxQueuedFetches = await integerSetting('MARKETPLACE_API_MAX_QUEUED_FETCHES', 1024, 0)
+  const bulkhead = createBulkhead(maxConcurrentFetches, maxQueuedFetches, ({ running, queued }) => {
+    metrics.observe('marketplace_api_fetches', { state: 'running' }, running)
+    metrics.observe('marketplace_api_fetches', { state: 'queued' }, queued)
+  })
 
   /**
    * Builds endpoint URL with query parameters (transparent pass-through)
@@ -304,6 +308,7 @@ export async function createMarketplaceApiFetcher(
       return await bulkhead.run(fn)
     } catch (error) {
       if (error instanceof BulkheadSaturatedError) {
+        metrics.increment('marketplace_api_fetches_shed_total', { operation })
         logger.warn('Marketplace fetch shed, bulkhead saturated', { operation, ...bulkhead.stats() })
         throw new MarketplaceApiSaturatedError(error.message)
       }

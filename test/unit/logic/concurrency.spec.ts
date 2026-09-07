@@ -126,6 +126,24 @@ describe('when running calls through a bulkhead', () => {
     })
   })
 
+  describe('and a state hook is given', () => {
+    let seen: Array<{ running: number; queued: number }>
+
+    beforeEach(async () => {
+      seen = []
+      const bulkhead = createBulkhead(1, 1, (stats) => seen.push({ ...stats }))
+      await Promise.all([bulkhead.run(async () => undefined), bulkhead.run(async () => undefined)])
+    })
+
+    it('should report every transition, ending idle', () => {
+      expect(seen[seen.length - 1]).toEqual({ running: 0, queued: 0 })
+    })
+
+    it('should have reported the second call waiting in the queue', () => {
+      expect(seen).toContainEqual({ running: 1, queued: 1 })
+    })
+  })
+
   describe('and the queue is full as well', () => {
     let outcomes: PromiseSettledResult<string>[]
     let releaseFirst: () => void

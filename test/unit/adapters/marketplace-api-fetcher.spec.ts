@@ -6,6 +6,8 @@ import {
   MarketplaceApiSaturatedError
 } from '../../../src/adapters/marketplace-api-fetcher'
 import { ServiceOverloadedError } from '../../../src/types'
+
+const metrics = { increment: jest.fn(), observe: jest.fn() } as any
 import { WearableCategory, EmoteCategory } from '@dcl/schemas'
 
 describe('MarketplaceApiFetcher', () => {
@@ -30,13 +32,13 @@ describe('MarketplaceApiFetcher', () => {
     it('should throw error when MARKETPLACE_API_URL is not configured', async () => {
       mockConfig.getString.mockResolvedValue(undefined)
 
-      await expect(createMarketplaceApiFetcher({ config: mockConfig, fetch: mockFetch, logs })).rejects.toThrow(
-        'MARKETPLACE_API_URL configuration is required'
-      )
+      await expect(
+        createMarketplaceApiFetcher({ metrics, config: mockConfig, fetch: mockFetch, logs })
+      ).rejects.toThrow('MARKETPLACE_API_URL configuration is required')
     })
 
     it('should create fetcher successfully with valid config', async () => {
-      const fetcher = await createMarketplaceApiFetcher({ config: mockConfig, fetch: mockFetch, logs })
+      const fetcher = await createMarketplaceApiFetcher({ metrics, config: mockConfig, fetch: mockFetch, logs })
 
       expect(fetcher).toBeDefined()
       expect(typeof fetcher.fetchUserWearables).toBe('function')
@@ -87,7 +89,7 @@ describe('MarketplaceApiFetcher', () => {
         json: jest.fn().mockResolvedValue(mockResponse)
       })
 
-      const fetcher = await createMarketplaceApiFetcher({ config: mockConfig, fetch: mockFetch, logs })
+      const fetcher = await createMarketplaceApiFetcher({ metrics, config: mockConfig, fetch: mockFetch, logs })
       const result = await fetcher.fetchUserWearables('0xabc123')
 
       expect(mockFetch.fetch).toHaveBeenCalledWith(
@@ -182,7 +184,7 @@ describe('MarketplaceApiFetcher', () => {
           json: jest.fn().mockResolvedValue(page2Response)
         })
 
-      const fetcher = await createMarketplaceApiFetcher({ config: mockConfig, fetch: mockFetch, logs })
+      const fetcher = await createMarketplaceApiFetcher({ metrics, config: mockConfig, fetch: mockFetch, logs })
       const result = await fetcher.fetchUserWearables('0xabc123')
 
       expect(mockFetch.fetch).toHaveBeenCalledTimes(2)
@@ -199,7 +201,7 @@ describe('MarketplaceApiFetcher', () => {
         statusText: 'Internal Server Error'
       })
 
-      const fetcher = await createMarketplaceApiFetcher({ config: mockConfig, fetch: mockFetch, logs })
+      const fetcher = await createMarketplaceApiFetcher({ metrics, config: mockConfig, fetch: mockFetch, logs })
 
       await expect(fetcher.fetchUserWearables('0xabc123')).rejects.toThrow(MarketplaceApiError)
       await expect(fetcher.fetchUserWearables('0xabc123')).rejects.toThrow(
@@ -210,7 +212,7 @@ describe('MarketplaceApiFetcher', () => {
     it('should throw MarketplaceApiError when fetch fails', async () => {
       mockFetch.fetch = jest.fn().mockRejectedValue(new Error('Network error'))
 
-      const fetcher = await createMarketplaceApiFetcher({ config: mockConfig, fetch: mockFetch, logs })
+      const fetcher = await createMarketplaceApiFetcher({ metrics, config: mockConfig, fetch: mockFetch, logs })
 
       await expect(fetcher.fetchUserWearables('0xabc123')).rejects.toThrow(MarketplaceApiError)
       await expect(fetcher.fetchUserWearables('0xabc123')).rejects.toThrow(
@@ -255,7 +257,7 @@ describe('MarketplaceApiFetcher', () => {
         json: jest.fn().mockResolvedValue(mockResponse)
       })
 
-      const fetcher = await createMarketplaceApiFetcher({ config: mockConfig, fetch: mockFetch, logs })
+      const fetcher = await createMarketplaceApiFetcher({ metrics, config: mockConfig, fetch: mockFetch, logs })
       const result = await fetcher.fetchUserEmotes('0xdef456')
 
       expect(mockFetch.fetch).toHaveBeenCalledWith(
@@ -316,7 +318,7 @@ describe('MarketplaceApiFetcher', () => {
         json: jest.fn().mockResolvedValue(mockResponse)
       })
 
-      const fetcher = await createMarketplaceApiFetcher({ config: mockConfig, fetch: mockFetch, logs })
+      const fetcher = await createMarketplaceApiFetcher({ metrics, config: mockConfig, fetch: mockFetch, logs })
       const result = await fetcher.fetchUserNames('0x789abc')
 
       expect(mockFetch.fetch).toHaveBeenCalledWith(
@@ -353,7 +355,7 @@ describe('MarketplaceApiFetcher', () => {
         })
       })
 
-      const fetcher = await createMarketplaceApiFetcher({ config: mockConfig, fetch: mockFetch, logs })
+      const fetcher = await createMarketplaceApiFetcher({ metrics, config: mockConfig, fetch: mockFetch, logs })
       await fetcher.fetchUserWearables('0xtest')
 
       expect(mockFetch.fetch).toHaveBeenCalledWith(
@@ -371,7 +373,7 @@ describe('MarketplaceApiFetcher', () => {
         })
       })
 
-      const fetcher = await createMarketplaceApiFetcher({ config: mockConfig, fetch: mockFetch, logs })
+      const fetcher = await createMarketplaceApiFetcher({ metrics, config: mockConfig, fetch: mockFetch, logs })
       await fetcher.fetchUserWearables('0xABC123DEF')
 
       expect(mockFetch.fetch).toHaveBeenCalledWith(
@@ -429,6 +431,7 @@ describe('when the owned items span several pages', () => {
     }
     const logs = await createLogComponent({})
     const fetcher = await createMarketplaceApiFetcher({
+      metrics,
       config: {
         getString: jest.fn().mockResolvedValue('https://marketplace-api.com'),
         getNumber: jest.fn().mockResolvedValue(undefined)
@@ -463,6 +466,7 @@ describe('when the upstream declares an implausible page count', () => {
   beforeEach(async () => {
     fetch = { fetch: jest.fn() }
     fetcher = await createMarketplaceApiFetcher({
+      metrics,
       config: {
         getString: jest.fn().mockResolvedValue('https://marketplace-api.com'),
         getNumber: jest.fn().mockResolvedValue(undefined)
@@ -540,6 +544,7 @@ describe('when more marketplace requests are in flight than the bulkhead allows'
       })
     }
     const fetcher = await createMarketplaceApiFetcher({
+      metrics,
       config: {
         getString: jest.fn().mockResolvedValue('https://marketplace-api.com'),
         getNumber: jest.fn(async (key: string) => limits[key])
@@ -552,6 +557,10 @@ describe('when more marketplace requests are in flight than the bulkhead allows'
 
   it('should serve the request that found a slot', () => {
     expect(outcomes[0].status).toBe('fulfilled')
+  })
+
+  it('should count the shed fetch under its operation so the bulkhead can be sized from data', () => {
+    expect(metrics.increment).toHaveBeenCalledWith('marketplace_api_fetches_shed_total', { operation: 'wearables' })
   })
 
   it('should fail the excess request fast with a saturation error, not a marketplace error', () => {
@@ -568,6 +577,7 @@ describe('when the bulkhead settings are invalid', () => {
 
   function fetcherWith(settings: Record<string, number>) {
     return createMarketplaceApiFetcher({
+      metrics,
       config: {
         getString: jest.fn().mockResolvedValue('https://marketplace-api.com'),
         getNumber: jest.fn(async (key: string) => settings[key])
@@ -641,6 +651,7 @@ describe('when a multi-page inventory is fetched under the tightest bulkhead set
       MARKETPLACE_API_MAX_QUEUED_FETCHES: 0
     }
     const fetcher = await createMarketplaceApiFetcher({
+      metrics,
       config: {
         getString: jest.fn().mockResolvedValue('https://marketplace-api.com'),
         getNumber: jest.fn(async (key: string) => settings[key])
@@ -694,6 +705,7 @@ describe('when a page request fails while another fetch is queued behind the bul
       MARKETPLACE_API_MAX_QUEUED_FETCHES: 1
     }
     const fetcher = await createMarketplaceApiFetcher({
+      metrics,
       config: {
         getString: jest.fn().mockResolvedValue('https://marketplace-api.com'),
         getNumber: jest.fn(async (key: string) => settings[key])
