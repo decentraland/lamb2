@@ -91,4 +91,21 @@ describe('when fetching owned elements', () => {
       expect(fetchElements).toHaveBeenCalledTimes(1)
     })
   })
+
+  describe('and two requests differ only in the case of a filter value', () => {
+    beforeEach(async () => {
+      fetchElements.mockImplementation(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 10))
+        return settled(['a'])
+      })
+      await Promise.all([
+        fetcher.fetchOwnedElements('0x1', undefined, { name: 'Foo' }),
+        fetcher.fetchOwnedElements('0x1', undefined, { name: 'foo' })
+      ])
+    })
+
+    it('should treat them as the same request, since filters match case-insensitively downstream', () => {
+      expect(fetchElements).toHaveBeenCalledTimes(1)
+    })
+  })
 })

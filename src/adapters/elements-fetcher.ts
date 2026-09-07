@@ -11,7 +11,12 @@ const CACHE_DEFAULTS = {
 } as const
 
 /**
- * Create a cache key that includes all parameters for caching
+ * Create a cache key that includes all parameters for caching.
+ *
+ * Filter values are lowercased on purpose: every filter is matched case-insensitively downstream
+ * (the marketplace uses ILIKE for `name`, categories and rarities are lowercase enums, sort
+ * fields are normalised by both backends), so `Foo` and `foo` are the same request and share one
+ * entry and one in-flight fetch.
  */
 function createCacheKey(
   address: string,
@@ -28,7 +33,7 @@ function createCacheKey(
     const filterParts = Object.entries(filters)
       .filter(([_, value]) => value !== undefined && value !== '')
       .sort(([a], [b]) => a.localeCompare(b)) // Consistent ordering
-      .map(([key, value]) => `${key}:${value}`)
+      .map(([key, value]) => `${key}:${String(value).toLowerCase()}`)
 
     if (filterParts.length > 0) {
       parts.push(`f${filterParts.join('|')}`)
@@ -120,8 +125,7 @@ export function createElementsFetcherComponent<T>(
       const cacheKey = createCacheKey(address, pagination, filters)
 
       try {
-        // Lowercased as the shared cache wrapper does, so the key stays case-insensitive.
-        const result = await cache.fetch(cacheKey.toLowerCase(), { context: { address, pagination, filters } })
+        const result = await cache.fetch(cacheKey, { context: { address, pagination, filters } })
         if (!result) {
           throw new Error('The elements fetch resolved without a result')
         }
