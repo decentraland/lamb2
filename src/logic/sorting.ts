@@ -97,7 +97,7 @@ function sortDirectionParams(url: URL) {
  * Core sorting function selector - returns the appropriate sorting function based on sort field and direction.
  * Returns undefined if the combination is not recognized.
  */
-function selectSortingFunction<T extends HasName & HasRarity & HasDate>(
+export function selectSortingFunction<T extends HasName & HasRarity & HasDate>(
   sort: string,
   direction: string
 ): SortingFunction<T> | undefined {

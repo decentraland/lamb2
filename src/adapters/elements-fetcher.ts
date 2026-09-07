@@ -1,5 +1,5 @@
 import { Network } from '@dcl/schemas'
-import { AppComponents } from '../types'
+import { AppComponents, InvalidRequestError } from '../types'
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { createLowerCaseKeysCache } from './lowercase-keys-cache'
 import { PAGINATION_DEFAULTS } from '../logic/pagination-constants'
@@ -121,6 +121,12 @@ export function createElementsFetcherComponent<T>(
 
         return result
       } catch (err: any) {
+        // A rejected request is the caller's fault, not an upstream failure: let it keep its
+        // 400 instead of being reported as an upstream 502.
+        if (err instanceof InvalidRequestError) {
+          throw err
+        }
+
         logger.error(err)
         throw new FetcherError(`Cannot fetch elements for ${address}`)
       }

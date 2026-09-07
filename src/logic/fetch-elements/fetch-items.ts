@@ -1,5 +1,16 @@
 import { EmoteCategory, WearableCategory, Network } from '@dcl/schemas'
-import { Item, ItemType, OnChainEmote, OnChainWearable, Pagination } from '../../types'
+import {
+  HasDate,
+  HasName,
+  HasRarity,
+  InvalidRequestError,
+  Item,
+  ItemType,
+  OnChainEmote,
+  OnChainWearable,
+  Pagination,
+  SortingFunction
+} from '../../types'
 import { MarketplaceApiParams } from '../../adapters/marketplace-api-fetcher'
 import {
   ElementsFilters,
@@ -7,8 +18,11 @@ import {
   ItemType as ItemTypeFilter
 } from '../../adapters/elements-fetcher'
 
-import { fetchNFTsPaginated, createItemQueryBuilder } from './graph-pagination'
+import { ItemQueryBuilder, createItemQueryBuilder } from './graph-pagination'
+import { fetchAllNFTs } from './fetch-elements'
+import { selectSortingFunction } from '../sorting'
 import { fetchWithMarketplaceFallback } from '../api-with-fallback'
+import { ISubgraphComponent } from '@dcl/thegraph-component'
 
 export function buildMarketplaceApiParams(
   filters?: ElementsFilters,
@@ -52,6 +66,91 @@ export function buildMarketplaceApiParams(
   }
 
   return params
+}
+
+type SortableItem = HasName & HasRarity & HasDate
+
+/**
+ * Maps the requested order onto the in-memory comparators, reusing the same selector the
+ * handlers validate against so sort semantics have a single source of truth.
+ *
+ * Ordering cannot be pushed down to the subgraph: `rarity` follows the rarity scale rather
+ * than alphabetical order, and `date` compares the min/max transfer dates that only exist
+ * once the rows have been grouped by URN.
+ */
+function selectSorting<T extends SortableItem>(filters?: ElementsFilters): SortingFunction<T> | undefined {
+  if (!filters?.orderBy) {
+    return undefined
+  }
+
+  const sort = filters.orderBy.toLowerCase()
+  // Mirrors `sortDirectionParams`: name ascends by default, everything else descends.
+  const direction = (filters.direction ?? (sort === 'name' ? 'asc' : 'desc')).toUpperCase()
+  const sorting = selectSortingFunction<T>(sort, direction)
+
+  if (!sorting) {
+    throw new InvalidRequestError(
+      `Invalid sorting requested: '${sort} ${direction}'. Valid options are '[rarity, name, date] [ASC, DESC]'.`
+    )
+  }
+
+  return sorting
+}
+
+/**
+ * Applies the name and rarity filters the marketplace API applies server-side, so the fallback
+ * answers a filtered request with the same set. Mirrors `createFilters` in items-commons, except
+ * that an unknown rarity matches nothing rather than rejecting the request.
+ */
+function filterItems<T extends SortableItem>(items: T[], filters?: ElementsFilters): T[] {
+  const name = filters?.name?.toLowerCase()
+  const rarity = filters?.rarity?.toLowerCase()
+
+  if (!name && !rarity) {
+    return items
+  }
+
+  return items.filter(
+    (item) => (!rarity || item.rarity === rarity) && (!name || (!!item.name && item.name.toLowerCase().includes(name)))
+  )
+}
+
+/**
+ * Filters and orders the grouped items, then cuts out the requested page. `totalAmount` counts
+ * the grouped items left after filtering, so it is the real total rather than the size of the page.
+ */
+function paginateItems<T extends SortableItem>(
+  items: T[],
+  pagination?: Pick<Pagination, 'pageNum' | 'pageSize'>,
+  filters?: ElementsFilters
+): { elements: T[]; totalAmount: number } {
+  const filtered = filterItems(items, filters)
+  const sorting = selectSorting<T>(filters)
+  // Copied rather than sorted in place: the caller's array is not ours to reorder.
+  const ordered = sorting ? [...filtered].sort(sorting) : filtered
+
+  if (!pagination) {
+    return { elements: ordered, totalAmount: ordered.length }
+  }
+
+  const offset = (pagination.pageNum - 1) * pagination.pageSize
+  // A page before the first has nothing on it; a negative offset would slice the tail instead.
+  if (pagination.pageSize <= 0 || offset < 0) {
+    return { elements: [], totalAmount: ordered.length }
+  }
+
+  return { elements: ordered.slice(offset, offset + pagination.pageSize), totalAmount: ordered.length }
+}
+
+/** Runs the owner query, or resolves to no rows when the filters cannot match anything. */
+async function queryOwnedNFTs<E extends { id: string }>(
+  subgraph: ISubgraphComponent,
+  buildQuery: ItemQueryBuilder,
+  owner: string,
+  filters?: ElementsFilters
+): Promise<E[]> {
+  const query = buildQuery(filters)
+  return query ? fetchAllNFTs<E>(subgraph, query, owner) : []
 }
 
 function groupItemsByURN<
@@ -154,22 +253,18 @@ export async function fetchEmotes(
     async () => {
       // TheGraph fallback implementation
       // There are no emotes on Ethereum, only on Polygon
-      const emoteQueryBuilder = createItemQueryBuilder('emote')
-
-      const maticResult = await fetchNFTsPaginated<EmoteFromQuery>(
+      const maticResult = await queryOwnedNFTs<EmoteFromQuery>(
         theGraph.maticCollectionsSubgraph,
-        emoteQueryBuilder,
+        createItemQueryBuilder('emote'),
         owner,
-        pagination,
         filters
       )
 
-      const emotesGrouped = groupItemsByURN(maticResult.elements, (item) => item.metadata.emote)
+      // Grouping collapses every token of a URN into one item, so it has to happen before the
+      // page is cut: a page of rows is not a page of items.
+      const emotesGrouped = groupItemsByURN(maticResult, (item) => item.metadata.emote)
 
-      return {
-        elements: emotesGrouped,
-        totalAmount: maticResult.totalAmount
-      }
+      return paginateItems(emotesGrouped, pagination, filters)
     }
   )
 }
@@ -211,32 +306,24 @@ export async function fetchWearables(
 
       const [ethereumResult, maticResult] = await Promise.all([
         shouldQueryEthereum
-          ? fetchNFTsPaginated<WearableFromQuery>(
+          ? queryOwnedNFTs<WearableFromQuery>(
               theGraph.ethereumCollectionsSubgraph,
               wearableQueryBuilder,
               owner,
-              pagination,
               filters
             )
-          : Promise.resolve({ elements: [], totalAmount: 0 }),
+          : Promise.resolve([] as WearableFromQuery[]),
         shouldQueryMatic
-          ? fetchNFTsPaginated<WearableFromQuery>(
-              theGraph.maticCollectionsSubgraph,
-              wearableQueryBuilder,
-              owner,
-              pagination,
-              filters
-            )
-          : Promise.resolve({ elements: [], totalAmount: 0 })
+          ? queryOwnedNFTs<WearableFromQuery>(theGraph.maticCollectionsSubgraph, wearableQueryBuilder, owner, filters)
+          : Promise.resolve([] as WearableFromQuery[])
       ])
 
-      const allWearables = [...ethereumResult.elements, ...maticResult.elements]
+      // Both networks have to be merged and grouped before the page is cut: paging each
+      // subgraph separately would take the same offset from each and concatenate the results.
+      const allWearables = [...ethereumResult, ...maticResult]
       const wearables = groupItemsByURN(allWearables, (item) => item.metadata.wearable)
 
-      return {
-        elements: wearables,
-        totalAmount: ethereumResult.totalAmount + maticResult.totalAmount
-      }
+      return paginateItems(wearables, pagination, filters)
     }
   )
 }
