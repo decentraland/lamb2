@@ -121,7 +121,11 @@ describe('when fetching owned elements', () => {
     beforeEach(async () => {
       let call = 0
       fetchElements.mockImplementation(async () => settled([`v${++call}`]))
-      stale = createElementsFetcherComponent<string>({ logs } as any, fetchElements, { maxEntries: 10, maxAge: 20 })
+      stale = createElementsFetcherComponent<string>({ logs } as any, fetchElements, {
+        maxEntries: 10,
+        maxAge: 20,
+        serveStale: true
+      })
       served = []
       served.push((await stale.fetchOwnedElements('0x1')).elements)
       await new Promise((resolve) => setTimeout(resolve, 40))
@@ -144,6 +148,132 @@ describe('when fetching owned elements', () => {
   })
 })
 
+describe('when stale serving is off for a fetcher', () => {
+  let fetchElements: jest.Mock
+  let fetcher: ElementsFetcher<string>
+
+  beforeEach(() => {
+    fetchElements = jest.fn()
+    fetcher = createElementsFetcherComponent<string>({ logs } as any, fetchElements, {
+      maxEntries: 10,
+      maxAge: 20,
+      serveStale: false
+    })
+  })
+
+  afterEach(() => {
+    jest.resetAllMocks()
+  })
+
+  describe('and the entry has expired', () => {
+    let served: string[][]
+
+    beforeEach(async () => {
+      let call = 0
+      fetchElements.mockImplementation(async () => settled([`v${++call}`]))
+      served = [(await fetcher.fetchOwnedElements('0x1')).elements]
+      await new Promise((resolve) => setTimeout(resolve, 40))
+      served.push((await fetcher.fetchOwnedElements('0x1')).elements)
+    })
+
+    it('should block on the refresh and answer with the fresh value', () => {
+      expect(served).toEqual([['v1'], ['v2']])
+    })
+  })
+
+  describe('and the entry has expired while the upstream is down', () => {
+    beforeEach(async () => {
+      fetchElements.mockResolvedValueOnce(settled(['owner-1'])).mockRejectedValue(new Error('upstream down'))
+      await fetcher.fetchOwnedElements('0x1')
+      await new Promise((resolve) => setTimeout(resolve, 40))
+    })
+
+    it('should fail closed instead of confidently serving the previous answer', async () => {
+      await expect(fetcher.fetchOwnedElements('0x1')).rejects.toThrow(FetcherError)
+    })
+  })
+})
+
+describe('when the elements cache is metered', () => {
+  let fetchElements: jest.Mock
+  let metrics: { increment: jest.Mock }
+  let fetcher: ElementsFetcher<string>
+
+  function resultsRecorded(): string[] {
+    return metrics.increment.mock.calls
+      .filter(([name]) => name === 'elements_cache_reads_total')
+      .map(([, labels]) => labels.result)
+  }
+
+  function refreshOutcomes(): string[] {
+    return metrics.increment.mock.calls
+      .filter(([name]) => name === 'elements_cache_background_refresh_total')
+      .map(([, labels]) => labels.outcome)
+  }
+
+  beforeEach(() => {
+    fetchElements = jest.fn()
+    metrics = { increment: jest.fn() }
+    fetcher = createElementsFetcherComponent<string>({ logs, metrics } as any, fetchElements, {
+      maxEntries: 10,
+      maxAge: 20,
+      serveStale: true
+    })
+  })
+
+  afterEach(() => {
+    jest.resetAllMocks()
+  })
+
+  describe('and an entry is read cold, warm, stale and warm again', () => {
+    beforeEach(async () => {
+      fetchElements.mockImplementation(async () => settled(['a']))
+      await fetcher.fetchOwnedElements('0x1')
+      await fetcher.fetchOwnedElements('0x1')
+      await new Promise((resolve) => setTimeout(resolve, 40))
+      await fetcher.fetchOwnedElements('0x1')
+      await new Promise((resolve) => setTimeout(resolve, 10))
+      await fetcher.fetchOwnedElements('0x1')
+    })
+
+    it('should record each read by what it cost', () => {
+      expect(resultsRecorded()).toEqual(['miss', 'hit', 'stale', 'hit'])
+    })
+
+    it('should record the one background refresh as successful', () => {
+      expect(refreshOutcomes()).toEqual(['ok'])
+    })
+  })
+
+  describe('and the background refresh fails', () => {
+    let served: string[][]
+
+    beforeEach(async () => {
+      fetchElements
+        .mockResolvedValueOnce(settled(['v1']))
+        .mockRejectedValueOnce(new Error('upstream down'))
+        .mockResolvedValueOnce(settled(['v3']))
+      served = [(await fetcher.fetchOwnedElements('0x1')).elements]
+      await new Promise((resolve) => setTimeout(resolve, 40))
+      served.push((await fetcher.fetchOwnedElements('0x1')).elements)
+      await new Promise((resolve) => setTimeout(resolve, 10))
+      served.push((await fetcher.fetchOwnedElements('0x1')).elements)
+    })
+
+    it('should still have served the stale value to the reader that triggered the refresh', () => {
+      expect(served[1]).toEqual(['v1'])
+    })
+
+    it('should record the failed refresh, which is the signal the cache has stopped self-healing', () => {
+      expect(refreshOutcomes()).toEqual(['failed'])
+    })
+
+    it('should drop the entry so the next read goes upstream again rather than serving it forever', () => {
+      expect(served[2]).toEqual(['v3'])
+    })
+  })
+})
+
 describe('when reading the elements cache settings', () => {
   function configWith(values: Record<string, number>) {
     return { getNumber: jest.fn(async (key: string) => values[key]) } as any
@@ -156,12 +286,16 @@ describe('when reading the elements cache settings', () => {
       settings = await readElementsCacheSettings(configWith({}))
     })
 
-    it('should default owned elements to one minute so ownership answers stay close to the chain', () => {
-      expect(settings.elements).toEqual({ maxEntries: 10000, maxAge: 60_000 })
+    it('should default owned elements to one minute, served stale while refreshing', () => {
+      expect(settings.elements).toEqual({ maxEntries: 10000, maxAge: 60_000, serveStale: true })
     })
 
     it('should keep linked wearables at ten minutes, since filling that entry is expensive and rarely changes', () => {
-      expect(settings.thirdPartyWearables).toEqual({ maxEntries: 10000, maxAge: 600_000 })
+      expect(settings.thirdPartyWearables).toEqual({ maxEntries: 10000, maxAge: 600_000, serveStale: true })
+    })
+
+    it('should never serve ownership decisions stale, so they fail closed on an outage', () => {
+      expect(settings.ownershipDecisions).toEqual({ maxEntries: 10000, maxAge: 60_000, serveStale: false })
     })
   })
 
@@ -174,8 +308,12 @@ describe('when reading the elements cache settings', () => {
       )
     })
 
-    it('should apply each age to its own cache', () => {
-      expect([settings.elements.maxAge, settings.thirdPartyWearables.maxAge]).toEqual([5000, 7000])
+    it('should apply each age to its own cache, ownership decisions following the elements age', () => {
+      expect([
+        settings.elements.maxAge,
+        settings.thirdPartyWearables.maxAge,
+        settings.ownershipDecisions.maxAge
+      ]).toEqual([5000, 7000, 5000])
     })
   })
 

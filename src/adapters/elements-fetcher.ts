@@ -15,6 +15,12 @@ export type ElementsCacheOptions = {
   maxEntries: number
   /** Milliseconds an entry is served as fresh before a request triggers its refresh. */
   maxAge: number
+  /**
+   * Answer an expired entry immediately and refresh it in the background. Off for fetchers whose
+   * answer decides ownership: on an outage those must fail rather than confidently serve the
+   * previous owner.
+   */
+  serveStale: boolean
 }
 
 /**
@@ -23,7 +29,7 @@ export type ElementsCacheOptions = {
  * one refresh runs in the background, so a short age costs one upstream fetch per hot key per
  * minute, not one per request.
  */
-export const ELEMENTS_CACHE_DEFAULTS: ElementsCacheOptions = { maxEntries: 10000, maxAge: 60_000 }
+export const ELEMENTS_CACHE_DEFAULTS: ElementsCacheOptions = { maxEntries: 10000, maxAge: 60_000, serveStale: true }
 
 /**
  * Linked wearables keep the previous ten minutes. Filling an entry means asking the NFT worker for
@@ -31,11 +37,17 @@ export const ELEMENTS_CACHE_DEFAULTS: ElementsCacheOptions = { maxEntries: 10000
  * collections, and the tokens change rarely; their presence on a profile is validated per item
  * through the ownership checker, not through this cache, so a longer age costs no correctness there.
  */
-export const THIRD_PARTY_WEARABLES_CACHE_DEFAULTS: ElementsCacheOptions = { maxEntries: 10000, maxAge: 600_000 }
+export const THIRD_PARTY_WEARABLES_CACHE_DEFAULTS: ElementsCacheOptions = {
+  maxEntries: 10000,
+  maxAge: 600_000,
+  serveStale: true
+}
 
 export type ElementsCacheSettings = {
   elements: ElementsCacheOptions
   thirdPartyWearables: ElementsCacheOptions
+  /** For routes whose answer decides ownership: same age, but an expired entry blocks on the refresh. */
+  ownershipDecisions: ElementsCacheOptions
 }
 
 export async function readElementsCacheSettings(config: AppComponents['config']): Promise<ElementsCacheSettings> {
@@ -51,16 +63,16 @@ export async function readElementsCacheSettings(config: AppComponents['config'])
   }
 
   const maxEntries = await integerSetting('ELEMENTS_CACHE_MAX_SIZE', ELEMENTS_CACHE_DEFAULTS.maxEntries)
+  const elementsAge = await integerSetting('ELEMENTS_CACHE_MAX_AGE', ELEMENTS_CACHE_DEFAULTS.maxAge)
 
   return {
-    elements: {
-      maxEntries,
-      maxAge: await integerSetting('ELEMENTS_CACHE_MAX_AGE', ELEMENTS_CACHE_DEFAULTS.maxAge)
-    },
+    elements: { maxEntries, maxAge: elementsAge, serveStale: true },
     thirdPartyWearables: {
       maxEntries,
-      maxAge: await integerSetting('THIRD_PARTY_WEARABLES_CACHE_MAX_AGE', THIRD_PARTY_WEARABLES_CACHE_DEFAULTS.maxAge)
-    }
+      maxAge: await integerSetting('THIRD_PARTY_WEARABLES_CACHE_MAX_AGE', THIRD_PARTY_WEARABLES_CACHE_DEFAULTS.maxAge),
+      serveStale: true
+    },
+    ownershipDecisions: { maxEntries, maxAge: elementsAge, serveStale: false }
   }
 }
 
@@ -127,7 +139,10 @@ export type ElementsFetcher<T> = IBaseComponent & {
   clearCache?(): void
 }
 
-export type ElementsFetcherDependencies = Pick<AppComponents, 'logs' | 'theGraph' | 'marketplaceApiFetcher'>
+export type ElementsFetcherDependencies = Pick<AppComponents, 'logs' | 'theGraph' | 'marketplaceApiFetcher'> & {
+  /** Optional so existing construction sites and test harnesses keep compiling. */
+  metrics?: AppComponents['metrics']
+}
 
 export class FetcherError extends Error {
   constructor(message: string) {
@@ -146,7 +161,7 @@ export function createElementsFetcherComponent<T>(
   ) => Promise<ElementsResult<T>>,
   options: ElementsCacheOptions = ELEMENTS_CACHE_DEFAULTS
 ): ElementsFetcher<T> {
-  const { logs } = dependencies
+  const { logs, metrics } = dependencies
   const logger = logs.getLogger('elements-fetcher')
 
   type FetchContext = {
@@ -157,10 +172,48 @@ export function createElementsFetcherComponent<T>(
 
   async function fetchForKey(
     _key: string,
-    _staleValue: ElementsResult<T> | undefined,
+    staleValue: ElementsResult<T> | undefined,
     { context }: { context: FetchContext }
   ): Promise<ElementsResult<T>> {
-    return fetchElements(dependencies, context.address.toLowerCase(), context.pagination, context.filters)
+    // lru-cache hands over the expired value whenever there is one; only with stale serving on
+    // has the reader already been answered, making this a refresh behind the request.
+    const isBackgroundRefresh = staleValue !== undefined && options.serveStale
+    try {
+      const result = await fetchElements(
+        dependencies,
+        context.address.toLowerCase(),
+        context.pagination,
+        context.filters
+      )
+      if (isBackgroundRefresh) {
+        metrics?.increment('elements_cache_background_refresh_total', { outcome: 'ok' })
+      }
+      return result
+    } catch (error) {
+      if (isBackgroundRefresh) {
+        metrics?.increment('elements_cache_background_refresh_total', { outcome: 'failed' })
+        logger.warn('Background refresh failed; the stale entry was served and dropped', {
+          address: context.address,
+          error: error instanceof Error ? error.message : String(error)
+        })
+      }
+      throw error
+    }
+  }
+
+  /**
+   * What this read will cost. `has` is false for a stale entry and for a cold load still in
+   * flight, so a reader joining that load counts as blocked on upstream, which it is.
+   */
+  function classifyRead(key: string): 'hit' | 'stale' | 'miss' {
+    const remaining = cache.getRemainingTTL(key)
+    if (remaining > 0 && cache.has(key)) {
+      return 'hit'
+    }
+    if (remaining < 0 && options.serveStale) {
+      return 'stale'
+    }
+    return 'miss'
   }
 
   // `fetch` hands every caller of a key the same in-flight promise, so concurrent misses for one
@@ -169,7 +222,7 @@ export function createElementsFetcherComponent<T>(
   const cache = new LRU<string, ElementsResult<T>, FetchContext>({
     max: options.maxEntries,
     ttl: options.maxAge,
-    allowStale: true,
+    allowStale: options.serveStale,
     fetchMethod: fetchForKey
   })
 
@@ -180,6 +233,7 @@ export function createElementsFetcherComponent<T>(
       filters?: ElementsFilters
     ) {
       const cacheKey = createCacheKey(address, pagination, filters)
+      metrics?.increment('elements_cache_reads_total', { result: classifyRead(cacheKey) })
 
       try {
         const result = await cache.fetch(cacheKey, { context: { address, pagination, filters } })
