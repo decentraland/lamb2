@@ -58,6 +58,16 @@ export const metricDeclarations = {
     type: IMetricsComponent.GaugeType,
     labelNames: ['state']
   },
+  elements_cache_reads_total: {
+    help: 'Owned-elements cache reads: hit (fresh), stale (served stale, refreshed behind the request) or miss (blocked on upstream)',
+    type: IMetricsComponent.CounterType,
+    labelNames: ['result']
+  },
+  elements_cache_background_refresh_total: {
+    help: 'Background refreshes of stale owned-elements entries by outcome; failures mean the entry was dropped',
+    type: IMetricsComponent.CounterType,
+    labelNames: ['outcome']
+  },
   cache_warmer_last_warmup_timestamp: {
     help: 'Unix timestamp of the last successful cache warmup',
     type: IMetricsComponent.GaugeType,

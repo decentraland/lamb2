@@ -15,7 +15,11 @@ import {
   createEmoteDefinitionsFetcherComponent,
   createWearableDefinitionsFetcherComponent
 } from './adapters/definitions-fetcher'
-import { createElementsFetcherComponent, createLegacyElementsFetcherComponent } from './adapters/elements-fetcher'
+import {
+  createElementsFetcherComponent,
+  createLegacyElementsFetcherComponent,
+  readElementsCacheSettings
+} from './adapters/elements-fetcher'
 import { createEntitiesFetcherComponent } from './adapters/entities-fetcher'
 import { createNameDenylistFetcher } from './adapters/name-denylist-fetcher'
 import { createPOIsFetcher } from './adapters/pois-fetcher'
@@ -82,6 +86,7 @@ export async function initComponents(
     : await createTheGraphComponent({ config, logs, fetch, metrics })
 
   const ownershipCaches = await createOwnershipCachesComponent({ config })
+  const elementsCache = await readElementsCacheSettings(config)
 
   const wearableDefinitionsFetcher = await createWearableDefinitionsFetcherComponent({
     config,
@@ -109,25 +114,42 @@ export async function initComponents(
     contentServerUrl
   })
   const baseWearablesFetcher = createElementsFetcherComponent<BaseWearable>(
-    { logs, theGraph, marketplaceApiFetcher },
+    { logs, metrics, theGraph, marketplaceApiFetcher },
     async (_deps, _address) => {
       const elements = await fetchBaseWearables({ entitiesFetcher })
       return { elements, totalAmount: elements.length }
-    }
+    },
+    elementsCache.elements
   )
 
-  const wearablesFetcher = createElementsFetcherComponent({ logs, theGraph, marketplaceApiFetcher }, fetchWearables)
+  const wearablesFetcher = createElementsFetcherComponent(
+    { logs, metrics, theGraph, marketplaceApiFetcher },
+    fetchWearables,
+    elementsCache.elements
+  )
 
-  const emotesFetcher = createElementsFetcherComponent({ logs, theGraph, marketplaceApiFetcher }, fetchEmotes)
+  const emotesFetcher = createElementsFetcherComponent(
+    { logs, metrics, theGraph, marketplaceApiFetcher },
+    fetchEmotes,
+    elementsCache.elements
+  )
 
-  const namesFetcher = createElementsFetcherComponent({ logs, theGraph, marketplaceApiFetcher }, fetchNames)
+  const namesFetcher = createElementsFetcherComponent(
+    { logs, metrics, theGraph, marketplaceApiFetcher },
+    fetchNames,
+    elementsCache.elements
+  )
 
   const landsFetcher = createLegacyElementsFetcherComponent({ logs }, async (address) => fetchLands(theGraph, address))
 
-  const landsPermissionsFetcher = createElementsFetcherComponent({ logs, theGraph }, async (_deps, address) => {
-    const elements = await fetchAllPermissions({ theGraph }, address)
-    return { elements, totalAmount: elements.length }
-  })
+  const landsPermissionsFetcher = createElementsFetcherComponent(
+    { logs, metrics, theGraph },
+    async (_deps, address) => {
+      const elements = await fetchAllPermissions({ theGraph }, address)
+      return { elements, totalAmount: elements.length }
+    },
+    elementsCache.ownershipDecisions
+  )
 
   const resourcesStatusCheck = createResourcesStatusComponent({ logs })
   const status = await createStatusComponent({ logs, fetch })
@@ -179,22 +201,27 @@ export async function initComponents(
   })
 
   const thirdPartyWearablesFetcher = createElementsFetcherComponent(
-    { logs, theGraph, marketplaceApiFetcher },
+    { logs, metrics, theGraph, marketplaceApiFetcher },
     async (_deps, address) => {
       const elements = await fetchAllThirdPartyWearables(
         { alchemyNftFetcher, contentServerUrl, thirdPartyProvidersStorage, fetch, entitiesFetcher, metrics },
         address
       )
       return { elements, totalAmount: elements.length }
-    }
+    },
+    elementsCache.thirdPartyWearables
   )
 
   const alchemyNftFetcher = await createAlchemyNftFetcher({ config, logs, fetch })
 
-  const nameOwnerFetcher = createElementsFetcherComponent({ logs, theGraph }, async (_deps, name) => {
-    const { owner } = await fetchNameOwner({ theGraph }, name)
-    return { elements: owner ? [{ owner }] : [], totalAmount: owner ? 1 : 0 }
-  })
+  const nameOwnerFetcher = createElementsFetcherComponent(
+    { logs, metrics, theGraph },
+    async (_deps, name) => {
+      const { owner } = await fetchNameOwner({ theGraph }, name)
+      return { elements: owner ? [{ owner }] : [], totalAmount: owner ? 1 : 0 }
+    },
+    elementsCache.ownershipDecisions
+  )
 
   const profiles = await createProfilesComponent({
     alchemyNftFetcher,

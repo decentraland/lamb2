@@ -10,10 +10,11 @@ type Harness = {
   profiles: IProfilesComponent
   content: { fetchEntitiesByPointers: jest.Mock }
   wearablesFetcher: { fetchOwnedElements: jest.Mock }
+  emotesFetcher: { fetchOwnedElements: jest.Mock }
   l2ThirdPartyItemChecker: { checkThirdPartyItems: jest.Mock }
 }
 
-function profileEntity(address: string, wearables: string[]): Entity {
+function profileEntity(address: string, wearables: string[], emotes: { urn: string; slot: number }[] = []): Entity {
   return {
     version: 'v3',
     id: `entity-${address}`,
@@ -31,7 +32,7 @@ function profileEntity(address: string, wearables: string[]): Entity {
           avatar: {
             bodyShape: 'urn:decentraland:off-chain:base-avatars:BaseMale',
             wearables,
-            emotes: [],
+            emotes,
             snapshots: { face256: '', body: '' }
           }
         }
@@ -48,6 +49,7 @@ async function createHarness(numbers: Record<string, number> = {}): Promise<Harn
   }
   const content = { fetchEntitiesByPointers: jest.fn() }
   const wearablesFetcher = nothingOwned()
+  const emotesFetcher = nothingOwned()
   const l2ThirdPartyItemChecker = { checkThirdPartyItems: jest.fn().mockResolvedValue([]) }
 
   const profiles = await createProfilesComponent({
@@ -60,23 +62,24 @@ async function createHarness(numbers: Record<string, number> = {}): Promise<Harn
     l1ThirdPartyItemChecker: { checkThirdPartyItems: jest.fn().mockResolvedValue([]) },
     l2ThirdPartyItemChecker,
     wearablesFetcher,
-    emotesFetcher: nothingOwned(),
+    emotesFetcher,
     namesFetcher: nothingOwned()
   } as any)
 
-  return { profiles, content, wearablesFetcher, l2ThirdPartyItemChecker }
+  return { profiles, content, wearablesFetcher, emotesFetcher, l2ThirdPartyItemChecker }
 }
 
 describe('when fetching a batch of profiles', () => {
   let profiles: IProfilesComponent
   let content: Harness['content']
   let wearablesFetcher: Harness['wearablesFetcher']
+  let emotesFetcher: Harness['emotesFetcher']
   let l2ThirdPartyItemChecker: Harness['l2ThirdPartyItemChecker']
   let addresses: string[]
   let result: ProfileMetadata[] | undefined
 
   beforeEach(async () => {
-    ;({ profiles, content, wearablesFetcher, l2ThirdPartyItemChecker } = await createHarness())
+    ;({ profiles, content, wearablesFetcher, emotesFetcher, l2ThirdPartyItemChecker } = await createHarness())
   })
 
   afterEach(() => {
@@ -255,6 +258,88 @@ describe('when fetching a batch of profiles', () => {
 
     it('should fail the request as an overload rather than answer with no profiles', async () => {
       await expect(profiles.getProfiles(['0x1'])).rejects.toThrow(ServiceOverloadedError)
+    })
+  })
+
+  describe('and nothing was deployed since the If-Modified-Since timestamp', () => {
+    beforeEach(async () => {
+      content.fetchEntitiesByPointers.mockResolvedValue([profileEntity('0x1', [])])
+      result = await profiles.getProfiles(['0x1'], Date.now())
+    })
+
+    it('should answer with no profiles so the handler can respond 304', () => {
+      expect(result).toBeUndefined()
+    })
+  })
+
+  describe('and the profile entities cannot be fetched', () => {
+    beforeEach(async () => {
+      content.fetchEntitiesByPointers.mockRejectedValue(new Error('content server down'))
+      result = await profiles.getProfiles(['0x1'])
+    })
+
+    it('should answer with an empty list rather than fail the request', () => {
+      expect(result).toEqual([])
+    })
+  })
+
+  describe('and an avatar wears one owned and one unowned wearable', () => {
+    beforeEach(async () => {
+      wearablesFetcher.fetchOwnedElements.mockResolvedValue({
+        elements: [
+          {
+            urn: 'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7',
+            individualData: [{ tokenId: '11' }]
+          }
+        ],
+        totalAmount: 1
+      })
+      content.fetchEntitiesByPointers.mockResolvedValue([
+        profileEntity('0x1', [
+          'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7:11',
+          'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1:1'
+        ])
+      ])
+      result = await profiles.getProfiles(['0x1'])
+    })
+
+    it('should keep the owned wearable with its token and drop the unowned one', () => {
+      expect(result?.[0].avatars[0].avatar.wearables).toEqual([
+        'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7:11'
+      ])
+    })
+  })
+
+  describe('and an avatar wears an owned, an unowned and a base emote', () => {
+    beforeEach(async () => {
+      emotesFetcher.fetchOwnedElements.mockResolvedValue({
+        elements: [
+          {
+            urn: 'urn:decentraland:matic:collections-v2:0x2b8b3fb6bc8b7e5a1f1c9e7d4a6b5c3d2e1f0a9b:3',
+            individualData: [{ tokenId: '5' }]
+          }
+        ],
+        totalAmount: 1
+      })
+      content.fetchEntitiesByPointers.mockResolvedValue([
+        profileEntity(
+          '0x1',
+          [],
+          [
+            { urn: 'urn:decentraland:matic:collections-v2:0x2b8b3fb6bc8b7e5a1f1c9e7d4a6b5c3d2e1f0a9b:3:5', slot: 0 },
+            { urn: 'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1:1', slot: 1 },
+            { urn: 'wave', slot: 2 }
+          ]
+        )
+      ])
+      result = await profiles.getProfiles(['0x1'])
+    })
+
+    it('should keep the owned and the base emote in their slots and drop the unowned one', () => {
+      expect(result?.[0].avatars[0].avatar.emotes).toEqual([
+        { urn: 'urn:decentraland:matic:collections-v2:0x2b8b3fb6bc8b7e5a1f1c9e7d4a6b5c3d2e1f0a9b:3:5', slot: 0 },
+        { urn: 'wave', slot: 2 }
+      ])
     })
   })
 })

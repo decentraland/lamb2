@@ -23,6 +23,28 @@ describe('when building the owned items query', () => {
     })
   })
 
+  describe('and smart wearables are requested', () => {
+    beforeEach(() => {
+      filters = undefined
+      query = createItemQueryBuilder('smartWearable')(filters)
+    })
+
+    it('should filter on the smart wearable item type alone', () => {
+      expect(query).toContain('itemType: smart_wearable_v1')
+    })
+  })
+
+  describe('and Ethereum wearables are requested', () => {
+    beforeEach(() => {
+      filters = undefined
+      query = createItemQueryBuilder('wearable', Network.ETHEREUM)(filters)
+    })
+
+    it('should filter on the v1 item type, the only kind minted there', () => {
+      expect(query).toContain('itemType: wearable_v1')
+    })
+  })
+
   describe('and the results are ordered by date', () => {
     beforeEach(() => {
       filters = { orderBy: 'date', direction: 'DESC' }
