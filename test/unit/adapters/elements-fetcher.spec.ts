@@ -9,8 +9,45 @@ const logs = {
   getLogger: () => ({ debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn(), log: jest.fn() })
 }
 
+const ONE_MINUTE = 60_000
+
 function settled(elements: string[]) {
   return { elements, totalAmount: elements.length }
+}
+
+/**
+ * lru-cache reads its TTL clock through `performance.now()`, so the tests drive time by offsetting
+ * that clock instead of sleeping; nothing here depends on how fast the machine is. The only real
+ * wait is a few milliseconds after each jump, because lru-cache debounces its clock reads for 1 ms.
+ */
+function installClock() {
+  const realNow = performance.now.bind(performance)
+  let offset = 0
+  jest.spyOn(performance, 'now').mockImplementation(() => realNow() + offset)
+
+  return {
+    async advance(ms: number): Promise<void> {
+      offset += ms
+      await new Promise((resolve) => setTimeout(resolve, 5))
+    }
+  }
+}
+
+/** Lets every pending promise chain, including lru-cache's own, run to completion. */
+async function flush(): Promise<void> {
+  await new Promise((resolve) => setImmediate(resolve))
+  await new Promise((resolve) => setImmediate(resolve))
+}
+
+/** An upstream call the test releases explicitly, so overlap between requests is arranged, not timed. */
+function deferred<T>() {
+  let resolve!: (value: T) => void
+  let reject!: (reason: unknown) => void
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res
+    reject = rej
+  })
+  return { promise, resolve, reject }
 }
 
 describe('when fetching owned elements', () => {
@@ -23,18 +60,18 @@ describe('when fetching owned elements', () => {
   })
 
   afterEach(() => {
-    jest.resetAllMocks()
+    jest.restoreAllMocks()
   })
 
   describe('and a second request for the same address arrives while the first is in flight', () => {
     let results: Awaited<ReturnType<ElementsFetcher<string>['fetchOwnedElements']>>[]
 
     beforeEach(async () => {
-      fetchElements.mockImplementation(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 10))
-        return settled(['a'])
-      })
-      results = await Promise.all([fetcher.fetchOwnedElements('0xAbC'), fetcher.fetchOwnedElements('0xabc')])
+      const upstream = deferred<ReturnType<typeof settled>>()
+      fetchElements.mockReturnValue(upstream.promise)
+      const requests = Promise.all([fetcher.fetchOwnedElements('0xAbC'), fetcher.fetchOwnedElements('0xabc')])
+      upstream.resolve(settled(['a']))
+      results = await requests
     })
 
     it('should fetch upstream once and hand both requests the result', () => {
@@ -57,15 +94,27 @@ describe('when fetching owned elements', () => {
     })
   })
 
+  describe('and the same address is requested for two different pages', () => {
+    beforeEach(async () => {
+      fetchElements.mockResolvedValue(settled([]))
+      await fetcher.fetchOwnedElements('0x1', { pageSize: 10, pageNum: 1 })
+      await fetcher.fetchOwnedElements('0x1', { pageSize: 10, pageNum: 2 })
+    })
+
+    it('should keep one entry per page', () => {
+      expect(fetchElements).toHaveBeenCalledTimes(2)
+    })
+  })
+
   describe('and the upstream fails while requests are waiting on it', () => {
     let outcomes: PromiseSettledResult<unknown>[]
 
     beforeEach(async () => {
-      fetchElements.mockImplementation(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 10))
-        throw new Error('upstream down')
-      })
-      outcomes = await Promise.allSettled([fetcher.fetchOwnedElements('0x1'), fetcher.fetchOwnedElements('0x1')])
+      const upstream = deferred<never>()
+      fetchElements.mockReturnValue(upstream.promise)
+      const requests = Promise.allSettled([fetcher.fetchOwnedElements('0x1'), fetcher.fetchOwnedElements('0x1')])
+      upstream.reject(new Error('upstream down'))
+      outcomes = await requests
     })
 
     it('should fail both requests from the single upstream attempt', () => {
@@ -78,10 +127,15 @@ describe('when fetching owned elements', () => {
       ).toEqual([true, true])
     })
 
-    it('should try upstream again on the next request instead of remembering the failure', async () => {
-      fetchElements.mockResolvedValueOnce(settled(['b']))
-      await fetcher.fetchOwnedElements('0x1')
-      expect(fetchElements).toHaveBeenCalledTimes(2)
+    describe('and the next request for that address arrives', () => {
+      beforeEach(async () => {
+        fetchElements.mockResolvedValueOnce(settled(['b']))
+        await fetcher.fetchOwnedElements('0x1')
+      })
+
+      it('should try upstream again instead of remembering the failure', () => {
+        expect(fetchElements).toHaveBeenCalledTimes(2)
+      })
     })
   })
 
@@ -99,14 +153,14 @@ describe('when fetching owned elements', () => {
 
   describe('and two requests differ only in the case of a filter value', () => {
     beforeEach(async () => {
-      fetchElements.mockImplementation(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 10))
-        return settled(['a'])
-      })
-      await Promise.all([
+      const upstream = deferred<ReturnType<typeof settled>>()
+      fetchElements.mockReturnValue(upstream.promise)
+      const requests = Promise.all([
         fetcher.fetchOwnedElements('0x1', undefined, { name: 'Foo' }),
         fetcher.fetchOwnedElements('0x1', undefined, { name: 'foo' })
       ])
+      upstream.resolve(settled(['a']))
+      await requests
     })
 
     it('should treat them as the same request, since filters match case-insensitively downstream', () => {
@@ -114,25 +168,24 @@ describe('when fetching owned elements', () => {
     })
   })
 
-  describe('and the entry has gone stale', () => {
-    let stale: ElementsFetcher<string>
+  describe('and the entry has gone stale within the grace window', () => {
     let served: string[][]
 
     beforeEach(async () => {
+      const clock = installClock()
       let call = 0
       fetchElements.mockImplementation(async () => settled([`v${++call}`]))
-      stale = createElementsFetcherComponent<string>({ logs } as any, fetchElements, {
+      fetcher = createElementsFetcherComponent<string>({ logs } as any, fetchElements, {
         maxEntries: 10,
-        maxAge: 20,
-        maxStaleAge: 200,
+        maxAge: ONE_MINUTE,
+        maxStaleAge: ONE_MINUTE,
         serveStale: true
       })
-      served = []
-      served.push((await stale.fetchOwnedElements('0x1')).elements)
-      await new Promise((resolve) => setTimeout(resolve, 40))
-      served.push((await stale.fetchOwnedElements('0x1')).elements)
-      await new Promise((resolve) => setTimeout(resolve, 10))
-      served.push((await stale.fetchOwnedElements('0x1')).elements)
+      served = [(await fetcher.fetchOwnedElements('0x1')).elements]
+      await clock.advance(ONE_MINUTE * 1.5)
+      served.push((await fetcher.fetchOwnedElements('0x1')).elements)
+      await flush()
+      served.push((await fetcher.fetchOwnedElements('0x1')).elements)
     })
 
     it('should answer the stale request at once with the previous value', () => {
@@ -152,19 +205,21 @@ describe('when fetching owned elements', () => {
 describe('when stale serving is off for a fetcher', () => {
   let fetchElements: jest.Mock
   let fetcher: ElementsFetcher<string>
+  let clock: ReturnType<typeof installClock>
 
   beforeEach(() => {
+    clock = installClock()
     fetchElements = jest.fn()
     fetcher = createElementsFetcherComponent<string>({ logs } as any, fetchElements, {
       maxEntries: 10,
-      maxAge: 20,
+      maxAge: ONE_MINUTE,
       maxStaleAge: 0,
       serveStale: false
     })
   })
 
   afterEach(() => {
-    jest.resetAllMocks()
+    jest.restoreAllMocks()
   })
 
   describe('and the entry has expired', () => {
@@ -174,7 +229,7 @@ describe('when stale serving is off for a fetcher', () => {
       let call = 0
       fetchElements.mockImplementation(async () => settled([`v${++call}`]))
       served = [(await fetcher.fetchOwnedElements('0x1')).elements]
-      await new Promise((resolve) => setTimeout(resolve, 40))
+      await clock.advance(ONE_MINUTE * 1.5)
       served.push((await fetcher.fetchOwnedElements('0x1')).elements)
     })
 
@@ -184,14 +239,17 @@ describe('when stale serving is off for a fetcher', () => {
   })
 
   describe('and the entry has expired while the upstream is down', () => {
+    let outcome: PromiseSettledResult<unknown>
+
     beforeEach(async () => {
       fetchElements.mockResolvedValueOnce(settled(['owner-1'])).mockRejectedValue(new Error('upstream down'))
       await fetcher.fetchOwnedElements('0x1')
-      await new Promise((resolve) => setTimeout(resolve, 40))
+      await clock.advance(ONE_MINUTE * 1.5)
+      ;[outcome] = await Promise.allSettled([fetcher.fetchOwnedElements('0x1')])
     })
 
-    it('should fail closed instead of confidently serving the previous answer', async () => {
-      await expect(fetcher.fetchOwnedElements('0x1')).rejects.toThrow(FetcherError)
+    it('should fail closed instead of confidently serving the previous answer', () => {
+      expect(outcome.status === 'rejected' && outcome.reason instanceof FetcherError).toBe(true)
     })
   })
 })
@@ -200,6 +258,7 @@ describe('when the elements cache is metered', () => {
   let fetchElements: jest.Mock
   let metrics: { increment: jest.Mock }
   let fetcher: ElementsFetcher<string>
+  let clock: ReturnType<typeof installClock>
 
   function resultsRecorded(): string[] {
     return metrics.increment.mock.calls
@@ -214,18 +273,19 @@ describe('when the elements cache is metered', () => {
   }
 
   beforeEach(() => {
+    clock = installClock()
     fetchElements = jest.fn()
     metrics = { increment: jest.fn() }
     fetcher = createElementsFetcherComponent<string>({ logs, metrics } as any, fetchElements, {
       maxEntries: 10,
-      maxAge: 20,
-      maxStaleAge: 200,
+      maxAge: ONE_MINUTE,
+      maxStaleAge: ONE_MINUTE,
       serveStale: true
     })
   })
 
   afterEach(() => {
-    jest.resetAllMocks()
+    jest.restoreAllMocks()
   })
 
   describe('and an entry is read cold, warm, stale and warm again', () => {
@@ -233,9 +293,9 @@ describe('when the elements cache is metered', () => {
       fetchElements.mockImplementation(async () => settled(['a']))
       await fetcher.fetchOwnedElements('0x1')
       await fetcher.fetchOwnedElements('0x1')
-      await new Promise((resolve) => setTimeout(resolve, 40))
+      await clock.advance(ONE_MINUTE * 1.5)
       await fetcher.fetchOwnedElements('0x1')
-      await new Promise((resolve) => setTimeout(resolve, 10))
+      await flush()
       await fetcher.fetchOwnedElements('0x1')
     })
 
@@ -254,14 +314,8 @@ describe('when the elements cache is metered', () => {
     beforeEach(async () => {
       let call = 0
       fetchElements.mockImplementation(async () => settled([`v${++call}`]))
-      fetcher = createElementsFetcherComponent<string>({ logs, metrics } as any, fetchElements, {
-        maxEntries: 10,
-        maxAge: 20,
-        maxStaleAge: 20,
-        serveStale: true
-      })
       served = [(await fetcher.fetchOwnedElements('0x1')).elements]
-      await new Promise((resolve) => setTimeout(resolve, 60))
+      await clock.advance(ONE_MINUTE * 2.5)
       served.push((await fetcher.fetchOwnedElements('0x1')).elements)
     })
 
@@ -287,9 +341,9 @@ describe('when the elements cache is metered', () => {
         .mockRejectedValueOnce(new Error('upstream down'))
         .mockResolvedValueOnce(settled(['v3']))
       served = [(await fetcher.fetchOwnedElements('0x1')).elements]
-      await new Promise((resolve) => setTimeout(resolve, 40))
+      await clock.advance(ONE_MINUTE * 1.5)
       served.push((await fetcher.fetchOwnedElements('0x1')).elements)
-      await new Promise((resolve) => setTimeout(resolve, 10))
+      await flush()
       served.push((await fetcher.fetchOwnedElements('0x1')).elements)
     })
 
@@ -369,10 +423,14 @@ describe('when reading the elements cache settings', () => {
   })
 
   describe('and a setting is not a positive integer', () => {
-    it('should refuse to start rather than run with a broken cache', async () => {
-      await expect(readElementsCacheSettings(configWith({ ELEMENTS_CACHE_MAX_AGE: 0 }))).rejects.toThrow(
-        'ELEMENTS_CACHE_MAX_AGE'
-      )
+    let outcome: PromiseSettledResult<unknown>
+
+    beforeEach(async () => {
+      ;[outcome] = await Promise.allSettled([readElementsCacheSettings(configWith({ ELEMENTS_CACHE_MAX_AGE: 0 }))])
+    })
+
+    it('should refuse to start rather than run with a broken cache', () => {
+      expect(outcome.status === 'rejected' && String(outcome.reason)).toContain('ELEMENTS_CACHE_MAX_AGE')
     })
   })
 })

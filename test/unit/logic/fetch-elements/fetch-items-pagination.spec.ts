@@ -1,6 +1,10 @@
-import { Rarity } from '@dcl/schemas'
+import { Network, Rarity } from '@dcl/schemas'
 import { ElementsFilters } from '../../../../src/adapters/elements-fetcher'
-import { WearableFromQuery, fetchWearables } from '../../../../src/logic/fetch-elements/fetch-items'
+import {
+  WearableFromQuery,
+  buildMarketplaceApiParams,
+  fetchWearables
+} from '../../../../src/logic/fetch-elements/fetch-items'
 import { InvalidRequestError, OnChainWearable } from '../../../../src/types'
 import { createTheGraphComponentMock } from '../../../mocks/the-graph-mock'
 
@@ -275,6 +279,23 @@ describe('when fetching owned wearables from the subgraph fallback', () => {
 
     it('should count the items held across both networks', () => {
       expect(result.totalAmount).toBe(2)
+    })
+  })
+})
+
+describe('when building the marketplace params from the request filters', () => {
+  let params: ReturnType<typeof buildMarketplaceApiParams>
+
+  describe('and an item type and a network are requested', () => {
+    beforeEach(() => {
+      params = buildMarketplaceApiParams(
+        { itemType: 'smartWearable', network: Network.MATIC },
+        { pageNum: 2, pageSize: 25 }
+      )
+    })
+
+    it('should forward both so the marketplace can narrow the query itself', () => {
+      expect(params).toEqual({ limit: 25, offset: 25, itemType: 'smartWearable', network: Network.MATIC })
     })
   })
 })

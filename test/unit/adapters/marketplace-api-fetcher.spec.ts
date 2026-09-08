@@ -8,7 +8,7 @@ import {
 import { ServiceOverloadedError } from '../../../src/types'
 
 const metrics = { increment: jest.fn(), observe: jest.fn() } as any
-import { WearableCategory, EmoteCategory } from '@dcl/schemas'
+import { WearableCategory, EmoteCategory, Network } from '@dcl/schemas'
 
 describe('MarketplaceApiFetcher', () => {
   let mockConfig: any
@@ -718,5 +718,121 @@ describe('when a page request fails while another fetch is queued behind the bul
 
   it('should not let the queued fetch start until the failed fetch has no request in flight', () => {
     expect(events.indexOf('start b 1')).toBeGreaterThan(events.indexOf('end a 3'))
+  })
+})
+
+describe('when owned items are requested with pagination', () => {
+  let fetch: { fetch: jest.Mock }
+  let fetcher: Awaited<ReturnType<typeof createMarketplaceApiFetcher>>
+
+  function pageResponse(elements: unknown[], total: number) {
+    return { ok: true, json: async () => ({ ok: true, data: { elements, page: 3, pages: 9, limit: 10, total } }) }
+  }
+
+  beforeEach(async () => {
+    fetch = { fetch: jest.fn() }
+    fetcher = await createMarketplaceApiFetcher({
+      metrics,
+      config: {
+        getString: jest.fn().mockResolvedValue('https://marketplace-api.com'),
+        getNumber: jest.fn().mockResolvedValue(undefined)
+      } as any,
+      fetch: fetch as any,
+      logs: await createLogComponent({})
+    })
+  })
+
+  afterEach(() => {
+    jest.resetAllMocks()
+  })
+
+  describe('and the wearables of one page are requested', () => {
+    let result: Awaited<ReturnType<typeof fetcher.fetchUserWearables>>
+
+    beforeEach(async () => {
+      fetch.fetch.mockResolvedValue(pageResponse([], 87))
+      result = await fetcher.fetchUserWearables('0xAbC', { limit: 10, offset: 20 })
+    })
+
+    it('should ask for exactly that page and nothing more, even though more pages exist', () => {
+      expect(fetch.fetch.mock.calls.map(([url]) => url)).toEqual([
+        'https://marketplace-api.com/v1/users/0xabc/wearables/grouped?limit=10&offset=20'
+      ])
+    })
+
+    it('should report the total the marketplace declares, not the size of the page', () => {
+      expect(result.total).toBe(87)
+    })
+  })
+
+  describe('and the emotes and names of one page are requested', () => {
+    beforeEach(async () => {
+      fetch.fetch.mockResolvedValue(pageResponse([], 0))
+      await fetcher.fetchUserEmotes('0xabc', { limit: 5, offset: 0 })
+      await fetcher.fetchUserNames('0xabc', { limit: 5, offset: 5 })
+    })
+
+    it('should address each collection at its own endpoint', () => {
+      expect(fetch.fetch.mock.calls.map(([url]) => url)).toEqual([
+        'https://marketplace-api.com/v1/users/0xabc/emotes/grouped?limit=5&offset=0',
+        'https://marketplace-api.com/v1/users/0xabc/names?limit=5&offset=5'
+      ])
+    })
+  })
+
+  describe('and the page comes back without an elements array', () => {
+    let outcome: PromiseSettledResult<unknown>
+
+    beforeEach(async () => {
+      fetch.fetch.mockResolvedValue({ ok: true, json: async () => ({ ok: true, data: { total: 1 } }) })
+      ;[outcome] = await Promise.allSettled([fetcher.fetchUserWearables('0xabc', { limit: 10, offset: 0 })])
+    })
+
+    it('should reject as a marketplace error so the caller can fall back', () => {
+      expect(outcome.status === 'rejected' && outcome.reason instanceof MarketplaceApiError).toBe(true)
+    })
+  })
+
+  describe('and every filter is set for Polygon wearables', () => {
+    beforeEach(async () => {
+      fetch.fetch.mockResolvedValue(pageResponse([], 0))
+      await fetcher.fetchUserWearables('0xabc', {
+        limit: 10,
+        offset: 0,
+        category: 'hat',
+        rarity: 'rare',
+        name: 'cap',
+        orderBy: 'date',
+        direction: 'desc',
+        itemType: 'wearable',
+        network: Network.MATIC
+      })
+    })
+
+    it('should forward every filter and expand the Polygon wearable item types', () => {
+      expect(new URL(fetch.fetch.mock.calls[0][0]).search).toBe(
+        '?limit=10&offset=0&category=hat&rarity=rare&name=cap&orderBy=date&direction=desc&itemType=wearable_v2&itemType=smart_wearable_v1'
+      )
+    })
+  })
+
+  describe('and Ethereum wearables or smart wearables are requested', () => {
+    beforeEach(async () => {
+      fetch.fetch.mockResolvedValue(pageResponse([], 0))
+      await fetcher.fetchUserWearables('0xabc', {
+        limit: 1,
+        offset: 0,
+        itemType: 'wearable',
+        network: Network.ETHEREUM
+      })
+      await fetcher.fetchUserWearables('0xabc', { limit: 1, offset: 0, itemType: 'smartWearable' })
+    })
+
+    it('should map each to its single marketplace item type', () => {
+      expect(fetch.fetch.mock.calls.map(([url]) => new URL(url).searchParams.getAll('itemType'))).toEqual([
+        ['wearable_v1'],
+        ['smart_wearable_v1']
+      ])
+    })
   })
 })
