@@ -17,7 +17,7 @@ export async function namesHandler(
     pageNum: pagination.pageNum,
     pageSize: pagination.pageSize
   }
-  // Convert price from number to string for API compatibility
+  // Upstreams may still send the wei price as a number; the API always answers a string
   const elementsWithStringPrice = page.elements.map((name) => ({
     ...name,
     price: name.price !== undefined ? String(name.price) : undefined

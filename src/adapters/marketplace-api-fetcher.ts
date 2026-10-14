@@ -30,7 +30,7 @@ export type MarketplaceApiName = {
   name: string
   contractAddress: string
   tokenId: string
-  price?: number
+  price?: string
 }
 
 type MarketplaceApiGroupedBaseData = {

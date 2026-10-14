@@ -28,7 +28,7 @@ it('names are mapped correctly', async () => {
       contractAddress: 'address1',
       tokenId: 'tokenId1',
       activeOrder: {
-        price: 100
+        price: '800815000000000000000000'
       }
     },
     {
@@ -48,7 +48,7 @@ it('names are mapped correctly', async () => {
         name: 'name1',
         contractAddress: 'address1',
         tokenId: 'tokenId1',
-        price: 100
+        price: '800815000000000000000000'
       },
       {
         name: 'name2',
