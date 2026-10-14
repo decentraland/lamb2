@@ -15,7 +15,6 @@ type MarketplaceApiBaseData = {
   transferredAt: string | null
   name: string
   rarity: string
-  price?: number
 }
 
 export type MarketplaceApiWearable = MarketplaceApiBaseData & {
