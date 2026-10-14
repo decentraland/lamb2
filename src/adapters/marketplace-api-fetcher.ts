@@ -33,9 +33,10 @@ export type MarketplaceApiName = {
   price?: number
 }
 
+// The API serializes amount and the transfer bounds as numeric strings
 type MarketplaceApiGroupedBaseData = {
   urn: string
-  amount: number
+  amount: number | string
   individualData: Array<{
     id: string
     tokenId: string
@@ -45,8 +46,8 @@ type MarketplaceApiGroupedBaseData = {
   name: string
   rarity: string
   itemType: ItemType
-  minTransferredAt: number
-  maxTransferredAt: number
+  minTransferredAt: number | string
+  maxTransferredAt: number | string
 }
 
 export type MarketplaceApiGroupedWearable = MarketplaceApiGroupedBaseData & {
@@ -156,7 +157,7 @@ export class MarketplaceApiError extends Error {
 function mapGroupedWearableToOnChainWearable(grouped: MarketplaceApiGroupedWearable): OnChainWearable {
   return {
     urn: grouped.urn,
-    amount: grouped.amount,
+    amount: Number(grouped.amount),
     individualData: grouped.individualData.map((item) => ({
       id: item.id,
       tokenId: item.tokenId,
@@ -166,8 +167,8 @@ function mapGroupedWearableToOnChainWearable(grouped: MarketplaceApiGroupedWeara
     name: grouped.name,
     rarity: grouped.rarity,
     itemType: grouped.itemType,
-    minTransferredAt: grouped.minTransferredAt,
-    maxTransferredAt: grouped.maxTransferredAt,
+    minTransferredAt: Number(grouped.minTransferredAt),
+    maxTransferredAt: Number(grouped.maxTransferredAt),
     category: grouped.category
   }
 }
@@ -178,7 +179,7 @@ function mapGroupedWearableToOnChainWearable(grouped: MarketplaceApiGroupedWeara
 function mapGroupedEmoteToOnChainEmote(grouped: MarketplaceApiGroupedEmote): OnChainEmote {
   return {
     urn: grouped.urn,
-    amount: grouped.amount,
+    amount: Number(grouped.amount),
     individualData: grouped.individualData.map((item) => ({
       id: item.id,
       tokenId: item.tokenId,
@@ -187,8 +188,8 @@ function mapGroupedEmoteToOnChainEmote(grouped: MarketplaceApiGroupedEmote): OnC
     })),
     name: grouped.name,
     rarity: grouped.rarity,
-    minTransferredAt: grouped.minTransferredAt,
-    maxTransferredAt: grouped.maxTransferredAt,
+    minTransferredAt: Number(grouped.minTransferredAt),
+    maxTransferredAt: Number(grouped.maxTransferredAt),
     category: grouped.category
   }
 }

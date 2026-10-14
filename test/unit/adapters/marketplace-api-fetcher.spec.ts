@@ -836,3 +836,85 @@ describe('when owned items are requested with pagination', () => {
     })
   })
 })
+
+describe('when the marketplace serializes the numeric fields of grouped items as strings', () => {
+  let fetch: { fetch: jest.Mock }
+  let fetcher: Awaited<ReturnType<typeof createMarketplaceApiFetcher>>
+  let groupedItem: Record<string, unknown>
+
+  beforeEach(async () => {
+    groupedItem = {
+      urn: 'urn:decentraland:matic:collections-v2:0xabc:0',
+      amount: '2',
+      individualData: [
+        {
+          id: 'urn:decentraland:matic:collections-v2:0xabc:0:1',
+          tokenId: '1',
+          transferredAt: '1689165984',
+          price: '0'
+        },
+        { id: 'urn:decentraland:matic:collections-v2:0xabc:0:2', tokenId: '2', transferredAt: '1689166000', price: '0' }
+      ],
+      name: 'An item',
+      rarity: 'legendary',
+      itemType: 'wearable_v2',
+      minTransferredAt: '1689165984',
+      maxTransferredAt: '1689166000',
+      category: 'lower_body'
+    }
+    fetch = { fetch: jest.fn() }
+    fetch.fetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true, data: { elements: [groupedItem], page: 1, pages: 1, limit: 10, total: 1 } })
+    })
+    fetcher = await createMarketplaceApiFetcher({
+      metrics,
+      config: {
+        getString: jest.fn().mockResolvedValue('https://marketplace-api.com'),
+        getNumber: jest.fn().mockResolvedValue(undefined)
+      } as any,
+      fetch: fetch as any,
+      logs: await createLogComponent({})
+    })
+  })
+
+  afterEach(() => {
+    jest.resetAllMocks()
+  })
+
+  describe('and the wearables are requested', () => {
+    let wearable: Awaited<ReturnType<typeof fetcher.fetchUserWearables>>['wearables'][number]
+
+    beforeEach(async () => {
+      ;({
+        wearables: [wearable]
+      } = await fetcher.fetchUserWearables('0xabc', { limit: 10, offset: 0 }))
+    })
+
+    it('should return the amount as a number', () => {
+      expect(wearable.amount).toBe(2)
+    })
+
+    it('should return the transfer bounds as numbers', () => {
+      expect([wearable.minTransferredAt, wearable.maxTransferredAt]).toEqual([1689165984, 1689166000])
+    })
+  })
+
+  describe('and the emotes are requested', () => {
+    let emote: Awaited<ReturnType<typeof fetcher.fetchUserEmotes>>['emotes'][number]
+
+    beforeEach(async () => {
+      ;({
+        emotes: [emote]
+      } = await fetcher.fetchUserEmotes('0xabc', { limit: 10, offset: 0 }))
+    })
+
+    it('should return the amount as a number', () => {
+      expect(emote.amount).toBe(2)
+    })
+
+    it('should return the transfer bounds as numbers', () => {
+      expect([emote.minTransferredAt, emote.maxTransferredAt]).toEqual([1689165984, 1689166000])
+    })
+  })
+})
