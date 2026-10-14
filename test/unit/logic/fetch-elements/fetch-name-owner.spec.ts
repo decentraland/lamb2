@@ -1,6 +1,8 @@
 import { fetchNameOwner, NameOwnerFromQuery } from '../../../../src/logic/fetch-elements/fetch-name-owner'
 import { createTheGraphComponentMock } from '../../../mocks/the-graph-mock'
 
+const compact = (query: string) => query.replace(/\s+/g, '')
+
 describe('fetchNameOwner', () => {
   let theGraph: any
   let mockQuery: jest.SpyInstance
@@ -26,7 +28,11 @@ describe('fetchNameOwner', () => {
     })
 
     it('should filter by an exact match on the searchText of ENS NFTs', () => {
-      expect(sentQuery).toContain('where: { category: ens, searchText: $name }')
+      expect(compact(sentQuery)).toContain('where:{category:ens,searchText:$name}')
+    })
+
+    it('should request a single NFT', () => {
+      expect(compact(sentQuery)).toMatch(/nfts\([^)]*first:1[,)]/)
     })
 
     it('should not filter by name prefix or suffix', () => {

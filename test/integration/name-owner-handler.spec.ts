@@ -73,6 +73,49 @@ test('Integration tests for name-owner-handle', function ({ components }) {
     })
   })
 
+  describe('when the name has an uppercase .dcl.eth suffix and surrounding whitespace', () => {
+    let ownerAddress: string
+    let fetchSpy: jest.SpyInstance
+    let response: Response
+
+    beforeEach(async () => {
+      ownerAddress = generateRandomAddress()
+      fetchSpy = jest.spyOn(nameOwnerFetcher, 'fetchOwnedElements').mockResolvedValueOnce({
+        elements: [{ owner: ownerAddress }],
+        totalAmount: 1
+      })
+      response = await components.localFetch.fetch(`/names/${encodeURIComponent(' Test-Name.DCL.ETH ')}/owner`)
+    })
+
+    it('should look up the trimmed, lowercased name without the suffix', () => {
+      expect(fetchSpy).toHaveBeenCalledWith('test-name')
+    })
+
+    it('should return 200 status with owner information', async () => {
+      expect(response.status).toBe(200)
+      expect(await response.json()).toEqual({ owner: ownerAddress })
+    })
+  })
+
+  describe('when the name is empty after removing the .dcl.eth suffix', () => {
+    let fetchSpy: jest.SpyInstance
+    let response: Response
+
+    beforeEach(async () => {
+      fetchSpy = jest.spyOn(nameOwnerFetcher, 'fetchOwnedElements')
+      response = await components.localFetch.fetch(`/names/${encodeURIComponent(' .DCL.eth')}/owner`)
+    })
+
+    it('should not look up the name', () => {
+      expect(fetchSpy).not.toHaveBeenCalled()
+    })
+
+    it('should return 404 status with an empty body', async () => {
+      expect(response.status).toBe(404)
+      expect(await response.text()).toBe('')
+    })
+  })
+
   describe('when the name does not exist', () => {
     let testName: string
 
