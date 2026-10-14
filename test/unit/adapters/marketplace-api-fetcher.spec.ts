@@ -850,21 +850,21 @@ describe('when the marketplace serializes the numeric fields of grouped items as
         {
           id: 'urn:decentraland:matic:collections-v2:0xabc:0:1',
           tokenId: '1',
-          transferredAt: '1640995200000',
+          transferredAt: '1640995200',
           price: '0'
         },
         {
           id: 'urn:decentraland:matic:collections-v2:0xabc:0:2',
           tokenId: '2',
-          transferredAt: '1640995300000',
+          transferredAt: '1640995300',
           price: '0'
         }
       ],
       name: 'An item',
       rarity: 'legendary',
       itemType: 'wearable_v2',
-      minTransferredAt: '1640995200000',
-      maxTransferredAt: '1640995300000',
+      minTransferredAt: '1640995200',
+      maxTransferredAt: '1640995300',
       category: 'lower_body'
     }
     fetch = { fetch: jest.fn() }
@@ -901,7 +901,7 @@ describe('when the marketplace serializes the numeric fields of grouped items as
     })
 
     it('should return the transfer bounds as numbers', () => {
-      expect([wearable.minTransferredAt, wearable.maxTransferredAt]).toEqual([1640995200000, 1640995300000])
+      expect([wearable.minTransferredAt, wearable.maxTransferredAt]).toEqual([1640995200, 1640995300])
     })
   })
 
@@ -919,7 +919,7 @@ describe('when the marketplace serializes the numeric fields of grouped items as
     })
 
     it('should return the transfer bounds as numbers', () => {
-      expect([wearable.minTransferredAt, wearable.maxTransferredAt]).toEqual([1640995200000, 1640995300000])
+      expect([wearable.minTransferredAt, wearable.maxTransferredAt]).toEqual([1640995200, 1640995300])
     })
   })
 
@@ -937,7 +937,7 @@ describe('when the marketplace serializes the numeric fields of grouped items as
     })
 
     it('should return the transfer bounds as numbers', () => {
-      expect([emote.minTransferredAt, emote.maxTransferredAt]).toEqual([1640995200000, 1640995300000])
+      expect([emote.minTransferredAt, emote.maxTransferredAt]).toEqual([1640995200, 1640995300])
     })
   })
 
@@ -955,7 +955,7 @@ describe('when the marketplace serializes the numeric fields of grouped items as
     })
 
     it('should return the transfer bounds as numbers', () => {
-      expect([emote.minTransferredAt, emote.maxTransferredAt]).toEqual([1640995200000, 1640995300000])
+      expect([emote.minTransferredAt, emote.maxTransferredAt]).toEqual([1640995200, 1640995300])
     })
   })
 

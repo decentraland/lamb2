@@ -330,10 +330,12 @@ describe('when the subgraph serves the wearables with transferredAt as a string'
       maticCollectionsSubgraph: {
         query: jest.fn().mockResolvedValue({
           nfts: [
-            graphWearable('urn:single', '1', '1640995200000'),
-            graphWearable('urn:multiple', '2', '1640995300000'),
-            graphWearable('urn:multiple', '3', '1640995400000'),
-            graphWearable('urn:undated', '4', null)
+            graphWearable('urn:single', '1', '1640995200'),
+            graphWearable('urn:multiple', '2', '1640995300'),
+            graphWearable('urn:multiple', '3', '1640995400'),
+            graphWearable('urn:undated', '4', null),
+            graphWearable('urn:partly-dated', '5', null),
+            graphWearable('urn:partly-dated', '6', '1640995500')
           ]
         })
       },
@@ -350,14 +352,18 @@ describe('when the subgraph serves the wearables with transferredAt as a string'
   })
 
   it('should return the transfer bounds of a single-token item as numbers', () => {
-    expect(transferBounds['urn:single']).toEqual([1640995200000, 1640995200000])
+    expect(transferBounds['urn:single']).toEqual([1640995200, 1640995200])
   })
 
   it('should return the transfer bounds of a multi-token item as numbers', () => {
-    expect(transferBounds['urn:multiple']).toEqual([1640995300000, 1640995400000])
+    expect(transferBounds['urn:multiple']).toEqual([1640995300, 1640995400])
   })
 
   it('should return 0 as the transfer bounds of an item without a transfer date', () => {
     expect(transferBounds['urn:undated']).toEqual([0, 0])
+  })
+
+  it('should keep the real oldest date of an item with an undated token', () => {
+    expect(transferBounds['urn:partly-dated']).toEqual([1640995500, 1640995500])
   })
 })

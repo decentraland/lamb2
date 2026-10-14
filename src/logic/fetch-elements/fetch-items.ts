@@ -174,7 +174,7 @@ function groupItemsByURN<
       const itemFromMap = itemsByURN.get(itemFromQuery.urn)!
       itemFromMap.individualData.push(individualData)
       itemFromMap.amount = itemFromMap.amount + 1
-      itemFromMap.minTransferredAt = Math.min(transferredAt, itemFromMap.minTransferredAt)
+      itemFromMap.minTransferredAt = earliestDate(transferredAt, itemFromMap.minTransferredAt)
       itemFromMap.maxTransferredAt = Math.max(transferredAt, itemFromMap.maxTransferredAt)
     } else {
       itemsByURN.set(itemFromQuery.urn, {
@@ -192,6 +192,11 @@ function groupItemsByURN<
   })
 
   return Array.from(itemsByURN.values())
+}
+
+// 0 means undated, so it never wins over a real date
+function earliestDate(a: number, b: number): number {
+  return a && b ? Math.min(a, b) : a || b
 }
 
 type ItemCategory = 'wearable' | 'emote'
