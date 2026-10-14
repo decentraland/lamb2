@@ -308,3 +308,56 @@ describe('when the marketplace API sheds the request because it is saturated', (
     expect(outcome.status === 'rejected' && outcome.reason instanceof MarketplaceApiSaturatedError).toBe(true)
   })
 })
+
+describe('when the subgraph serves the wearables with transferredAt as a string', () => {
+  let theGraph: TheGraphComponent
+  let transferBounds: Record<string, [unknown, unknown]>
+
+  function graphWearable(urn: string, tokenId: string, transferredAt: string | null) {
+    return {
+      id: `${urn}:${tokenId}`,
+      tokenId,
+      urn,
+      transferredAt,
+      metadata: { wearable: { name: urn, category: WearableCategory.HAT } },
+      item: { rarity: 'rare', price: '0' }
+    }
+  }
+
+  beforeEach(async () => {
+    theGraph = {
+      ethereumCollectionsSubgraph: { query: jest.fn().mockResolvedValue({ nfts: [] }) },
+      maticCollectionsSubgraph: {
+        query: jest.fn().mockResolvedValue({
+          nfts: [
+            graphWearable('urn:single', '1', '1640995200000'),
+            graphWearable('urn:multiple', '2', '1640995300000'),
+            graphWearable('urn:multiple', '3', '1640995400000'),
+            graphWearable('urn:undated', '4', null)
+          ]
+        })
+      },
+      ensSubgraph: { query: jest.fn() }
+    } as any
+    const { elements } = await fetchWearables({ theGraph, logs: await createLogComponent({}) }, '0xtest')
+    transferBounds = Object.fromEntries(
+      elements.map((wearable) => [wearable.urn, [wearable.minTransferredAt, wearable.maxTransferredAt]])
+    )
+  })
+
+  afterEach(() => {
+    jest.resetAllMocks()
+  })
+
+  it('should return the transfer bounds of a single-token item as numbers', () => {
+    expect(transferBounds['urn:single']).toEqual([1640995200000, 1640995200000])
+  })
+
+  it('should return the transfer bounds of a multi-token item as numbers', () => {
+    expect(transferBounds['urn:multiple']).toEqual([1640995300000, 1640995400000])
+  })
+
+  it('should return 0 as the transfer bounds of an item without a transfer date', () => {
+    expect(transferBounds['urn:undated']).toEqual([0, 0])
+  })
+})

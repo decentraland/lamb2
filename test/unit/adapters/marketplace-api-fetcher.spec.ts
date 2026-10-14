@@ -850,16 +850,21 @@ describe('when the marketplace serializes the numeric fields of grouped items as
         {
           id: 'urn:decentraland:matic:collections-v2:0xabc:0:1',
           tokenId: '1',
-          transferredAt: '1689165984',
+          transferredAt: '1640995200000',
           price: '0'
         },
-        { id: 'urn:decentraland:matic:collections-v2:0xabc:0:2', tokenId: '2', transferredAt: '1689166000', price: '0' }
+        {
+          id: 'urn:decentraland:matic:collections-v2:0xabc:0:2',
+          tokenId: '2',
+          transferredAt: '1640995300000',
+          price: '0'
+        }
       ],
       name: 'An item',
       rarity: 'legendary',
       itemType: 'wearable_v2',
-      minTransferredAt: '1689165984',
-      maxTransferredAt: '1689166000',
+      minTransferredAt: '1640995200000',
+      maxTransferredAt: '1640995300000',
       category: 'lower_body'
     }
     fetch = { fetch: jest.fn() }
@@ -882,7 +887,7 @@ describe('when the marketplace serializes the numeric fields of grouped items as
     jest.resetAllMocks()
   })
 
-  describe('and the wearables are requested', () => {
+  describe('and the wearables are requested with pagination', () => {
     let wearable: Awaited<ReturnType<typeof fetcher.fetchUserWearables>>['wearables'][number]
 
     beforeEach(async () => {
@@ -896,11 +901,29 @@ describe('when the marketplace serializes the numeric fields of grouped items as
     })
 
     it('should return the transfer bounds as numbers', () => {
-      expect([wearable.minTransferredAt, wearable.maxTransferredAt]).toEqual([1689165984, 1689166000])
+      expect([wearable.minTransferredAt, wearable.maxTransferredAt]).toEqual([1640995200000, 1640995300000])
     })
   })
 
-  describe('and the emotes are requested', () => {
+  describe('and every page of wearables is requested', () => {
+    let wearable: Awaited<ReturnType<typeof fetcher.fetchUserWearables>>['wearables'][number]
+
+    beforeEach(async () => {
+      ;({
+        wearables: [wearable]
+      } = await fetcher.fetchUserWearables('0xabc'))
+    })
+
+    it('should return the amount as a number', () => {
+      expect(wearable.amount).toBe(2)
+    })
+
+    it('should return the transfer bounds as numbers', () => {
+      expect([wearable.minTransferredAt, wearable.maxTransferredAt]).toEqual([1640995200000, 1640995300000])
+    })
+  })
+
+  describe('and the emotes are requested with pagination', () => {
     let emote: Awaited<ReturnType<typeof fetcher.fetchUserEmotes>>['emotes'][number]
 
     beforeEach(async () => {
@@ -914,7 +937,50 @@ describe('when the marketplace serializes the numeric fields of grouped items as
     })
 
     it('should return the transfer bounds as numbers', () => {
-      expect([emote.minTransferredAt, emote.maxTransferredAt]).toEqual([1689165984, 1689166000])
+      expect([emote.minTransferredAt, emote.maxTransferredAt]).toEqual([1640995200000, 1640995300000])
+    })
+  })
+
+  describe('and every page of emotes is requested', () => {
+    let emote: Awaited<ReturnType<typeof fetcher.fetchUserEmotes>>['emotes'][number]
+
+    beforeEach(async () => {
+      ;({
+        emotes: [emote]
+      } = await fetcher.fetchUserEmotes('0xabc'))
+    })
+
+    it('should return the amount as a number', () => {
+      expect(emote.amount).toBe(2)
+    })
+
+    it('should return the transfer bounds as numbers', () => {
+      expect([emote.minTransferredAt, emote.maxTransferredAt]).toEqual([1640995200000, 1640995300000])
+    })
+  })
+
+  describe.each([
+    ['null', null],
+    ['missing', undefined],
+    ['not numeric', 'not-a-number']
+  ])('and the amount and transfer bounds are %s', (_, value) => {
+    let wearable: Awaited<ReturnType<typeof fetcher.fetchUserWearables>>['wearables'][number]
+
+    beforeEach(async () => {
+      groupedItem.amount = value
+      groupedItem.minTransferredAt = value
+      groupedItem.maxTransferredAt = value
+      ;({
+        wearables: [wearable]
+      } = await fetcher.fetchUserWearables('0xabc'))
+    })
+
+    it('should return the number of tokens as the amount', () => {
+      expect(wearable.amount).toBe(2)
+    })
+
+    it('should return 0 as the transfer bounds so the item sorts as undated', () => {
+      expect([wearable.minTransferredAt, wearable.maxTransferredAt]).toEqual([0, 0])
     })
   })
 })

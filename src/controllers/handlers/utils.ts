@@ -2,6 +2,7 @@ import { Entity, WearableDefinition, EmoteDefinition } from '@dcl/schemas'
 import { ElementsFilters } from '../../adapters/elements-fetcher'
 import { paginationObject } from '../../logic/pagination'
 import { createSorting } from '../../logic/sorting'
+import { toFiniteNumber } from '../../logic/utils'
 
 /**
  * Extracts filters from URL search parameters
@@ -112,8 +113,8 @@ export function normalizeWearableFormat(wearable: any): any {
       rarity: wearable.item.rarity,
       category: wearable.metadata.wearable.category,
       name: wearable.metadata.wearable.name,
-      minTransferredAt: wearable.transferredAt,
-      maxTransferredAt: wearable.transferredAt
+      minTransferredAt: toFiniteNumber(wearable.transferredAt, 0),
+      maxTransferredAt: toFiniteNumber(wearable.transferredAt, 0)
     }
   }
 

@@ -4,6 +4,7 @@ import { WearableCategory, EmoteCategory, Network } from '@dcl/schemas'
 import { AppComponents, Name, OnChainEmote, OnChainWearable, ServiceOverloadedError } from '../types'
 import { ItemType as ItemTypeFilter } from './elements-fetcher'
 import { ItemType } from '../types'
+import { toFiniteNumber } from '../logic/utils'
 
 /**
  * Marketplace API response types matching the marketplace-server API
@@ -33,10 +34,10 @@ export type MarketplaceApiName = {
   price?: number
 }
 
-// The API serializes amount and the transfer bounds as numeric strings
+// The API serializes amount and the transfer bounds as numeric strings; missing ones fall back on mapping
 type MarketplaceApiGroupedBaseData = {
   urn: string
-  amount: number | string
+  amount: number | string | null
   individualData: Array<{
     id: string
     tokenId: string
@@ -46,8 +47,8 @@ type MarketplaceApiGroupedBaseData = {
   name: string
   rarity: string
   itemType: ItemType
-  minTransferredAt: number | string
-  maxTransferredAt: number | string
+  minTransferredAt: number | string | null
+  maxTransferredAt: number | string | null
 }
 
 export type MarketplaceApiGroupedWearable = MarketplaceApiGroupedBaseData & {
@@ -157,7 +158,7 @@ export class MarketplaceApiError extends Error {
 function mapGroupedWearableToOnChainWearable(grouped: MarketplaceApiGroupedWearable): OnChainWearable {
   return {
     urn: grouped.urn,
-    amount: Number(grouped.amount),
+    amount: toFiniteNumber(grouped.amount, grouped.individualData.length),
     individualData: grouped.individualData.map((item) => ({
       id: item.id,
       tokenId: item.tokenId,
@@ -167,8 +168,8 @@ function mapGroupedWearableToOnChainWearable(grouped: MarketplaceApiGroupedWeara
     name: grouped.name,
     rarity: grouped.rarity,
     itemType: grouped.itemType,
-    minTransferredAt: Number(grouped.minTransferredAt),
-    maxTransferredAt: Number(grouped.maxTransferredAt),
+    minTransferredAt: toFiniteNumber(grouped.minTransferredAt, 0),
+    maxTransferredAt: toFiniteNumber(grouped.maxTransferredAt, 0),
     category: grouped.category
   }
 }
@@ -179,7 +180,7 @@ function mapGroupedWearableToOnChainWearable(grouped: MarketplaceApiGroupedWeara
 function mapGroupedEmoteToOnChainEmote(grouped: MarketplaceApiGroupedEmote): OnChainEmote {
   return {
     urn: grouped.urn,
-    amount: Number(grouped.amount),
+    amount: toFiniteNumber(grouped.amount, grouped.individualData.length),
     individualData: grouped.individualData.map((item) => ({
       id: item.id,
       tokenId: item.tokenId,
@@ -188,8 +189,8 @@ function mapGroupedEmoteToOnChainEmote(grouped: MarketplaceApiGroupedEmote): OnC
     })),
     name: grouped.name,
     rarity: grouped.rarity,
-    minTransferredAt: Number(grouped.minTransferredAt),
-    maxTransferredAt: Number(grouped.maxTransferredAt),
+    minTransferredAt: toFiniteNumber(grouped.minTransferredAt, 0),
+    maxTransferredAt: toFiniteNumber(grouped.maxTransferredAt, 0),
     category: grouped.category
   }
 }

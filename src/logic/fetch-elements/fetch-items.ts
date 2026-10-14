@@ -22,6 +22,7 @@ import { ItemQueryBuilder, createItemQueryBuilder } from './graph-pagination'
 import { fetchAllNFTs } from './fetch-elements'
 import { selectSortingFunction } from '../sorting'
 import { fetchWithMarketplaceFallback } from '../api-with-fallback'
+import { toFiniteNumber } from '../utils'
 import { ISubgraphComponent } from '@dcl/thegraph-component'
 
 export function buildMarketplaceApiParams(
@@ -160,6 +161,8 @@ function groupItemsByURN<
   const itemsByURN = new Map<string, Item<E['category']>>()
 
   items.forEach((itemFromQuery) => {
+    // The subgraph sends this BigInt as a string; 0 means no date to sorting
+    const transferredAt = toFiniteNumber(itemFromQuery.transferredAt, 0)
     const individualData = {
       id: itemFromQuery.urn + ':' + itemFromQuery.tokenId,
       tokenId: itemFromQuery.tokenId,
@@ -171,8 +174,8 @@ function groupItemsByURN<
       const itemFromMap = itemsByURN.get(itemFromQuery.urn)!
       itemFromMap.individualData.push(individualData)
       itemFromMap.amount = itemFromMap.amount + 1
-      itemFromMap.minTransferredAt = Math.min(itemFromQuery.transferredAt, itemFromMap.minTransferredAt)
-      itemFromMap.maxTransferredAt = Math.max(itemFromQuery.transferredAt, itemFromMap.maxTransferredAt)
+      itemFromMap.minTransferredAt = Math.min(transferredAt, itemFromMap.minTransferredAt)
+      itemFromMap.maxTransferredAt = Math.max(transferredAt, itemFromMap.maxTransferredAt)
     } else {
       itemsByURN.set(itemFromQuery.urn, {
         urn: itemFromQuery.urn,
@@ -182,8 +185,8 @@ function groupItemsByURN<
         amount: 1,
         name: getMetadata(itemFromQuery).name,
         category: getMetadata(itemFromQuery).category,
-        minTransferredAt: itemFromQuery.transferredAt,
-        maxTransferredAt: itemFromQuery.transferredAt
+        minTransferredAt: transferredAt,
+        maxTransferredAt: transferredAt
       })
     }
   })
