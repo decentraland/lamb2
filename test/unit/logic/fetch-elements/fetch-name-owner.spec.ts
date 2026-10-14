@@ -4,6 +4,7 @@ import { createTheGraphComponentMock } from '../../../mocks/the-graph-mock'
 describe('fetchNameOwner', () => {
   let theGraph: any
   let mockQuery: jest.SpyInstance
+  let result: { owner: string | null }
 
   beforeEach(() => {
     theGraph = createTheGraphComponentMock()
@@ -14,21 +15,33 @@ describe('fetchNameOwner', () => {
     jest.resetAllMocks()
   })
 
-  describe('when the ensSubgraph is queried', () => {
-    beforeEach(() => {
-      mockQuery.mockResolvedValue({ nfts: [] })
+  describe('when the name is queried', () => {
+    let sentQuery: string
+    let sentVariables: Record<string, unknown>
+
+    beforeEach(async () => {
+      mockQuery.mockResolvedValueOnce({ nfts: [] })
+      await fetchNameOwner({ theGraph }, 'Test-Name')
+      ;[sentQuery, sentVariables] = mockQuery.mock.calls[0]
     })
 
-    it('should call the ensSubgraph query method', async () => {
-      await fetchNameOwner({ theGraph }, 'test-name')
-      expect(theGraph.ensSubgraph.query).toBeCalled()
+    it('should filter by an exact match on the searchText of ENS NFTs', () => {
+      expect(sentQuery).toContain('where: { category: ens, searchText: $name }')
+    })
+
+    it('should not filter by name prefix or suffix', () => {
+      expect(sentQuery).not.toMatch(/name_(starts|ends)_with/)
+    })
+
+    it('should send the name lowercased', () => {
+      expect(sentVariables).toEqual({ name: 'test-name' })
     })
   })
 
   describe('when the name is found', () => {
     let mockResult: NameOwnerFromQuery
 
-    beforeEach(() => {
+    beforeEach(async () => {
       mockResult = {
         nfts: [
           {
@@ -38,46 +51,23 @@ describe('fetchNameOwner', () => {
           }
         ]
       }
-      mockQuery.mockResolvedValue(mockResult)
+      mockQuery.mockResolvedValueOnce(mockResult)
+      result = await fetchNameOwner({ theGraph }, 'test-name')
     })
 
-    it('should return the owner address', async () => {
-      const result = await fetchNameOwner({ theGraph }, 'test-name')
-
-      expect(result).toEqual({
-        owner: '0x123456789abcdef'
-      })
+    it('should return the owner address', () => {
+      expect(result).toEqual({ owner: '0x123456789abcdef' })
     })
   })
 
   describe('when the name is not found', () => {
-    beforeEach(() => {
-      mockQuery.mockResolvedValue({ nfts: [] })
+    beforeEach(async () => {
+      mockQuery.mockResolvedValueOnce({ nfts: [] })
+      result = await fetchNameOwner({ theGraph }, 'non-existent-name')
     })
 
-    it('should return null as owner', async () => {
-      const result = await fetchNameOwner({ theGraph }, 'non-existent-name')
-
-      expect(result).toEqual({
-        owner: null
-      })
-    })
-  })
-
-  describe('when querying with parameters', () => {
-    let testName: string
-
-    beforeEach(() => {
-      testName = 'test-name'
-      mockQuery.mockResolvedValue({ nfts: [] })
-    })
-
-    it('should call the query with correct parameters', async () => {
-      await fetchNameOwner({ theGraph }, testName)
-
-      expect(mockQuery).toHaveBeenCalledWith(expect.stringContaining('query fetchNameOwner($name: String)'), {
-        name: testName
-      })
+    it('should return null as owner', () => {
+      expect(result).toEqual({ owner: null })
     })
   })
 })
