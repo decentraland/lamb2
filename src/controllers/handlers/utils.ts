@@ -87,36 +87,3 @@ export async function fetchDefinitionsAndEntities<T extends { urn: string }>(
 
   return { definitions, entities }
 }
-
-/**
- * Normalizes different wearable formats to OnChainWearable format
- * Handles both OnChainWearable and WearableFromQuery formats
- */
-export function normalizeWearableFormat(wearable: any): any {
-  // Check if it's WearableFromQuery format
-  const isWearableFromQuery = 'item' in wearable && 'metadata' in wearable
-
-  if (isWearableFromQuery) {
-    // Convert WearableFromQuery to OnChainWearable format
-    return {
-      urn: wearable.urn,
-      amount: 1,
-      individualData: [
-        {
-          id: `${wearable.urn}:${wearable.tokenId}`,
-          tokenId: wearable.tokenId,
-          transferredAt: wearable.transferredAt,
-          price: wearable.item.price
-        }
-      ],
-      rarity: wearable.item.rarity,
-      category: wearable.metadata.wearable.category,
-      name: wearable.metadata.wearable.name,
-      minTransferredAt: wearable.transferredAt,
-      maxTransferredAt: wearable.transferredAt
-    }
-  }
-
-  // Already in OnChainWearable format
-  return wearable
-}
