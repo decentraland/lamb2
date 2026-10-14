@@ -16,7 +16,6 @@ type MarketplaceApiBaseData = {
   transferredAt: string | null
   name: string
   rarity: string
-  price?: number
 }
 
 export type MarketplaceApiWearable = MarketplaceApiBaseData & {
@@ -31,7 +30,7 @@ export type MarketplaceApiName = {
   name: string
   contractAddress: string
   tokenId: string
-  price?: number
+  price?: string
 }
 
 // The API serializes amount and the transfer bounds as numeric strings; missing ones fall back on mapping

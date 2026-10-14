@@ -9,7 +9,7 @@ export function generateNames(quantity: number): NameFromQuery[] {
       contractAddress: 'contractAddress-' + i,
       tokenId: 'tokenId-' + i,
       activeOrder: {
-        price: i
+        price: `${i}000000000000000000`
       }
     })
   }

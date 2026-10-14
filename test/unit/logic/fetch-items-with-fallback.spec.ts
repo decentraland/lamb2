@@ -230,7 +230,7 @@ describe('Fetch Functions with Marketplace API Fallback', () => {
           name: 'graphname.dcl.eth',
           contractAddress: '0x2a187453064356c898df4fe204b0fa9f9eb45d33',
           tokenId: '67890',
-          activeOrder: { price: 200 }
+          activeOrder: { price: '200000000000000000000' }
         }
       ]
 
@@ -249,7 +249,7 @@ describe('Fetch Functions with Marketplace API Fallback', () => {
       expect(mockTheGraph.ensSubgraph.query).toHaveBeenCalled()
       expect(result.elements).toHaveLength(1)
       expect(result.elements[0].name).toBe('graphname.dcl.eth')
-      expect(result.elements[0].price).toBe(200)
+      expect(result.elements[0].price).toBe('200000000000000000000')
     })
 
     it('should use The Graph directly when no marketplace API fetcher provided', async () => {
