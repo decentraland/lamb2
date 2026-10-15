@@ -10,13 +10,13 @@ export type TheGraphComponent = IBaseComponent & {
   landSubgraph: ISubgraphComponent
 }
 
-const DEFAULT_COLLECTIONS_SUBGRAPH_SEPOLIA =
-  'https://api.studio.thegraph.com/query/49472/collections-ethereum-sepolia/version/latest'
+// Every default goes through the subgraph provider worker, which fronts the actual indexers
+// (Goldsky, Subsquid, The Graph) behind one path per subgraph; see cloudflare-workers/subgraph-provider.
+const DEFAULT_COLLECTIONS_SUBGRAPH_SEPOLIA = 'https://subgraph.decentraland.org/collections-ethereum-sepolia'
 const DEFAULT_COLLECTIONS_SUBGRAPH_MAINNET = 'https://subgraph.decentraland.org/collections-ethereum-mainnet'
 const DEFAULT_COLLECTIONS_SUBGRAPH_MATIC_AMOY = 'https://subgraph.decentraland.org/collections-matic-amoy'
 const DEFAULT_COLLECTIONS_SUBGRAPH_MATIC_MAINNET = 'https://subgraph.decentraland.org/collections-matic-mainnet'
-const DEFAULT_ENS_OWNER_PROVIDER_URL_SEPOLIA =
-  'https://api.studio.thegraph.com/query/49472/marketplace-sepolia/version/latest'
+const DEFAULT_ENS_OWNER_PROVIDER_URL_SEPOLIA = 'https://subgraph.decentraland.org/marketplace-sepolia'
 const DEFAULT_ENS_OWNER_PROVIDER_URL_MAINNET = 'https://subgraph.decentraland.org/marketplace'
 const DEFAULT_THIRD_PARTY_REGISTRY_SUBGRAPH_MATIC_AMOY = 'https://subgraph.decentraland.org/tpr-matic-amoy'
 const DEFAULT_THIRD_PARTY_REGISTRY_SUBGRAPH_MATIC_MAINNET = 'https://subgraph.decentraland.org/tpr-matic-mainnet'
@@ -34,9 +34,7 @@ export async function createTheGraphComponent(
     (ethNetwork === 'mainnet' ? DEFAULT_COLLECTIONS_SUBGRAPH_MAINNET : DEFAULT_COLLECTIONS_SUBGRAPH_SEPOLIA)
   const maticCollectionsSubgraphURL: string =
     (await config.getString('COLLECTIONS_L2_SUBGRAPH_URL')) ??
-    (process.env.ETH_NETWORK === 'mainnet'
-      ? DEFAULT_COLLECTIONS_SUBGRAPH_MATIC_MAINNET
-      : DEFAULT_COLLECTIONS_SUBGRAPH_MATIC_AMOY)
+    (ethNetwork === 'mainnet' ? DEFAULT_COLLECTIONS_SUBGRAPH_MATIC_MAINNET : DEFAULT_COLLECTIONS_SUBGRAPH_MATIC_AMOY)
   const ensSubgraphURL: string =
     (await config.getString('ENS_OWNER_PROVIDER_URL')) ??
     (ethNetwork === 'mainnet' ? DEFAULT_ENS_OWNER_PROVIDER_URL_MAINNET : DEFAULT_ENS_OWNER_PROVIDER_URL_SEPOLIA)

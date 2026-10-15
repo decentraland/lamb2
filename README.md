@@ -145,6 +145,12 @@ yarn test test/integration
 
 For detailed testing guidelines and standards, refer to our [Testing Standards](https://github.com/decentraland/docs/tree/main/development-standards/testing-standards) documentation.
 
+## End-to-end tests
+
+`yarn test:e2e` runs the suites under `test/e2e` against a deployed realm, `https://peer.decentraland.zone` by default. They exercise the public lambdas and explorer routes with live data: owned wearables, emotes and names with paging, ordering and filters; profile assembly and its ownership invariants; the explorer backpack routes; and the routes served only from the subgraphs. They are not part of CI because they depend on the realm and its upstream services.
+
+Point them at another deployment with `E2E_REALM_URL`, and at a specific wallet with `E2E_ADDRESS`; without it a wallet holding wearables, emotes and a profile is discovered from recent transfers on the realm's L2 collections subgraph (`E2E_COLLECTIONS_SUBGRAPH_URL`, Amoy by default).
+
 ## AI Agent Context
 
 For detailed AI Agent context, see [docs/ai-agent-context.md](docs/ai-agent-context.md).

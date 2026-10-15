@@ -7,6 +7,7 @@
     "lint:fix": "eslint '**/*.{js,ts}' --fix",
     "start": "node --trace-warnings --abort-on-uncaught-exception --unhandled-rejections=strict dist/index.js",
     "test": "jest --forceExit --detectOpenHandles --coverage --verbose",
+    "test:e2e": "jest --forceExit --verbose -c jest.e2e.config.js --runInBand",
     "test:integration": "jest --forceExit --detectOpenHandles --verbose -c jest.integration.config.js --runInBand"
   },
   "license": "Apache-2.0",
