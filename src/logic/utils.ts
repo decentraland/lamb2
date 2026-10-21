@@ -143,3 +143,12 @@ export function buildTrimmedEmoteEntity({
     }
   }
 }
+
+/** Converts a number or numeric string, returning the fallback when it is missing or not finite. */
+export function toFiniteNumber(value: unknown, fallback: number): number {
+  if ((typeof value !== 'number' && typeof value !== 'string') || (typeof value === 'string' && !value.trim())) {
+    return fallback
+  }
+  const number = Number(value)
+  return Number.isFinite(number) ? number : fallback
+}

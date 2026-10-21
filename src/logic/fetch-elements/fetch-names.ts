@@ -29,7 +29,7 @@ export type NameFromQuery = {
   contractAddress: string
   tokenId: string
   activeOrder?: {
-    price: number
+    price: string
   }
 }
 

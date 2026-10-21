@@ -692,9 +692,11 @@ components:
               tokenId:
                 type: string
               transferredAt:
-                type: integer
+                type: string
+                description: Unix timestamp in seconds, as a string
               price:
-                type: number
+                type: string
+                description: Price in wei, as a string
         name:
           type: string
         category:
@@ -741,9 +743,11 @@ components:
               tokenId:
                 type: string
               transferredAt:
-                type: integer
+                type: string
+                description: Unix timestamp in seconds, as a string
               price:
-                type: number
+                type: string
+                description: Price in wei, as a string
         name:
           type: string
         category:
@@ -784,8 +788,9 @@ components:
         tokenId:
           type: string
         price:
-          type: number
+          type: string
           nullable: true
+          description: Price in wei of the active order, if any
 
     Land:
       type: object
@@ -812,8 +817,9 @@ components:
           type: string
           nullable: true
         price:
-          type: number
+          type: string
           nullable: true
+          description: Price in wei of the active order, if any
         image:
           type: string
           nullable: true

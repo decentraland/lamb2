@@ -202,7 +202,8 @@ export type Name = {
   name: string
   contractAddress: string
   tokenId: string
-  price?: number
+  /** Price in wei of the active order, if any */
+  price?: string
 }
 
 export type LAND = {
