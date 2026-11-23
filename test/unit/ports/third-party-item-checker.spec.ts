@@ -74,4 +74,75 @@ describe('third party item checker', () => {
     expect(registry.isErc721).not.toBeCalled()
     expect(registry.isUnknown).not.toBeCalled()
   })
+
+  describe('when an item has no deployed entity', () => {
+    let owner: string
+    let missingItemUrn: string
+    let existingItemUrn: string
+
+    beforeEach(async () => {
+      owner = '0x69d30b1875d39e13a01af73ccfed6d84839e84f2'
+      httpProvider = createHttpProviderMock([
+        [{ jsonrpc: '2.0', id: 1, result: `0x000000000000000000000000${owner.slice(2)}` }]
+      ])
+      registry.isErc721 = jest.fn().mockReturnValue(true)
+      registry.isErc1155 = jest.fn().mockReturnValue(false)
+      registry.isUnknown = jest.fn().mockReturnValue(false)
+      missingItemUrn =
+        'urn:decentraland:amoy:collections-thirdparty:back-to-the-future:sepolia-8a50:missing-item:sepolia:0x74c78f5a4ab22f01d5fd08455cf0ff5c3367535c:7'
+      existingItemUrn =
+        'urn:decentraland:amoy:collections-thirdparty:back-to-the-future:sepolia-8a50:f-bananacrown-4685:sepolia:0x74c78f5a4ab22f01d5fd08455cf0ff5c3367535c:7'
+      entitiesFetcher = {
+        fetchEntities: jest
+          .fn()
+          .mockImplementation(async (urns: string[]) =>
+            generateThirdPartyWearableEntities(urns.filter((urn) => !urn.includes(':missing-item')))
+          ),
+        fetchCollectionEntities: jest.fn()
+      }
+      thirdPartyItemChecker = await createThirdPartyItemChecker({ entitiesFetcher, logs }, httpProvider, registry)
+    })
+
+    it('should resolve the missing item as not owned and still check the other items', async () => {
+      await expect(
+        thirdPartyItemChecker.checkThirdPartyItems(owner, [missingItemUrn, existingItemUrn])
+      ).resolves.toEqual([false, true])
+    })
+  })
+
+  describe('when the item pointer differs from the entity id only in letter case', () => {
+    let owner: string
+    let contract: string
+    let itemUrn: string
+
+    beforeEach(async () => {
+      owner = '0x69d30b1875d39e13a01af73ccfed6d84839e84f2'
+      contract = '0x74c78f5a4ab22f01d5fd08455cf0ff5c3367535c'
+      itemUrn = `urn:decentraland:amoy:collections-thirdparty:back-to-the-future:sepolia-8a50:f-bananacrown-4685:sepolia:${contract}:7`
+      httpProvider = createHttpProviderMock([
+        [{ jsonrpc: '2.0', id: 1, result: `0x000000000000000000000000${owner.slice(2)}` }]
+      ])
+      entitiesFetcher = {
+        fetchEntities: jest.fn().mockImplementation(async (urns: string[]) =>
+          generateThirdPartyWearableEntities(urns).map((entity) => ({
+            ...entity,
+            metadata: {
+              ...entity.metadata,
+              id: entity.metadata.id.replace('f-bananacrown-4685', 'F-BananaCrown-4685'),
+              mappings: { sepolia: { [contract]: [{ type: 'any' }] } }
+            }
+          }))
+        ),
+        fetchCollectionEntities: jest.fn()
+      }
+      registry.isErc721 = jest.fn().mockReturnValue(true)
+      registry.isErc1155 = jest.fn().mockReturnValue(false)
+      registry.isUnknown = jest.fn().mockReturnValue(false)
+      thirdPartyItemChecker = await createThirdPartyItemChecker({ entitiesFetcher, logs }, httpProvider, registry)
+    })
+
+    it('should match the entity and resolve the item as owned', async () => {
+      await expect(thirdPartyItemChecker.checkThirdPartyItems(owner, [itemUrn])).resolves.toEqual([true])
+    })
+  })
 })

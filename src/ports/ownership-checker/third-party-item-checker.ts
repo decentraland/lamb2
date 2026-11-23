@@ -69,8 +69,8 @@ export async function createThirdPartyItemChecker(
     const entities = await entitiesFetcher.fetchEntities(Array.from(entitiesToFetch))
     const entitiesByPointer = entities.reduce(
       (acc, entity: Entity | undefined) => {
-        if (entity?.metadata) {
-          acc[entity.metadata.id] = entity
+        if (entity?.metadata?.id) {
+          acc[entity.metadata.id.toLowerCase()] = entity
         }
         return acc
       },
@@ -81,10 +81,11 @@ export async function createThirdPartyItemChecker(
     Object.values(allUrns)
       .filter((tempData) => tempData.result !== false)
       .forEach((tempData) => {
-        if (!entitiesByPointer[tempData.assetUrn]) {
+        const entity = tempData.assetUrn ? entitiesByPointer[tempData.assetUrn.toLowerCase()] : undefined
+        if (!entity) {
           tempData.result = false
+          return
         }
-        const entity = entitiesByPointer[tempData.assetUrn]
         const mappingsHelper = createMappingsHelper(entity.metadata.mappings)
         if (!mappingsHelper.includesNft(tempData.network! as ContractNetwork, tempData.contract!, tempData.nftId!)) {
           tempData.result = false
