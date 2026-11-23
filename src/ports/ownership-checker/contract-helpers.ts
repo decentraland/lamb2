@@ -43,10 +43,7 @@ export async function sendSingle(provider: HTTPProvider, message: RPCSendableMes
   return res[0]
 }
 
-const ITEM_TYPES_TO_SPLIT = ['blockchain-collection-third-party', 'blockchain-collection-third-party-item']
-
 type URNsByNetwork = {
-  v1: { urn: string; type: string }[]
   l1ThirdParty: { urn: string; type: string }[]
   l2ThirdParty: { urn: string; type: string }[]
 }
@@ -54,38 +51,28 @@ type URNsByNetwork = {
 export const L1_NETWORKS = ['mainnet', 'sepolia']
 export const L2_NETWORKS = ['matic', 'amoy']
 
+/**
+ * Splits linked third-party item URNs by the network of their NFT. Any other URN, including a
+ * third-party URN that names no NFT, is left out: its ownership cannot be checked.
+ */
 export async function splitItemsURNsByTypeAndNetwork(urnsToSplit: string[]): Promise<URNsByNetwork> {
-  const v1: { urn: string; type: string }[] = []
   const l1ThirdParty: { urn: string; type: string }[] = []
   const l2ThirdParty: { urn: string; type: string }[] = []
 
   for (const urn of urnsToSplit) {
-    const asset = await parseUrn(urn)
-    if (!asset || !('network' in asset) || !ITEM_TYPES_TO_SPLIT.includes(asset.type)) {
+    const asset = await parseUrn(urn).catch(() => null)
+    if (!asset || asset.type !== 'blockchain-collection-third-party-item' || !L2_NETWORKS.includes(asset.network)) {
       continue
     }
 
-    // check if it is a L1 or L2 asset
-    // 'ethereum' is included since L1 Mainnet assets include it instead of 'mainnet'
-    if (![...L1_NETWORKS, 'ethereum'].includes(asset.network) && !L2_NETWORKS.includes(asset.network)) {
-      continue
-    }
-
-    if (L2_NETWORKS.includes(asset.network)) {
-      if (asset.type === 'blockchain-collection-third-party-item') {
-        if (L1_NETWORKS.includes(asset.nftChain)) {
-          l1ThirdParty.push({ urn: asset.uri.toString(), type: asset.type })
-        } else if (L2_NETWORKS.includes(asset.nftChain)) {
-          l2ThirdParty.push({ urn: asset.uri.toString(), type: asset.type })
-        }
-      } else if (asset.type === 'blockchain-collection-third-party') {
-        v1.push({ urn: asset.uri.toString(), type: asset.type })
-      }
+    if (L1_NETWORKS.includes(asset.nftChain)) {
+      l1ThirdParty.push({ urn: asset.uri.toString(), type: asset.type })
+    } else if (L2_NETWORKS.includes(asset.nftChain)) {
+      l2ThirdParty.push({ urn: asset.uri.toString(), type: asset.type })
     }
   }
 
   return {
-    v1,
     l1ThirdParty,
     l2ThirdParty
   }

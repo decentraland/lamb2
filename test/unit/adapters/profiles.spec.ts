@@ -4,6 +4,8 @@ import { createOwnershipCachesComponent } from '../../../src/ports/ownership-cac
 import { ProfileMetadata, ServiceOverloadedError } from '../../../src/types'
 
 const THIRD_PARTY_WEARABLE =
+  'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f:matic:0x1d9fb685c257e74f869ba302e260c0b68f5ebb37:1'
+const UNLINKED_THIRD_PARTY_WEARABLE =
   'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f'
 
 type Harness = {
@@ -92,6 +94,9 @@ describe('when fetching a batch of profiles', () => {
       content.fetchEntitiesByPointers.mockResolvedValue(
         addresses.map((address) => profileEntity(address, [THIRD_PARTY_WEARABLE]))
       )
+      l2ThirdPartyItemChecker.checkThirdPartyItems.mockImplementation(async (_address: string, urns: string[]) =>
+        urns.map(() => true)
+      )
       result = await profiles.getProfiles(addresses)
     })
 
@@ -107,6 +112,28 @@ describe('when fetching a batch of profiles', () => {
       expect(result?.map((profile) => profile.avatars[0].avatar.wearables)).toEqual(
         addresses.map(() => [THIRD_PARTY_WEARABLE])
       )
+    })
+  })
+
+  describe('and one profile wears a third-party item without its NFT while another wears a linked one', () => {
+    beforeEach(async () => {
+      addresses = ['0x1', '0x2']
+      content.fetchEntitiesByPointers.mockResolvedValue([
+        profileEntity('0x1', [UNLINKED_THIRD_PARTY_WEARABLE]),
+        profileEntity('0x2', [THIRD_PARTY_WEARABLE])
+      ])
+      l2ThirdPartyItemChecker.checkThirdPartyItems.mockImplementation(async (_address: string, urns: string[]) =>
+        urns.map(() => true)
+      )
+      result = await profiles.getProfiles(addresses)
+    })
+
+    it('should not ask the chain about the item without its NFT', () => {
+      expect(l2ThirdPartyItemChecker.checkThirdPartyItems).toHaveBeenCalledWith('0x1', [])
+    })
+
+    it('should drop the item without its NFT and keep the linked one', () => {
+      expect(result?.map((profile) => profile.avatars[0].avatar.wearables)).toEqual([[], [THIRD_PARTY_WEARABLE]])
     })
   })
 

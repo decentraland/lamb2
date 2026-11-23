@@ -72,7 +72,7 @@ async function ownedThirdPartyWearables(
   const response = new Map<string, string[]>()
 
   for (const [address, wearableIds] of wearableIdsByAddress) {
-    const { v1, l1ThirdParty, l2ThirdParty } = await splitItemsURNsByTypeAndNetwork(wearableIds)
+    const { l1ThirdParty, l2ThirdParty } = await splitItemsURNsByTypeAndNetwork(wearableIds)
 
     const results = await Promise.all([
       l1ThirdPartyItemChecker.checkThirdPartyItems(
@@ -85,7 +85,6 @@ async function ownedThirdPartyWearables(
       )
     ])
     response.set(address, [
-      ...v1.map((tp) => tp.urn),
       ...l1ThirdParty.filter((_tpw, idx) => results[0][idx]).map((tp) => tp.urn),
       ...l2ThirdParty.filter((_tpw, idx) => results[1][idx]).map((tp) => tp.urn)
     ])

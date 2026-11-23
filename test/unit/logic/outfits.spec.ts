@@ -427,6 +427,34 @@ test('when getting outfits', function ({ components }) {
         })
       })
 
+      describe('and the outfit contains a third party item without its NFT', () => {
+        beforeEach(() => {
+          outfitsEntity.metadata.outfits.push(
+            createOutfit(1, ['urn:decentraland:matic:collections-thirdparty:cryptohats:collection-1:hat-1'])
+          )
+
+          components.namesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+            elements: [],
+            totalAmount: 0
+          })
+          components.wearablesFetcher.fetchOwnedElements = jest.fn().mockResolvedValue({
+            elements: [],
+            totalAmount: 0
+          })
+
+          components.ownershipCaches.tpwCache.clear()
+
+          components.l2ThirdPartyItemChecker.checkThirdPartyItems = jest.fn().mockResolvedValue([])
+          components.l1ThirdPartyItemChecker.checkThirdPartyItems = jest.fn().mockResolvedValue([])
+        })
+
+        it('should not include the outfit', async () => {
+          const result = await getOutfits(components, ethAddress)
+
+          expect(result?.metadata.outfits).toHaveLength(0)
+        })
+      })
+
       describe('and the outfit contains both on-chain and third party wearables', () => {
         let mixedWearables: string[]
 
