@@ -96,7 +96,9 @@ describe('third party item checker', () => {
         fetchEntities: jest
           .fn()
           .mockImplementation(async (urns: string[]) =>
-            generateThirdPartyWearableEntities(urns.filter((urn) => !urn.includes(':missing-item')))
+            urns.map((urn) =>
+              urn.includes(':missing-item') ? undefined : generateThirdPartyWearableEntities([urn])[0]
+            )
           ),
         fetchCollectionEntities: jest.fn()
       }
@@ -128,8 +130,7 @@ describe('third party item checker', () => {
             ...entity,
             metadata: {
               ...entity.metadata,
-              id: entity.metadata.id.replace('f-bananacrown-4685', 'F-BananaCrown-4685'),
-              mappings: { sepolia: { [contract]: [{ type: 'any' }] } }
+              id: entity.metadata.id.replace('f-bananacrown-4685', 'F-BananaCrown-4685')
             }
           }))
         ),
