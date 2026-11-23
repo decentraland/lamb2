@@ -182,9 +182,7 @@ testWithComponents(() => {
       'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7:tokenId-3',
       'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1:tokenId-3',
       'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:tokenId-1',
-      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand:tokenId-2',
-      'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f',
-      'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:12341234-1234-3434-3434-f9dfde9f9393'
+      'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand:tokenId-2'
     ])
   })
 })
@@ -363,9 +361,7 @@ testWithComponents(() => {
         'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7:3',
         'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1:3',
         'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:1',
-        'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand:2',
-        'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f',
-        'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:12341234-1234-3434-3434-f9dfde9f9393'
+        'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand:2'
       ])
     })
   }
@@ -666,9 +662,7 @@ testWithComponents(() => {
         'urn:decentraland:matic:collections-v2:0xa25c20f58ac447621a5f854067b857709cbd60eb:7:1',
         'urn:decentraland:matic:collections-v2:0x293d1ae40b28c39d7b013d4a1fe3c5a8c016bf19:1:1',
         'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_feet:1',
-        'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand:1',
-        'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:98ac122c-523f-403f-9730-f09c992f386f',
-        'urn:decentraland:matic:collections-thirdparty:ntr1-meta:ntr1-meta-1ef79e7b:12341234-1234-3434-3434-f9dfde9f9393'
+        'urn:decentraland:ethereum:collections-v1:ethermon_wearables:ethermon_hand:1'
       ])
     })
   }
